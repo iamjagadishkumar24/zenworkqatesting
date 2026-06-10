@@ -12,6 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
+import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
+import { Route as AppForms990RouteImport } from './routes/_app.forms-990'
+import { Route as AppForms1099RouteImport } from './routes/_app.forms-1099'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 
 const LoginRoute = LoginRouteImport.update({
@@ -28,6 +32,26 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppOnline1099Route = AppOnline1099RouteImport.update({
+  id: '/online-1099',
+  path: '/online-1099',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIntegrationsRoute = AppIntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppForms990Route = AppForms990RouteImport.update({
+  id: '/forms-990',
+  path: '/forms-990',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppForms1099Route = AppForms1099RouteImport.update({
+  id: '/forms-1099',
+  path: '/forms-1099',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -38,11 +62,19 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AppDashboardRoute
+  '/forms-1099': typeof AppForms1099Route
+  '/forms-990': typeof AppForms990Route
+  '/integrations': typeof AppIntegrationsRoute
+  '/online-1099': typeof AppOnline1099Route
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AppDashboardRoute
+  '/forms-1099': typeof AppForms1099Route
+  '/forms-990': typeof AppForms990Route
+  '/integrations': typeof AppIntegrationsRoute
+  '/online-1099': typeof AppOnline1099Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,13 +82,40 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/forms-1099': typeof AppForms1099Route
+  '/_app/forms-990': typeof AppForms990Route
+  '/_app/integrations': typeof AppIntegrationsRoute
+  '/_app/online-1099': typeof AppOnline1099Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/forms-1099'
+    | '/forms-990'
+    | '/integrations'
+    | '/online-1099'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard'
-  id: '__root__' | '/' | '/_app' | '/login' | '/_app/dashboard'
+  to:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/forms-1099'
+    | '/forms-990'
+    | '/integrations'
+    | '/online-1099'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/dashboard'
+    | '/_app/forms-1099'
+    | '/_app/forms-990'
+    | '/_app/integrations'
+    | '/_app/online-1099'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -88,6 +147,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/online-1099': {
+      id: '/_app/online-1099'
+      path: '/online-1099'
+      fullPath: '/online-1099'
+      preLoaderRoute: typeof AppOnline1099RouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/integrations': {
+      id: '/_app/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof AppIntegrationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/forms-990': {
+      id: '/_app/forms-990'
+      path: '/forms-990'
+      fullPath: '/forms-990'
+      preLoaderRoute: typeof AppForms990RouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/forms-1099': {
+      id: '/_app/forms-1099'
+      path: '/forms-1099'
+      fullPath: '/forms-1099'
+      preLoaderRoute: typeof AppForms1099RouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -100,10 +187,18 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppForms1099Route: typeof AppForms1099Route
+  AppForms990Route: typeof AppForms990Route
+  AppIntegrationsRoute: typeof AppIntegrationsRoute
+  AppOnline1099Route: typeof AppOnline1099Route
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppForms1099Route: AppForms1099Route,
+  AppForms990Route: AppForms990Route,
+  AppIntegrationsRoute: AppIntegrationsRoute,
+  AppOnline1099Route: AppOnline1099Route,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
