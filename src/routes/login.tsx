@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useServerFn } from "@tanstack/react-start";
-import { resetSampleAdmin, sampleAdminStatus } from "@/lib/qa/admin.functions";
+import { resetSampleAdmin, sampleAdminStatus, accountStatus } from "@/lib/qa/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,8 @@ function LoginPage() {
   const [seeding, setSeeding] = useState(false);
   const reset = useServerFn(resetSampleAdmin);
   const checkSample = useServerFn(sampleAdminStatus);
+  const checkAccount = useServerFn(accountStatus);
+  const [hint, setHint] = useState<{ tone: "info" | "warn" | "error"; title: string; body: string } | null>(null);
   const [sample, setSample] = useState<{ loading: boolean; exists?: boolean; isAdmin?: boolean; active?: boolean }>({ loading: true });
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -46,8 +48,42 @@ function LoginPage() {
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHint(null);
     const r = await login(email, password);
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) {
+      toast.error(r.error);
+      try {
+        const s = await checkAccount({ data: { email: email.trim().toLowerCase() } });
+        if (!s.exists) {
+          setHint({
+            tone: "warn",
+            title: "No account found for that email",
+            body: "Use the Create account tab, or ask an admin to invite you from Settings → Team & Roles.",
+          });
+        } else if (!s.active) {
+          setHint({
+            tone: "error",
+            title: "This account is inactive",
+            body: `${s.name ?? "This user"} was deactivated by an admin. Ask an admin to reactivate it from Settings → Team & Roles.`,
+          });
+        } else if (!s.hasRole) {
+          setHint({
+            tone: "warn",
+            title: "Account has no role assigned",
+            body: "An admin must assign Admin or QA Agent role before sign-in works. Settings → Team & Roles.",
+          });
+        } else {
+          setHint({
+            tone: "info",
+            title: `Wrong password for a ${s.isAdmin ? "Admin" : "QA Agent"} account`,
+            body: "Double-check the password, or use Forgot password? to email yourself a reset link.",
+          });
+        }
+      } catch {
+        /* ignore — generic toast already shown */
+      }
+      return;
+    }
     toast.success("Welcome back");
     navigate({ to: "/dashboard" });
   };
@@ -163,6 +199,22 @@ function LoginPage() {
                     <Input id="pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                   </div>
                   <Button type="submit" className="w-full">Sign in</Button>
+                  {hint && (
+                    <div
+                      role="status"
+                      className={
+                        "rounded-md border p-3 text-xs " +
+                        (hint.tone === "error"
+                          ? "border-destructive/40 bg-destructive/10 text-destructive"
+                          : hint.tone === "warn"
+                          ? "border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300"
+                          : "border-primary/30 bg-primary/5 text-foreground")
+                      }
+                    >
+                      <p className="font-medium">{hint.title}</p>
+                      <p className="mt-1 opacity-90">{hint.body}</p>
+                    </div>
+                  )}
                   <div className="flex justify-end">
                     <button
                       type="button"
