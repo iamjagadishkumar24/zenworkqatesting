@@ -36,11 +36,12 @@ const LINK_FIELDS: { key: keyof Defect; label: string }[] = [
 ];
 
 export function DefectDetailSheet({
-  defectId, open, onOpenChange,
+  defectId, open, onOpenChange, initialEdit = false,
 }: {
   defectId: string | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  initialEdit?: boolean;
 }) {
   const { defects, audit, users, currentUser, updateDefect, addComment } = useQA();
   const defect = defects.find((d) => d.id === defectId) ?? null;
@@ -49,11 +50,23 @@ export function DefectDetailSheet({
   const [draft, setDraft] = useState<Partial<Defect>>({});
 
   const isAdmin = currentUser?.role === "admin";
-  const canEdit = !!defect && (isAdmin || defect.assignedAgent === currentUser?.name || defect.createdBy === currentUser?.name);
+  const isOwner = !!defect && defect.createdBy === currentUser?.name;
+  const isAssignee = !!defect && defect.assignedAgent === currentUser?.name;
+  const canEdit = !!defect && (isAdmin || isOwner || isAssignee);
   const history = useMemo(
     () => audit.filter((a) => a.defectId === defectId).slice(0, 100),
     [audit, defectId],
   );
+
+  // Open in edit mode when requested by parent (e.g. agent clicks "Edit" on My Errors)
+  // Resets when defect changes or sheet closes
+  useMemo(() => {
+    if (open && initialEdit && defect && canEdit) {
+      setDraft(defect);
+      setEditMode(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialEdit, defectId]);
 
   if (!defect) {
     return (
