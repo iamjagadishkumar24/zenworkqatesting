@@ -219,72 +219,12 @@ function DefectsPage() {
         </CardContent>
       </Card>
 
-      {/* View dialog */}
-      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {viewing && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <span className="font-mono text-sm text-muted-foreground">{viewing.id}</span>
-                  <span>{viewing.title}</span>
-                </DialogTitle>
-                <DialogDescription className="flex flex-wrap gap-2 pt-2">
-                  <DefectStatusBadge status={viewing.status} />
-                  <PriorityBadge value={viewing.priority} />
-                  <PriorityBadge value={viewing.severity} />
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 text-sm">
-                <Field label="Module">{viewing.module} • {viewing.formFeature}</Field>
-                <Field label="Description">{viewing.description}</Field>
-                <Field label="Steps to Reproduce"><pre className="whitespace-pre-wrap font-sans">{viewing.stepsToReproduce}</pre></Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Expected Result">{viewing.expectedResult}</Field>
-                  <Field label="Actual Result">{viewing.actualResult}</Field>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 text-xs">
-                  <Field label="Assigned Agent">{viewing.assignedAgent}</Field>
-                  <Field label="Created By">{viewing.createdBy}</Field>
-                  <Field label="Created">{new Date(viewing.createdAt).toLocaleString()}</Field>
-                  <Field label="Updated">{new Date(viewing.updatedAt).toLocaleString()} by {viewing.updatedBy}</Field>
-                </div>
-                {viewing.jiraUrl && <Field label="Jira"><a className="text-primary underline" href={viewing.jiraUrl} target="_blank" rel="noreferrer">{viewing.jiraUrl}</a></Field>}
-
-                <div>
-                  <h4 className="mb-2 text-sm font-semibold">Comments</h4>
-                  <div className="space-y-2">
-                    {viewing.comments.length === 0 && <p className="text-xs text-muted-foreground">No comments yet.</p>}
-                    {viewing.comments.map((c) => (
-                      <div key={c.id} className="rounded-md border border-border bg-muted/40 p-2">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">{c.author}</span>
-                          <span>{new Date(c.createdAt).toLocaleString()}</span>
-                        </div>
-                        <p className="mt-1 text-sm">{c.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Add a comment…" />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        if (!comment.trim()) return;
-                        addComment(viewing.id, comment.trim());
-                        setComment("");
-                        // refresh viewing reference
-                        setViewing((v) => v && { ...v });
-                        toast.success("Comment added");
-                      }}
-                    ><MessageSquare className="mr-1 h-4 w-4" />Post</Button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Detail slide-over */}
+      <DefectDetailSheet
+        defectId={viewing?.id ?? null}
+        open={!!viewing}
+        onOpenChange={(o) => { if (!o) setViewing(null); }}
+      />
 
       {/* Edit dialog */}
       <Dialog open={!!editing} onOpenChange={(o) => { if (!o) { setEditing(null); setEditDraft(null); } }}>
