@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, MessageSquare, History as HistoryIcon,
   Link as LinkIcon, ExternalLink, ShieldCheck, ShieldX,
+  Activity as ActivityIcon, Pencil, UserPlus, Plus, MessageCircle,
 } from "lucide-react";
 
 const STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
@@ -56,6 +57,44 @@ export function DefectDetailSheet({
     () => audit.filter((a) => a.defectId === defectId).slice(0, 100),
     [audit, defectId],
   );
+
+  type TimelineItem = {
+    id: string;
+    at: string;
+    kind: "created" | "comment" | "status" | "assigned_agent" | "priority" | "severity" | "validity" | "title" | "edit";
+    actor: string;
+    summary: string;
+    detail?: string;
+  };
+  const timeline = useMemo<TimelineItem[]>(() => {
+    if (!defect) return [];
+    const items: TimelineItem[] = [];
+    items.push({
+      id: `create-${defect.id}`,
+      at: defect.createdAt,
+      kind: "created",
+      actor: defect.createdBy,
+      summary: `Reported ${defect.id}`,
+      detail: defect.title,
+    });
+    defect.comments.forEach((c) => {
+      items.push({
+        id: `c-${c.id}`, at: c.createdAt, kind: "comment", actor: c.author,
+        summary: "Added a comment", detail: c.text,
+      });
+    });
+    history.forEach((h) => {
+      const kind = (["status","assigned_agent","priority","severity","validity","title"] as const)
+        .includes(h.field as never) ? (h.field as TimelineItem["kind"]) : "edit";
+      const label = h.field.replace(/_/g, " ");
+      items.push({
+        id: `h-${h.id}`, at: h.changedAt, kind, actor: h.changedBy,
+        summary: `Changed ${label}`,
+        detail: `${h.oldValue ?? "—"} → ${h.newValue ?? "—"}`,
+      });
+    });
+    return items.sort((a, b) => +new Date(b.at) - +new Date(a.at));
+  }, [defect, history]);
 
   // Open in edit mode when requested by parent (e.g. agent clicks Edit on My Errors)
   useEffect(() => {
