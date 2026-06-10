@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
 import { Route as AppForms990RouteImport } from './routes/_app.forms-990'
@@ -32,6 +34,16 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppOnline1099Route = AppOnline1099RouteImport.update({
   id: '/online-1099',
@@ -73,6 +85,8 @@ export interface FileRoutesByFullPath {
   '/forms-990': typeof AppForms990Route
   '/integrations': typeof AppIntegrationsRoute
   '/online-1099': typeof AppOnline1099Route
+  '/reports': typeof AppReportsRoute
+  '/settings': typeof AppSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +97,8 @@ export interface FileRoutesByTo {
   '/forms-990': typeof AppForms990Route
   '/integrations': typeof AppIntegrationsRoute
   '/online-1099': typeof AppOnline1099Route
+  '/reports': typeof AppReportsRoute
+  '/settings': typeof AppSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +111,8 @@ export interface FileRoutesById {
   '/_app/forms-990': typeof AppForms990Route
   '/_app/integrations': typeof AppIntegrationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
+  '/_app/reports': typeof AppReportsRoute
+  '/_app/settings': typeof AppSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +125,8 @@ export interface FileRouteTypes {
     | '/forms-990'
     | '/integrations'
     | '/online-1099'
+    | '/reports'
+    | '/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +137,8 @@ export interface FileRouteTypes {
     | '/forms-990'
     | '/integrations'
     | '/online-1099'
+    | '/reports'
+    | '/settings'
   id:
     | '__root__'
     | '/'
@@ -128,6 +150,8 @@ export interface FileRouteTypes {
     | '/_app/forms-990'
     | '/_app/integrations'
     | '/_app/online-1099'
+    | '/_app/reports'
+    | '/_app/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +182,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reports': {
+      id: '/_app/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/online-1099': {
       id: '/_app/online-1099'
@@ -211,6 +249,8 @@ interface AppRouteChildren {
   AppForms990Route: typeof AppForms990Route
   AppIntegrationsRoute: typeof AppIntegrationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
+  AppReportsRoute: typeof AppReportsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -220,6 +260,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppForms990Route: AppForms990Route,
   AppIntegrationsRoute: AppIntegrationsRoute,
   AppOnline1099Route: AppOnline1099Route,
+  AppReportsRoute: AppReportsRoute,
+  AppSettingsRoute: AppSettingsRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
