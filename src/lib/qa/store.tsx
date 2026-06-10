@@ -1,156 +1,327 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { seedUsers, seedForms, seedDefects } from "./seed";
-import type { Defect, FormItem, User, Role } from "./types";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { Defect, DefectStatus, FormItem, Module, Priority, Role, Severity, TestStatus, User } from "./types";
+
+type DefectWithVersion = Defect & { version: number };
 
 type State = {
   users: User[];
   forms: FormItem[];
-  defects: Defect[];
+  defects: DefectWithVersion[];
   currentUser: User | null;
+  loading: boolean;
 };
+
+type Result = { ok: boolean; error?: string };
 
 type Ctx = State & {
-  login: (email: string, password: string) => { ok: boolean; error?: string };
-  signup: (name: string, email: string, password: string) => { ok: boolean; error?: string };
-  logout: () => void;
-  addDefect: (d: Omit<Defect, "id" | "createdAt" | "updatedAt" | "updatedBy" | "createdBy" | "comments">) => void;
-  updateDefect: (id: string, patch: Partial<Defect>) => void;
-  deleteDefect: (id: string) => void;
-  addComment: (id: string, text: string) => void;
-  addUser: (u: Omit<User, "id">) => void;
-  updateUser: (id: string, patch: Partial<User>) => void;
-  removeUser: (id: string) => void;
-  updateForm: (id: string, patch: Partial<FormItem>) => void;
-  addForm: (f: Omit<FormItem, "id">) => void;
+  login: (email: string, password: string) => Promise<Result>;
+  signup: (name: string, email: string, password: string) => Promise<Result>;
+  logout: () => Promise<void>;
+  addDefect: (d: Omit<Defect, "id" | "createdAt" | "updatedAt" | "updatedBy" | "createdBy" | "comments">) => Promise<Result>;
+  updateDefect: (id: string, patch: Partial<Defect>) => Promise<Result & { conflict?: boolean }>;
+  deleteDefect: (id: string) => Promise<Result>;
+  addComment: (id: string, text: string) => Promise<Result>;
+  updateUser: (id: string, patch: Partial<User>) => Promise<Result>;
+  removeUser: (id: string) => Promise<Result>;
+  updateForm: (id: string, patch: Partial<FormItem>) => Promise<Result>;
+  addForm: (f: Omit<FormItem, "id">) => Promise<Result>;
 };
-
-const LS_KEY = "zenwork-qa-state-v1";
-const LS_PWD = "zenwork-qa-pwd-v1";
-const LS_SESSION = "zenwork-qa-session-v1";
-
-function loadState(): State {
-  if (typeof window === "undefined")
-    return { users: seedUsers, forms: seedForms, defects: seedDefects, currentUser: null };
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    const session = localStorage.getItem(LS_SESSION);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Omit<State, "currentUser">;
-      const currentUser = session ? (JSON.parse(session) as User) : null;
-      return { ...parsed, currentUser };
-    }
-  } catch {}
-  return { users: seedUsers, forms: seedForms, defects: seedDefects, currentUser: null };
-}
-
-function savePwd(map: Record<string, string>) {
-  localStorage.setItem(LS_PWD, JSON.stringify(map));
-}
-function loadPwd(): Record<string, string> {
-  try {
-    return JSON.parse(localStorage.getItem(LS_PWD) || "{}");
-  } catch {
-    return {};
-  }
-}
 
 const Context = createContext<Ctx | null>(null);
 
+type DefectRow = {
+  id: string; module: string; form_feature: string; title: string; description: string;
+  steps_to_reproduce: string; expected_result: string; actual_result: string;
+  attachment_url: string | null; jira_url: string | null;
+  status: string; priority: string; severity: string;
+  assigned_agent: string; created_by: string; updated_by: string;
+  version: number; created_at: string; updated_at: string;
+};
+type CommentRow = { id: string; defect_id: string; author: string; text: string; created_at: string };
+type FormRow = { id: string; name: string; module: string; status: string; passed: number; failed: number; open_defects: number; last_tested: string; assigned_agent: string };
+
+function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersion {
+  return {
+    id: r.id, module: r.module as Module, formFeature: r.form_feature,
+    title: r.title, description: r.description,
+    stepsToReproduce: r.steps_to_reproduce,
+    expectedResult: r.expected_result, actualResult: r.actual_result,
+    attachmentUrl: r.attachment_url ?? undefined, jiraUrl: r.jira_url ?? undefined,
+    status: r.status as DefectStatus, priority: r.priority as Priority, severity: r.severity as Severity,
+    assignedAgent: r.assigned_agent, createdBy: r.created_by, updatedBy: r.updated_by,
+    createdAt: r.created_at, updatedAt: r.updated_at, version: r.version,
+    comments: comments
+      .filter((c) => c.defect_id === r.id)
+      .map((c) => ({ id: c.id, author: c.author, text: c.text, createdAt: c.created_at })),
+  };
+}
+
+function rowToForm(r: FormRow): FormItem {
+  return {
+    id: r.id, name: r.name, module: r.module as Module, status: r.status as TestStatus,
+    passed: r.passed, failed: r.failed, openDefects: r.open_defects,
+    lastTested: r.last_tested, assignedAgent: r.assigned_agent,
+  };
+}
+
 export function QAProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<State>(() => loadState());
+  const [state, setState] = useState<State>({
+    users: [], forms: [], defects: [], currentUser: null, loading: true,
+  });
+  const commentsRef = useRef<CommentRow[]>([]);
 
+  // Auth lifecycle
   useEffect(() => {
-    const { currentUser, ...persist } = state;
-    localStorage.setItem(LS_KEY, JSON.stringify(persist));
-    if (currentUser) localStorage.setItem(LS_SESSION, JSON.stringify(currentUser));
-    else localStorage.removeItem(LS_SESSION);
-  }, [state]);
+    let mounted = true;
+    const hydrateUser = async (authUserId: string | null) => {
+      if (!authUserId) { setState((s) => ({ ...s, currentUser: null })); return; }
+      const [{ data: profile }, { data: roles }] = await Promise.all([
+        supabase.from("profiles").select("id, name, email, active").eq("id", authUserId).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", authUserId),
+      ]);
+      if (!profile) return;
+      const role: Role = roles?.some((r) => r.role === "admin") ? "admin" : "agent";
+      setState((s) => ({ ...s, currentUser: { id: profile.id, name: profile.name, email: profile.email, role, active: profile.active } }));
+    };
 
-  const now = () => new Date().toISOString();
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      void hydrateUser(data.session?.user.id ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      void hydrateUser(session?.user.id ?? null);
+    });
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
+  }, []);
+
+  // Data load + realtime
+  useEffect(() => {
+    if (!state.currentUser) {
+      setState((s) => ({ ...s, loading: false }));
+      return;
+    }
+    let cancelled = false;
+    setState((s) => ({ ...s, loading: true }));
+
+    const loadAll = async () => {
+      const [profilesR, rolesR, formsR, defectsR, commentsR] = await Promise.all([
+        supabase.from("profiles").select("id, name, email, active"),
+        supabase.from("user_roles").select("user_id, role"),
+        supabase.from("forms").select("*"),
+        supabase.from("defects").select("*").order("updated_at", { ascending: false }),
+        supabase.from("defect_comments").select("*").order("created_at", { ascending: true }),
+      ]);
+      if (cancelled) return;
+      const rolesByUser = new Map<string, Role>();
+      (rolesR.data ?? []).forEach((r) => {
+        if (r.role === "admin") rolesByUser.set(r.user_id, "admin");
+        else if (!rolesByUser.has(r.user_id)) rolesByUser.set(r.user_id, "agent");
+      });
+      const users: User[] = (profilesR.data ?? []).map((p) => ({
+        id: p.id, name: p.name, email: p.email, active: p.active,
+        role: rolesByUser.get(p.id) ?? "agent",
+      }));
+      const comments = (commentsR.data ?? []) as CommentRow[];
+      commentsRef.current = comments;
+      setState((s) => ({
+        ...s,
+        loading: false,
+        users,
+        forms: (formsR.data ?? []).map((f) => rowToForm(f as FormRow)),
+        defects: (defectsR.data ?? []).map((d) => rowToDefect(d as DefectRow, comments)),
+      }));
+    };
+    void loadAll();
+
+    const channel = supabase
+      .channel("qa-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "defects" }, (payload) => {
+        setState((s) => {
+          let next = s.defects;
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const row = rowToDefect(payload.new as DefectRow, commentsRef.current);
+            const exists = next.find((d) => d.id === row.id);
+            next = exists ? next.map((d) => (d.id === row.id ? row : d)) : [row, ...next];
+          } else if (payload.eventType === "DELETE") {
+            const oldId = (payload.old as { id: string }).id;
+            next = next.filter((d) => d.id !== oldId);
+          }
+          return { ...s, defects: next };
+        });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "defect_comments" }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          const c = payload.new as CommentRow;
+          commentsRef.current = [...commentsRef.current, c];
+        } else if (payload.eventType === "DELETE") {
+          const oldId = (payload.old as { id: string }).id;
+          commentsRef.current = commentsRef.current.filter((c) => c.id !== oldId);
+        }
+        setState((s) => ({
+          ...s,
+          defects: s.defects.map((d) => ({
+            ...d,
+            comments: commentsRef.current
+              .filter((c) => c.defect_id === d.id)
+              .map((c) => ({ id: c.id, author: c.author, text: c.text, createdAt: c.created_at })),
+          })),
+        }));
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "forms" }, (payload) => {
+        setState((s) => {
+          let next = s.forms;
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const row = rowToForm(payload.new as FormRow);
+            next = next.find((f) => f.id === row.id)
+              ? next.map((f) => (f.id === row.id ? row : f))
+              : [...next, row];
+          } else if (payload.eventType === "DELETE") {
+            const oldId = (payload.old as { id: string }).id;
+            next = next.filter((f) => f.id !== oldId);
+          }
+          return { ...s, forms: next };
+        });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { void loadAll(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => { void loadAll(); })
+      .subscribe();
+
+    return () => { cancelled = true; void supabase.removeChannel(channel); };
+  }, [state.currentUser?.id]);
+
+  const requireUser = () => {
+    const u = state.currentUser;
+    if (!u) throw new Error("Not authenticated");
+    return u;
+  };
 
   const ctx: Ctx = {
     ...state,
-    login: (email, password) => {
-      const user = state.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-      if (!user) return { ok: false, error: "User not found" };
-      if (!user.active) return { ok: false, error: "Account is deactivated" };
-      const pwds = loadPwd();
-      const stored = pwds[user.email.toLowerCase()];
-      // Allow seed users with default password "demo1234"
-      const expected = stored ?? "demo1234";
-      if (password !== expected) return { ok: false, error: "Invalid password" };
-      setState((s) => ({ ...s, currentUser: user }));
+    login: async (email, password) => {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return { ok: false, error: error.message };
       return { ok: true };
     },
-    signup: (name, email, password) => {
-      const exists = state.users.some((u) => u.email.toLowerCase() === email.toLowerCase());
-      if (exists) return { ok: false, error: "Email already registered" };
-      const role: Role = state.users.length === 0 ? "admin" : "agent";
-      const user: User = { id: `u-${Date.now()}`, name, email, role, active: true };
-      const pwds = loadPwd();
-      pwds[email.toLowerCase()] = password;
-      savePwd(pwds);
-      setState((s) => ({ ...s, users: [...s.users, user], currentUser: user }));
+    signup: async (name, email, password) => {
+      const { error } = await supabase.auth.signUp({
+        email, password,
+        options: { data: { name }, emailRedirectTo: `${window.location.origin}/dashboard` },
+      });
+      if (error) return { ok: false, error: error.message };
       return { ok: true };
     },
-    logout: () => setState((s) => ({ ...s, currentUser: null })),
-    addDefect: (d) =>
-      setState((s) => {
-        const nextNum = 1000 + s.defects.length + 1;
-        const author = s.currentUser?.name ?? "System";
-        const defect: Defect = {
-          ...d,
-          id: `DEF-${nextNum}`,
-          createdAt: now(),
-          updatedAt: now(),
-          createdBy: author,
-          updatedBy: author,
-          comments: [],
-        };
-        return { ...s, defects: [defect, ...s.defects] };
-      }),
-    updateDefect: (id, patch) =>
-      setState((s) => ({
-        ...s,
-        defects: s.defects.map((d) =>
-          d.id === id
-            ? { ...d, ...patch, updatedAt: now(), updatedBy: s.currentUser?.name ?? d.updatedBy }
-            : d,
-        ),
-      })),
-    deleteDefect: (id) =>
-      setState((s) => ({ ...s, defects: s.defects.filter((d) => d.id !== id) })),
-    addComment: (id, text) =>
-      setState((s) => ({
-        ...s,
-        defects: s.defects.map((d) =>
-          d.id === id
-            ? {
-                ...d,
-                comments: [
-                  ...d.comments,
-                  {
-                    id: `c-${Date.now()}`,
-                    author: s.currentUser?.name ?? "Agent",
-                    text,
-                    createdAt: now(),
-                  },
-                ],
-                updatedAt: now(),
-              }
-            : d,
-        ),
-      })),
-    addUser: (u) =>
-      setState((s) => ({ ...s, users: [...s.users, { ...u, id: `u-${Date.now()}` }] })),
-    updateUser: (id, patch) =>
-      setState((s) => ({ ...s, users: s.users.map((u) => (u.id === id ? { ...u, ...patch } : u)) })),
-    removeUser: (id) =>
-      setState((s) => ({ ...s, users: s.users.filter((u) => u.id !== id) })),
-    updateForm: (id, patch) =>
-      setState((s) => ({ ...s, forms: s.forms.map((f) => (f.id === id ? { ...f, ...patch } : f)) })),
-    addForm: (f) =>
-      setState((s) => ({ ...s, forms: [...s.forms, { ...f, id: `F-${Date.now()}` }] })),
+    logout: async () => { await supabase.auth.signOut(); },
+
+    addDefect: async (d) => {
+      const me = requireUser();
+      const id = `DEF-${1000 + Math.floor(Date.now() % 100000)}`;
+      const { error } = await supabase.from("defects").insert({
+        id, module: d.module, form_feature: d.formFeature, title: d.title,
+        description: d.description, steps_to_reproduce: d.stepsToReproduce,
+        expected_result: d.expectedResult, actual_result: d.actualResult,
+        attachment_url: d.attachmentUrl || null, jira_url: d.jiraUrl || null,
+        status: d.status, priority: d.priority, severity: d.severity,
+        assigned_agent: d.assignedAgent, created_by: me.name, updated_by: me.name,
+      });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+
+    updateDefect: async (id, patch) => {
+      const me = requireUser();
+      const local = state.defects.find((d) => d.id === id);
+      if (!local) return { ok: false, error: "Defect not found" };
+      const dbPatch: Record<string, unknown> = { updated_by: me.name };
+      const map: Record<string, string> = {
+        module: "module", formFeature: "form_feature", title: "title",
+        description: "description", stepsToReproduce: "steps_to_reproduce",
+        expectedResult: "expected_result", actualResult: "actual_result",
+        attachmentUrl: "attachment_url", jiraUrl: "jira_url",
+        status: "status", priority: "priority", severity: "severity",
+        assignedAgent: "assigned_agent",
+      };
+      for (const [k, dbk] of Object.entries(map)) {
+        if (k in patch) dbPatch[dbk] = (patch as Record<string, unknown>)[k];
+      }
+      const { data, error } = await supabase
+        .from("defects")
+        .update(dbPatch)
+        .eq("id", id)
+        .eq("version", local.version)
+        .select()
+        .maybeSingle();
+      if (error) return { ok: false, error: error.message };
+      if (!data) {
+        // Optimistic lock conflict: fetch latest and surface
+        const { data: latest } = await supabase.from("defects").select("*").eq("id", id).maybeSingle();
+        if (latest) {
+          setState((s) => ({
+            ...s,
+            defects: s.defects.map((d) => (d.id === id ? rowToDefect(latest as DefectRow, commentsRef.current) : d)),
+          }));
+        }
+        toast.error("Conflict: another agent updated this defect. Latest values were loaded.");
+        return { ok: false, conflict: true, error: "Version conflict" };
+      }
+      return { ok: true };
+    },
+
+    deleteDefect: async (id) => {
+      const { error } = await supabase.from("defects").delete().eq("id", id);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+
+    addComment: async (id, text) => {
+      const me = requireUser();
+      const { error } = await supabase.from("defect_comments").insert({ defect_id: id, author: me.name, text });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+
+    updateUser: async (id, patch) => {
+      if (patch.role !== undefined) {
+        await supabase.from("user_roles").delete().eq("user_id", id);
+        const { error } = await supabase.from("user_roles").insert({ user_id: id, role: patch.role });
+        if (error) return { ok: false, error: error.message };
+      }
+      const profilePatch: Record<string, unknown> = {};
+      if (patch.name !== undefined) profilePatch.name = patch.name;
+      if (patch.active !== undefined) profilePatch.active = patch.active;
+      if (Object.keys(profilePatch).length) {
+        const { error } = await supabase.from("profiles").update(profilePatch).eq("id", id);
+        if (error) return { ok: false, error: error.message };
+      }
+      return { ok: true };
+    },
+    removeUser: async () => ({ ok: false, error: "User removal must be performed by an administrator from the backend." }),
+
+    updateForm: async (id, patch) => {
+      const dbPatch: Record<string, unknown> = {};
+      if (patch.name !== undefined) dbPatch.name = patch.name;
+      if (patch.module !== undefined) dbPatch.module = patch.module;
+      if (patch.status !== undefined) dbPatch.status = patch.status;
+      if (patch.passed !== undefined) dbPatch.passed = patch.passed;
+      if (patch.failed !== undefined) dbPatch.failed = patch.failed;
+      if (patch.openDefects !== undefined) dbPatch.open_defects = patch.openDefects;
+      if (patch.lastTested !== undefined) dbPatch.last_tested = patch.lastTested;
+      if (patch.assignedAgent !== undefined) dbPatch.assigned_agent = patch.assignedAgent;
+      const { error } = await supabase.from("forms").update(dbPatch).eq("id", id);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+    addForm: async (f) => {
+      const id = `F-${Date.now()}`;
+      const { error } = await supabase.from("forms").insert({
+        id, name: f.name, module: f.module, status: f.status,
+        passed: f.passed, failed: f.failed, open_defects: f.openDefects,
+        last_tested: f.lastTested, assigned_agent: f.assignedAgent,
+      });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
   };
 
   return <Context.Provider value={ctx}>{children}</Context.Provider>;
