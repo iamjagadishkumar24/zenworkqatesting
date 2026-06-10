@@ -46,14 +46,31 @@ export type Defect = {
   expectedResult: string;
   actualResult: string;
   attachmentUrl?: string;
+  attachmentUrl2?: string;
+  evidenceUrl?: string;
+  screenshotUrl?: string;
+  videoUrl?: string;
+  excelUrl?: string;
+  driveUrl?: string;
   jiraUrl?: string;
   status: DefectStatus;
   priority: Priority;
   severity: Severity;
+  validity: "Unverified" | "Valid" | "Invalid";
   assignedAgent: string;
   createdAt: string;
   updatedAt: string;
   updatedBy: string;
   createdBy: string;
   comments: { id: string; author: string; text: string; createdAt: string }[];
+};
+
+export type AuditEntry = {
+  id: string;
+  defectId: string;
+  field: string;
+  oldValue: string | null;
+  newValue: string | null;
+  changedBy: string;
+  changedAt: string;
 };
