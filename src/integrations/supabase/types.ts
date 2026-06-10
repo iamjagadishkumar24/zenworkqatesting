@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      defect_audit_log: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          defect_id: string
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          defect_id: string
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          defect_id?: string
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "defect_audit_log_defect_id_fkey"
+            columns: ["defect_id"]
+            isOneToOne: false
+            referencedRelation: "defects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       defect_comments: {
         Row: {
           author: string
@@ -51,64 +89,85 @@ export type Database = {
           actual_result: string
           assigned_agent: string
           attachment_url: string | null
+          attachment_url2: string | null
           created_at: string
           created_by: string
           description: string
+          drive_url: string | null
+          evidence_url: string | null
+          excel_url: string | null
           expected_result: string
           form_feature: string
           id: string
           jira_url: string | null
           module: string
           priority: string
+          screenshot_url: string | null
           severity: string
           status: string
           steps_to_reproduce: string
           title: string
           updated_at: string
           updated_by: string
+          validity: string
           version: number
+          video_url: string | null
         }
         Insert: {
           actual_result?: string
           assigned_agent?: string
           attachment_url?: string | null
+          attachment_url2?: string | null
           created_at?: string
           created_by?: string
           description?: string
+          drive_url?: string | null
+          evidence_url?: string | null
+          excel_url?: string | null
           expected_result?: string
           form_feature: string
           id: string
           jira_url?: string | null
           module: string
           priority?: string
+          screenshot_url?: string | null
           severity?: string
           status?: string
           steps_to_reproduce?: string
           title: string
           updated_at?: string
           updated_by?: string
+          validity?: string
           version?: number
+          video_url?: string | null
         }
         Update: {
           actual_result?: string
           assigned_agent?: string
           attachment_url?: string | null
+          attachment_url2?: string | null
           created_at?: string
           created_by?: string
           description?: string
+          drive_url?: string | null
+          evidence_url?: string | null
+          excel_url?: string | null
           expected_result?: string
           form_feature?: string
           id?: string
           jira_url?: string | null
           module?: string
           priority?: string
+          screenshot_url?: string | null
           severity?: string
           status?: string
           steps_to_reproduce?: string
           title?: string
           updated_at?: string
           updated_by?: string
+          validity?: string
           version?: number
+          video_url?: string | null
         }
         Relationships: []
       }
