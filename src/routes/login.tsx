@@ -15,8 +15,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const { currentUser, login, signup, users } = useQA();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("saisrija@zenwork.com");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [sEmail, setSEmail] = useState("");
   const [sPwd, setSPwd] = useState("");
