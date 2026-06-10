@@ -383,16 +383,16 @@ function SettingsPage() {
                 <Button variant="outline" onClick={() => exportCsv("defects-all", defects.map(({ comments, ...d }) => ({ ...d, comments: comments.length })))}>
                   <Download className="mr-2 h-4 w-4" /> Export defects (CSV)
                 </Button>
-                <Button variant="outline" onClick={() => exportXlsx({
-                  filename: "qa-snapshot",
-                  title: "QA portal snapshot",
-                  sheets: [
+                <Button variant="outline" onClick={() => exportXlsx(
+                  "qa-snapshot",
+                  [
                     { name: "Defects", rows: defects.map(({ comments, ...d }) => ({ ...d, comments: comments.length })) },
-                    { name: "Forms", rows: forms },
+                    { name: "Forms", rows: forms as unknown as Record<string, unknown>[] },
                     { name: "Users", rows: users.map(({ id: _id, ...u }) => u) },
-                    { name: "Audit", rows: audit },
+                    { name: "Audit", rows: audit as unknown as Record<string, unknown>[] },
                   ],
-                })}>
+                  { title: "QA portal snapshot" },
+                )}>
                   <Download className="mr-2 h-4 w-4" /> Full snapshot (Excel)
                 </Button>
                 <Button variant="outline" onClick={() => exportCsv("settings", [prefs])}>
@@ -502,7 +502,7 @@ function AddFormRow({
       <Button onClick={() => {
         if (!name.trim()) { toast.error("Form name required"); return; }
         onAdd({
-          name: name.trim(), module: mod as never, status: "Pending",
+          name: name.trim(), module: mod, status: "Pending",
           passed: 0, failed: 0, openDefects: 0,
           lastTested: new Date().toISOString(), assignedAgent: agent,
         });
