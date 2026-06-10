@@ -1,15 +1,17 @@
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useServerFn } from "@tanstack/react-start";
-import { resetSampleAdmin } from "@/lib/qa/admin.functions";
+import { resetSampleAdmin, sampleAdminStatus } from "@/lib/qa/admin.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { HelpCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { HelpCircle, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -26,6 +28,19 @@ function LoginPage() {
   const [sPwd, setSPwd] = useState("");
   const [seeding, setSeeding] = useState(false);
   const reset = useServerFn(resetSampleAdmin);
+  const checkSample = useServerFn(sampleAdminStatus);
+  const [sample, setSample] = useState<{ loading: boolean; exists?: boolean; isAdmin?: boolean; active?: boolean }>({ loading: true });
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotBusy, setForgotBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    checkSample()
+      .then((r) => { if (!cancelled) setSample({ loading: false, ...r }); })
+      .catch(() => { if (!cancelled) setSample({ loading: false }); });
+    return () => { cancelled = true; };
+  }, [checkSample]);
 
   if (currentUser) return <Navigate to="/dashboard" replace />;
 
@@ -57,11 +72,54 @@ function LoginPage() {
         toast.success("Signed in as sample admin");
         navigate({ to: "/dashboard" });
       }
+      setSample({ loading: false, exists: true, isAdmin: true, active: true });
     } catch (e: any) {
       toast.error(e?.message ?? "Could not create sample admin");
     } finally {
       setSeeding(false);
     }
+  };
+
+  const sendReset = async () => {
+    if (!forgotEmail) return;
+    setForgotBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim().toLowerCase(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setForgotBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("If an account exists for that email, a reset link is on its way.");
+    setForgotOpen(false);
+    setForgotEmail("");
+  };
+
+  const renderSampleStatus = () => {
+    if (sample.loading) {
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Loader2 className="h-3 w-3 animate-spin" /> Checking…
+        </Badge>
+      );
+    }
+    if (!sample.exists) {
+      return (
+        <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400">
+          <AlertCircle className="h-3 w-3" /> Not created
+        </Badge>
+      );
+    }
+    if (sample.isAdmin && sample.active) {
+      return (
+        <Badge variant="outline" className="gap-1 border-emerald-500/40 text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 className="h-3 w-3" /> Ready
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400">
+        <AlertCircle className="h-3 w-3" /> Needs reset
+      </Badge>
+    );
   };
 
   return (
@@ -105,18 +163,68 @@ function LoginPage() {
                     <Input id="pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                   </div>
                   <Button type="submit" className="w-full">Sign in</Button>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-primary hover:underline"
+                      onClick={() => { if (!forgotEmail) setForgotEmail(email); setForgotOpen((v) => !v); }}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  {forgotOpen && (
+                    <div className="rounded-md border border-border bg-muted/30 p-3 text-xs space-y-2">
+                      <p className="font-medium text-foreground">Reset by email</p>
+                      <p className="text-muted-foreground">
+                        We'll email a secure link to set a new password. Works for both Admin and QA Agent accounts.
+                      </p>
+                      <div className="flex gap-2">
+                        <Input
+                          type="email"
+                          placeholder="you@company.com"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          className="h-9"
+                        />
+                        <Button type="button" size="sm" onClick={sendReset} disabled={forgotBusy || !forgotEmail}>
+                          {forgotBusy ? "Sending…" : "Send link"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   <p className="text-center text-xs text-muted-foreground">
                     No account yet? Use <span className="font-medium">Create account</span> — the first signup becomes Admin.
                   </p>
                   <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs">
-                    <p className="mb-2 font-medium">Try the sample admin</p>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="font-medium">Try the sample admin</p>
+                      {renderSampleStatus()}
+                    </div>
                     <p className="mb-2 text-muted-foreground">
                       Email: <span className="font-mono">admin@qaportal.app</span><br />
                       Password: <span className="font-mono">Admin@12345</span>
                     </p>
-                    <Button type="button" variant="outline" size="sm" className="w-full" onClick={seedAdmin} disabled={seeding}>
-                      {seeding ? "Setting up…" : "Create / reset sample admin & sign in"}
-                    </Button>
+                    {!sample.loading && sample.exists && sample.isAdmin && sample.active ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="w-full"
+                        onClick={async () => {
+                          setEmail("admin@qaportal.app");
+                          setPassword("Admin@12345");
+                          const r = await login("admin@qaportal.app", "Admin@12345");
+                          if (!r.ok) return toast.error(`${r.error} — click Reset to re-mint the password.`);
+                          toast.success("Signed in as sample admin");
+                          navigate({ to: "/dashboard" });
+                        }}
+                      >
+                        Sign in as sample admin
+                      </Button>
+                    ) : (
+                      <Button type="button" variant="outline" size="sm" className="w-full" onClick={seedAdmin} disabled={seeding}>
+                        {seeding ? "Setting up…" : sample.exists ? "Reset sample admin & sign in" : "Create sample admin & sign in"}
+                      </Button>
+                    )}
                   </div>
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="trouble" className="border-border">
