@@ -98,6 +98,7 @@ function SettingsPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Active</TableHead>
                     <TableHead className="text-right">Open defects</TableHead>
                   </TableRow>
@@ -105,13 +106,18 @@ function SettingsPage() {
                 <TableBody>
                   {users.map((u) => {
                     const load = defects.filter((d) => d.assignedAgent === u.name && !["Fixed","Closed"].includes(d.status)).length;
+                    const isSelf = u.id === currentUser?.id;
                     return (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium">{u.name}</TableCell>
+                      <TableRow key={u.id} className={u.active ? "" : "opacity-60"}>
+                        <TableCell className="font-medium">
+                          {u.name}
+                          {isSelf && <span className="ml-2 text-xs text-muted-foreground">(you)</span>}
+                        </TableCell>
                         <TableCell>{u.email}</TableCell>
                         <TableCell>
                           <Select
                             value={u.role}
+                            disabled={!u.active || isSelf}
                             onValueChange={async (v) => {
                               const r = await updateUser(u.id, { role: v as "admin" | "agent" });
                               if (!r.ok) toast.error(r.error); else toast.success("Role updated");
@@ -125,11 +131,33 @@ function SettingsPage() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Switch checked={u.active} onCheckedChange={async (c) => {
-                            const r = await updateUser(u.id, { active: c });
-                            if (!r.ok) toast.error(r.error);
-                            else toast.success(c ? "Agent activated" : "Agent deactivated");
-                          }} />
+                          {u.active ? (
+                            <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                              <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              Active
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                              Inactive
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={u.active}
+                            disabled={isSelf}
+                            onCheckedChange={async (c) => {
+                              const r = await updateUser(u.id, { active: c });
+                              if (!r.ok) { toast.error(r.error); return; }
+                              if (!c) {
+                                await updateUser(u.id, { role: "agent" });
+                                toast.success(`${u.name} deactivated — access revoked`);
+                              } else {
+                                toast.success(`${u.name} activated`);
+                              }
+                            }}
+                          />
                         </TableCell>
                         <TableCell className="text-right text-sm">{load}</TableCell>
                       </TableRow>

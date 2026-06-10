@@ -104,6 +104,15 @@ export function QAProvider({ children }: { children: ReactNode }) {
       ]);
       if (!profile) return;
       const role: Role = roles?.some((r) => r.role === "admin") ? "admin" : "agent";
+      if (profile.active === false) {
+        await supabase.auth.signOut();
+        setState((s) => ({ ...s, currentUser: null }));
+        if (typeof window !== "undefined") {
+          const { toast } = await import("sonner");
+          toast.error("Your account has been deactivated. Contact an administrator.");
+        }
+        return;
+      }
       setState((s) => ({ ...s, currentUser: { id: profile.id, name: profile.name, email: profile.email, role, active: profile.active } }));
     };
 
@@ -207,7 +216,18 @@ export function QAProvider({ children }: { children: ReactNode }) {
           return { ...s, forms: next };
         });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { void loadAll(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, (payload) => {
+        const row = (payload.new ?? payload.old) as { id?: string; active?: boolean } | undefined;
+        if (row?.id && row.id === state.currentUser?.id && row.active === false) {
+          void (async () => {
+            await supabase.auth.signOut();
+            const { toast } = await import("sonner");
+            toast.error("Your account has been deactivated by an administrator.");
+          })();
+          return;
+        }
+        void loadAll();
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => { void loadAll(); })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "defect_audit_log" }, (payload) => {
         const entry = rowToAudit(payload.new as AuditRow);
