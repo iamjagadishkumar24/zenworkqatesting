@@ -10,7 +10,7 @@ import {
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
 import { ExportMenu } from "@/components/qa/ExportMenu";
-import { Eye, Search, ShieldCheck, ShieldX } from "lucide-react";
+import { Eye, Pencil, Search, ShieldCheck, ShieldX } from "lucide-react";
 
 export const Route = createFileRoute("/_app/my-errors")({
   component: MyErrorsPage,
@@ -20,6 +20,7 @@ function MyErrorsPage() {
   const { defects, currentUser } = useQA();
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const mine = useMemo(() => {
     const me = currentUser?.name ?? "";
@@ -75,7 +76,7 @@ function MyErrorsPage() {
                 <TableHead>Priority</TableHead>
                 <TableHead>Validity</TableHead>
                 <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Open</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -96,9 +97,19 @@ function MyErrorsPage() {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{new Date(d.updatedAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setOpenId(d.id); }}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setOpenId(d.id); }} aria-label="View">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      {d.createdBy === currentUser?.name && (
+                        <Button
+                          size="icon" variant="ghost" aria-label="Edit"
+                          onClick={(e) => { e.stopPropagation(); setEditId(d.id); }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -118,6 +129,12 @@ function MyErrorsPage() {
         defectId={openId}
         open={!!openId}
         onOpenChange={(o) => { if (!o) setOpenId(null); }}
+      />
+      <DefectDetailSheet
+        defectId={editId}
+        open={!!editId}
+        initialEdit
+        onOpenChange={(o) => { if (!o) setEditId(null); }}
       />
     </div>
   );
