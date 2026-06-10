@@ -16,7 +16,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
-import { Bug, Plus, Search, Eye, Pencil, MessageSquare, Trash2 } from "lucide-react";
+import { Bug, Plus, Search, Eye, Pencil, Trash2 } from "lucide-react";
 import { ExportMenu } from "@/components/qa/ExportMenu";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
 import type {
@@ -56,7 +56,7 @@ const emptyDraft = (currentUser?: { name: string } | null): Omit<Defect, "id" | 
 });
 
 function DefectsPage() {
-  const { defects, addDefect, updateDefect, deleteDefect, addComment, currentUser, users } = useQA();
+  const { defects, addDefect, updateDefect, deleteDefect, currentUser, users } = useQA();
   const search = Route.useSearch();
   const [q, setQ] = useState(search.q ?? "");
   const [mod, setMod] = useState<string>("all");
@@ -70,7 +70,6 @@ function DefectsPage() {
   const [viewing, setViewing] = useState<Defect | null>(null);
   const [editing, setEditing] = useState<Defect | null>(null);
   const [editDraft, setEditDraft] = useState<Defect | null>(null);
-  const [comment, setComment] = useState("");
 
   const isAdmin = currentUser?.role === "admin";
 
