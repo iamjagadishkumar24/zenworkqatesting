@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   LayoutDashboard, FileText, ClipboardList, Link2, Globe, Bug,
-  BarChart3, Settings, Bell, ChevronLeft, ChevronRight, LogOut, Search,
+  BarChart3, Settings, Bell, ChevronLeft, ChevronRight, LogOut, Search, ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
@@ -20,6 +20,7 @@ const nav = [
   { to: "/integrations", label: "Integrations", icon: Link2 },
   { to: "/online-1099", label: "1099 Online", icon: Globe },
   { to: "/defects", label: "Defects", icon: Bug },
+  { to: "/my-errors", label: "My Errors", icon: ListChecks },
   { to: "/reports", label: "Reports", icon: BarChart3 },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
