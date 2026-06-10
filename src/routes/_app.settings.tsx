@@ -160,7 +160,7 @@ function SettingsPage() {
             </CardHeader>
             <CardContent>
               <AddFormRow modules={prefs.modules} agents={users.map((u) => u.name)} onAdd={async (f) => {
-                const r = await addForm(f);
+                const r = await addForm(f as never);
                 if (r.ok) toast.success("Form added"); else toast.error(r.error);
               }} />
             </CardContent>
