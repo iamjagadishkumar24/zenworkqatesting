@@ -251,15 +251,6 @@ function DefectsPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-      <div className="mt-1">{children}</div>
-    </div>
-  );
-}
-
 function FilterSelect({ value, onChange, placeholder, options }: { value: string; onChange: (v: string) => void; placeholder: string; options: string[] }) {
   return (
     <Select value={value} onValueChange={onChange}>
