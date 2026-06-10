@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -116,6 +118,38 @@ function LoginPage() {
                       {seeding ? "Setting up…" : "Create / reset sample admin & sign in"}
                     </Button>
                   </div>
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="trouble" className="border-border">
+                      <AccordionTrigger className="py-2 text-xs hover:no-underline">
+                        <span className="flex items-center gap-2">
+                          <HelpCircle className="h-3.5 w-3.5" />
+                          Can't sign in? Troubleshoot
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-3 text-xs text-muted-foreground">
+                        <div>
+                          <p className="font-medium text-foreground">"Invalid login credentials"</p>
+                          <p>The sample admin hasn't been created yet, or the password was changed. Click <span className="font-medium">Create / reset sample admin &amp; sign in</span> above to mint <span className="font-mono">admin@qaportal.app</span> / <span className="font-mono">Admin@12345</span> and sign in.</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">"Your account is inactive"</p>
+                          <p>An admin has deactivated your account from <span className="font-medium">Settings → Team &amp; Roles</span>. Ask an admin to flip your status back to Active.</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">Signed in but can't see admin tools</p>
+                          <p>Your account is a QA Agent, not Admin. Only the <span className="font-medium">first</span> account becomes Admin automatically. Ask an existing admin to promote you from <span className="font-medium">Settings → Team &amp; Roles</span>.</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">No account at all yet</p>
+                          <p>Use the <span className="font-medium">Create account</span> tab — the first signup is auto-promoted to Admin.</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">Forgot your password</p>
+                          <p>Ask an admin to invite you again from <span className="font-medium">Settings → Team &amp; Roles → Invite agent</span> with a fresh password, or use <span className="font-medium">Create / reset sample admin</span> if you're using the sample account.</p>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </form>
               </TabsContent>
               <TabsContent value="signup">
