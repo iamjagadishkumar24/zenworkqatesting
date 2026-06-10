@@ -8,7 +8,6 @@ import {
   LineChart, Line, CartesianGrid,
 } from "recharts";
 import { Download } from "lucide-react";
-import { toast } from "sonner";
 import { exportXlsx } from "@/lib/qa/export";
 import { ExportMenu } from "@/components/qa/ExportMenu";
 
@@ -17,18 +16,6 @@ export const Route = createFileRoute("/_app/reports")({
 });
 
 const COLORS = ["oklch(0.55 0.18 255)", "oklch(0.62 0.17 150)", "oklch(0.75 0.16 75)", "oklch(0.6 0.22 27)", "oklch(0.65 0.15 300)"];
-
-function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
-  if (!rows.length) return;
-  const headers = Object.keys(rows[0]);
-  const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => JSON.stringify(r[h] ?? "")).join(","))].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-  toast.success(`Exported ${filename}`);
-}
 
 function ReportsPage() {
   const { forms, defects } = useQA();
