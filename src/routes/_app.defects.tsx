@@ -63,6 +63,7 @@ function DefectsPage() {
   const [status, setStatus] = useState<string>("all");
   const [prio, setPrio] = useState<string>("all");
   const [sev, setSev] = useState<string>("all");
+  const [agent, setAgent] = useState<string>("all");
 
   const [createOpen, setCreateOpen] = useState(false);
   const [draft, setDraft] = useState(() => emptyDraft(currentUser));
@@ -85,11 +86,18 @@ function DefectsPage() {
       if (status !== "all" && d.status !== status) return false;
       if (prio !== "all" && d.priority !== prio) return false;
       if (sev !== "all" && d.severity !== sev) return false;
+      if (agent !== "all" && d.assignedAgent !== agent) return false;
       if (!term) return true;
       return [d.id, d.title, d.formFeature, d.module, d.assignedAgent, d.status, d.priority, d.severity]
         .join(" ").toLowerCase().includes(term);
     });
-  }, [defects, q, mod, status, prio, sev, search.filter, isAdmin, currentUser]);
+  }, [defects, q, mod, status, prio, sev, agent, search.filter, isAdmin, currentUser]);
+
+  const agentOptions = useMemo(() => {
+    const set = new Set<string>();
+    defects.forEach((d) => d.assignedAgent && set.add(d.assignedAgent));
+    return ["all", ...Array.from(set).sort()];
+  }, [defects]);
 
   const canEdit = (d: Defect) => isAdmin || d.createdBy === currentUser?.name;
 
@@ -148,7 +156,7 @@ function DefectsPage() {
 
       <Card>
         <CardContent className="p-4">
-          <div className="grid gap-3 md:grid-cols-6">
+          <div className="grid gap-3 md:grid-cols-7">
             <div className="relative md:col-span-2">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search defects…" className="pl-9" />
@@ -157,6 +165,7 @@ function DefectsPage() {
             <FilterSelect value={status} onChange={setStatus} placeholder="Status" options={["all", ...DEFECT_STATUSES]} />
             <FilterSelect value={prio} onChange={setPrio} placeholder="Priority" options={["all", ...PRIORITIES]} />
             <FilterSelect value={sev} onChange={setSev} placeholder="Severity" options={["all", ...SEVERITIES]} />
+            <FilterSelect value={agent} onChange={setAgent} placeholder="Assigned" options={agentOptions} />
           </div>
         </CardContent>
       </Card>
