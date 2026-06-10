@@ -15,8 +15,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const { currentUser, login, signup, users } = useQA();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("saisrija@zenwork.com");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [sEmail, setSEmail] = useState("");
   const [sPwd, setSPwd] = useState("");
@@ -80,7 +80,7 @@ function LoginPage() {
                   </div>
                   <Button type="submit" className="w-full">Sign in</Button>
                   <p className="text-center text-xs text-muted-foreground">
-                    Demo: <span className="font-mono">saisrija@zenwork.com</span> / <span className="font-mono">demo1234</span>
+                    No account yet? Use <span className="font-medium">Create account</span> — the first signup becomes Admin.
                   </p>
                 </form>
               </TabsContent>
