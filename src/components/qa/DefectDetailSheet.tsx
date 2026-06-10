@@ -145,6 +145,8 @@ export function DefectDetailSheet({
           <TabsContent value="details" className="mt-4 space-y-4">
             {editMode ? (
               <div className="grid gap-3 sm:grid-cols-2">
+                {isAdmin && (
+                <>
                 <Field label="Title" className="sm:col-span-2">
                   <Input value={v("title")} onChange={(e) => set("title", e.target.value)} />
                 </Field>
@@ -155,12 +157,20 @@ export function DefectDetailSheet({
                   </Select>
                 </Field>
                 <Field label="Form / Feature"><Input value={v("formFeature")} onChange={(e) => set("formFeature", e.target.value)} /></Field>
+                </>
+                )}
                 <Field label="Status">
                   <Select value={v("status")} onValueChange={(x) => set("status", x)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {(isAdmin ? STATUSES : (["Reported","Pending","In Progress","Retest Required","Reopened"] as DefectStatus[])).map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </Field>
+                {isAdmin && (
+                <>
                 <Field label="Assigned Agent">
                   <Select value={v("assignedAgent")} onValueChange={(x) => set("assignedAgent", x)} disabled={!isAdmin}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -179,13 +189,21 @@ export function DefectDetailSheet({
                     <SelectContent>{(LEVELS as readonly Severity[]).map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
+                </>
+                )}
                 <Field label="Description" className="sm:col-span-2"><Textarea rows={3} value={v("description")} onChange={(e) => set("description", e.target.value)} /></Field>
+                <Field label="Jira Ticket URL" className="sm:col-span-2">
+                  <Input value={v("jiraUrl")} onChange={(e) => set("jiraUrl", e.target.value)} placeholder="https://your-org.atlassian.net/browse/…" />
+                </Field>
+                <Field label="Attachment Link 1"><Input value={v("attachmentUrl")} onChange={(e) => set("attachmentUrl", e.target.value)} placeholder="https://…" /></Field>
+                <Field label="Attachment Link 2"><Input value={v("attachmentUrl2")} onChange={(e) => set("attachmentUrl2", e.target.value)} placeholder="https://…" /></Field>
+                <Field label="Evidence Link" className="sm:col-span-2"><Input value={v("evidenceUrl")} onChange={(e) => set("evidenceUrl", e.target.value)} placeholder="https://…" /></Field>
                 <Field label="Steps to Reproduce" className="sm:col-span-2"><Textarea rows={3} value={v("stepsToReproduce")} onChange={(e) => set("stepsToReproduce", e.target.value)} /></Field>
                 <Field label="Expected Result"><Textarea rows={2} value={v("expectedResult")} onChange={(e) => set("expectedResult", e.target.value)} /></Field>
                 <Field label="Actual Result"><Textarea rows={2} value={v("actualResult")} onChange={(e) => set("actualResult", e.target.value)} /></Field>
                 <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={cancelEdit}>Cancel</Button>
-                  <Button onClick={save}>Save changes</Button>
+                  <Button onClick={save}>{isAdmin ? "Save changes" : "Resubmit for review"}</Button>
                 </div>
               </div>
             ) : (
