@@ -104,6 +104,15 @@ export function QAProvider({ children }: { children: ReactNode }) {
       ]);
       if (!profile) return;
       const role: Role = roles?.some((r) => r.role === "admin") ? "admin" : "agent";
+      if (profile.active === false) {
+        await supabase.auth.signOut();
+        setState((s) => ({ ...s, currentUser: null }));
+        if (typeof window !== "undefined") {
+          const { toast } = await import("sonner");
+          toast.error("Your account has been deactivated. Contact an administrator.");
+        }
+        return;
+      }
       setState((s) => ({ ...s, currentUser: { id: profile.id, name: profile.name, email: profile.email, role, active: profile.active } }));
     };
 
