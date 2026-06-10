@@ -113,3 +113,19 @@ export const resetSampleAdmin = createServerFn({ method: "POST" })
 
     return { ok: true as const, email: SAMPLE_EMAIL, password: SAMPLE_PASSWORD, name: SAMPLE_NAME };
   });
+
+export const sampleAdminStatus = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("id, active")
+    .eq("email", "admin@qaportal.app")
+    .maybeSingle();
+  if (!data?.id) return { exists: false as const };
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", data.id);
+  const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+  return { exists: true as const, isAdmin, active: !!data.active };
+});
