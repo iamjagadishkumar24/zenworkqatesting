@@ -15,9 +15,12 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { exportCsv, exportXlsx } from "@/lib/qa/export";
+import { useServerFn } from "@tanstack/react-start";
+import { inviteAgent, resetSampleAdmin } from "@/lib/qa/admin.functions";
 import {
   Users, Layers, FileText, Tag, BellRing, FileBarChart, Palette,
   LayoutDashboard, Database, History, ShieldCheck, Plus, X, Save, RotateCcw, Download,
+  Mail, KeyRound, Copy,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/settings")({
@@ -77,19 +80,8 @@ function SettingsPage() {
 
         {/* TEAM */}
         <TabsContent value="team" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Invite team members</CardTitle>
-              <CardDescription>
-                Share the sign-up page — new accounts appear here automatically. Toggle Active to disable an agent without removing their record.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Sign-up URL: <span className="font-mono">{typeof window !== "undefined" ? window.location.origin : ""}/login</span>
-              </p>
-            </CardContent>
-          </Card>
+          <InviteAgentCard />
+          <SampleAdminCard />
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -448,6 +440,116 @@ function SettingsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function InviteAgentCard() {
+  const invite = useServerFn(inviteAgent);
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const genPassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    let out = "";
+    for (let i = 0; i < 12; i++) out += chars[Math.floor(Math.random() * chars.length)];
+    setPassword(out + "!7");
+  };
+
+  const submit = async () => {
+    if (!email || !name || !password) { toast.error("Email, name and password are required"); return; }
+    setBusy(true);
+    try {
+      const res = await invite({ data: { email, name, password } });
+      toast.success(`Invited ${res.email} as QA Agent`);
+      setEmail(""); setName(""); setPassword("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Invite failed");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Mail className="h-4 w-4" />Invite a QA Agent</CardTitle>
+        <CardDescription>Create an active agent account by email. They can sign in immediately with the password you set; role is assigned automatically.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
+        <div className="grid gap-1">
+          <Label htmlFor="invite-name">Full name</Label>
+          <Input id="invite-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Alex Tester" />
+        </div>
+        <div className="grid gap-1">
+          <Label htmlFor="invite-email">Email</Label>
+          <Input id="invite-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="agent@company.com" />
+        </div>
+        <div className="grid gap-1">
+          <Label htmlFor="invite-pwd">Temporary password</Label>
+          <div className="flex gap-1">
+            <Input id="invite-pwd" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 chars" />
+            <Button type="button" variant="outline" size="icon" title="Generate" onClick={genPassword}><KeyRound className="h-4 w-4" /></Button>
+          </div>
+        </div>
+        <Button onClick={submit} disabled={busy}><Plus className="mr-1 h-4 w-4" />{busy ? "Inviting…" : "Invite agent"}</Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SampleAdminCard() {
+  const reset = useServerFn(resetSampleAdmin);
+  const [creds, setCreds] = useState<{ email: string; password: string; name: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      const r = await reset({});
+      setCreds({ email: r.email, password: r.password, name: r.name });
+      toast.success("Sample admin account ready");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Reset failed");
+    } finally { setBusy(false); }
+  };
+
+  const copy = (text: string) => {
+    void navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" />Sample admin account</CardTitle>
+        <CardDescription>Generate or reset a known-good admin login for demos and onboarding. The credentials below are recreated each time you click reset.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Button variant="outline" onClick={run} disabled={busy}>
+          <RotateCcw className="mr-1 h-4 w-4" />{busy ? "Resetting…" : "Reset sample admin"}
+        </Button>
+        {creds && (
+          <div className="grid gap-2 rounded-md border bg-muted/40 p-3 text-sm sm:grid-cols-3">
+            <div>
+              <div className="text-xs text-muted-foreground">Name</div>
+              <div className="font-medium">{creds.name}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Email</div>
+              <div className="flex items-center gap-1 font-mono">{creds.email}
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(creds.email)}><Copy className="h-3 w-3" /></Button>
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Password</div>
+              <div className="flex items-center gap-1 font-mono">{creds.password}
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(creds.password)}><Copy className="h-3 w-3" /></Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
