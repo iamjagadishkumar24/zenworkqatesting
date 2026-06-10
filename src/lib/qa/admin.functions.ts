@@ -48,20 +48,38 @@ export const inviteAgent = createServerFn({ method: "POST" })
   });
 
 export const resetSampleAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data: isAdmin, error: roleErr } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (roleErr) throw new Error(roleErr.message);
-    if (!isAdmin) throw new Error("Only admins can reset the sample admin account");
-
+  .handler(async () => {
+    // Bootstrap-friendly: allowed when (a) no admin exists yet, or
+    // (b) the caller is already an authenticated admin. This lets a brand-new
+    // workspace mint the sample admin without first needing to log in.
     const SAMPLE_EMAIL = "admin@qaportal.app";
     const SAMPLE_PASSWORD = "Admin@12345";
     const SAMPLE_NAME = "Portal Admin";
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Authorization gate: require admin caller UNLESS no admin exists yet.
+    const { count: adminCount } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id", { count: "exact", head: true })
+      .eq("role", "admin");
+    if ((adminCount ?? 0) > 0) {
+      // Need a valid admin bearer token.
+      const { getRequest } = await import("@tanstack/react-start/server");
+      const req = getRequest();
+      const authHeader = req?.headers.get("authorization") ?? "";
+      const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+      if (!token) throw new Error("Only admins can reset the sample admin account");
+      const { data: claims } = await supabaseAdmin.auth.getClaims(token);
+      const callerId = claims?.claims?.sub;
+      if (!callerId) throw new Error("Only admins can reset the sample admin account");
+      const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
+        _user_id: callerId,
+        _role: "admin",
+      });
+      if (!isAdmin) throw new Error("Only admins can reset the sample admin account");
+    }
+
     // Look for existing user via profiles
     const { data: existing } = await supabaseAdmin
       .from("profiles")
