@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { Bug, Plus, Search, Eye, Pencil, MessageSquare, Trash2 } from "lucide-react";
+import { ExportMenu } from "@/components/qa/ExportMenu";
 import type {
   Defect, DefectStatus, Module, Priority, Severity,
 } from "@/lib/qa/types";
@@ -114,7 +115,16 @@ function DefectsPage() {
           <h2 className="text-2xl font-bold tracking-tight">Defects</h2>
           <p className="text-sm text-muted-foreground">Jira-style defect tracking across all QA modules.</p>
         </div>
-        <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) setDraft(emptyDraft(currentUser)); }}>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            filename="defects"
+            title="Defects export"
+            filters={{ Search: q || "—", Module: mod, Status: status, Priority: prio, Severity: sev, "Quick filter": search.filter ?? "—", "Row count": filtered.length }}
+            rows={filtered.map(({ comments, ...d }) => ({ ...d, commentsCount: comments.length }))}
+            columns={["id","module","formFeature","title","status","priority","severity","assignedAgent","createdBy","createdAt","updatedAt","updatedBy","description","stepsToReproduce","expectedResult","actualResult","jiraUrl","commentsCount"]}
+            defaultSelected={["id","module","formFeature","title","status","priority","severity","assignedAgent","updatedAt"]}
+          />
+          <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) setDraft(emptyDraft(currentUser)); }}>
           <DialogTrigger asChild>
             <Button><Plus className="mr-2 h-4 w-4" /> Add Defect</Button>
           </DialogTrigger>
@@ -129,7 +139,8 @@ function DefectsPage() {
               <Button onClick={submitCreate}>Create Defect</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
