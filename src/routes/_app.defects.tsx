@@ -75,7 +75,10 @@ function DefectsPage() {
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
+    const me = currentUser?.name ?? "";
     return defects.filter((d) => {
+      // Agents only see defects they reported or are assigned to
+      if (!isAdmin && d.createdBy !== me && d.assignedAgent !== me) return false;
       if (search.filter === "open" && ["Fixed", "Closed"].includes(d.status)) return false;
       if (search.filter === "failed" && d.status === "Closed") return false;
       if (mod !== "all" && d.module !== mod) return false;
@@ -86,9 +89,9 @@ function DefectsPage() {
       return [d.id, d.title, d.formFeature, d.module, d.assignedAgent, d.status, d.priority, d.severity]
         .join(" ").toLowerCase().includes(term);
     });
-  }, [defects, q, mod, status, prio, sev, search.filter]);
+  }, [defects, q, mod, status, prio, sev, search.filter, isAdmin, currentUser]);
 
-  const canEdit = (d: Defect) => isAdmin || d.assignedAgent === currentUser?.name || d.createdBy === currentUser?.name;
+  const canEdit = (d: Defect) => isAdmin || d.createdBy === currentUser?.name;
 
   const submitCreate = (e: React.FormEvent) => {
     e.preventDefault();
