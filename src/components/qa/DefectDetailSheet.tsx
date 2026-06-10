@@ -172,11 +172,12 @@ export function DefectDetailSheet({
         </div>
 
         <Tabs defaultValue="details" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="links"><LinkIcon className="mr-1 h-3 w-3" />Links</TabsTrigger>
             <TabsTrigger value="comments"><MessageSquare className="mr-1 h-3 w-3" />Comments ({defect.comments.length})</TabsTrigger>
             <TabsTrigger value="history"><HistoryIcon className="mr-1 h-3 w-3" />History ({history.length})</TabsTrigger>
+            <TabsTrigger value="activity"><ActivityIcon className="mr-1 h-3 w-3" />Activity ({timeline.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="mt-4 space-y-4">
