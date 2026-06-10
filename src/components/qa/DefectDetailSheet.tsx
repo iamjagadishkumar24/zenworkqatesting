@@ -51,8 +51,7 @@ export function DefectDetailSheet({
 
   const isAdmin = currentUser?.role === "admin";
   const isOwner = !!defect && defect.createdBy === currentUser?.name;
-  const isAssignee = !!defect && defect.assignedAgent === currentUser?.name;
-  const canEdit = !!defect && (isAdmin || isOwner || isAssignee);
+  const canEdit = !!defect && (isAdmin || isOwner);
   const history = useMemo(
     () => audit.filter((a) => a.defectId === defectId).slice(0, 100),
     [audit, defectId],
