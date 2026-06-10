@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import type {
   Defect, DefectStatus, Module, Priority, Severity,
 } from "@/lib/qa/types";
 import { toast } from "sonner";
+import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
 
 export const Route = createFileRoute("/_app/defects")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -98,6 +99,31 @@ function DefectsPage() {
     defects.forEach((d) => d.assignedAgent && set.add(d.assignedAgent));
     return ["all", ...Array.from(set).sort()];
   }, [defects]);
+
+  // Filter validation + empty-result toast
+  const lastToastRef = useRef<string>("");
+  useEffect(() => {
+    const filters = { q, module: mod, status, priority: prio, severity: sev, assignedAgent: agent, quick: search.filter };
+    const warnings = validateFilters(filters, defects);
+    if (warnings.length) {
+      const key = "warn:" + warnings.join("|");
+      if (key !== lastToastRef.current) {
+        lastToastRef.current = key;
+        warnings.forEach((w) => toast.warning(w));
+      }
+      return;
+    }
+    if (filtered.length === 0 && defects.length > 0) {
+      const msg = buildEmptyResultMessage(filters, warnings);
+      const key = "empty:" + msg;
+      if (key !== lastToastRef.current) {
+        lastToastRef.current = key;
+        toast.info(msg);
+      }
+    } else {
+      lastToastRef.current = "";
+    }
+  }, [q, mod, status, prio, sev, agent, search.filter, filtered.length, defects]);
 
   const canEdit = (d: Defect) => isAdmin || d.createdBy === currentUser?.name;
 
