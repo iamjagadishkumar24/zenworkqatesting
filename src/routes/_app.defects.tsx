@@ -91,7 +91,7 @@ function DefectsPage() {
     });
   }, [defects, q, mod, status, prio, sev, search.filter, isAdmin, currentUser]);
 
-  const canEdit = (d: Defect) => isAdmin || d.assignedAgent === currentUser?.name || d.createdBy === currentUser?.name;
+  const canEdit = (d: Defect) => isAdmin || d.createdBy === currentUser?.name;
 
   const submitCreate = (e: React.FormEvent) => {
     e.preventDefault();
