@@ -8,25 +8,14 @@ import {
   LineChart, Line, CartesianGrid,
 } from "recharts";
 import { Download } from "lucide-react";
-import { toast } from "sonner";
+import { exportXlsx } from "@/lib/qa/export";
+import { ExportMenu } from "@/components/qa/ExportMenu";
 
 export const Route = createFileRoute("/_app/reports")({
   component: ReportsPage,
 });
 
 const COLORS = ["oklch(0.55 0.18 255)", "oklch(0.62 0.17 150)", "oklch(0.75 0.16 75)", "oklch(0.6 0.22 27)", "oklch(0.65 0.15 300)"];
-
-function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
-  if (!rows.length) return;
-  const headers = Object.keys(rows[0]);
-  const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => JSON.stringify(r[h] ?? "")).join(","))].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-  toast.success(`Exported ${filename}`);
-}
 
 function ReportsPage() {
   const { forms, defects } = useQA();
@@ -79,8 +68,36 @@ function ReportsPage() {
           <p className="text-sm text-muted-foreground">Power BI-style insights on testing performance.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => downloadCsv("forms.csv", forms)}><Download className="mr-2 h-4 w-4" />Forms CSV</Button>
-          <Button onClick={() => downloadCsv("defects.csv", defects.map(({ comments, ...d }) => d))}><Download className="mr-2 h-4 w-4" />Defects CSV</Button>
+          <ExportMenu
+            label="Forms"
+            filename="forms"
+            title="Forms export"
+            rows={forms as unknown as Record<string, unknown>[]}
+            columns={["id","name","module","status","passed","failed","openDefects","lastTested","assignedAgent"]}
+          />
+          <ExportMenu
+            label="Defects"
+            filename="defects"
+            title="Defects export"
+            rows={defects.map(({ comments, ...d }) => ({ ...d, commentsCount: comments.length }))}
+            columns={["id","module","formFeature","title","status","priority","severity","assignedAgent","createdBy","createdAt","updatedAt","updatedBy","commentsCount"]}
+          />
+          <Button
+            variant="outline"
+            onClick={() =>
+              exportXlsx(
+                "qa-report",
+                [
+                  { name: "Passed vs Failed", rows: passedVsFailed },
+                  { name: "Defects by Module", rows: defectsByModule },
+                  { name: "Status Trend", rows: statusTrend },
+                  { name: "Agent Load", rows: agentDefects },
+                  { name: "Form Coverage", rows: formCoverage },
+                ],
+                { title: "QA Analytics Report" },
+              )
+            }
+          ><Download className="mr-2 h-4 w-4" />Full Report (xlsx)</Button>
         </div>
       </div>
 
