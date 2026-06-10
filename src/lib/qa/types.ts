@@ -56,7 +56,7 @@ export type Defect = {
   status: DefectStatus;
   priority: Priority;
   severity: Severity;
-  validity: "Unverified" | "Valid" | "Invalid";
+  validity?: "Unverified" | "Valid" | "Invalid";
   assignedAgent: string;
   createdAt: string;
   updatedAt: string;
