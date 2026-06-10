@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
+import { Route as AppMyErrorsRouteImport } from './routes/_app.my-errors'
 import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
 import { Route as AppForms990RouteImport } from './routes/_app.forms-990'
 import { Route as AppForms1099RouteImport } from './routes/_app.forms-1099'
@@ -48,6 +49,11 @@ const AppReportsRoute = AppReportsRouteImport.update({
 const AppOnline1099Route = AppOnline1099RouteImport.update({
   id: '/online-1099',
   path: '/online-1099',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMyErrorsRoute = AppMyErrorsRouteImport.update({
+  id: '/my-errors',
+  path: '/my-errors',
   getParentRoute: () => AppRoute,
 } as any)
 const AppIntegrationsRoute = AppIntegrationsRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/forms-1099': typeof AppForms1099Route
   '/forms-990': typeof AppForms990Route
   '/integrations': typeof AppIntegrationsRoute
+  '/my-errors': typeof AppMyErrorsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/forms-1099': typeof AppForms1099Route
   '/forms-990': typeof AppForms990Route
   '/integrations': typeof AppIntegrationsRoute
+  '/my-errors': typeof AppMyErrorsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/_app/forms-1099': typeof AppForms1099Route
   '/_app/forms-990': typeof AppForms990Route
   '/_app/integrations': typeof AppIntegrationsRoute
+  '/_app/my-errors': typeof AppMyErrorsRoute
   '/_app/online-1099': typeof AppOnline1099Route
   '/_app/reports': typeof AppReportsRoute
   '/_app/settings': typeof AppSettingsRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/forms-1099'
     | '/forms-990'
     | '/integrations'
+    | '/my-errors'
     | '/online-1099'
     | '/reports'
     | '/settings'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/forms-1099'
     | '/forms-990'
     | '/integrations'
+    | '/my-errors'
     | '/online-1099'
     | '/reports'
     | '/settings'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/_app/forms-1099'
     | '/_app/forms-990'
     | '/_app/integrations'
+    | '/_app/my-errors'
     | '/_app/online-1099'
     | '/_app/reports'
     | '/_app/settings'
@@ -204,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOnline1099RouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/my-errors': {
+      id: '/_app/my-errors'
+      path: '/my-errors'
+      fullPath: '/my-errors'
+      preLoaderRoute: typeof AppMyErrorsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/integrations': {
       id: '/_app/integrations'
       path: '/integrations'
@@ -248,6 +267,7 @@ interface AppRouteChildren {
   AppForms1099Route: typeof AppForms1099Route
   AppForms990Route: typeof AppForms990Route
   AppIntegrationsRoute: typeof AppIntegrationsRoute
+  AppMyErrorsRoute: typeof AppMyErrorsRoute
   AppOnline1099Route: typeof AppOnline1099Route
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -259,6 +279,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppForms1099Route: AppForms1099Route,
   AppForms990Route: AppForms990Route,
   AppIntegrationsRoute: AppIntegrationsRoute,
+  AppMyErrorsRoute: AppMyErrorsRoute,
   AppOnline1099Route: AppOnline1099Route,
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
@@ -274,3 +295,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
