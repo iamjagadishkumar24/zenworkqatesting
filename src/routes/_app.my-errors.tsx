@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
 import { ExportMenu } from "@/components/qa/ExportMenu";
 import { Eye, Pencil, Search, ShieldCheck, ShieldX } from "lucide-react";
 import type { DefectStatus, Module, Priority, Severity } from "@/lib/qa/types";
+import { toast } from "sonner";
+import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
 
 const DEFECT_STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
 const PRIORITIES: Priority[] = ["Low","Medium","High","Critical"];
@@ -67,6 +69,30 @@ function MyErrorsPage() {
   const resetFilters = () => {
     setQ(""); setScope("all"); setMod("all"); setStatus("all"); setPrio("all"); setSev("all"); setAgent("all");
   };
+
+  const lastToastRef = useRef<string>("");
+  useEffect(() => {
+    const filters = { q, module: mod, status, priority: prio, severity: sev, assignedAgent: agent, scope };
+    const warnings = validateFilters(filters, defects);
+    if (warnings.length) {
+      const key = "warn:" + warnings.join("|");
+      if (key !== lastToastRef.current) {
+        lastToastRef.current = key;
+        warnings.forEach((w) => toast.warning(w));
+      }
+      return;
+    }
+    if (mine.length === 0) {
+      const msg = buildEmptyResultMessage(filters, warnings);
+      const key = "empty:" + msg;
+      if (key !== lastToastRef.current) {
+        lastToastRef.current = key;
+        toast.info(msg);
+      }
+    } else {
+      lastToastRef.current = "";
+    }
+  }, [q, scope, mod, status, prio, sev, agent, mine.length, defects]);
 
   const reported = mine.filter((d) => d.createdBy === currentUser?.name);
   const assigned = mine.filter((d) => d.assignedAgent === currentUser?.name);

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, MessageSquare, History as HistoryIcon,
   Link as LinkIcon, ExternalLink, ShieldCheck, ShieldX,
+  Activity as ActivityIcon, Pencil, UserPlus, Plus, MessageCircle,
 } from "lucide-react";
 
 const STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
@@ -56,6 +57,44 @@ export function DefectDetailSheet({
     () => audit.filter((a) => a.defectId === defectId).slice(0, 100),
     [audit, defectId],
   );
+
+  type TimelineItem = {
+    id: string;
+    at: string;
+    kind: "created" | "comment" | "status" | "assigned_agent" | "priority" | "severity" | "validity" | "title" | "edit";
+    actor: string;
+    summary: string;
+    detail?: string;
+  };
+  const timeline = useMemo<TimelineItem[]>(() => {
+    if (!defect) return [];
+    const items: TimelineItem[] = [];
+    items.push({
+      id: `create-${defect.id}`,
+      at: defect.createdAt,
+      kind: "created",
+      actor: defect.createdBy,
+      summary: `Reported ${defect.id}`,
+      detail: defect.title,
+    });
+    defect.comments.forEach((c) => {
+      items.push({
+        id: `c-${c.id}`, at: c.createdAt, kind: "comment", actor: c.author,
+        summary: "Added a comment", detail: c.text,
+      });
+    });
+    history.forEach((h) => {
+      const kind = (["status","assigned_agent","priority","severity","validity","title"] as const)
+        .includes(h.field as never) ? (h.field as TimelineItem["kind"]) : "edit";
+      const label = h.field.replace(/_/g, " ");
+      items.push({
+        id: `h-${h.id}`, at: h.changedAt, kind, actor: h.changedBy,
+        summary: `Changed ${label}`,
+        detail: `${h.oldValue ?? "—"} → ${h.newValue ?? "—"}`,
+      });
+    });
+    return items.sort((a, b) => +new Date(b.at) - +new Date(a.at));
+  }, [defect, history]);
 
   // Open in edit mode when requested by parent (e.g. agent clicks Edit on My Errors)
   useEffect(() => {
@@ -133,11 +172,12 @@ export function DefectDetailSheet({
         </div>
 
         <Tabs defaultValue="details" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="links"><LinkIcon className="mr-1 h-3 w-3" />Links</TabsTrigger>
             <TabsTrigger value="comments"><MessageSquare className="mr-1 h-3 w-3" />Comments ({defect.comments.length})</TabsTrigger>
             <TabsTrigger value="history"><HistoryIcon className="mr-1 h-3 w-3" />History ({history.length})</TabsTrigger>
+            <TabsTrigger value="activity"><ActivityIcon className="mr-1 h-3 w-3" />Activity ({timeline.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="mt-4 space-y-4">
@@ -314,6 +354,39 @@ export function DefectDetailSheet({
                     </div>
                   </li>
                 ))}
+              </ol>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="activity" className="mt-4">
+            <ScrollArea className="h-96 rounded-md border p-3">
+              {timeline.length === 0 && <p className="text-xs text-muted-foreground">No activity yet.</p>}
+              <ol className="relative space-y-3 border-l pl-4">
+                {timeline.map((t) => {
+                  const Icon =
+                    t.kind === "created" ? Plus
+                    : t.kind === "comment" ? MessageCircle
+                    : t.kind === "assigned_agent" ? UserPlus
+                    : t.kind === "status" ? ActivityIcon
+                    : Pencil;
+                  return (
+                    <li key={t.id} className="relative">
+                      <span className="absolute -left-[22px] top-1 inline-flex h-4 w-4 items-center justify-center rounded-full border bg-background">
+                        <Icon className="h-2.5 w-2.5 text-muted-foreground" />
+                      </span>
+                      <div className="rounded-md border bg-card p-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{t.summary}</span>
+                          <span className="text-muted-foreground">{new Date(t.at).toLocaleString()}</span>
+                        </div>
+                        {t.detail && (
+                          <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{t.detail}</p>
+                        )}
+                        <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">by {t.actor}</p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ol>
             </ScrollArea>
           </TabsContent>
