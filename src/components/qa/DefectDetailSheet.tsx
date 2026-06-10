@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import type { Defect, DefectStatus, Priority, Severity } from "@/lib/qa/types";
 import {
@@ -58,9 +58,8 @@ export function DefectDetailSheet({
     [audit, defectId],
   );
 
-  // Open in edit mode when requested by parent (e.g. agent clicks "Edit" on My Errors)
-  // Resets when defect changes or sheet closes
-  useMemo(() => {
+  // Open in edit mode when requested by parent (e.g. agent clicks Edit on My Errors)
+  useEffect(() => {
     if (open && initialEdit && defect && canEdit) {
       setDraft(defect);
       setEditMode(true);
