@@ -18,6 +18,7 @@ import {
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { Bug, Plus, Search, Eye, Pencil, MessageSquare, Trash2 } from "lucide-react";
 import { ExportMenu } from "@/components/qa/ExportMenu";
+import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
 import type {
   Defect, DefectStatus, Module, Priority, Severity,
 } from "@/lib/qa/types";
