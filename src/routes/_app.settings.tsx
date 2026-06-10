@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,19 +10,14 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/settings")({
   component: SettingsPage,
 });
 
 function SettingsPage() {
-  const { currentUser, users, addUser, updateUser, removeUser } = useQA();
+  const { currentUser, users, updateUser } = useQA();
   const isAdmin = currentUser?.role === "admin";
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "agent">("agent");
 
   return (
     <div className="space-y-6">
@@ -57,29 +50,11 @@ function SettingsPage() {
         <TabsContent value="team" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Add Team Member</CardTitle>
-              <CardDescription>New QA agents can sign in with the temporary password <span className="font-mono">demo1234</span>.</CardDescription>
+              <CardTitle>Invite Team Members</CardTitle>
+              <CardDescription>Share the sign-up page with new QA agents — they will appear in the table below after their first login. You can then adjust their role or active status.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-3 md:grid-cols-4">
-                <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
-                <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                <Select value={role} onValueChange={(v) => setRole(v as "admin" | "agent")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="agent">QA Agent</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={() => {
-                    if (!name || !email) return toast.error("Name and email required");
-                    addUser({ name, email, role, active: true });
-                    setName(""); setEmail(""); setRole("agent");
-                    toast.success("Team member added");
-                  }}
-                >Add Member</Button>
-              </div>
+              <p className="text-sm text-muted-foreground">Sign-up URL: <span className="font-mono">{typeof window !== "undefined" ? window.location.origin : ""}/login</span></p>
             </CardContent>
           </Card>
 
@@ -101,7 +76,14 @@ function SettingsPage() {
                       <TableCell className="font-medium">{u.name}</TableCell>
                       <TableCell>{u.email}</TableCell>
                       <TableCell>
-                        <Select value={u.role} onValueChange={(v) => updateUser(u.id, { role: v as "admin" | "agent" })}>
+                        <Select
+                          value={u.role}
+                          onValueChange={async (v) => {
+                            const r = await updateUser(u.id, { role: v as "admin" | "agent" });
+                            if (!r.ok) toast.error(r.error);
+                            else toast.success("Role updated");
+                          }}
+                        >
                           <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="agent">QA Agent</SelectItem>
@@ -110,15 +92,15 @@ function SettingsPage() {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Switch checked={u.active} onCheckedChange={(c) => updateUser(u.id, { active: c })} />
+                        <Switch
+                          checked={u.active}
+                          onCheckedChange={async (c) => {
+                            const r = await updateUser(u.id, { active: c });
+                            if (!r.ok) toast.error(r.error);
+                          }}
+                        />
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="icon" variant="ghost"
-                          disabled={u.id === currentUser?.id}
-                          onClick={() => { if (confirm(`Remove ${u.name}?`)) { removeUser(u.id); toast.success("Member removed"); } }}
-                        ><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                      </TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

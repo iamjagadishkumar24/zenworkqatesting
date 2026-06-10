@@ -247,7 +247,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
       }
       const { data, error } = await supabase
         .from("defects")
-        .update(dbPatch)
+        .update(dbPatch as never)
         .eq("id", id)
         .eq("version", local.version)
         .select()
@@ -291,7 +291,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
       if (patch.name !== undefined) profilePatch.name = patch.name;
       if (patch.active !== undefined) profilePatch.active = patch.active;
       if (Object.keys(profilePatch).length) {
-        const { error } = await supabase.from("profiles").update(profilePatch).eq("id", id);
+        const { error } = await supabase.from("profiles").update(profilePatch as never).eq("id", id);
         if (error) return { ok: false, error: error.message };
       }
       return { ok: true };
@@ -308,7 +308,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
       if (patch.openDefects !== undefined) dbPatch.open_defects = patch.openDefects;
       if (patch.lastTested !== undefined) dbPatch.last_tested = patch.lastTested;
       if (patch.assignedAgent !== undefined) dbPatch.assigned_agent = patch.assignedAgent;
-      const { error } = await supabase.from("forms").update(dbPatch).eq("id", id);
+      const { error } = await supabase.from("forms").update(dbPatch as never).eq("id", id);
       if (error) return { ok: false, error: error.message };
       return { ok: true };
     },

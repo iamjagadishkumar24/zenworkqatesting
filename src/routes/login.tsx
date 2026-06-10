@@ -23,18 +23,18 @@ function LoginPage() {
 
   if (currentUser) return <Navigate to="/dashboard" replace />;
 
-  const onLogin = (e: React.FormEvent) => {
+  const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const r = login(email, password);
+    const r = await login(email, password);
     if (!r.ok) return toast.error(r.error);
     toast.success("Welcome back");
     navigate({ to: "/dashboard" });
   };
-  const onSignup = (e: React.FormEvent) => {
+  const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    const r = signup(name, sEmail, sPwd);
+    const r = await signup(name, sEmail, sPwd);
     if (!r.ok) return toast.error(r.error);
-    toast.success(users.length === 0 ? "Admin account created" : "Account created");
+    toast.success(users.length === 0 ? "Admin account created — signing you in" : "Account created — signing you in");
     navigate({ to: "/dashboard" });
   };
 
