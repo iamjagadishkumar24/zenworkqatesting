@@ -357,6 +357,39 @@ export function DefectDetailSheet({
               </ol>
             </ScrollArea>
           </TabsContent>
+
+          <TabsContent value="activity" className="mt-4">
+            <ScrollArea className="h-96 rounded-md border p-3">
+              {timeline.length === 0 && <p className="text-xs text-muted-foreground">No activity yet.</p>}
+              <ol className="relative space-y-3 border-l pl-4">
+                {timeline.map((t) => {
+                  const Icon =
+                    t.kind === "created" ? Plus
+                    : t.kind === "comment" ? MessageCircle
+                    : t.kind === "assigned_agent" ? UserPlus
+                    : t.kind === "status" ? ActivityIcon
+                    : Pencil;
+                  return (
+                    <li key={t.id} className="relative">
+                      <span className="absolute -left-[22px] top-1 inline-flex h-4 w-4 items-center justify-center rounded-full border bg-background">
+                        <Icon className="h-2.5 w-2.5 text-muted-foreground" />
+                      </span>
+                      <div className="rounded-md border bg-card p-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{t.summary}</span>
+                          <span className="text-muted-foreground">{new Date(t.at).toLocaleString()}</span>
+                        </div>
+                        {t.detail && (
+                          <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{t.detail}</p>
+                        )}
+                        <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">by {t.actor}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </ScrollArea>
+          </TabsContent>
         </Tabs>
       </SheetContent>
     </Sheet>
