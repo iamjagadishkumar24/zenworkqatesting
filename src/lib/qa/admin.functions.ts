@@ -129,3 +129,33 @@ export const sampleAdminStatus = createServerFn({ method: "GET" }).handler(async
   const isAdmin = (roles ?? []).some((r) => r.role === "admin");
   return { exists: true as const, isAdmin, active: !!data.active };
 });
+
+export const accountStatus = createServerFn({ method: "POST" })
+  .inputValidator((input: { email: string }) => {
+    const email = String(input?.email || "").trim().toLowerCase();
+    if (!validateEmail(email)) throw new Error("Enter a valid email address");
+    return { email };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("id, active, name")
+      .eq("email", data.email)
+      .maybeSingle();
+    if (!profile?.id) return { exists: false as const };
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", profile.id);
+    const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+    const isAgent = (roles ?? []).some((r) => r.role === "agent");
+    return {
+      exists: true as const,
+      active: !!profile.active,
+      isAdmin,
+      isAgent,
+      hasRole: isAdmin || isAgent,
+      name: profile.name as string | null,
+    };
+  });
