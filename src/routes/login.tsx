@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQA } from "@/lib/qa/store";
+import { useServerFn } from "@tanstack/react-start";
+import { resetSampleAdmin } from "@/lib/qa/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +22,8 @@ function LoginPage() {
   const [name, setName] = useState("");
   const [sEmail, setSEmail] = useState("");
   const [sPwd, setSPwd] = useState("");
+  const [seeding, setSeeding] = useState(false);
+  const reset = useServerFn(resetSampleAdmin);
 
   if (currentUser) return <Navigate to="/dashboard" replace />;
 
@@ -36,6 +40,26 @@ function LoginPage() {
     if (!r.ok) return toast.error(r.error);
     toast.success(users.length === 0 ? "Admin account created — signing you in" : "Account created — signing you in");
     navigate({ to: "/dashboard" });
+  };
+
+  const seedAdmin = async () => {
+    setSeeding(true);
+    try {
+      const r = await reset();
+      setEmail(r.email);
+      setPassword(r.password);
+      const li = await login(r.email, r.password);
+      if (!li.ok) {
+        toast.success(`Sample admin ready — email: ${r.email}, password: ${r.password}`);
+      } else {
+        toast.success("Signed in as sample admin");
+        navigate({ to: "/dashboard" });
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not create sample admin");
+    } finally {
+      setSeeding(false);
+    }
   };
 
   return (
@@ -82,6 +106,16 @@ function LoginPage() {
                   <p className="text-center text-xs text-muted-foreground">
                     No account yet? Use <span className="font-medium">Create account</span> — the first signup becomes Admin.
                   </p>
+                  <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs">
+                    <p className="mb-2 font-medium">Try the sample admin</p>
+                    <p className="mb-2 text-muted-foreground">
+                      Email: <span className="font-mono">admin@qaportal.app</span><br />
+                      Password: <span className="font-mono">Admin@12345</span>
+                    </p>
+                    <Button type="button" variant="outline" size="sm" className="w-full" onClick={seedAdmin} disabled={seeding}>
+                      {seeding ? "Setting up…" : "Create / reset sample admin & sign in"}
+                    </Button>
+                  </div>
                 </form>
               </TabsContent>
               <TabsContent value="signup">
