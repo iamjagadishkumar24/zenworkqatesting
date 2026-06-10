@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { Defect, DefectStatus, FormItem, Module, Priority, Role, Severity, TestStatus, User } from "./types";
+import type { AuditEntry, Defect, DefectStatus, FormItem, Module, Priority, Role, Severity, TestStatus, User } from "./types";
 
 type DefectWithVersion = Defect & { version: number };
 
@@ -9,6 +9,7 @@ type State = {
   users: User[];
   forms: FormItem[];
   defects: DefectWithVersion[];
+  audit: AuditEntry[];
   currentUser: User | null;
   loading: boolean;
 };
@@ -34,12 +35,16 @@ const Context = createContext<Ctx | null>(null);
 type DefectRow = {
   id: string; module: string; form_feature: string; title: string; description: string;
   steps_to_reproduce: string; expected_result: string; actual_result: string;
-  attachment_url: string | null; jira_url: string | null;
+  attachment_url: string | null; attachment_url2: string | null;
+  evidence_url: string | null; screenshot_url: string | null;
+  video_url: string | null; excel_url: string | null; drive_url: string | null;
+  jira_url: string | null; validity: string;
   status: string; priority: string; severity: string;
   assigned_agent: string; created_by: string; updated_by: string;
   version: number; created_at: string; updated_at: string;
 };
 type CommentRow = { id: string; defect_id: string; author: string; text: string; created_at: string };
+type AuditRow = { id: string; defect_id: string; field: string; old_value: string | null; new_value: string | null; changed_by: string; changed_at: string };
 type FormRow = { id: string; name: string; module: string; status: string; passed: number; failed: number; open_defects: number; last_tested: string; assigned_agent: string };
 
 function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersion {
@@ -48,13 +53,29 @@ function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersi
     title: r.title, description: r.description,
     stepsToReproduce: r.steps_to_reproduce,
     expectedResult: r.expected_result, actualResult: r.actual_result,
-    attachmentUrl: r.attachment_url ?? undefined, jiraUrl: r.jira_url ?? undefined,
+    attachmentUrl: r.attachment_url ?? undefined,
+    attachmentUrl2: r.attachment_url2 ?? undefined,
+    evidenceUrl: r.evidence_url ?? undefined,
+    screenshotUrl: r.screenshot_url ?? undefined,
+    videoUrl: r.video_url ?? undefined,
+    excelUrl: r.excel_url ?? undefined,
+    driveUrl: r.drive_url ?? undefined,
+    jiraUrl: r.jira_url ?? undefined,
+    validity: (r.validity as Defect["validity"]) ?? "Unverified",
     status: r.status as DefectStatus, priority: r.priority as Priority, severity: r.severity as Severity,
     assignedAgent: r.assigned_agent, createdBy: r.created_by, updatedBy: r.updated_by,
     createdAt: r.created_at, updatedAt: r.updated_at, version: r.version,
     comments: comments
       .filter((c) => c.defect_id === r.id)
       .map((c) => ({ id: c.id, author: c.author, text: c.text, createdAt: c.created_at })),
+  };
+}
+
+function rowToAudit(r: AuditRow): AuditEntry {
+  return {
+    id: r.id, defectId: r.defect_id, field: r.field,
+    oldValue: r.old_value, newValue: r.new_value,
+    changedBy: r.changed_by, changedAt: r.changed_at,
   };
 }
 
@@ -68,7 +89,7 @@ function rowToForm(r: FormRow): FormItem {
 
 export function QAProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({
-    users: [], forms: [], defects: [], currentUser: null, loading: true,
+    users: [], forms: [], defects: [], audit: [], currentUser: null, loading: true,
   });
   const commentsRef = useRef<CommentRow[]>([]);
 
@@ -106,12 +127,13 @@ export function QAProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, loading: true }));
 
     const loadAll = async () => {
-      const [profilesR, rolesR, formsR, defectsR, commentsR] = await Promise.all([
+      const [profilesR, rolesR, formsR, defectsR, commentsR, auditR] = await Promise.all([
         supabase.from("profiles").select("id, name, email, active"),
         supabase.from("user_roles").select("user_id, role"),
         supabase.from("forms").select("*"),
         supabase.from("defects").select("*").order("updated_at", { ascending: false }),
         supabase.from("defect_comments").select("*").order("created_at", { ascending: true }),
+        supabase.from("defect_audit_log").select("*").order("changed_at", { ascending: false }),
       ]);
       if (cancelled) return;
       const rolesByUser = new Map<string, Role>();
@@ -131,6 +153,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         users,
         forms: (formsR.data ?? []).map((f) => rowToForm(f as FormRow)),
         defects: (defectsR.data ?? []).map((d) => rowToDefect(d as DefectRow, comments)),
+        audit: (auditR.data ?? []).map((a) => rowToAudit(a as AuditRow)),
       }));
     };
     void loadAll();
@@ -186,6 +209,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { void loadAll(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => { void loadAll(); })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "defect_audit_log" }, (payload) => {
+        const entry = rowToAudit(payload.new as AuditRow);
+        setState((s) => ({ ...s, audit: [entry, ...s.audit] }));
+      })
       .subscribe();
 
     return () => { cancelled = true; void supabase.removeChannel(channel); };
@@ -221,7 +248,15 @@ export function QAProvider({ children }: { children: ReactNode }) {
         id, module: d.module, form_feature: d.formFeature, title: d.title,
         description: d.description, steps_to_reproduce: d.stepsToReproduce,
         expected_result: d.expectedResult, actual_result: d.actualResult,
-        attachment_url: d.attachmentUrl || null, jira_url: d.jiraUrl || null,
+        attachment_url: d.attachmentUrl || null,
+        attachment_url2: d.attachmentUrl2 || null,
+        evidence_url: d.evidenceUrl || null,
+        screenshot_url: d.screenshotUrl || null,
+        video_url: d.videoUrl || null,
+        excel_url: d.excelUrl || null,
+        drive_url: d.driveUrl || null,
+        jira_url: d.jiraUrl || null,
+        validity: d.validity || "Unverified",
         status: d.status, priority: d.priority, severity: d.severity,
         assigned_agent: d.assignedAgent, created_by: me.name, updated_by: me.name,
       });
@@ -238,7 +273,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
         module: "module", formFeature: "form_feature", title: "title",
         description: "description", stepsToReproduce: "steps_to_reproduce",
         expectedResult: "expected_result", actualResult: "actual_result",
-        attachmentUrl: "attachment_url", jiraUrl: "jira_url",
+        attachmentUrl: "attachment_url", attachmentUrl2: "attachment_url2",
+        evidenceUrl: "evidence_url", screenshotUrl: "screenshot_url",
+        videoUrl: "video_url", excelUrl: "excel_url", driveUrl: "drive_url",
+        jiraUrl: "jira_url", validity: "validity",
         status: "status", priority: "priority", severity: "severity",
         assignedAgent: "assigned_agent",
       };
