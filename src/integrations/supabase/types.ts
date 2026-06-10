@@ -14,16 +14,201 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      defect_comments: {
+        Row: {
+          author: string
+          created_at: string
+          defect_id: string
+          id: string
+          text: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          defect_id: string
+          id?: string
+          text: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          defect_id?: string
+          id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "defect_comments_defect_id_fkey"
+            columns: ["defect_id"]
+            isOneToOne: false
+            referencedRelation: "defects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      defects: {
+        Row: {
+          actual_result: string
+          assigned_agent: string
+          attachment_url: string | null
+          created_at: string
+          created_by: string
+          description: string
+          expected_result: string
+          form_feature: string
+          id: string
+          jira_url: string | null
+          module: string
+          priority: string
+          severity: string
+          status: string
+          steps_to_reproduce: string
+          title: string
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        Insert: {
+          actual_result?: string
+          assigned_agent?: string
+          attachment_url?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          expected_result?: string
+          form_feature: string
+          id: string
+          jira_url?: string | null
+          module: string
+          priority?: string
+          severity?: string
+          status?: string
+          steps_to_reproduce?: string
+          title: string
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Update: {
+          actual_result?: string
+          assigned_agent?: string
+          attachment_url?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          expected_result?: string
+          form_feature?: string
+          id?: string
+          jira_url?: string | null
+          module?: string
+          priority?: string
+          severity?: string
+          status?: string
+          steps_to_reproduce?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      forms: {
+        Row: {
+          assigned_agent: string
+          failed: number
+          id: string
+          last_tested: string
+          module: string
+          name: string
+          open_defects: number
+          passed: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_agent?: string
+          failed?: number
+          id: string
+          last_tested?: string
+          module: string
+          name: string
+          open_defects?: number
+          passed?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_agent?: string
+          failed?: number
+          id?: string
+          last_tested?: string
+          module?: string
+          name?: string
+          open_defects?: number
+          passed?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string
+          id: string
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email: string
+          id: string
+          name: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_user_name: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "agent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +335,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "agent"],
+    },
   },
 } as const
