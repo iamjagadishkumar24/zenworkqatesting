@@ -12,10 +12,14 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
 import { ExportMenu } from "@/components/qa/ExportMenu";
-import { Eye, Pencil, Search, Bug } from "lucide-react";
+import { Eye, Pencil, Search, Bug, Trash2 } from "lucide-react";
 import type { DefectStatus, Module, Priority, Severity } from "@/lib/qa/types";
 import { AGENTS } from "@/lib/qa/constants";
 import { toast } from "sonner";
@@ -34,7 +38,7 @@ export const Route = createFileRoute("/_app/my-reported-errors")({
 });
 
 function ReportedErrorsPage() {
-  const { defects, currentUser } = useQA();
+  const { defects, currentUser, deleteDefect } = useQA();
   const { env } = useEnvironment();
   const search = Route.useSearch();
   const isAdmin = currentUser?.role === "admin";
@@ -42,6 +46,8 @@ function ReportedErrorsPage() {
   const [q, setQ] = useState(search.q ?? "");
   const [openId, setOpenId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [mod, setMod] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [prio, setPrio] = useState<string>("all");
@@ -192,6 +198,13 @@ function ReportedErrorsPage() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                       )}
+                      {(isAdmin || d.createdBy === currentUser?.name) && (
+                        <Button size="icon" variant="ghost" aria-label="Delete"
+                          className="text-destructive hover:text-destructive"
+                          onClick={(e) => { e.stopPropagation(); setDeleteId(d.id); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -211,6 +224,39 @@ function ReportedErrorsPage() {
 
       <DefectDetailSheet defectId={openId} open={!!openId} onOpenChange={(o) => { if (!o) setOpenId(null); }} />
       <DefectDetailSheet defectId={editId} open={!!editId} initialEdit onOpenChange={(o) => { if (!o) setEditId(null); }} />
+
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => { if (!o && !deleting) setDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Reported Error</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this reported error? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!deleteId) return;
+                setDeleting(true);
+                const res = await deleteDefect(deleteId);
+                setDeleting(false);
+                if (res.ok) {
+                  toast.success("Reported error deleted");
+                  setDeleteId(null);
+                } else {
+                  toast.error(res.error ?? "Failed to delete");
+                }
+              }}
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

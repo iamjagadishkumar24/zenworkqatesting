@@ -89,7 +89,7 @@ export function FormsCatalog({
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{module}</p>
                   <Button
-                    size="sm" variant="outline" className="mt-3 w-full"
+                    size="sm" className="mt-3 w-full"
                     onClick={() => setPicked(name)}
                   >Report Error</Button>
                 </CardContent>
