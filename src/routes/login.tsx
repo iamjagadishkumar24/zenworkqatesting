@@ -15,7 +15,7 @@ import { HelpCircle, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, ShieldChec
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
-function LoginErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+export function LoginErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="grid min-h-dvh place-items-center bg-slate-950 p-6 text-white">
       <div className="w-full max-w-md rounded-xl border border-white/15 bg-white/5 p-6 shadow-xl">
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/login")({
   errorComponent: LoginErrorFallback,
 });
 
-function LoginPage() {
+export function LoginPage() {
   const { currentUser, login, signup, users } = useQA();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
