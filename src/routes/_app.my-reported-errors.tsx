@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
-import { ExportMenu } from "@/components/qa/ExportMenu";
 import { AssignTaskDialog } from "@/components/qa/AssignTaskDialog";
-import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Plus } from "lucide-react";
+import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Plus, Download } from "lucide-react";
+import { exportReportedErrorsXlsx } from "@/lib/qa/exportReportedErrors";
 import type { DefectStatus, Priority, Severity } from "@/lib/qa/types";
 import { AGENTS, MODULE_OPTIONS } from "@/lib/qa/constants";
 import { toast } from "sonner";
@@ -130,14 +130,14 @@ function ReportedErrorsPage() {
               <Plus className="mr-2 h-4 w-4" /> Assign Task
             </Button>
           )}
-          <ExportMenu
-          filename="reported-errors"
-          title="Reported errors export"
-          filters={{ Scope: isAdmin ? "All" : (currentUser?.name ?? "—"), Environment: env ?? "All", Count: filtered.length }}
-          rows={filtered.map(({ comments, ...d }) => ({ ...d, commentsCount: comments.length }))}
-          columns={["id","module","formFeature","title","status","priority","severity","validity","assignedAgent","createdBy","environment","updatedAt"]}
-          defaultSelected={["id","module","formFeature","title","status","priority","validity","createdBy","updatedAt"]}
-          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportReportedErrorsXlsx(filtered, env)}
+            disabled={!filtered.length}
+          >
+            <Download className="mr-2 h-4 w-4" /> Export
+          </Button>
         </div>
       </div>
 
