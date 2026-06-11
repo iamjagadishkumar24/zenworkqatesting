@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEnvironment } from "@/lib/qa/environment";
+import { usePrefs } from "@/lib/qa/prefs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Rocket, FlaskConical, ArrowRight } from "lucide-react";
@@ -11,11 +12,12 @@ export const Route = createFileRoute("/_app/select-environment")({
 
 function SelectEnvironment() {
   const { setEnv } = useEnvironment();
+  const { prefs } = usePrefs();
   const navigate = useNavigate();
 
   const pick = (e: "Production" | "Stage") => {
     setEnv(e);
-    navigate({ to: "/dashboard" });
+    navigate({ to: prefs.defaultLanding || "/dashboard" });
   };
 
   return (
