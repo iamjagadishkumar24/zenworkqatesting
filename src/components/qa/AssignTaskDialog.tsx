@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useRetests, TESTING_TYPES, RETEST_STATUSES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
-import { MODULE_OPTIONS } from "@/lib/qa/constants";
+import { MODULE_OPTIONS, TAX_YEARS, DEFAULT_TAX_YEAR } from "@/lib/qa/constants";
 import { useAgentInvites } from "@/lib/qa/agents";
 
 const PRIORITIES: RetestPriority[] = ["Low", "Medium", "High", "Critical"];
@@ -45,6 +45,7 @@ export function AssignTaskDialog({
   const [assignAll, setAssignAll] = useState(false);
   const [allForms, setAllForms] = useState(false);
   const [priority, setPriority] = useState<RetestPriority>("Medium");
+  const [taxYear, setTaxYear] = useState<string>(DEFAULT_TAX_YEAR);
   const [status, setStatus] = useState<RetestStatus>("Pending");
   const [dueDate, setDueDate] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -79,6 +80,7 @@ export function AssignTaskDialog({
       testingType,
       title: title.trim(),
       module: moduleSel,
+      taxYear,
     });
     setSubmitting(false);
     if (!r.ok) return toast.error(r.error);
