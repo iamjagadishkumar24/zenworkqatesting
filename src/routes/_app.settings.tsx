@@ -922,3 +922,116 @@ function ExportAuditTable() {
     </Card>
   );
 }
+
+function ProfilePictureCard() {
+  const { currentUser, updateUser } = useQA();
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useState<HTMLInputElement | null>(null);
+
+  if (!currentUser) return null;
+
+  const handleFile = async (file: File) => {
+    const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Only PNG, JPG, JPEG, and WEBP files are allowed.");
+      return;
+    }
+    const MAX = 5 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast.error("Image size is too large. Please upload a smaller image (max 5 MB).");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `${currentUser.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: file.type,
+      });
+      if (upErr) throw upErr;
+      const r = await updateUser(currentUser.id, { avatarUrl: path });
+      if (!r.ok) throw new Error(r.error);
+      toast.success("Profile picture updated successfully.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(`Unable to upload profile picture. ${msg}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    setUploading(true);
+    try {
+      if (currentUser.avatarUrl) {
+        await supabase.storage.from("avatars").remove([currentUser.avatarUrl]).catch(() => {});
+      }
+      const r = await updateUser(currentUser.id, { avatarUrl: null });
+      if (!r.ok) throw new Error(r.error);
+      toast.success("Profile picture removed.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(`Unable to remove profile picture. ${msg}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Your Profile</CardTitle>
+        <CardDescription>Profile picture and account details for the signed-in user.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex flex-wrap items-center gap-6">
+          <UserAvatar
+            name={currentUser.name}
+            email={currentUser.email}
+            avatarUrl={currentUser.avatarUrl}
+            size="xl"
+          />
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
+              <label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  ref={(el) => { inputRef[1](el); }}
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void handleFile(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+                <Button asChild disabled={uploading} variant="default">
+                  <span className="cursor-pointer">
+                    <Upload className="mr-1 h-4 w-4" />
+                    {uploading ? "Uploading…" : currentUser.avatarUrl ? "Change picture" : "Upload picture"}
+                  </span>
+                </Button>
+              </label>
+              {currentUser.avatarUrl && (
+                <Button variant="outline" disabled={uploading} onClick={handleRemove}>
+                  <Trash2 className="mr-1 h-4 w-4" /> Remove
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              PNG, JPG, JPEG or WEBP — up to 5 MB. A default avatar is generated when no picture is uploaded.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div><Label>Name</Label><Input value={currentUser.name ?? ""} disabled /></div>
+          <div><Label>Email</Label><Input value={currentUser.email ?? ""} disabled /></div>
+          <div><Label>Role</Label><Input value={currentUser.role ?? ""} disabled className="capitalize" /></div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
