@@ -187,6 +187,13 @@ export function AssignTaskDialog({
             <Label>Environment</Label>
             <Input value={env ?? "Production"} readOnly disabled />
           </div>
+          <div>
+            <Label>Tax Year *</Label>
+            <Select value={taxYear} onValueChange={setTaxYear}>
+              <SelectTrigger><SelectValue placeholder="Select Tax Year" /></SelectTrigger>
+              <SelectContent>{TAX_YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
           <div className="md:col-span-2">
             <Label>Filter forms / features (optional)</Label>
             <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Search by name…" />
