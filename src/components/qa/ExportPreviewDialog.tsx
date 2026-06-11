@@ -176,7 +176,7 @@ export function ExportPreviewDialog({ open, onOpenChange, rows, filters, environ
               {job?.status === "failed" && isAdmin && (
                 <Button variant="secondary" onClick={onRetry}><RotateCw className="mr-2 h-4 w-4" />Retry</Button>
               )}
-              <Button onClick={download} disabled={job?.status !== "completed" || downloaded === false && false}>
+              <Button onClick={download} disabled={job?.status !== "completed"}>
                 <Download className="mr-2 h-4 w-4" />
                 {downloaded ? "Download again" : "Download"}
               </Button>
