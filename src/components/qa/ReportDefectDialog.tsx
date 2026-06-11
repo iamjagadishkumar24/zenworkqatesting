@@ -31,7 +31,7 @@ function isValidUrl(u: string) {
 
 export function ReportDefectDialog({
   open, onOpenChange, defaultForm = "", defaultModule = "1099 Forms",
-  defaultAgents, defaultIntegration = "", featureMode = false,
+  defaultAgents, defaultIntegration = "", featureMode = false, formOptions,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -41,6 +41,8 @@ export function ReportDefectDialog({
   defaultIntegration?: string;
   /** When true, hide form/integration dropdowns and treat defaultForm as the read-only feature/module item. */
   featureMode?: boolean;
+  /** Optional restricted list of forms (e.g. Integrations → only 1099-NEC / 1099-MISC). */
+  formOptions?: string[];
 }) {
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
@@ -53,6 +55,7 @@ export function ReportDefectDialog({
   const showIntegration = !featureMode && defaultModule === "Integrations";
   const lockIntegration = showIntegration && !!defaultIntegration;
   const showForm = !featureMode;
+  const formChoices = formOptions && formOptions.length ? formOptions : FORM_LIST;
   const [draft, setDraft] = useState<Draft>(() => ({
     module: defaultModule, formFeature: "", title: "", description: "",
     stepsToReproduce: "", expectedResult: "", actualResult: "",
@@ -138,7 +141,7 @@ export function ReportDefectDialog({
               <Select value={draft._form} onValueChange={(v) => upd("_form", v)}>
                 <SelectTrigger><SelectValue placeholder="Select a form" /></SelectTrigger>
                 <SelectContent className="max-h-72">
-                  {FORM_LIST.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                  {formChoices.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
