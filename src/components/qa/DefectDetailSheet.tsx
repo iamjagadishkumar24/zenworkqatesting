@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQA } from "@/lib/qa/store";
 import type { Defect, DefectStatus, Priority, Severity } from "@/lib/qa/types";
 import {
@@ -24,6 +25,34 @@ import {
 const STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
 const LEVELS: Priority[] = ["Low","Medium","High","Critical"];
 const MODULES = ["1099 Forms","990 Forms","Integrations","1099 Online"] as const;
+
+function moduleRoute(module: string): string {
+  switch (module) {
+    case "Integrations": return "/integrations";
+    case "Chatbot": return "/chatbot-testing";
+    case "Functionality": return "/functionality-testing";
+    case "Tax1099": return "/tax1099-features";
+    case "2290 Forms": return "/2290-forms";
+    default: return "/forms";
+  }
+}
+
+function historyLabel(field: string, oldVal: string | null, newVal: string | null): string {
+  if (field === "status") {
+    if (newVal === "Closed") return "Closed defect";
+    if (newVal === "Reopened") return "Reopened defect";
+    if (newVal === "Fixed") return "Marked Fixed";
+    if (newVal === "Retest Required") return "Requested retest";
+    return `Status: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
+  }
+  if (field === "assigned_agent") return `Assigned to ${newVal ?? "—"}`;
+  if (field === "validity") return `Validated as ${newVal ?? "—"}`;
+  if (field === "priority") return `Priority: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
+  if (field === "severity") return `Severity: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
+  if (field === "title") return `Renamed title`;
+  if (field === "environment") return `Environment: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
+  return `Edited ${field.replace(/_/g, " ")}`;
+}
 
 const LINK_FIELDS: { key: keyof Defect; label: string }[] = [
   { key: "jiraUrl", label: "Jira Ticket" },
@@ -250,7 +279,16 @@ export function DefectDetailSheet({
               </div>
             ) : (
               <div className="space-y-4 text-sm">
-                <Field label="Module">{defect.module} • {defect.formFeature}</Field>
+                <Field label="Module">
+                  <Link
+                    to={moduleRoute(defect.module)}
+                    onClick={() => onOpenChange(false)}
+                    className="text-primary underline-offset-2 hover:underline"
+                  >
+                    {defect.module}
+                  </Link>
+                  {defect.formFeature && <span className="text-muted-foreground"> • {defect.formFeature}</span>}
+                </Field>
                 <Field label="Description">{defect.description || <span className="text-muted-foreground">—</span>}</Field>
                 <Field label="Steps to Reproduce"><pre className="whitespace-pre-wrap font-sans">{defect.stepsToReproduce || "—"}</pre></Field>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -342,12 +380,21 @@ export function DefectDetailSheet({
 
           <TabsContent value="history" className="mt-4">
             <ScrollArea className="h-80 rounded-md border p-3">
-              {history.length === 0 && <p className="text-xs text-muted-foreground">No changes recorded yet.</p>}
               <ol className="relative space-y-3">
+                <li className="rounded-md border bg-card p-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Reported defect</span>
+                    <span className="text-muted-foreground">{new Date(defect.createdAt).toLocaleString()}</span>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
+                    <span>{defect.module}{defect.formFeature ? ` • ${defect.formFeature}` : ""}</span>
+                    <span className="ml-auto">by {defect.createdBy}</span>
+                  </div>
+                </li>
                 {history.map((h) => (
                   <li key={h.id} className="rounded-md border bg-card p-2 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium capitalize">{h.field.replace(/_/g, " ")}</span>
+                      <span className="font-medium">{historyLabel(h.field, h.oldValue, h.newValue)}</span>
                       <span className="text-muted-foreground">{new Date(h.changedAt).toLocaleString()}</span>
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
