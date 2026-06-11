@@ -6,8 +6,7 @@ afterEach(() => cleanup());
 
 // jsdom doesn't implement matchMedia
 if (!window.matchMedia) {
-  // @ts-expect-error - test polyfill
-  window.matchMedia = (query: string) => ({
+  (window as any).matchMedia = (query: string) => ({
     matches: false,
     media: query,
     onchange: null,
