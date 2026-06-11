@@ -1,86 +1,48 @@
-## Goal
-Wire the UI for the server-side export jobs system already in place: preview → background job → realtime progress → signed download. Enforce the `allow_agent_exports` toggle in the UI, apply the styled XLSX formatting to the generic exporter, and add an Audit Log viewer to Settings.
+# Agent Management, Task Assignment, Per-Reporter Visibility & Env Scoping
 
-## 1. Reported Errors export flow (`src/routes/_app.my-reported-errors.tsx`)
+## 1. Agent Management (admin only)
 
-Replace the current inline `exportReportedErrorsXlsx(filtered, env)` button with a new `ExportReportedErrorsButton` component that:
+New page **Settings → Agents** (admin-only tab) + DB support for pending invites.
 
-- Reads `allow_agent_exports` from `app_settings` on mount (or via shared hook).
-- Admins: button always enabled.
-- Agents: when setting is `false`, button is hidden; when `true`, button enabled and export is scoped to their own rows (already enforced server-side, but UI matches).
-- On click → opens `ExportPreviewDialog` (see below) with the current filters + `filtered` rows.
-- On "Run export" → calls `createExportJob({ filters })`, gets `jobId`, then subscribes to realtime updates on `export_jobs` for that id, shows progress, and on `completed` calls `getExportDownloadUrl({ jobId })` to trigger a browser download via the signed URL.
-- On error → toast, allow retry from the dialog (admins only via `retryExportJob`).
+- New table `public.agent_invites` (email, name, status `pending|active|inactive`, notes, created_by). RLS: admins full access; agents may select their own row by email.
+- On user signup, `handle_new_user` trigger is extended: if an `agent_invites` row exists for `NEW.email`, mark it `active`, link `user_id`, and ensure `user_roles.role = 'agent'` (override the "first user = admin" branch only when an invite exists).
+- Admin UI lists invites + registered agents in one table with status badges (Pending Registration / Active / Inactive), actions: Add Agent (name + email + notes), Deactivate/Activate, Delete (pending only).
+- "Add Agent" inserts an invite row; no auth user is created until the person signs up with the matching email.
 
-## 2. Export Preview Dialog (`src/components/qa/ExportPreviewDialog.tsx` — new)
+## 2. Task Assignment — multi-agent + All Forms / Specific Forms
 
-Shared dialog used by Reported Errors (and reusable later by Defects). Props: `open`, `onOpenChange`, `rows: Defect[]`, `filters`, `environment`, `onConfirm()`.
+Rework `AssignTaskDialog`:
 
-Contents:
-- Summary row: environment, applied filters (chips), total row count.
-- Column list: shows the 8 columns from `REPORTED_ERROR_HEADERS` with a small note "all included".
-- Preview table: first 10 rows mapped through `toReportedErrorRow` (Agent, Section, truncated Description, Expected, Screenshot/Link icons, Date Reported).
-- Footer: "Cancel" + primary "Run as background job".
-- After confirm: switches into "Job progress" mode embedded in the same dialog showing a Progress bar bound to the live `export_jobs` row (status + progress + row_count + error). Buttons swap to "Download" (when completed), "Retry" (admin, when failed), "Close".
+- Replace single-agent Select with a multi-select chip picker over active agents, plus checkbox "Assign to all active agents" and a new "Include pending agents" toggle (pre-assigns; becomes visible when they register).
+- Forms picker gains a top "All Forms" checkbox. When checked, store assignment with `all_forms = true` and zero rows in `retest_assignment_forms`; the agent dashboard then shows every form in the shared `MODULE_OPTIONS`/`forms` list for that environment.
+- Add `all_forms boolean default false` column on `retest_assignments`.
+- `createAssignment` loops over selected agents (including pending invite ids stored as `pending_email`) and writes one assignment per agent in a single batch.
 
-A small `useExportJob(jobId)` hook colocated in the dialog file (or `src/lib/qa/useExportJob.ts`) handles the realtime channel + initial select.
+For pending agents, write a `retest_pending_assignments` row keyed by email + payload JSON. On signup the same trigger materializes those into real `retest_assignments` for the new user_id.
 
-## 3. Jobs Panel (`src/components/qa/ExportJobsPanel.tsx` — new)
+## 3. Per-Reporter Visibility
 
-Card listing recent `export_jobs` (last 25) with realtime updates:
-- Columns: Requested by, Scope, Environment, Status badge, Progress, Rows, Started, Actions.
-- Actions: Download (if completed and viewer is owner or admin) → uses `getExportDownloadUrl`; Retry (admin only, failed jobs) → uses `retryExportJob`.
-- Mounted under Settings → Import / Export (above the Audit Log) so admins/agents can monitor.
+- `retest_assignments` RLS already scopes agents to `assigned_agent_id = auth.uid()`; keep it.
+- `defects` RLS: add policy so agents can `SELECT` only rows where `created_by = current_user_name()` OR `assigned_agent = current_user_name()`. Admins keep full access.
+- "Fixed errors" counts/lists in agent dashboard filter by `created_by = me` so an agent only sees their own fixed errors. Admin dashboard remains global.
+- My Reported Errors page already filters by reporter; verify it also filters fixed-status updates client-side.
 
-## 4. Settings → Audit Log viewer
+## 4. Environment Toggle Wiring
 
-Extend the existing `audit` tab (`src/routes/_app.settings.tsx`) by adding a new `ExportAuditTable` card alongside the current `AuditTable` and `RoleAuditTable`.
+Audit every list/count surface and ensure it filters by `useEnvironment().env`:
 
-`ExportAuditTable` (admin-only, same tab):
-- Fetches `export_audit_log` ordered by `created_at desc`, limit 200.
-- Subscribes to inserts via realtime.
-- Columns: When, User, Role, Scope, Environment, Filters (collapsible JSON pill), Rows, Status (success/failed), Error.
-- Search box + status filter (success / failed / all).
-- "Export CSV" button reusing existing `exportCsv`.
+- Dashboard counts (tasks, errors, fixed) — re-derive from `env`-filtered queries.
+- Forms catalog, Task Assignment table, Reported Errors, Defects — all already env-aware; add the missing filters in Dashboard tiles.
+- Realtime: each list hook already subscribes to its table; on env change, the derived `scoped` arrays recompute, so counts update live. Add a `key={env}` on Dashboard cards so transitions are clean.
 
-Also surface the new `ExportJobsPanel` inside the "Import / Export" tab (admin only) so it's discoverable alongside the agent-export toggle.
+## Technical notes
 
-## 5. Apply xlsx-js-style formatting in `src/lib/qa/export.ts`
+- Migrations: `agent_invites`, `retest_pending_assignments`, `all_forms` column, updated `handle_new_user` trigger, RLS policies + GRANTs.
+- New files: `src/routes/_app.agents.tsx` (admin-only), `src/lib/qa/agents.ts` hook, updates to `AssignTaskDialog`, `useRetests.createAssignment`, `_app.dashboard.tsx`, `store.tsx` defect scoping.
+- Constants: keep the shared `MODULE_OPTIONS` + `forms` list as the single source of truth for "All Forms".
+- No edge functions; all logic via `createServerFn` + RLS.
 
-Refactor the generic `exportXlsx` to use `xlsx-js-style` (already a dependency) and the same formatting helpers used by Reported Errors:
+## Out of scope (call out for follow-up)
 
-- Bold white-on-slate header row.
-- Wrap text on any column whose header includes `Description`, `Notes`, `Comments`, `Steps`, `Expected`, `Actual`, `Body`.
-- Hyperlink + blue underline for any cell whose value is an `http(s)://` URL.
-- Date formatting (`yyyy-mm-dd hh:mm`) for cells whose value is a `Date` instance or whose header includes `Date`, `Created`, `Updated`, `Reported`, `Completed`, `Due` (parse ISO strings to Date before insertion).
-- Auto column widths capped to 60 (same as Reported Errors).
-
-Keep the same public signature so existing callsites (settings snapshot, defect/forms exports) keep working — they automatically gain the styling. `exportCsv` stays unchanged.
-
-## 6. Defects export parity
-
-The site-wide Defects exports already go through `exportXlsx` in `src/routes/_app.settings.tsx`. Once step 5 lands, hyperlink/wrap/date rules apply automatically. No additional changes required beyond verifying the snapshot button renders correctly.
-
-## 7. Verification
-
-- Build passes (TS strict).
-- Manually verify in preview:
-  - Admin: Export button on Reported Errors → preview opens → run job → progress fills → download succeeds → row appears in Audit Log.
-  - Admin: simulate a failure (toggle setting off then call as agent) → Retry from Jobs Panel works.
-  - Agent with `allow_agent_exports=false`: Export button hidden.
-  - Agent with toggle on: only own rows in preview + downloaded file.
-  - Settings snapshot Excel: hyperlinks clickable, dates formatted, long text wraps.
-
-## Files
-
-New:
-- `src/components/qa/ExportPreviewDialog.tsx`
-- `src/components/qa/ExportJobsPanel.tsx`
-- `src/lib/qa/useExportJob.ts` (small realtime hook)
-
-Edited:
-- `src/routes/_app.my-reported-errors.tsx` (replace Export button + enforce toggle)
-- `src/routes/_app.settings.tsx` (add `ExportAuditTable` + mount `ExportJobsPanel`)
-- `src/lib/qa/export.ts` (xlsx-js-style + formatting rules)
-
-No DB migrations needed — schema, RLS, and storage bucket already exist.
+- UI redesign / dark premium restyle.
+- Highlighting "Assigned" badges across every Forms page (will land in a follow-up after the data model is in place).
