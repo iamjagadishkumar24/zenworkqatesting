@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useQA } from "@/lib/qa/store";
+import { useEnvironment } from "@/lib/qa/environment";
 import {
   FORM_LIST, INTEGRATIONS, AGENTS, encodeFormFeature,
 } from "@/lib/qa/constants";
@@ -30,32 +31,38 @@ function isValidUrl(u: string) {
 
 export function ReportDefectDialog({
   open, onOpenChange, defaultForm = "", defaultModule = "1099 Forms",
+  defaultAgents,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   defaultForm?: string;
   defaultModule?: Module;
+  defaultAgents?: string[];
 }) {
   const { addDefect, currentUser } = useQA();
+  const { env } = useEnvironment();
+  const agentOptions = defaultAgents && defaultAgents.length ? defaultAgents : AGENTS;
   const [draft, setDraft] = useState<Draft>(() => ({
     module: defaultModule, formFeature: "", title: "", description: "",
     stepsToReproduce: "", expectedResult: "", actualResult: "",
     jiraUrl: "", attachmentUrl: "", attachmentUrl2: "", evidenceUrl: "",
     status: "Reported", priority: "Medium", severity: "Medium",
-    assignedAgent: AGENTS[0] ?? "", _form: defaultForm, _integration: "",
+    environment: env ?? "Production",
+    assignedAgent: agentOptions[0] ?? "", _form: defaultForm, _integration: "",
   }));
 
   useEffect(() => {
     if (open) {
-      setDraft((d) => ({ ...d, _form: defaultForm || d._form, module: defaultModule }));
+      setDraft((d) => ({ ...d, _form: defaultForm || d._form, module: defaultModule, environment: env ?? d.environment ?? "Production" }));
     }
-  }, [open, defaultForm, defaultModule]);
+  }, [open, defaultForm, defaultModule, env]);
 
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   const submit = async () => {
     if (!draft._form) return toast.error("Please select a form");
-    if (!draft._integration) return toast.error("Please select an integration");
+    // Integration is only required for 1099 form testing
+    if (draft.module === "1099 Forms" && !draft._integration) return toast.error("Please select an integration");
     if (!draft.assignedAgent) return toast.error("Please select an assigned agent");
     if (!draft.title.trim()) return toast.error("Title is required");
     if (!draft.description.trim()) return toast.error("Description is required");
@@ -102,7 +109,7 @@ export function ReportDefectDialog({
             </Select>
           </div>
           <div>
-            <Label>Integration *</Label>
+            <Label>Integration{draft.module === "1099 Forms" ? " *" : ""}</Label>
             <Select value={draft._integration} onValueChange={(v) => upd("_integration", v)}>
               <SelectTrigger><SelectValue placeholder="Select integration" /></SelectTrigger>
               <SelectContent>
@@ -111,11 +118,21 @@ export function ReportDefectDialog({
             </Select>
           </div>
           <div>
+            <Label>Environment</Label>
+            <Select value={draft.environment ?? "Production"} onValueChange={(v) => upd("environment", v as Draft["environment"]) }>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Production">Production</SelectItem>
+                <SelectItem value="Stage">Stage</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label>Assigned Agent *</Label>
             <Select value={draft.assignedAgent} onValueChange={(v) => upd("assignedAgent", v)}>
               <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
               <SelectContent className="max-h-72">
-                {AGENTS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                {agentOptions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
