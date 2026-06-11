@@ -178,6 +178,17 @@ export function ReportDefectDialog({
             <Input value={draft.environment ?? env ?? "Production"} readOnly disabled aria-readonly />
           </div>
           <div>
+            <Label>Tax Year *</Label>
+            {lockTaxYear ? (
+              <Input value={draft.taxYear ?? ""} readOnly disabled aria-readonly />
+            ) : (
+              <Select value={draft.taxYear ?? ""} onValueChange={(v) => upd("taxYear", v)}>
+                <SelectTrigger><SelectValue placeholder="Select Tax Year" /></SelectTrigger>
+                <SelectContent>{TAX_YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+              </Select>
+            )}
+          </div>
+          <div>
             <Label>Assigned Agent *</Label>
             {isAgent ? (
               <Input value={draft.assignedAgent} readOnly disabled aria-readonly />
