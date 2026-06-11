@@ -20,6 +20,7 @@ const nav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/forms", label: "Forms", icon: FileText },
   { to: "/online-1099", label: "1099 Online Forms", icon: Globe },
+  { to: "/990-forms", label: "990 Form Testing", icon: FileText },
   { to: "/2290-forms", label: "2290 Forms", icon: FileSpreadsheet },
   { to: "/integrations", label: "Integrations", icon: Plug },
   { to: "/chatbot-testing", label: "Chatbot Testing", icon: MessageSquare },
