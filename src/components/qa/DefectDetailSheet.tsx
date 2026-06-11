@@ -74,9 +74,11 @@ export function DefectDetailSheet({
   onOpenChange: (o: boolean) => void;
   initialEdit?: boolean;
 }) {
-  const { defects, audit, users, currentUser, updateDefect, addComment } = useQA();
+  const { defects, audit, users, currentUser, updateDefect, addComment, updateComment, deleteComment } = useQA();
   const defect = defects.find((d) => d.id === defectId) ?? null;
   const [comment, setComment] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState<Partial<Defect>>({});
 
