@@ -74,6 +74,7 @@ type NotifRow = { id: string; type: string; title: string; body: string; defect_
 function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersion {
   return {
     id: r.id, module: r.module as Module, formFeature: r.form_feature,
+    taxYear: r.tax_year ?? undefined,
     title: r.title, description: r.description,
     stepsToReproduce: r.steps_to_reproduce,
     expectedResult: r.expected_result, actualResult: r.actual_result,
