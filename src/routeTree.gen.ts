@@ -17,6 +17,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppMyErrorsRouteImport } from './routes/_app.my-errors'
+import { Route as AppFormsRouteImport } from './routes/_app.forms'
 import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 
@@ -59,6 +60,11 @@ const AppMyErrorsRoute = AppMyErrorsRouteImport.update({
   path: '/my-errors',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFormsRoute = AppFormsRouteImport.update({
+  id: '/forms',
+  path: '/forms',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDefectsRoute = AppDefectsRouteImport.update({
   id: '/defects',
   path: '/defects',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
+  '/forms': typeof AppFormsRoute
   '/my-errors': typeof AppMyErrorsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
+  '/forms': typeof AppFormsRoute
   '/my-errors': typeof AppMyErrorsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/defects': typeof AppDefectsRoute
+  '/_app/forms': typeof AppFormsRoute
   '/_app/my-errors': typeof AppMyErrorsRoute
   '/_app/online-1099': typeof AppOnline1099Route
   '/_app/reports': typeof AppReportsRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/dashboard'
     | '/defects'
+    | '/forms'
     | '/my-errors'
     | '/online-1099'
     | '/reports'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/dashboard'
     | '/defects'
+    | '/forms'
     | '/my-errors'
     | '/online-1099'
     | '/reports'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_app/dashboard'
     | '/_app/defects'
+    | '/_app/forms'
     | '/_app/my-errors'
     | '/_app/online-1099'
     | '/_app/reports'
@@ -207,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMyErrorsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/forms': {
+      id: '/_app/forms'
+      path: '/forms'
+      fullPath: '/forms'
+      preLoaderRoute: typeof AppFormsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/defects': {
       id: '/_app/defects'
       path: '/defects'
@@ -227,6 +246,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDefectsRoute: typeof AppDefectsRoute
+  AppFormsRoute: typeof AppFormsRoute
   AppMyErrorsRoute: typeof AppMyErrorsRoute
   AppOnline1099Route: typeof AppOnline1099Route
   AppReportsRoute: typeof AppReportsRoute
@@ -236,6 +256,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDefectsRoute: AppDefectsRoute,
+  AppFormsRoute: AppFormsRoute,
   AppMyErrorsRoute: AppMyErrorsRoute,
   AppOnline1099Route: AppOnline1099Route,
   AppReportsRoute: AppReportsRoute,
@@ -253,3 +274,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
