@@ -145,7 +145,11 @@ export function DefectDetailSheet({
             <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
               {defect.validity === "Valid" && <ShieldCheck className="h-3 w-3 text-success" />}
               {defect.validity === "Invalid" && <ShieldX className="h-3 w-3 text-destructive" />}
-              {defect.validity ?? "Unverified"}
+              {defect.validity === "Valid"
+                ? "Valid Error"
+                : defect.validity === "Invalid"
+                ? "Invalid Error"
+                : "Pending Review"}
             </span>
           </SheetDescription>
         </SheetHeader>
@@ -157,11 +161,11 @@ export function DefectDetailSheet({
           )}
           {isAdmin && (
             <>
-              <Button size="sm" variant="outline" onClick={() => quickPatch({ validity: "Valid" }, "Marked Valid")}>
-                <CheckCircle2 className="mr-1 h-4 w-4" /> Valid
+              <Button size="sm" variant="outline" onClick={() => quickPatch({ validity: "Valid" }, "Marked Valid Error")}>
+                <CheckCircle2 className="mr-1 h-4 w-4" /> Valid Error
               </Button>
-              <Button size="sm" variant="outline" onClick={() => quickPatch({ validity: "Invalid" }, "Marked Invalid")}>
-                <XCircle className="mr-1 h-4 w-4" /> Invalid
+              <Button size="sm" variant="outline" onClick={() => quickPatch({ validity: "Invalid" }, "Marked Invalid Error")}>
+                <XCircle className="mr-1 h-4 w-4" /> Invalid Error
               </Button>
               <Button size="sm" variant="outline" onClick={() => quickPatch({ status: "Fixed" }, "Marked Fixed")}>Fixed</Button>
               <Button size="sm" variant="outline" onClick={() => quickPatch({ status: "Retest Required" }, "Retest requested")}>Retest</Button>

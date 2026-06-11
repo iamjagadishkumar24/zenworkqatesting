@@ -127,15 +127,22 @@ function Dashboard() {
         <h3 className="mb-4 text-lg font-semibold">Form Testing Status</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {featured.map((f) => (
-            <Card key={f.id} className="cursor-pointer border-border transition-all hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5">
-              <CardContent className="p-4">
-                <p className="text-sm font-semibold truncate">{f.name}</p>
-                <div className="mt-3"><TestStatusBadge status={f.status} /></div>
-                {f.openDefects > 0 && (
-                  <p className="mt-2 text-xs text-muted-foreground">{f.openDefects} open defect(s)</p>
-                )}
-              </CardContent>
-            </Card>
+            <Link
+              key={f.id}
+              to="/forms"
+              search={{ q: f.name } as never}
+              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+            >
+              <Card className="cursor-pointer border-border transition-all hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5">
+                <CardContent className="p-4">
+                  <p className="text-sm font-semibold truncate">{f.name}</p>
+                  <div className="mt-3"><TestStatusBadge status={f.status} /></div>
+                  {f.openDefects > 0 && (
+                    <p className="mt-2 text-xs text-muted-foreground">{f.openDefects} open defect(s)</p>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </section>
