@@ -380,12 +380,21 @@ export function DefectDetailSheet({
 
           <TabsContent value="history" className="mt-4">
             <ScrollArea className="h-80 rounded-md border p-3">
-              {history.length === 0 && <p className="text-xs text-muted-foreground">No changes recorded yet.</p>}
               <ol className="relative space-y-3">
+                <li className="rounded-md border bg-card p-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Reported defect</span>
+                    <span className="text-muted-foreground">{new Date(defect.createdAt).toLocaleString()}</span>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
+                    <span>{defect.module}{defect.formFeature ? ` • ${defect.formFeature}` : ""}</span>
+                    <span className="ml-auto">by {defect.createdBy}</span>
+                  </div>
+                </li>
                 {history.map((h) => (
                   <li key={h.id} className="rounded-md border bg-card p-2 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium capitalize">{h.field.replace(/_/g, " ")}</span>
+                      <span className="font-medium">{historyLabel(h.field, h.oldValue, h.newValue)}</span>
                       <span className="text-muted-foreground">{new Date(h.changedAt).toLocaleString()}</span>
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
