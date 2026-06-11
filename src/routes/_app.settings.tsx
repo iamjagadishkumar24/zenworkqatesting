@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { exportCsv, exportXlsx } from "@/lib/qa/export";
 import { useServerFn } from "@tanstack/react-start";
 import { inviteAgent, resetSampleAdmin } from "@/lib/qa/admin.functions";
+import { setAllowAgentExports } from "@/lib/qa/exportJobs.functions";
 import {
   Users, Layers, FileText, Tag, BellRing, FileBarChart, Palette,
   LayoutDashboard, Database, History, ShieldCheck, Plus, X, Save, RotateCcw, Download,
@@ -421,6 +422,7 @@ function SettingsPage() {
                   <Download className="mr-2 h-4 w-4" /> Export settings
                 </Button>
               </div>
+              {isAdmin && <AgentExportToggle />}
             </CardContent>
           </Card>
         </TabsContent>
@@ -444,6 +446,35 @@ function SettingsPage() {
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+function AgentExportToggle() {
+  const setAllow = useServerFn(setAllowAgentExports);
+  const [allowed, setAllowedState] = useState<boolean>(false);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    supabase.from("app_settings").select("value").eq("key", "allow_agent_exports").maybeSingle()
+      .then(({ data }) => setAllowedState(data?.value === true));
+  }, []);
+  const toggle = async (v: boolean) => {
+    setBusy(true);
+    try {
+      await setAllow({ data: { allowed: v } });
+      setAllowedState(v);
+      toast.success(`Agent exports ${v ? "enabled" : "disabled"}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update setting");
+    } finally { setBusy(false); }
+  };
+  return (
+    <div className="md:col-span-2 flex items-center justify-between rounded-md border border-border p-3">
+      <div>
+        <p className="text-sm font-medium">Allow agents to export their own reported errors</p>
+        <p className="text-xs text-muted-foreground">When disabled, only admins can export. Enforced in both UI and API.</p>
+      </div>
+      <Switch checked={allowed} onCheckedChange={toggle} disabled={busy} />
     </div>
   );
 }

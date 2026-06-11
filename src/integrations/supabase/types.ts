@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       defect_audit_log: {
         Row: {
           changed_at: string
@@ -180,6 +201,111 @@ export type Database = {
           validity?: string
           version?: number
           video_url?: string | null
+        }
+        Relationships: []
+      }
+      export_audit_log: {
+        Row: {
+          created_at: string
+          environment: string | null
+          error: string | null
+          filters: Json
+          id: string
+          job_id: string | null
+          role: string
+          row_count: number
+          scope: string
+          status: string
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          environment?: string | null
+          error?: string | null
+          filters?: Json
+          id?: string
+          job_id?: string | null
+          role: string
+          row_count?: number
+          scope: string
+          status?: string
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string | null
+          error?: string | null
+          filters?: Json
+          id?: string
+          job_id?: string | null
+          role?: string
+          row_count?: number
+          scope?: string
+          status?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
+      }
+      export_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          environment: string | null
+          error: string | null
+          file_name: string | null
+          file_path: string | null
+          filters: Json
+          id: string
+          progress: number
+          requested_by_id: string | null
+          requested_by_name: string
+          retries: number
+          role: string
+          row_count: number
+          scope: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          environment?: string | null
+          error?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          filters?: Json
+          id?: string
+          progress?: number
+          requested_by_id?: string | null
+          requested_by_name: string
+          retries?: number
+          role: string
+          row_count?: number
+          scope: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          environment?: string | null
+          error?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          filters?: Json
+          id?: string
+          progress?: number
+          requested_by_id?: string | null
+          requested_by_name?: string
+          retries?: number
+          role?: string
+          row_count?: number
+          scope?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
