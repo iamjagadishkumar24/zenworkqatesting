@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_app/chatbot-testing")({
     <TestingModule
       title="Chatbot Testing"
       description="QA conversational flows, intents and hand-off behaviour."
-      module="Integrations"
+      module="Chatbot Testing"
       items={ITEMS}
       itemLabel="flow"
     />

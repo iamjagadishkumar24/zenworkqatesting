@@ -71,6 +71,9 @@ export function TestingModule({
   // Agents only get their own name in the assigned dropdown
   const allowedAgents = isAdmin ? AGENTS : (currentUser ? [currentUser.name] : []);
 
+  // Feature-based modules report errors against the selected item (no form/integration dropdowns).
+  const featureMode = module !== "Integrations" && module !== "1099 Forms" && module !== "1099 Online" && module !== "990 Forms";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -181,6 +184,7 @@ export function TestingModule({
         defaultModule={module}
         defaultAgents={allowedAgents}
         defaultIntegration={module === "Integrations" ? (reportFor ?? "") : ""}
+        featureMode={featureMode}
       />
       <DefectDetailSheet
         defectId={viewId}

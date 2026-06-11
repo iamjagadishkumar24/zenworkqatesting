@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   LayoutDashboard, FileText, Globe, FileSpreadsheet, Plug, MessageSquare,
-  Cpu, Sparkles, Bell as BellIcon,
+  Cpu, Sparkles, Bell as BellIcon, FileUp,
   BarChart3, Settings, ChevronLeft, ChevronRight, LogOut, Search, ListChecks, ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,10 +23,11 @@ const nav: NavItem[] = [
   { to: "/2290-forms", label: "2290 Forms", icon: FileSpreadsheet },
   { to: "/integrations", label: "Integrations", icon: Plug },
   { to: "/chatbot-testing", label: "Chatbot Testing", icon: MessageSquare },
+  { to: "/excel-import-testing", label: "Excel Import Testing", icon: FileUp },
   { to: "/functionality-testing", label: "Functionality Testing", icon: Cpu },
   { to: "/tax1099-features", label: "Tax1099 Features", icon: Sparkles },
   { to: "/my-reported-errors", label: "My Reported Errors", icon: ListChecks },
-  { to: "/retest", label: "Retest Assignments", icon: ClipboardCheck },
+  { to: "/retest", label: "Retest Testing Errors", icon: ClipboardCheck },
   { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
   { to: "/notifications", label: "Notifications", icon: BellIcon },
   { to: "/settings", label: "Settings", icon: Settings },

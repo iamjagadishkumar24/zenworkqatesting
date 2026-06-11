@@ -40,7 +40,16 @@ export type DefectStatus =
 export type Priority = "Low" | "Medium" | "High" | "Critical";
 export type Severity = "Low" | "Medium" | "High" | "Critical";
 
-export type Module = "1099 Forms" | "990 Forms" | "Integrations" | "1099 Online";
+export type Module =
+  | "1099 Forms"
+  | "990 Forms"
+  | "Integrations"
+  | "1099 Online"
+  | "2290 Forms"
+  | "Chatbot Testing"
+  | "Excel Import Testing"
+  | "Functionality Testing"
+  | "Tax1099 Features";
 
 export type TestingModule =
   | "1099 Forms"

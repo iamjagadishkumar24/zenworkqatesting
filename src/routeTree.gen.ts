@@ -25,6 +25,7 @@ import { Route as AppMyErrorsRouteImport } from './routes/_app.my-errors'
 import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
 import { Route as AppFunctionalityTestingRouteImport } from './routes/_app.functionality-testing'
 import { Route as AppFormsRouteImport } from './routes/_app.forms'
+import { Route as AppExcelImportTestingRouteImport } from './routes/_app.excel-import-testing'
 import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppChatbotTestingRouteImport } from './routes/_app.chatbot-testing'
@@ -109,6 +110,11 @@ const AppFormsRoute = AppFormsRouteImport.update({
   path: '/forms',
   getParentRoute: () => AppRoute,
 } as any)
+const AppExcelImportTestingRoute = AppExcelImportTestingRouteImport.update({
+  id: '/excel-import-testing',
+  path: '/excel-import-testing',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDefectsRoute = AppDefectsRouteImport.update({
   id: '/defects',
   path: '/defects',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
+  '/excel-import-testing': typeof AppExcelImportTestingRoute
   '/forms': typeof AppFormsRoute
   '/functionality-testing': typeof AppFunctionalityTestingRoute
   '/integrations': typeof AppIntegrationsRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
+  '/excel-import-testing': typeof AppExcelImportTestingRoute
   '/forms': typeof AppFormsRoute
   '/functionality-testing': typeof AppFunctionalityTestingRoute
   '/integrations': typeof AppIntegrationsRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/_app/chatbot-testing': typeof AppChatbotTestingRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/defects': typeof AppDefectsRoute
+  '/_app/excel-import-testing': typeof AppExcelImportTestingRoute
   '/_app/forms': typeof AppFormsRoute
   '/_app/functionality-testing': typeof AppFunctionalityTestingRoute
   '/_app/integrations': typeof AppIntegrationsRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
+    | '/excel-import-testing'
     | '/forms'
     | '/functionality-testing'
     | '/integrations'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
+    | '/excel-import-testing'
     | '/forms'
     | '/functionality-testing'
     | '/integrations'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/_app/chatbot-testing'
     | '/_app/dashboard'
     | '/_app/defects'
+    | '/_app/excel-import-testing'
     | '/_app/forms'
     | '/_app/functionality-testing'
     | '/_app/integrations'
@@ -383,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFormsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/excel-import-testing': {
+      id: '/_app/excel-import-testing'
+      path: '/excel-import-testing'
+      fullPath: '/excel-import-testing'
+      preLoaderRoute: typeof AppExcelImportTestingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/defects': {
       id: '/_app/defects'
       path: '/defects'
@@ -419,6 +438,7 @@ interface AppRouteChildren {
   AppChatbotTestingRoute: typeof AppChatbotTestingRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDefectsRoute: typeof AppDefectsRoute
+  AppExcelImportTestingRoute: typeof AppExcelImportTestingRoute
   AppFormsRoute: typeof AppFormsRoute
   AppFunctionalityTestingRoute: typeof AppFunctionalityTestingRoute
   AppIntegrationsRoute: typeof AppIntegrationsRoute
@@ -438,6 +458,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChatbotTestingRoute: AppChatbotTestingRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDefectsRoute: AppDefectsRoute,
+  AppExcelImportTestingRoute: AppExcelImportTestingRoute,
   AppFormsRoute: AppFormsRoute,
   AppFunctionalityTestingRoute: AppFunctionalityTestingRoute,
   AppIntegrationsRoute: AppIntegrationsRoute,
