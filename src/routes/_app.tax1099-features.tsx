@@ -1,0 +1,25 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { TestingModule } from "@/components/qa/TestingModule";
+
+const ITEMS = [
+  "TIN Match",
+  "W-9 Solicitation",
+  "Bulk Upload",
+  "Vendor Management",
+  "State Filing",
+  "Corrections",
+  "E-Delivery",
+  "Print & Mail",
+];
+
+export const Route = createFileRoute("/_app/tax1099-features")({
+  component: () => (
+    <TestingModule
+      title="Tax1099 Features"
+      description="Validate Tax1099 product features in the selected environment."
+      module="1099 Online"
+      items={ITEMS}
+      itemLabel="feature"
+    />
+  ),
+});

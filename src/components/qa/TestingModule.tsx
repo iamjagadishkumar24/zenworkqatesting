@@ -1,0 +1,188 @@
+import { useMemo, useState } from "react";
+import { useQA } from "@/lib/qa/store";
+import { useEnvironment } from "@/lib/qa/environment";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { DefectStatusBadge, PriorityBadge } from "./StatusBadge";
+import { DefectDetailSheet } from "./DefectDetailSheet";
+import { ReportDefectDialog } from "./ReportDefectDialog";
+import { Bug, Plus, Search, ArrowRight } from "lucide-react";
+import { AGENTS } from "@/lib/qa/constants";
+import type { Module } from "@/lib/qa/types";
+
+/**
+ * Generic testing module page. Used for Integrations, Chatbot Testing,
+ * Functionality Testing, Tax1099 Features and the 2290 sub-forms.
+ *
+ * It shows a catalog of sub-items (e.g. integration names or 2290 forms),
+ * lets the user open a defect list scoped to that sub-item and the active
+ * environment, and report a new defect.
+ */
+export function TestingModule({
+  title,
+  description,
+  module,
+  items,
+  itemLabel = "item",
+}: {
+  title: string;
+  description: string;
+  module: Module; // DB-stored module
+  items: string[];
+  itemLabel?: string;
+}) {
+  const { defects, currentUser } = useQA();
+  const { env } = useEnvironment();
+  const isAdmin = currentUser?.role === "admin";
+
+  const [picked, setPicked] = useState<string | null>(null);
+  const [reportFor, setReportFor] = useState<string | null>(null);
+  const [viewId, setViewId] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+
+  const visibleItems = useMemo(
+    () => items.filter((n) => (q ? n.toLowerCase().includes(q.toLowerCase()) : true)),
+    [items, q],
+  );
+
+  const openCount = (name: string) =>
+    defects.filter((d) =>
+      d.module === module &&
+      d.formFeature.includes(name) &&
+      (!env || d.environment === env) &&
+      !["Fixed", "Closed"].includes(d.status),
+    ).length;
+
+  const scopedDefects = useMemo(() => {
+    if (!picked) return [];
+    const me = currentUser?.name ?? "";
+    return defects
+      .filter((d) => d.module === module && d.formFeature.includes(picked))
+      .filter((d) => !env || d.environment === env)
+      .filter((d) => isAdmin || d.assignedAgent === me || d.createdBy === me)
+      .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
+  }, [picked, defects, module, env, isAdmin, currentUser]);
+
+  // Agents only get their own name in the assigned dropdown
+  const allowedAgents = isAdmin ? AGENTS : (currentUser ? [currentUser.name] : []);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <div className="flex gap-2">
+          <div className="relative w-72 max-w-full">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${itemLabel}s…`} className="pl-9" />
+          </div>
+          <Button onClick={() => { setReportFor(picked ?? items[0] ?? ""); }}>
+            <Plus className="mr-2 h-4 w-4" /> Report defect
+          </Button>
+        </div>
+      </div>
+
+      {!picked ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {visibleItems.map((name) => {
+            const open = openCount(name);
+            return (
+              <Card key={name} className="group border-border transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold leading-tight">{name}</p>
+                    {open > 0 && (
+                      <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400">
+                        <Bug className="h-3 w-3" /> {open}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground capitalize">{itemLabel}</p>
+                  <div className="mt-3 flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setPicked(name)}>
+                      Open <ArrowRight className="ml-1 h-3 w-3" />
+                    </Button>
+                    <Button size="sm" className="flex-1" onClick={() => setReportFor(name)}>
+                      Report
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+          {visibleItems.length === 0 && (
+            <Card className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
+              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                Nothing matches "{q}".
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Button variant="ghost" size="sm" onClick={() => setPicked(null)}>← Back to {itemLabel}s</Button>
+            <span className="font-medium">{picked}</span>
+            {env && <Badge variant="outline" className="ml-2">{env}</Badge>}
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Assigned</TableHead>
+                    <TableHead>Updated</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {scopedDefects.map((d) => (
+                    <TableRow key={d.id} className="cursor-pointer" onClick={() => setViewId(d.id)}>
+                      <TableCell className="font-mono text-xs">{d.id}</TableCell>
+                      <TableCell className="max-w-[320px] truncate font-medium">{d.title}</TableCell>
+                      <TableCell><DefectStatusBadge status={d.status} /></TableCell>
+                      <TableCell><PriorityBadge value={d.priority} /></TableCell>
+                      <TableCell className="text-sm">{d.assignedAgent}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{new Date(d.updatedAt).toLocaleDateString()}</TableCell>
+                    </TableRow>
+                  ))}
+                  {scopedDefects.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
+                        <Bug className="mx-auto mb-2 h-8 w-8 opacity-40" />
+                        No defects reported for {picked} in {env ?? "any environment"} yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <ReportDefectDialog
+        open={!!reportFor}
+        onOpenChange={(o) => { if (!o) setReportFor(null); }}
+        defaultForm={reportFor ?? ""}
+        defaultModule={module}
+        defaultAgents={allowedAgents}
+      />
+      <DefectDetailSheet
+        defectId={viewId}
+        open={!!viewId}
+        onOpenChange={(o) => { if (!o) setViewId(null); }}
+      />
+    </div>
+  );
+}

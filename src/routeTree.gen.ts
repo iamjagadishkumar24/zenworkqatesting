@@ -13,13 +13,21 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppTax1099FeaturesRouteImport } from './routes/_app.tax1099-features'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppSelectEnvironmentRouteImport } from './routes/_app.select-environment'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
+import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
+import { Route as AppMyReportedErrorsRouteImport } from './routes/_app.my-reported-errors'
 import { Route as AppMyErrorsRouteImport } from './routes/_app.my-errors'
+import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
+import { Route as AppFunctionalityTestingRouteImport } from './routes/_app.functionality-testing'
 import { Route as AppFormsRouteImport } from './routes/_app.forms'
 import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppChatbotTestingRouteImport } from './routes/_app.chatbot-testing'
+import { Route as App2290FormsRouteImport } from './routes/_app.2290-forms'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -40,9 +48,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppTax1099FeaturesRoute = AppTax1099FeaturesRouteImport.update({
+  id: '/tax1099-features',
+  path: '/tax1099-features',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSelectEnvironmentRoute = AppSelectEnvironmentRouteImport.update({
+  id: '/select-environment',
+  path: '/select-environment',
   getParentRoute: () => AppRoute,
 } as any)
 const AppReportsRoute = AppReportsRouteImport.update({
@@ -55,9 +73,29 @@ const AppOnline1099Route = AppOnline1099RouteImport.update({
   path: '/online-1099',
   getParentRoute: () => AppRoute,
 } as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMyReportedErrorsRoute = AppMyReportedErrorsRouteImport.update({
+  id: '/my-reported-errors',
+  path: '/my-reported-errors',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMyErrorsRoute = AppMyErrorsRouteImport.update({
   id: '/my-errors',
   path: '/my-errors',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIntegrationsRoute = AppIntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFunctionalityTestingRoute = AppFunctionalityTestingRouteImport.update({
+  id: '/functionality-testing',
+  path: '/functionality-testing',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFormsRoute = AppFormsRouteImport.update({
@@ -75,30 +113,56 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppChatbotTestingRoute = AppChatbotTestingRouteImport.update({
+  id: '/chatbot-testing',
+  path: '/chatbot-testing',
+  getParentRoute: () => AppRoute,
+} as any)
+const App2290FormsRoute = App2290FormsRouteImport.update({
+  id: '/2290-forms',
+  path: '/2290-forms',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/2290-forms': typeof App2290FormsRoute
+  '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
   '/forms': typeof AppFormsRoute
+  '/functionality-testing': typeof AppFunctionalityTestingRoute
+  '/integrations': typeof AppIntegrationsRoute
   '/my-errors': typeof AppMyErrorsRoute
+  '/my-reported-errors': typeof AppMyReportedErrorsRoute
+  '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
+  '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
+  '/tax1099-features': typeof AppTax1099FeaturesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/2290-forms': typeof App2290FormsRoute
+  '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
   '/forms': typeof AppFormsRoute
+  '/functionality-testing': typeof AppFunctionalityTestingRoute
+  '/integrations': typeof AppIntegrationsRoute
   '/my-errors': typeof AppMyErrorsRoute
+  '/my-reported-errors': typeof AppMyReportedErrorsRoute
+  '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
+  '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
+  '/tax1099-features': typeof AppTax1099FeaturesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,13 +170,21 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_app/2290-forms': typeof App2290FormsRoute
+  '/_app/chatbot-testing': typeof AppChatbotTestingRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/defects': typeof AppDefectsRoute
   '/_app/forms': typeof AppFormsRoute
+  '/_app/functionality-testing': typeof AppFunctionalityTestingRoute
+  '/_app/integrations': typeof AppIntegrationsRoute
   '/_app/my-errors': typeof AppMyErrorsRoute
+  '/_app/my-reported-errors': typeof AppMyReportedErrorsRoute
+  '/_app/notifications': typeof AppNotificationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
   '/_app/reports': typeof AppReportsRoute
+  '/_app/select-environment': typeof AppSelectEnvironmentRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/tax1099-features': typeof AppTax1099FeaturesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,38 +192,62 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/reset-password'
+    | '/2290-forms'
+    | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
     | '/forms'
+    | '/functionality-testing'
+    | '/integrations'
     | '/my-errors'
+    | '/my-reported-errors'
+    | '/notifications'
     | '/online-1099'
     | '/reports'
+    | '/select-environment'
     | '/settings'
+    | '/tax1099-features'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/reset-password'
+    | '/2290-forms'
+    | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
     | '/forms'
+    | '/functionality-testing'
+    | '/integrations'
     | '/my-errors'
+    | '/my-reported-errors'
+    | '/notifications'
     | '/online-1099'
     | '/reports'
+    | '/select-environment'
     | '/settings'
+    | '/tax1099-features'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/login'
     | '/reset-password'
+    | '/_app/2290-forms'
+    | '/_app/chatbot-testing'
     | '/_app/dashboard'
     | '/_app/defects'
     | '/_app/forms'
+    | '/_app/functionality-testing'
+    | '/_app/integrations'
     | '/_app/my-errors'
+    | '/_app/my-reported-errors'
+    | '/_app/notifications'
     | '/_app/online-1099'
     | '/_app/reports'
+    | '/_app/select-environment'
     | '/_app/settings'
+    | '/_app/tax1099-features'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -191,11 +287,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/tax1099-features': {
+      id: '/_app/tax1099-features'
+      path: '/tax1099-features'
+      fullPath: '/tax1099-features'
+      preLoaderRoute: typeof AppTax1099FeaturesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/select-environment': {
+      id: '/_app/select-environment'
+      path: '/select-environment'
+      fullPath: '/select-environment'
+      preLoaderRoute: typeof AppSelectEnvironmentRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/reports': {
@@ -212,11 +322,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOnline1099RouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/my-reported-errors': {
+      id: '/_app/my-reported-errors'
+      path: '/my-reported-errors'
+      fullPath: '/my-reported-errors'
+      preLoaderRoute: typeof AppMyReportedErrorsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/my-errors': {
       id: '/_app/my-errors'
       path: '/my-errors'
       fullPath: '/my-errors'
       preLoaderRoute: typeof AppMyErrorsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/integrations': {
+      id: '/_app/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof AppIntegrationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/functionality-testing': {
+      id: '/_app/functionality-testing'
+      path: '/functionality-testing'
+      fullPath: '/functionality-testing'
+      preLoaderRoute: typeof AppFunctionalityTestingRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/forms': {
@@ -240,27 +378,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/chatbot-testing': {
+      id: '/_app/chatbot-testing'
+      path: '/chatbot-testing'
+      fullPath: '/chatbot-testing'
+      preLoaderRoute: typeof AppChatbotTestingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/2290-forms': {
+      id: '/_app/2290-forms'
+      path: '/2290-forms'
+      fullPath: '/2290-forms'
+      preLoaderRoute: typeof App2290FormsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  App2290FormsRoute: typeof App2290FormsRoute
+  AppChatbotTestingRoute: typeof AppChatbotTestingRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDefectsRoute: typeof AppDefectsRoute
   AppFormsRoute: typeof AppFormsRoute
+  AppFunctionalityTestingRoute: typeof AppFunctionalityTestingRoute
+  AppIntegrationsRoute: typeof AppIntegrationsRoute
   AppMyErrorsRoute: typeof AppMyErrorsRoute
+  AppMyReportedErrorsRoute: typeof AppMyReportedErrorsRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
   AppReportsRoute: typeof AppReportsRoute
+  AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppTax1099FeaturesRoute: typeof AppTax1099FeaturesRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  App2290FormsRoute: App2290FormsRoute,
+  AppChatbotTestingRoute: AppChatbotTestingRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDefectsRoute: AppDefectsRoute,
   AppFormsRoute: AppFormsRoute,
+  AppFunctionalityTestingRoute: AppFunctionalityTestingRoute,
+  AppIntegrationsRoute: AppIntegrationsRoute,
   AppMyErrorsRoute: AppMyErrorsRoute,
+  AppMyReportedErrorsRoute: AppMyReportedErrorsRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppOnline1099Route: AppOnline1099Route,
   AppReportsRoute: AppReportsRoute,
+  AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppTax1099FeaturesRoute: AppTax1099FeaturesRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -274,3 +442,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
