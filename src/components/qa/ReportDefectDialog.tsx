@@ -31,7 +31,7 @@ function isValidUrl(u: string) {
 
 export function ReportDefectDialog({
   open, onOpenChange, defaultForm = "", defaultModule = "1099 Forms",
-  defaultAgents, defaultIntegration = "",
+  defaultAgents, defaultIntegration = "", featureMode = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -39,6 +39,8 @@ export function ReportDefectDialog({
   defaultModule?: Module;
   defaultAgents?: string[];
   defaultIntegration?: string;
+  /** When true, hide form/integration dropdowns and treat defaultForm as the read-only feature/module item. */
+  featureMode?: boolean;
 }) {
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
@@ -48,8 +50,9 @@ export function ReportDefectDialog({
   const agentOptions = isAgent && currentUser
     ? [currentUser.name]
     : (defaultAgents && defaultAgents.length ? defaultAgents : AGENTS);
-  const showIntegration = defaultModule === "Integrations";
+  const showIntegration = !featureMode && defaultModule === "Integrations";
   const lockIntegration = showIntegration && !!defaultIntegration;
+  const showForm = !featureMode;
   const [draft, setDraft] = useState<Draft>(() => ({
     module: defaultModule, formFeature: "", title: "", description: "",
     stepsToReproduce: "", expectedResult: "", actualResult: "",
@@ -78,7 +81,8 @@ export function ReportDefectDialog({
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   const submit = async () => {
-    if (!draft._form) return toast.error("Please select a form");
+    if (showForm && !draft._form) return toast.error("Please select a form");
+    if (featureMode && !draft._form) return toast.error("Missing feature context");
     // Integration only applies when reporting from the Integrations module
     if (showIntegration && !draft._integration) return toast.error("Please select an integration");
     if (!draft.assignedAgent) return toast.error("Please select an assigned agent");
@@ -89,7 +93,7 @@ export function ReportDefectDialog({
 
     const payload = {
       ...draft,
-      formFeature: encodeFormFeature(draft._form, draft._integration),
+      formFeature: featureMode ? draft._form : encodeFormFeature(draft._form, draft._integration),
     };
     delete (payload as Partial<Draft>)._form;
     delete (payload as Partial<Draft>)._integration;
@@ -117,15 +121,28 @@ export function ReportDefectDialog({
         </DialogHeader>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label>Form *</Label>
-            <Select value={draft._form} onValueChange={(v) => upd("_form", v)}>
-              <SelectTrigger><SelectValue placeholder="Select a form" /></SelectTrigger>
-              <SelectContent className="max-h-72">
-                {FORM_LIST.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {featureMode ? (
+            <>
+              <div>
+                <Label>Module</Label>
+                <Input value={defaultModule} readOnly disabled aria-readonly />
+              </div>
+              <div>
+                <Label>Feature</Label>
+                <Input value={draft._form} readOnly disabled aria-readonly />
+              </div>
+            </>
+          ) : (
+            <div>
+              <Label>Form *</Label>
+              <Select value={draft._form} onValueChange={(v) => upd("_form", v)}>
+                <SelectTrigger><SelectValue placeholder="Select a form" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {FORM_LIST.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {showIntegration && (
             <div>
               <Label>Integration *</Label>
