@@ -2,10 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
+import { scopeForUser, filterByEnvironment } from "@/lib/qa/scope";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TestStatusBadge } from "@/components/qa/StatusBadge";
-import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe } from "lucide-react";
+import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe, Wrench, RotateCw, CircleCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -13,39 +14,54 @@ export const Route = createFileRoute("/_app/dashboard")({
 });
 
 function Dashboard() {
-  const { forms, defects } = useQA();
+  const { forms, defects, currentUser } = useQA();
   const { env } = useEnvironment();
   const navigate = useNavigate();
 
   const scopedDefects = useMemo(
-    () => defects.filter((d) => !env || !d.environment || d.environment === env),
-    [defects, env],
+    () => {
+      const byUser = scopeForUser(
+        defects,
+        currentUser ? { name: currentUser.name, role: currentUser.role } : null,
+      );
+      return filterByEnvironment(byUser, env);
+    },
+    [defects, env, currentUser],
   );
 
   const stats = useMemo(() => {
-    const passed = forms.reduce((s, f) => s + f.passed, 0);
-    const failed = forms.reduce((s, f) => s + f.failed, 0);
+    const total = scopedDefects.length;
     const open = scopedDefects.filter((d) => !["Fixed", "Closed"].includes(d.status)).length;
-    return { total: passed + failed, passed, failed, open };
-  }, [forms, scopedDefects]);
+    const valid = scopedDefects.filter((d) => d.validity === "Valid").length;
+    const invalid = scopedDefects.filter((d) => d.validity === "Invalid").length;
+    const fixed = scopedDefects.filter((d) => d.status === "Fixed").length;
+    const retest = scopedDefects.filter((d) => d.status === "Retest Required").length;
+    const closed = scopedDefects.filter((d) => d.status === "Closed").length;
+    return { total, open, valid, invalid, fixed, retest, closed };
+  }, [scopedDefects]);
 
   const kpis = [
     { label: "Total Tests", value: stats.total, Icon: ListChecks, tone: "primary", to: "/my-reported-errors" },
-    { label: "Valid", value: stats.passed, Icon: CheckCircle2, tone: "success", to: "/forms" },
-    { label: "Invalid Errors", value: stats.failed, Icon: XCircle, tone: "danger", to: "/my-reported-errors", filter: "failed" },
-    { label: "Open Errors", value: stats.open, Icon: Bug, tone: "warning", to: "/my-reported-errors", filter: "open" },
+    { label: "Open Errors", value: stats.open, Icon: Bug, tone: "warning", to: "/my-reported-errors" },
+    { label: "Valid Errors", value: stats.valid, Icon: CheckCircle2, tone: "success", to: "/my-reported-errors" },
+    { label: "Invalid Errors", value: stats.invalid, Icon: XCircle, tone: "danger", to: "/my-reported-errors" },
+    { label: "Fixed Errors", value: stats.fixed, Icon: Wrench, tone: "success", to: "/my-reported-errors" },
+    { label: "Retest Errors", value: stats.retest, Icon: RotateCw, tone: "warning", to: "/my-reported-errors" },
+    { label: "Closed Errors", value: stats.closed, Icon: CircleCheck, tone: "primary", to: "/my-reported-errors" },
   ] as const;
 
+  const openCountByModule = (mod: string) =>
+    scopedDefects.filter((d) => d.module === mod && !["Fixed", "Closed"].includes(d.status)).length;
   const modules = [
     {
       name: "Forms", to: "/forms", Icon: FileText,
       forms: forms.filter((f) => f.module === "1099 Forms").length,
-      bugs: forms.filter((f) => f.module === "1099 Forms").reduce((s, f) => s + f.openDefects, 0),
+      bugs: openCountByModule("1099 Forms"),
     },
     {
       name: "1099 Online Forms", to: "/online-1099", Icon: Globe,
       forms: forms.filter((f) => f.module === "1099 Online").length,
-      bugs: forms.filter((f) => f.module === "1099 Online").reduce((s, f) => s + f.openDefects, 0),
+      bugs: openCountByModule("1099 Online"),
     },
   ];
 
@@ -63,7 +79,7 @@ function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         {kpis.map((k) => (
           <button
             key={k.label}
