@@ -80,6 +80,7 @@ export type Defect = {
   id: string;
   module: Module;
   formFeature: string;
+  taxYear?: string;
   title: string;
   description: string;
   stepsToReproduce: string;

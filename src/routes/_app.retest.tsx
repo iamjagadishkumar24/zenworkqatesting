@@ -95,6 +95,7 @@ function RetestPage() {
                   <TableHead>Type</TableHead>
                   <TableHead>Agent</TableHead>
                   <TableHead>Priority</TableHead>
+                  <TableHead>Tax Year</TableHead>
                   <TableHead>Due</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Updated</TableHead>
@@ -140,6 +141,7 @@ function RetestPage() {
                           </Select>
                         ) : <Badge variant="outline">{r.priority}</Badge>}
                       </TableCell>
+                      <TableCell className="text-xs">{r.tax_year ?? "—"}</TableCell>
                       <TableCell className="text-xs">{r.due_date ?? "—"}</TableCell>
                       <TableCell>
                         <Select value={r.status} disabled={!canEditStatus} onValueChange={async (v) => {

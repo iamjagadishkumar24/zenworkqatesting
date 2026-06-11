@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import {
-  FORM_LIST, INTEGRATIONS, AGENTS, encodeFormFeature,
+  FORM_LIST, INTEGRATIONS, AGENTS, encodeFormFeature, TAX_YEARS, DEFAULT_TAX_YEAR,
 } from "@/lib/qa/constants";
 import type { Defect, Module, Priority, Severity } from "@/lib/qa/types";
 
@@ -32,6 +32,7 @@ function isValidUrl(u: string) {
 export function ReportDefectDialog({
   open, onOpenChange, defaultForm = "", defaultModule = "1099 Forms",
   defaultAgents, defaultIntegration = "", featureMode = false, formOptions,
+  defaultTaxYear, lockTaxYear = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -43,6 +44,10 @@ export function ReportDefectDialog({
   featureMode?: boolean;
   /** Optional restricted list of forms (e.g. Integrations → only 1099-NEC / 1099-MISC). */
   formOptions?: string[];
+  /** Inherit tax year (e.g. from an assigned task). */
+  defaultTaxYear?: string;
+  /** Lock tax year selection when reporting from an assigned task. */
+  lockTaxYear?: boolean;
 }) {
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
@@ -62,6 +67,7 @@ export function ReportDefectDialog({
     jiraUrl: "", attachmentUrl: "", attachmentUrl2: "", evidenceUrl: "",
     status: "Reported", priority: "Medium", severity: "Medium",
     environment: env ?? "Production",
+    taxYear: defaultTaxYear ?? DEFAULT_TAX_YEAR,
     assignedAgent: (isAgent && currentUser?.name) || agentOptions[0] || "",
     _form: defaultForm, _integration: defaultIntegration,
   }));
@@ -74,12 +80,13 @@ export function ReportDefectDialog({
         _integration: defaultIntegration || d._integration,
         module: defaultModule,
         environment: env ?? d.environment ?? "Production",
+        taxYear: defaultTaxYear ?? d.taxYear ?? DEFAULT_TAX_YEAR,
         assignedAgent: isAgent && currentUser?.name
           ? currentUser.name
           : (d.assignedAgent || agentOptions[0] || ""),
       }));
     }
-  }, [open, defaultForm, defaultModule, defaultIntegration, env, isAgent, currentUser?.name]);
+  }, [open, defaultForm, defaultModule, defaultIntegration, defaultTaxYear, env, isAgent, currentUser?.name]);
 
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
@@ -93,6 +100,7 @@ export function ReportDefectDialog({
     if (!draft.description.trim()) return toast.error("Description is required");
     if (draft.jiraUrl && !isValidUrl(draft.jiraUrl)) return toast.error("Jira URL is not valid");
     if (draft.attachmentUrl && !isValidUrl(draft.attachmentUrl)) return toast.error("Attachment URL is not valid");
+    if (!draft.taxYear) return toast.error("Please select the tax year for this reported error.");
 
     const payload = {
       ...draft,
@@ -168,6 +176,17 @@ export function ReportDefectDialog({
           <div>
             <Label>Environment</Label>
             <Input value={draft.environment ?? env ?? "Production"} readOnly disabled aria-readonly />
+          </div>
+          <div>
+            <Label>Tax Year *</Label>
+            {lockTaxYear ? (
+              <Input value={draft.taxYear ?? ""} readOnly disabled aria-readonly />
+            ) : (
+              <Select value={draft.taxYear ?? ""} onValueChange={(v) => upd("taxYear", v)}>
+                <SelectTrigger><SelectValue placeholder="Select Tax Year" /></SelectTrigger>
+                <SelectContent>{TAX_YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <Label>Assigned Agent *</Label>

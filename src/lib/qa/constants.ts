@@ -68,6 +68,12 @@ export const AGENTS: string[] = Array.from(new Set([
 // so we don't need a schema migration.
 export const FF_SEP = " · ";
 
+// Tax year shared options used across Task Assignment, Report Defect,
+// filters, and exports.
+export const TAX_YEARS = ["2024", "2025", "2026"] as const;
+export type TaxYear = (typeof TAX_YEARS)[number];
+export const DEFAULT_TAX_YEAR: TaxYear = "2025";
+
 export function encodeFormFeature(form: string, integration?: string): string {
   const f = (form || "").trim();
   const i = (integration || "").trim();

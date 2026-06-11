@@ -5,6 +5,7 @@ import type { Defect, Environment } from "./types";
 export const REPORTED_ERROR_HEADERS = [
   "Agent",
   "Section",
+  "Tax Year",
   "Error Description",
   "Expected Result / Outcome",
   "Screenshots / Recordings",
@@ -18,6 +19,7 @@ const HEADERS = REPORTED_ERROR_HEADERS;
 export type ReportedErrorRow = {
   agent: string;
   section: string;
+  taxYear: string;
   description: string;
   expected: string;
   screenshot: string;
@@ -30,6 +32,7 @@ export function toReportedErrorRow(d: Defect): ReportedErrorRow {
   return {
     agent: d.createdBy ?? "",
     section: [d.module, d.formFeature].filter(Boolean).join(" / "),
+    taxYear: d.taxYear ?? "",
     description: [d.description, d.actualResult].filter(Boolean).join("\n\n"),
     expected: d.expectedResult ?? "",
     screenshot: pickScreenshot(d),
@@ -51,7 +54,7 @@ export function buildReportedErrorsFilename(env: Environment | null | undefined,
 export function buildReportedErrorsWorkbook(defects: Defect[]): ArrayBuffer {
   const rowsTyped: (string | number | Date | null)[][] = defects.map((d) => {
     const r = toReportedErrorRow(d);
-    return [r.agent, r.section, r.description, r.expected, r.screenshot, r.link, r.jira, r.reportedAt ? toDate(r.reportedAt) : null];
+    return [r.agent, r.section, r.taxYear, r.description, r.expected, r.screenshot, r.link, r.jira, r.reportedAt ? toDate(r.reportedAt) : null];
   });
   const ws = buildSheet(rowsTyped);
   const buf = XLSXStyle.write(
@@ -109,8 +112,9 @@ function buildSheet(rows: (string | number | Date | null)[][]) {
   });
   ws["!rows"] = [{ hpt: 22 }];
 
-  const wrapCols = new Set([2, 3]);
-  const linkCols = new Set([4, 5, 6]);
+  // Columns shifted by one because of the new "Tax Year" column at index 2.
+  const wrapCols = new Set([3, 4]);
+  const linkCols = new Set([5, 6, 7]);
   for (let r = 0; r < rows.length; r++) {
     for (let c = 0; c < HEADERS.length; c++) {
       const addr = XLSXStyle.utils.encode_cell({ r: r + 1, c });
@@ -129,7 +133,7 @@ function buildSheet(rows: (string | number | Date | null)[][]) {
         cell.l = { Target: cell.v, Tooltip: "Open link" };
         baseStyle.font = { color: { rgb: "1D4ED8" }, underline: true };
       }
-      if (c === 7 && cell.v instanceof Date) {
+      if (c === 8 && cell.v instanceof Date) {
         cell.t = "d";
         cell.z = "yyyy-mm-dd hh:mm";
       }
@@ -147,7 +151,7 @@ export function exportReportedErrorsXlsx(defects: Defect[], env: Environment | n
   const filename = buildReportedErrorsFilename(env);
   const rowsTyped: (string | number | Date | null)[][] = defects.map((d) => {
     const r = toReportedErrorRow(d);
-    return [r.agent, r.section, r.description, r.expected, r.screenshot, r.link, r.jira, r.reportedAt ? toDate(r.reportedAt) : null];
+    return [r.agent, r.section, r.taxYear, r.description, r.expected, r.screenshot, r.link, r.jira, r.reportedAt ? toDate(r.reportedAt) : null];
   });
   const ws = buildSheet(rowsTyped);
   XLSXStyle.writeFile({ SheetNames: ["Reported Errors"], Sheets: { "Reported Errors": ws } }, filename);

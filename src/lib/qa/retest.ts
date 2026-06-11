@@ -40,6 +40,7 @@ export type RetestAssignment = {
   updated_at: string;
   completed_at: string | null;
   all_forms?: boolean;
+  tax_year?: string | null;
   forms: RetestForm[];
 };
 
@@ -117,6 +118,7 @@ export function useRetests() {
     pendingEmails?: string[];
     /** When true, assignment covers every form (no form rows written). */
     allForms?: boolean;
+    taxYear?: string | null;
     forms: { id: string; name: string }[];
     instructions: string;
     priority: RetestPriority;
@@ -153,6 +155,7 @@ export function useRetests() {
         title: input.title ?? "",
         module: input.module ?? "",
         all_forms: !!input.allForms,
+        tax_year: input.taxYear ?? null,
       });
       if (error) return { ok: false, error: error.message };
       if (!input.allForms && input.forms.length) {
@@ -173,6 +176,7 @@ export function useRetests() {
         title: input.title ?? "",
         module: input.module ?? "",
         all_forms: !!input.allForms,
+        tax_year: input.taxYear ?? "",
       };
       const { error } = await supabase.from("retest_pending_assignments").insert({
         email,

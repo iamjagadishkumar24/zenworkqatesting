@@ -56,6 +56,7 @@ type DefectRow = {
   jira_url: string | null; validity: string;
   status: string; priority: string; severity: string;
   environment: string;
+  tax_year: string | null;
   assigned_agent: string; created_by: string; updated_by: string;
   version: number; created_at: string; updated_at: string;
 };
@@ -73,6 +74,7 @@ type NotifRow = { id: string; type: string; title: string; body: string; defect_
 function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersion {
   return {
     id: r.id, module: r.module as Module, formFeature: r.form_feature,
+    taxYear: r.tax_year ?? undefined,
     title: r.title, description: r.description,
     stepsToReproduce: r.steps_to_reproduce,
     expectedResult: r.expected_result, actualResult: r.actual_result,
@@ -341,6 +343,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         jira_url: d.jiraUrl || null,
         validity: d.validity || "Unverified",
         environment: d.environment || "Production",
+        tax_year: d.taxYear || null,
         status: d.status, priority: d.priority, severity: d.severity,
         assigned_agent: d.assignedAgent, created_by: me.name, updated_by: me.name,
       });
@@ -362,6 +365,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         videoUrl: "video_url", excelUrl: "excel_url", driveUrl: "drive_url",
         jiraUrl: "jira_url", validity: "validity",
         environment: "environment",
+        taxYear: "tax_year",
         status: "status", priority: "priority", severity: "severity",
         assignedAgent: "assigned_agent",
       };
