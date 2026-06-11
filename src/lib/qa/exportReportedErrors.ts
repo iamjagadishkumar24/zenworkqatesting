@@ -13,16 +13,10 @@ const HEADERS = [
   "Date Reported",
 ] as const;
 
-function fmtDate(iso: string): string {
-  if (!iso) return "";
+function toDate(iso: string): Date | null {
+  if (!iso) return null;
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mi = String(d.getMinutes()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  return isNaN(d.getTime()) ? null : d;
 }
 
 function pickScreenshot(d: Defect): string {
@@ -46,7 +40,7 @@ export function exportReportedErrorsXlsx(defects: Defect[], env: Environment | n
   const envLabel = env ?? "All";
   const filename = `Zenwork_Error_Report_${envLabel}_${yyyy}-${mm}-${dd}.xlsx`;
 
-  const rows: (string | number)[][] = defects.map((d) => [
+  const rows: (string | number | Date | null)[][] = defects.map((d) => [
     d.createdBy ?? "",
     [d.module, d.formFeature].filter(Boolean).join(" / "),
     [d.description, d.actualResult].filter(Boolean).join("\n\n"),
@@ -54,11 +48,11 @@ export function exportReportedErrorsXlsx(defects: Defect[], env: Environment | n
     pickScreenshot(d),
     pickLink(d),
     d.jiraUrl ?? "",
-    fmtDate(d.createdAt),
+    toDate(d.createdAt),
   ]);
 
-  const aoa: (string | number)[][] = [HEADERS as unknown as string[], ...rows];
-  const ws = XLSXStyle.utils.aoa_to_sheet(aoa);
+  const aoa: (string | number | Date | null)[][] = [HEADERS as unknown as string[], ...rows];
+  const ws = XLSXStyle.utils.aoa_to_sheet(aoa, { cellDates: true });
 
   // Column widths (auto-fit based on content, capped)
   const widths = HEADERS.map((h, ci) => {
