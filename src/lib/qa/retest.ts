@@ -50,29 +50,40 @@ export function useRetests() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [a, f] = await Promise.all([
-      supabase.from("retest_assignments").select("*").order("created_at", { ascending: false }),
-      supabase.from("retest_assignment_forms").select("*"),
-    ]);
-    const forms = (f.data ?? []) as RetestForm[];
-    const rows = ((a.data ?? []) as Omit<RetestAssignment, "forms">[]).map((r) => ({
-      ...r,
-      forms: forms.filter((x) => x.assignment_id === r.id),
-    }));
-    setItems(rows);
-    setLoading(false);
+    try {
+      const [a, f] = await Promise.all([
+        supabase.from("retest_assignments").select("*").order("created_at", { ascending: false }),
+        supabase.from("retest_assignment_forms").select("*"),
+      ]);
+      const forms = (f.data ?? []) as RetestForm[];
+      const rows = ((a.data ?? []) as Omit<RetestAssignment, "forms">[]).map((r) => ({
+        ...r,
+        forms: forms.filter((x) => x.assignment_id === r.id),
+      }));
+      setItems(rows);
+    } catch (e) {
+      console.warn("useRetests: load failed", e);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     if (!currentUser) return;
     void load();
-    const channelName = `retest-realtime-${Math.random().toString(36).slice(2, 9)}`;
-    const ch = supabase
-      .channel(channelName)
-      .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignments" }, () => void load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignment_forms" }, () => void load())
-      .subscribe();
-    return () => { void supabase.removeChannel(ch); };
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      const channelName = `retest-realtime-${Math.random().toString(36).slice(2, 9)}`;
+      ch = supabase
+        .channel(channelName)
+        .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignments" }, () => void load())
+        .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignment_forms" }, () => void load())
+        .subscribe();
+    } catch (e) {
+      console.warn("useRetests: realtime subscribe failed", e);
+    }
+    return () => { if (ch) { try { void supabase.removeChannel(ch); } catch { /* noop */ } } };
   }, [currentUser, load]);
 
   const scoped = items.filter((r) => {
