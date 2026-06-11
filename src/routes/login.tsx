@@ -166,7 +166,7 @@ function LoginPage() {
       >
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/15 font-bold backdrop-blur">Z</div>
-          <span className="text-xl font-semibold">Zenwork QA Portal</span>
+          <span className="text-xl font-semibold">Zenwork Testing Portal</span>
         </div>
         <div>
           <h2 className="text-4xl font-bold leading-tight">Ship higher-quality tax forms, faster.</h2>
@@ -180,7 +180,7 @@ function LoginPage() {
         <Card className="w-full max-w-md border-border shadow-[var(--shadow-card)]">
           <CardHeader>
             <CardTitle className="text-2xl">Sign in</CardTitle>
-            <CardDescription>Access the Zenwork QA dashboard</CardDescription>
+            <CardDescription>Access the Zenwork Testing dashboard</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
