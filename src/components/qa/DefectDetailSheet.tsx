@@ -386,7 +386,7 @@ export function DefectDetailSheet({
                   | { kind: "comment"; id: string; at: string; actor: string; text: string }
                   | { kind: "change"; id: string; at: string; actor: string; field: string; oldVal: string | null; newVal: string | null };
                 const items: HItem[] = [
-                  { kind: "created", at: defect.createdAt, actor: defect.createdBy },
+                  { kind: "created" as const, at: defect.createdAt, actor: defect.createdBy },
                   ...defect.comments.map((c) => ({ kind: "comment" as const, id: c.id, at: c.createdAt, actor: c.author, text: c.text })),
                   ...history.map((h) => ({ kind: "change" as const, id: h.id, at: h.changedAt, actor: h.changedBy, field: h.field, oldVal: h.oldValue, newVal: h.newValue })),
                 ].sort((a, b) => +new Date(a.at) - +new Date(b.at));
