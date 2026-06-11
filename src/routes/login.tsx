@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useServerFn } from "@tanstack/react-start";
-import { resetSampleAdmin, sampleAdminStatus, accountStatus } from "@/lib/qa/admin.functions";
+import { accountStatus } from "@/lib/qa/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { HelpCircle, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { HelpCircle, Eye, EyeOff, ShieldCheck, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
@@ -48,12 +47,8 @@ export function LoginPage() {
   const [name, setName] = useState("");
   const [sEmail, setSEmail] = useState("");
   const [sPwd, setSPwd] = useState("");
-  const [seeding, setSeeding] = useState(false);
-  const reset = useServerFn(resetSampleAdmin);
-  const checkSample = useServerFn(sampleAdminStatus);
   const checkAccount = useServerFn(accountStatus);
   const [hint, setHint] = useState<{ tone: "info" | "warn" | "error"; title: string; body: string } | null>(null);
-  const [sample, setSample] = useState<{ loading: boolean; exists?: boolean; isAdmin?: boolean; active?: boolean }>({ loading: true });
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotBusy, setForgotBusy] = useState(false);
@@ -63,14 +58,6 @@ export function LoginPage() {
   const emailRef = useRef<HTMLInputElement>(null);
   const pwdRef = useRef<HTMLInputElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    checkSample()
-      .then((r) => { if (!cancelled) setSample({ loading: false, ...r }); })
-      .catch(() => { if (!cancelled) setSample({ loading: false }); });
-    return () => { cancelled = true; };
-  }, [checkSample]);
 
   useEffect(() => {
     try {
@@ -143,27 +130,6 @@ export function LoginPage() {
     navigate({ to: "/select-environment" });
   };
 
-  const seedAdmin = async () => {
-    setSeeding(true);
-    try {
-      const r = await reset();
-      setEmail(r.email);
-      setPassword(r.password);
-      const li = await login(r.email, r.password);
-      if (!li.ok) {
-        toast.success(`Sample admin ready — email: ${r.email}, password: ${r.password}`);
-      } else {
-        toast.success("Signed in as sample admin");
-        navigate({ to: "/dashboard" });
-      }
-      setSample({ loading: false, exists: true, isAdmin: true, active: true });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not create sample admin");
-    } finally {
-      setSeeding(false);
-    }
-  };
-
   const sendReset = async () => {
     if (!forgotEmail) return;
     setForgotBusy(true);
@@ -175,35 +141,6 @@ export function LoginPage() {
     toast.success("If an account exists for that email, a reset link is on its way.");
     setForgotOpen(false);
     setForgotEmail("");
-  };
-
-  const renderSampleStatus = () => {
-    if (sample.loading) {
-      return (
-        <Badge variant="secondary" className="gap-1">
-          <Loader2 className="h-3 w-3 animate-spin" /> Checking…
-        </Badge>
-      );
-    }
-    if (!sample.exists) {
-      return (
-        <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400">
-          <AlertCircle className="h-3 w-3" /> Not created
-        </Badge>
-      );
-    }
-    if (sample.isAdmin && sample.active) {
-      return (
-        <Badge variant="outline" className="gap-1 border-emerald-500/40 text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="h-3 w-3" /> Ready
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400">
-        <AlertCircle className="h-3 w-3" /> Needs reset
-      </Badge>
-    );
   };
 
   return (
@@ -340,37 +277,6 @@ export function LoginPage() {
                   <p className="text-center text-xs text-white/60">
                     No account yet? Use <span className="font-medium">Create account</span> — the first signup becomes Admin.
                   </p>
-                  <div className="rounded-md border border-dashed border-white/25 bg-white/5 p-3 text-xs">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <p className="font-medium text-white">Try the sample admin</p>
-                      {renderSampleStatus()}
-                    </div>
-                    <p className="mb-2 text-white/70">
-                      Email: <span className="font-mono">admin@qaportal.app</span><br />
-                      Password: <span className="font-mono">Admin@12345</span>
-                    </p>
-                    {!sample.loading && sample.exists && sample.isAdmin && sample.active ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="w-full"
-                        onClick={async () => {
-                          setEmail("admin@qaportal.app");
-                          setPassword("Admin@12345");
-                          const r = await login("admin@qaportal.app", "Admin@12345");
-                          if (!r.ok) return toast.error(`${r.error} — click Reset to re-mint the password.`);
-                          toast.success("Signed in as sample admin");
-                          navigate({ to: "/dashboard" });
-                        }}
-                      >
-                        Sign in as sample admin
-                      </Button>
-                    ) : (
-                      <Button type="button" variant="outline" size="sm" className="w-full border-white/30 bg-white/5 text-white hover:bg-white/15" onClick={seedAdmin} disabled={seeding}>
-                        {seeding ? "Setting up…" : sample.exists ? "Reset sample admin & sign in" : "Create sample admin & sign in"}
-                      </Button>
-                    )}
-                  </div>
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="trouble" className="border-white/15">
                       <AccordionTrigger className="py-2 text-xs text-white/80 hover:no-underline">
