@@ -346,6 +346,8 @@ export function DefectDetailSheet({
                 {defect.comments.map((c) => {
                   const author = users.find((u) => u.name === c.author);
                   const role = author?.role;
+                  const canEditComment = currentUser?.name === c.author || isAdmin;
+                  const isEditing = editingCommentId === c.id;
                   return (
                     <div key={c.id} className="rounded-md border bg-muted/40 p-2">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -358,10 +360,73 @@ export function DefectDetailSheet({
                               {role}
                             </span>
                           )}
+                          {c.edited && (
+                            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400" title={c.updatedAt ? `Edited ${new Date(c.updatedAt).toLocaleString()}` : "Edited"}>
+                              edited
+                            </span>
+                          )}
                         </span>
-                        <span>{new Date(c.createdAt).toLocaleString()}</span>
+                        <span className="flex items-center gap-2">
+                          <span>{new Date(c.createdAt).toLocaleString()}</span>
+                          {canEditComment && !isEditing && (
+                            <>
+                              <button
+                                className="rounded p-1 hover:bg-muted"
+                                aria-label="Edit comment"
+                                onClick={() => { setEditingCommentId(c.id); setEditingText(c.text); }}
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                              <button
+                                className="rounded p-1 text-destructive hover:bg-destructive/10"
+                                aria-label="Delete comment"
+                                onClick={async () => {
+                                  const r = await deleteComment(c.id);
+                                  if (r.ok) toast.success("Comment deleted");
+                                  else toast.error(r.error ?? "Failed");
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </>
+                          )}
+                        </span>
                       </div>
-                      <p className="mt-1 whitespace-pre-wrap text-sm">{c.text}</p>
+                      {isEditing ? (
+                        <div className="mt-2 space-y-2">
+                          <Textarea
+                            rows={3}
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => { setEditingCommentId(null); setEditingText(""); }}>
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={async () => {
+                                if (editingText.trim() === c.text.trim()) {
+                                  setEditingCommentId(null);
+                                  return;
+                                }
+                                const r = await updateComment(c.id, editingText);
+                                if (r.ok) {
+                                  toast.success("Comment updated");
+                                  setEditingCommentId(null);
+                                  setEditingText("");
+                                } else {
+                                  toast.error(r.error ?? "Failed");
+                                }
+                              }}
+                            >
+                              <Check className="mr-1 h-3 w-3" /> Save
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-1 whitespace-pre-wrap text-sm">{c.text}</p>
+                      )}
                     </div>
                   );
                 })}
