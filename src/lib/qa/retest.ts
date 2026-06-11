@@ -64,7 +64,7 @@ export function useRetests() {
 
   const createAssignment = async (input: {
     agentName: string;
-    formIds: string[];
+    forms: { id: string; name: string }[];
     instructions: string;
     priority: RetestPriority;
     dueDate: string | null;
@@ -72,7 +72,7 @@ export function useRetests() {
     if (!currentUser) return { ok: false, error: "Not signed in" };
     const agent = users.find((u) => u.name === input.agentName);
     if (!agent) return { ok: false, error: "Select an agent" };
-    if (!input.formIds.length) return { ok: false, error: "Select at least one form" };
+    if (!input.forms.length) return { ok: false, error: "Select at least one form" };
     const id = `RT-${Date.now()}`;
     const { error } = await supabase.from("retest_assignments").insert({
       id,
@@ -87,7 +87,7 @@ export function useRetests() {
       status: "Assigned",
     });
     if (error) return { ok: false, error: error.message };
-    const rows = input.formIds.map((fid) => ({ assignment_id: id, form_id: fid, form_name: fid }));
+    const rows = input.forms.map((f) => ({ assignment_id: id, form_id: f.id, form_name: f.name }));
     const { error: e2 } = await supabase.from("retest_assignment_forms").insert(rows);
     if (e2) return { ok: false, error: e2.message };
     return { ok: true, id };
