@@ -130,7 +130,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
     const hydrateUser = async (authUserId: string | null) => {
       if (!authUserId) { setState((s) => ({ ...s, currentUser: null })); return; }
       const [{ data: profile }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("id, name, email, active").eq("id", authUserId).maybeSingle(),
+        supabase.from("profiles").select("id, name, email, active, avatar_url").eq("id", authUserId).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", authUserId),
       ]);
       if (!profile) return;
@@ -144,7 +144,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         }
         return;
       }
-      setState((s) => ({ ...s, currentUser: { id: profile.id, name: profile.name, email: profile.email, role, active: profile.active } }));
+      setState((s) => ({ ...s, currentUser: { id: profile.id, name: profile.name, email: profile.email, role, active: profile.active, avatarUrl: (profile as { avatar_url?: string | null }).avatar_url ?? null } }));
     };
 
     supabase.auth.getSession().then(({ data }) => {
@@ -168,7 +168,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
 
     const loadAll = async () => {
       const [profilesR, rolesR, formsR, defectsR, commentsR, auditR, notifR] = await Promise.all([
-        supabase.from("profiles").select("id, name, email, active"),
+        supabase.from("profiles").select("id, name, email, active, avatar_url"),
         supabase.from("user_roles").select("user_id, role"),
         supabase.from("forms").select("*"),
         supabase.from("defects").select("*").order("updated_at", { ascending: false }),
@@ -184,6 +184,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
       });
       const users: User[] = (profilesR.data ?? []).map((p) => ({
         id: p.id, name: p.name, email: p.email, active: p.active,
+        avatarUrl: (p as { avatar_url?: string | null }).avatar_url ?? null,
         role: rolesByUser.get(p.id) ?? "agent",
       }));
       const comments = (commentsR.data ?? []) as CommentRow[];
@@ -447,9 +448,13 @@ export function QAProvider({ children }: { children: ReactNode }) {
       const profilePatch: Record<string, unknown> = {};
       if (patch.name !== undefined) profilePatch.name = patch.name;
       if (patch.active !== undefined) profilePatch.active = patch.active;
+      if (patch.avatarUrl !== undefined) profilePatch.avatar_url = patch.avatarUrl;
       if (Object.keys(profilePatch).length) {
         const { error } = await supabase.from("profiles").update(profilePatch as never).eq("id", id);
         if (error) return { ok: false, error: error.message };
+      }
+      if (patch.avatarUrl !== undefined && id === state.currentUser?.id) {
+        setState((s) => s.currentUser ? { ...s, currentUser: { ...s.currentUser, avatarUrl: patch.avatarUrl ?? null } } : s);
       }
       return { ok: true };
     },
