@@ -23,7 +23,7 @@ export type AdminPrefs = {
   accent: "blue" | "violet" | "emerald" | "rose";
   density: "comfortable" | "compact";
   // Dashboard
-  defaultLanding: "/dashboard" | "/defects" | "/my-errors";
+  defaultLanding: "/dashboard" | "/my-reported-errors" | "/my-errors";
   showKpiCards: boolean;
   showTrendChart: boolean;
   showAgentChart: boolean;

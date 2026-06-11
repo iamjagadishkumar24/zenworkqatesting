@@ -358,7 +358,7 @@ function SettingsPage() {
                   <SelectTrigger className="w-72"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="/dashboard">Dashboard</SelectItem>
-                    <SelectItem value="/defects">Defects</SelectItem>
+                    <SelectItem value="/my-reported-errors">My Reported Errors</SelectItem>
                     <SelectItem value="/my-errors">My Errors</SelectItem>
                   </SelectContent>
                 </Select>
