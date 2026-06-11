@@ -143,6 +143,9 @@ function AgentsPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-center">Tasks</TableHead>
+                  <TableHead className="text-center">Errors</TableHead>
+                  <TableHead>Created</TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -153,12 +156,19 @@ function AgentsPage() {
                     !r.user_id && r.status === "pending" ? "Pending Registration"
                       : r.status === "active" ? "Active" : "Inactive";
                   const variant = !r.user_id ? "outline" : r.status === "active" ? "default" : "secondary";
+                  const tasks = r.user_id ? (taskCounts[r.user_id] ?? 0) : 0;
+                  const errs = errorCounts[r.name.toLowerCase()] ?? 0;
                   return (
                     <TableRow key={`${r.isInvite ? "i" : "u"}-${r.id}`}>
                       <TableCell className="font-medium">{r.name}</TableCell>
                       <TableCell className="text-sm">{r.email}</TableCell>
                       <TableCell><Badge variant={variant as never}>{statusLabel}</Badge></TableCell>
-                      <TableCell className="max-w-[260px] truncate text-xs text-muted-foreground">{r.notes || "—"}</TableCell>
+                      <TableCell className="text-center text-sm">{tasks}</TableCell>
+                      <TableCell className="text-center text-sm">{errs}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
+                      </TableCell>
+                      <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground">{r.notes || "—"}</TableCell>
                       <TableCell className="text-right">
                         {r.isInvite ? (
                           <div className="inline-flex items-center gap-2">
@@ -177,12 +187,17 @@ function AgentsPage() {
                               </SelectContent>
                             </Select>
                             {!r.user_id && (
-                              <Button size="sm" variant="ghost" onClick={async () => {
-                                const res = await remove(r.id);
-                                if (!res.ok) toast.error(res.error); else toast.success("Removed");
-                              }}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <>
+                                <Button size="sm" variant="ghost" title="Resend invite" onClick={() => resendInvite(r)}>
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" title="Remove" onClick={async () => {
+                                  const res = await remove(r.id);
+                                  if (!res.ok) toast.error(res.error); else toast.success("Removed");
+                                }}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
                             )}
                           </div>
                         ) : (
