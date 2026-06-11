@@ -65,6 +65,7 @@ function dbRowToDefect(row: Record<string, unknown>): Defect {
     severity: String(r.severity ?? "Medium") as Defect["severity"],
     validity: (r.validity as Defect["validity"]) ?? "Unverified",
     environment: (r.environment as Environment | undefined) ?? undefined,
+    taxYear: r.tax_year ?? undefined,
     assignedAgent: String(r.assigned_agent ?? ""),
     createdAt: String(r.created_at ?? ""),
     updatedAt: String(r.updated_at ?? ""),
