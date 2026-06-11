@@ -6,7 +6,7 @@ import { scopeForUser, filterByEnvironment } from "@/lib/qa/scope";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TestStatusBadge } from "@/components/qa/StatusBadge";
-import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe, Wrench, RotateCw, FileSpreadsheet, Plug, MessageSquare, Cpu, Sparkles } from "lucide-react";
+import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe, Wrench, RotateCw, FileSpreadsheet, Plug, MessageSquare, Cpu, Sparkles, FileUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -56,6 +56,7 @@ function Dashboard() {
     { name: "2290 Forms", to: "/2290-forms", Icon: FileSpreadsheet, key: "2290 Forms" },
     { name: "Integrations", to: "/integrations", Icon: Plug, key: "Integrations" },
     { name: "Chatbot Testing", to: "/chatbot-testing", Icon: MessageSquare, key: "Chatbot Testing" },
+    { name: "Excel Import Testing", to: "/excel-import-testing", Icon: FileUp, key: "Excel Import Testing" },
     { name: "Functionality Testing", to: "/functionality-testing", Icon: Cpu, key: "Functionality Testing" },
     { name: "Tax1099 Features", to: "/tax1099-features", Icon: Sparkles, key: "Tax1099 Features" },
   ].map((m) => ({ ...m, bugs: countByModule(m.key) }));
