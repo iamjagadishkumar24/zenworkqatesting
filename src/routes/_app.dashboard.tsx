@@ -109,7 +109,7 @@ function Dashboard() {
                   <div className="mt-4 space-y-1.5 text-sm">
                     <div className="flex justify-between"><span className="text-muted-foreground">Forms</span><span className="font-medium">{m.forms}</span></div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{m.bugLabel ?? "Open Bugs"}</span>
+                      <span className="text-muted-foreground">Open Bugs</span>
                       <span className={cn("font-medium", m.bugs > 0 ? "text-destructive" : "text-success")}>{m.bugs}</span>
                     </div>
                   </div>
