@@ -3,6 +3,10 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildReportedErrorsWorkbook, buildReportedErrorsFilename } from "./exportReportedErrors";
 import type { Defect, Environment } from "./types";
+import type { Database } from "@/integrations/supabase/types";
+
+type Json = Database["public"]["Tables"]["export_jobs"]["Insert"]["filters"];
+const toJson = (v: unknown): Json => JSON.parse(JSON.stringify(v)) as Json;
 
 const FiltersSchema = z.object({
   environment: z.enum(["Production", "Stage"]).nullable().optional(),
@@ -107,7 +111,7 @@ export const createExportJob = createServerFn({ method: "POST" })
         role,
         scope: "reported_errors",
         environment: env,
-        filters: filters as unknown as Record<string, unknown>,
+        filters: toJson(filters),
         status: "pending",
         progress: 0,
       })
@@ -155,7 +159,7 @@ export const createExportJob = createServerFn({ method: "POST" })
         role,
         scope: "reported_errors",
         environment: env,
-        filters: filters as unknown as Record<string, unknown>,
+        filters: toJson(filters),
         row_count: defects.length,
         status: "success",
         job_id: jobRow.id,
@@ -175,7 +179,7 @@ export const createExportJob = createServerFn({ method: "POST" })
         role,
         scope: "reported_errors",
         environment: env,
-        filters: filters as unknown as Record<string, unknown>,
+        filters: toJson(filters),
         row_count: 0,
         status: "failed",
         error: msg,
@@ -268,7 +272,7 @@ export const setAllowAgentExports = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("app_settings").upsert({
       key: "allow_agent_exports",
-      value: data.allowed as unknown as object,
+      value: toJson(data.allowed),
       updated_at: new Date().toISOString(),
       updated_by: userId,
     }, { onConflict: "key" });
@@ -302,7 +306,7 @@ export const logDirectExport = createServerFn({ method: "POST" })
       role,
       scope: data.scope,
       environment: data.environment,
-      filters: data.filters,
+      filters: toJson(data.filters),
       row_count: data.rowCount,
       status: data.status,
       error: data.error ?? null,
