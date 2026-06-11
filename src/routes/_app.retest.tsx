@@ -33,16 +33,16 @@ function RetestPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Retest Assignments</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Retest Testing Errors</h2>
           <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
-            {isAdmin ? "Assign forms to agents for retesting and track progress." : "Forms assigned to you for retesting."}
+            {isAdmin ? "Assign retest testing errors to agents and track progress." : "Retest testing errors assigned to you."}
             {env && <Badge variant="outline">{env}</Badge>}
           </p>
         </div>
         {isAdmin && (
           <Button onClick={() => setOpen((o) => !o)}>
             {open ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-            {open ? "Cancel" : "Assign Retest"}
+            {open ? "Cancel" : "Assign Retest Testing Errors"}
           </Button>
         )}
       </div>
@@ -62,13 +62,13 @@ function RetestPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base inline-flex items-center gap-2">
-            <ClipboardCheck className="h-4 w-4" /> {isAdmin ? "All retest tasks" : "My retest tasks"}
+            <ClipboardCheck className="h-4 w-4" /> {isAdmin ? "All retest testing errors" : "My retest testing errors"}
           </CardTitle>
-          <CardDescription>{loading ? "Loading…" : `${items.length} task(s)`}</CardDescription>
+          <CardDescription>{loading ? "Loading…" : `${items.length} retest testing error(s)`}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {items.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground">No retest tasks in this environment yet.</p>
+            <p className="p-6 text-sm text-muted-foreground">No retest testing errors in this environment yet.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -173,7 +173,7 @@ function CreateForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">New retest assignment</CardTitle>
+        <CardTitle className="text-base">Assign Retest Testing Errors</CardTitle>
         <CardDescription>Select one or more forms and assign them to an agent in the current environment.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
