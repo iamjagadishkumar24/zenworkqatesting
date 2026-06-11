@@ -8,12 +8,15 @@ import {
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
+import { useTaxYear } from "@/lib/qa/taxYear";
+import { TAX_YEARS } from "@/lib/qa/constants";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NotificationsBell } from "./NotificationsBell";
 import { toast } from "sonner";
 
@@ -40,6 +43,7 @@ const nav: NavItem[] = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { currentUser, logout } = useQA();
   const { env, setEnv } = useEnvironment();
+  const { taxYear, setTaxYear } = useTaxYear();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [collapsed, setCollapsed] = useState(false);
@@ -149,6 +153,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               />
             </div>
           )}
+          <div className="ml-2 flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide hidden lg:inline">Tax Year</span>
+            <Select
+              value={taxYear}
+              onValueChange={(v) => {
+                setTaxYear(v as typeof taxYear);
+                if (v === "all") toast.info("Showing all tax years");
+                else toast.success(`Filtered to Tax Year ${v}`);
+              }}
+            >
+              <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="Tax Year filter">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {TAX_YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <form onSubmit={onSearch} className="relative ml-auto hidden md:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input

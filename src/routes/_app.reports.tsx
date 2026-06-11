@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQA } from "@/lib/qa/store";
+import { useEnvironment } from "@/lib/qa/environment";
+import { useTaxYear, matchesTaxYear } from "@/lib/qa/taxYear";
+import { TAX_YEARS } from "@/lib/qa/constants";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +33,17 @@ function EmptyBreakdown({ message }: { message: string }) {
 }
 
 function ReportsPage() {
-  const { forms, defects } = useQA();
+  const { forms, defects: allDefects } = useQA();
+  const { env } = useEnvironment();
+  const { taxYear, setTaxYear } = useTaxYear();
+
+  const defects = useMemo(
+    () => allDefects.filter((d) =>
+      (!env || (d.environment ?? "Production") === env) &&
+      matchesTaxYear(d.taxYear, taxYear),
+    ),
+    [allDefects, env, taxYear],
+  );
 
   const passedVsFailed = useMemo(() => {
     const passed = forms.reduce((s, f) => s + f.passed, 0);
@@ -98,9 +113,22 @@ function ReportsPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Reports</h2>
-          <p className="text-sm text-muted-foreground">Power BI-style insights on testing performance. Counts refresh in real time as defects are added, edited, or deleted.</p>
+          <p className="text-sm text-muted-foreground inline-flex flex-wrap items-center gap-2">
+            Power BI-style insights on testing performance. Counts refresh in real time as defects are added, edited, or deleted.
+            {env && <Badge variant="outline">{env}</Badge>}
+            <Badge variant="outline">Tax Year: {taxYear === "all" ? "All" : taxYear}</Badge>
+          </p>
         </div>
         <div className="flex gap-2">
+          <Select value={taxYear} onValueChange={(v) => setTaxYear(v as typeof taxYear)}>
+            <SelectTrigger className="h-9 w-[140px]" aria-label="Tax Year filter">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tax Years</SelectItem>
+              {TAX_YEARS.map((y) => <SelectItem key={y} value={y}>Tax Year {y}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <ExportMenu
             label="Forms"
             filename="forms"
@@ -113,7 +141,8 @@ function ReportsPage() {
             filename="defects"
             title="Defects export"
             rows={defects.map(({ comments, ...d }) => ({ ...d, commentsCount: comments.length }))}
-            columns={["id","module","formFeature","title","status","priority","severity","assignedAgent","createdBy","createdAt","updatedAt","updatedBy","commentsCount"]}
+            columns={["id","module","formFeature","taxYear","environment","title","status","priority","severity","assignedAgent","createdBy","createdAt","updatedAt","updatedBy","commentsCount"]}
+            filters={{ environment: env ?? "All", taxYear: taxYear === "all" ? "All" : taxYear }}
           />
           <Button
             variant="outline"
@@ -128,7 +157,7 @@ function ReportsPage() {
                   { name: "Agent Load", rows: agentDefects },
                   { name: "Form Coverage", rows: formCoverage },
                 ],
-                { title: "QA Analytics Report" },
+                { title: "QA Analytics Report", filters: { environment: env ?? "All", taxYear: taxYear === "all" ? "All" : taxYear } },
               )
             }
           ><Download className="mr-2 h-4 w-4" />Full Report (xlsx)</Button>

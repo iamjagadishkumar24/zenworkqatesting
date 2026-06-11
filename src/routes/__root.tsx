@@ -8,6 +8,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { QAProvider } from "@/lib/qa/store";
 import { EnvironmentProvider } from "@/lib/qa/environment";
+import { TaxYearProvider } from "@/lib/qa/taxYear";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -82,8 +83,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <QAProvider>
         <EnvironmentProvider>
-          <Outlet />
-          <Toaster richColors position="top-right" />
+          <TaxYearProvider>
+            <Outlet />
+            <Toaster richColors position="top-right" />
+          </TaxYearProvider>
         </EnvironmentProvider>
       </QAProvider>
     </QueryClientProvider>

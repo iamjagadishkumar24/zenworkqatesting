@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
+import { useTaxYear, matchesTaxYear } from "@/lib/qa/taxYear";
 import { scopeForUser, filterByEnvironment } from "@/lib/qa/scope";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_app/dashboard")({
 function Dashboard() {
   const { forms, defects, currentUser } = useQA();
   const { env } = useEnvironment();
+  const { taxYear } = useTaxYear();
   const navigate = useNavigate();
 
   const scopedDefects = useMemo(
@@ -24,9 +26,10 @@ function Dashboard() {
         defects,
         currentUser ? { name: currentUser.name, role: currentUser.role } : null,
       );
-      return filterByEnvironment(byUser, env);
+      const byEnv = filterByEnvironment(byUser, env);
+      return byEnv.filter((d) => matchesTaxYear(d.taxYear, taxYear));
     },
-    [defects, env, currentUser],
+    [defects, env, currentUser, taxYear],
   );
 
   const stats = useMemo(() => {
@@ -84,6 +87,7 @@ function Dashboard() {
         <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
           Real-time QA testing overview across all modules.
           {env && <Badge variant="outline">{env}</Badge>}
+          <Badge variant="outline">Tax Year: {taxYear === "all" ? "All" : taxYear}</Badge>
         </p>
       </div>
 

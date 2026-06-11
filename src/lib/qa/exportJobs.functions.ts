@@ -10,6 +10,7 @@ const toJson = (v: unknown): Json => JSON.parse(JSON.stringify(v)) as Json;
 
 const FiltersSchema = z.object({
   environment: z.enum(["Production", "Stage"]).nullable().optional(),
+  taxYear: z.string().optional(),
   module: z.string().optional(),
   status: z.string().optional(),
   priority: z.string().optional(),
@@ -23,6 +24,7 @@ export type ExportFilters = z.infer<typeof FiltersSchema>;
 function matches(d: Defect, f: ExportFilters, isAdmin: boolean, userName: string): boolean {
   if (!isAdmin && d.createdBy !== userName) return false;
   if (f.environment && d.environment && d.environment !== f.environment) return false;
+  if (f.taxYear && f.taxYear !== "all" && (d.taxYear ?? "") !== f.taxYear) return false;
   if (f.module && f.module !== "all" && d.module !== f.module) return false;
   if (f.status && f.status !== "all" && d.status !== f.status) return false;
   if (f.priority && f.priority !== "all" && d.priority !== f.priority) return false;
@@ -63,6 +65,7 @@ function dbRowToDefect(row: Record<string, unknown>): Defect {
     severity: String(r.severity ?? "Medium") as Defect["severity"],
     validity: (r.validity as Defect["validity"]) ?? "Unverified",
     environment: (r.environment as Environment | undefined) ?? undefined,
+    taxYear: r.tax_year ?? undefined,
     assignedAgent: String(r.assigned_agent ?? ""),
     createdAt: String(r.created_at ?? ""),
     updatedAt: String(r.updated_at ?? ""),

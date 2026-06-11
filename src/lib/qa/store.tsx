@@ -205,7 +205,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
     void loadAll();
 
     const channel = supabase
-      .channel("qa-realtime")
+      .channel(`qa-realtime-${state.currentUser?.id ?? "anon"}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "defects" }, (payload) => {
         setState((s) => {
           let next = s.defects;
