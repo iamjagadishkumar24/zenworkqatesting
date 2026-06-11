@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, MessageSquare, History as HistoryIcon,
   Link as LinkIcon, ExternalLink, ShieldCheck, ShieldX,
-  Activity as ActivityIcon, Pencil, UserPlus, Plus, MessageCircle,
+  Activity as ActivityIcon, Pencil, UserPlus, Plus, MessageCircle, Check, X,
 } from "lucide-react";
 
 const STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
@@ -38,6 +38,7 @@ function moduleRoute(module: string): string {
 }
 
 function historyLabel(field: string, oldVal: string | null, newVal: string | null): string {
+  if (field === "comment") return "Edited a comment";
   if (field === "status") {
     if (newVal === "Closed") return "Closed defect";
     if (newVal === "Reopened") return "Reopened defect";
