@@ -4,6 +4,14 @@ import { cleanup } from "@testing-library/react";
 
 afterEach(() => cleanup());
 
+if (!(globalThis as any).ResizeObserver) {
+  (globalThis as any).ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
 // jsdom doesn't implement matchMedia
 if (!window.matchMedia) {
   (window as any).matchMedia = (query: string) => ({
