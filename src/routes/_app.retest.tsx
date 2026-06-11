@@ -14,6 +14,13 @@ import { ClipboardCheck, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_app/retest")({
   component: RetestPage,
+  errorComponent: ({ error, reset }) => (
+    <div className="rounded-lg border bg-card p-6 text-center">
+      <h2 className="text-lg font-semibold">Unable to load task assignment data.</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{error?.message ?? "Please try again."}</p>
+      <Button className="mt-4" onClick={() => reset()}>Retry</Button>
+    </div>
+  ),
 });
 
 const STATUSES: RetestStatus[] = RETEST_STATUSES;

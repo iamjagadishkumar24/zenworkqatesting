@@ -31,8 +31,8 @@ export function AssignTaskDialog({
     [users],
   );
   const [title, setTitle] = useState(defaultTitle ?? "");
-  const [moduleSel, setModuleSel] = useState<string>(defaultModule ?? MODULE_OPTIONS[0]);
-  const [testingType, setTestingType] = useState<string>(TESTING_TYPES[0]);
+  const [moduleSel, setModuleSel] = useState<string>(defaultModule ?? MODULE_OPTIONS[0] ?? "");
+  const [testingType, setTestingType] = useState<string>(TESTING_TYPES[0] ?? "Retest");
   const [agent, setAgent] = useState(defaultAgent ?? agentNames[0] ?? "");
   const [assignAll, setAssignAll] = useState(false);
   const [priority, setPriority] = useState<RetestPriority>("Medium");
