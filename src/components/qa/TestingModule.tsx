@@ -11,7 +11,7 @@ import {
 import { DefectStatusBadge, PriorityBadge } from "./StatusBadge";
 import { DefectDetailSheet } from "./DefectDetailSheet";
 import { ReportDefectDialog } from "./ReportDefectDialog";
-import { Bug, Search } from "lucide-react";
+import { Bug, Plus, Search } from "lucide-react";
 import { AGENTS } from "@/lib/qa/constants";
 import type { Module } from "@/lib/qa/types";
 
@@ -29,12 +29,14 @@ export function TestingModule({
   module,
   items,
   itemLabel = "item",
+  showHeaderReport = true,
 }: {
   title: string;
   description: string;
   module: Module; // DB-stored module
   items: string[];
   itemLabel?: string;
+  showHeaderReport?: boolean;
 }) {
   const { defects, currentUser } = useQA();
   const { env } = useEnvironment();
@@ -81,9 +83,16 @@ export function TestingModule({
           <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        <div className="relative w-72 max-w-full">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${itemLabel}s…`} className="pl-9" />
+        <div className="flex gap-2">
+          <div className="relative w-72 max-w-full">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${itemLabel}s…`} className="pl-9" />
+          </div>
+          {showHeaderReport && (
+            <Button onClick={() => { setReportFor(picked ?? items[0] ?? ""); }}>
+              <Plus className="mr-2 h-4 w-4" /> Report defect
+            </Button>
+          )}
         </div>
       </div>
 
