@@ -401,6 +401,25 @@ export function QAProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     },
 
+    updateComment: async (commentId, text) => {
+      const me = requireUser();
+      const trimmed = text.trim();
+      if (!trimmed) return { ok: false, error: "Comment cannot be empty" };
+      if (trimmed.length > 2000) return { ok: false, error: "Comment is too long (max 2000 characters)" };
+      const { error } = await supabase
+        .from("defect_comments")
+        .update({ text: trimmed, updated_by: me.name } as never)
+        .eq("id", commentId);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+
+    deleteComment: async (commentId) => {
+      const { error } = await supabase.from("defect_comments").delete().eq("id", commentId);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+
     updateUser: async (id, patch) => {
       if (patch.role !== undefined) {
         await supabase.from("user_roles").delete().eq("user_id", id);
