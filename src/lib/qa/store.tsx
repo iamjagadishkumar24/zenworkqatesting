@@ -57,7 +57,13 @@ type DefectRow = {
   assigned_agent: string; created_by: string; updated_by: string;
   version: number; created_at: string; updated_at: string;
 };
-type CommentRow = { id: string; defect_id: string; author: string; text: string; created_at: string };
+type CommentRow = {
+  id: string; defect_id: string; author: string; text: string;
+  created_at: string;
+  updated_at?: string | null;
+  updated_by?: string | null;
+  edited?: boolean | null;
+};
 type AuditRow = { id: string; defect_id: string; field: string; old_value: string | null; new_value: string | null; changed_by: string; changed_at: string };
 type FormRow = { id: string; name: string; module: string; status: string; passed: number; failed: number; open_defects: number; last_tested: string; assigned_agent: string; environment?: string };
 type NotifRow = { id: string; type: string; title: string; body: string; defect_id: string | null; environment: string | null; read: boolean; created_at: string };
@@ -83,7 +89,12 @@ function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersi
     createdAt: r.created_at, updatedAt: r.updated_at, version: r.version,
     comments: comments
       .filter((c) => c.defect_id === r.id)
-      .map((c) => ({ id: c.id, author: c.author, text: c.text, createdAt: c.created_at })),
+      .map((c) => ({
+        id: c.id, author: c.author, text: c.text, createdAt: c.created_at,
+        updatedAt: c.updated_at ?? undefined,
+        updatedBy: c.updated_by ?? undefined,
+        edited: !!c.edited,
+      })),
   };
 }
 
