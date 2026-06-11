@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { HelpCircle, Eye, EyeOff, ShieldCheck, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
@@ -278,37 +278,6 @@ export function LoginPage() {
                   <p className="text-center text-xs text-white/60">
                     No account yet? Use <span className="font-medium">Create account</span> — the first signup becomes Admin.
                   </p>
-                  <div className="rounded-md border border-dashed border-white/25 bg-white/5 p-3 text-xs">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <p className="font-medium text-white">Try the sample admin</p>
-                      {renderSampleStatus()}
-                    </div>
-                    <p className="mb-2 text-white/70">
-                      Email: <span className="font-mono">admin@qaportal.app</span><br />
-                      Password: <span className="font-mono">Admin@12345</span>
-                    </p>
-                    {!sample.loading && sample.exists && sample.isAdmin && sample.active ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="w-full"
-                        onClick={async () => {
-                          setEmail("admin@qaportal.app");
-                          setPassword("Admin@12345");
-                          const r = await login("admin@qaportal.app", "Admin@12345");
-                          if (!r.ok) return toast.error(`${r.error} — click Reset to re-mint the password.`);
-                          toast.success("Signed in as sample admin");
-                          navigate({ to: "/dashboard" });
-                        }}
-                      >
-                        Sign in as sample admin
-                      </Button>
-                    ) : (
-                      <Button type="button" variant="outline" size="sm" className="w-full border-white/30 bg-white/5 text-white hover:bg-white/15" onClick={seedAdmin} disabled={seeding}>
-                        {seeding ? "Setting up…" : sample.exists ? "Reset sample admin & sign in" : "Create sample admin & sign in"}
-                      </Button>
-                    )}
-                  </div>
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="trouble" className="border-white/15">
                       <AccordionTrigger className="py-2 text-xs text-white/80 hover:no-underline">
