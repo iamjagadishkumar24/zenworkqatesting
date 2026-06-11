@@ -156,7 +156,7 @@ function Dashboard() {
           {featured.map((f) => (
             <Link
               key={f.id}
-              to="/forms"
+              to="/my-reported-errors"
               search={{ q: f.name } as never}
               className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
             >
@@ -165,7 +165,7 @@ function Dashboard() {
                   <p className="text-sm font-semibold truncate">{f.name}</p>
                   <div className="mt-3"><TestStatusBadge status={f.status} /></div>
                   {f.openDefects > 0 && (
-                    <p className="mt-2 text-xs text-muted-foreground">{f.openDefects} open defect(s)</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{f.openDefects} open error(s)</p>
                   )}
                 </CardContent>
               </Card>
