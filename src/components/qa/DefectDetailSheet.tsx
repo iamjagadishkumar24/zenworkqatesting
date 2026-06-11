@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQA } from "@/lib/qa/store";
 import type { Defect, DefectStatus, Priority, Severity } from "@/lib/qa/types";
 import {
@@ -24,6 +25,34 @@ import {
 const STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
 const LEVELS: Priority[] = ["Low","Medium","High","Critical"];
 const MODULES = ["1099 Forms","990 Forms","Integrations","1099 Online"] as const;
+
+function moduleRoute(module: string): string {
+  switch (module) {
+    case "Integrations": return "/integrations";
+    case "Chatbot": return "/chatbot-testing";
+    case "Functionality": return "/functionality-testing";
+    case "Tax1099": return "/tax1099-features";
+    case "2290 Forms": return "/2290-forms";
+    default: return "/forms";
+  }
+}
+
+function historyLabel(field: string, oldVal: string | null, newVal: string | null): string {
+  if (field === "status") {
+    if (newVal === "Closed") return "Closed defect";
+    if (newVal === "Reopened") return "Reopened defect";
+    if (newVal === "Fixed") return "Marked Fixed";
+    if (newVal === "Retest Required") return "Requested retest";
+    return `Status: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
+  }
+  if (field === "assigned_agent") return `Assigned to ${newVal ?? "—"}`;
+  if (field === "validity") return `Validated as ${newVal ?? "—"}`;
+  if (field === "priority") return `Priority: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
+  if (field === "severity") return `Severity: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
+  if (field === "title") return `Renamed title`;
+  if (field === "environment") return `Environment: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
+  return `Edited ${field.replace(/_/g, " ")}`;
+}
 
 const LINK_FIELDS: { key: keyof Defect; label: string }[] = [
   { key: "jiraUrl", label: "Jira Ticket" },
