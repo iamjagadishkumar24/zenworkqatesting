@@ -378,7 +378,12 @@ export function QAProvider({ children }: { children: ReactNode }) {
 
     addComment: async (id, text) => {
       const me = requireUser();
-      const { error } = await supabase.from("defect_comments").insert({ defect_id: id, author: me.name, text });
+      const trimmed = text.trim();
+      if (!trimmed) return { ok: false, error: "Comment cannot be empty" };
+      if (trimmed.length > 2000) return { ok: false, error: "Comment is too long (max 2000 characters)" };
+      const { error } = await supabase
+        .from("defect_comments")
+        .insert({ defect_id: id, author: me.name, text: trimmed });
       if (error) return { ok: false, error: error.message };
       return { ok: true };
     },
