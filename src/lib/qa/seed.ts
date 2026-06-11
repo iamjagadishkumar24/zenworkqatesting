@@ -47,7 +47,6 @@ export const seedForms: FormItem[] = [
   f("1099-LS", "Form 1099-LS", "1099 Forms", "Passed", 28, 0, 0, 8, "Arun Kumar"),
   f("1097-BTC", "Form 1097-BTC", "1099 Forms", "Passed", 24, 1, 0, 6, "Priya Sharma"),
   f("1099-QA", "Form 1099-QA", "1099 Forms", "Passed", 22, 0, 0, 9, "Arun Kumar"),
-  f("1099-CORR", "Form 1099 Corrections", "1099 Forms", "In Progress", 40, 6, 3, 1, "Ravi Teja"),
   // 990 Forms
   f("990", "Form 990", "990 Forms", "Passed", 95, 3, 1, 2, "Priya Sharma"),
   f("990-N", "Form 990-N", "990 Forms", "Passed", 60, 1, 0, 4, "Arun Kumar"),
