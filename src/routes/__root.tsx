@@ -7,6 +7,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { QAProvider } from "@/lib/qa/store";
+import { EnvironmentProvider } from "@/lib/qa/environment";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -80,8 +81,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <QAProvider>
-        <Outlet />
-        <Toaster richColors position="top-right" />
+        <EnvironmentProvider>
+          <Outlet />
+          <Toaster richColors position="top-right" />
+        </EnvironmentProvider>
       </QAProvider>
     </QueryClientProvider>
   );
