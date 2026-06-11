@@ -30,10 +30,10 @@ function Dashboard() {
   }, [forms, scopedDefects]);
 
   const kpis = [
-    { label: "Total Tests", value: stats.total, Icon: ListChecks, tone: "primary", to: "/defects" },
+    { label: "Total Tests", value: stats.total, Icon: ListChecks, tone: "primary", to: "/my-reported-errors" },
     { label: "Passed", value: stats.passed, Icon: CheckCircle2, tone: "success", to: "/forms" },
-    { label: "Failed", value: stats.failed, Icon: XCircle, tone: "danger", to: "/defects", filter: "failed" },
-    { label: "Open Defects", value: stats.open, Icon: Bug, tone: "warning", to: "/defects", filter: "open" },
+    { label: "Failed", value: stats.failed, Icon: XCircle, tone: "danger", to: "/my-reported-errors", filter: "failed" },
+    { label: "Open Defects", value: stats.open, Icon: Bug, tone: "warning", to: "/my-reported-errors", filter: "open" },
   ] as const;
 
   const modules = [

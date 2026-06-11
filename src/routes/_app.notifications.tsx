@@ -63,7 +63,7 @@ function NotificationsPage() {
                   <button
                     className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent"
                     onClick={() => {
-                      if (n.defectId) navigate({ to: "/defects", search: { q: n.defectId } as never });
+                      if (n.defectId) navigate({ to: "/my-reported-errors", search: { q: n.defectId } as never });
                     }}
                   >
                     <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-primary"}`} />

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,9 +24,15 @@ export function FormsCatalog({
   const [q, setQ] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
 
+  // 2290-related forms live under the dedicated "2290 Forms" module page.
+  const visibleForms = useMemo(
+    () => forms.filter((n) => !/2290/i.test(n)),
+    [forms],
+  );
+
   const list = useMemo(
-    () => forms.filter((n) => (q ? n.toLowerCase().includes(q.toLowerCase()) : true)),
-    [forms, q],
+    () => visibleForms.filter((n) => (q ? n.toLowerCase().includes(q.toLowerCase()) : true)),
+    [visibleForms, q],
   );
 
   const openCountByForm = useMemo(() => {
@@ -66,18 +73,26 @@ export function FormsCatalog({
               <Card key={name} className="group border-border transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold leading-tight">{name}</p>
+                    <Link
+                      to="/my-reported-errors"
+                      search={{ q: name } as never}
+                      className="font-semibold leading-tight hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                    >
+                      {name}
+                    </Link>
                     {open > 0 && (
-                      <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400">
-                        <Bug className="h-3 w-3" /> {open}
-                      </Badge>
+                      <Link to="/my-reported-errors" search={{ q: name } as never}>
+                        <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10">
+                          <Bug className="h-3 w-3" /> {open}
+                        </Badge>
+                      </Link>
                     )}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{module}</p>
                   <Button
                     size="sm" variant="outline" className="mt-3 w-full"
                     onClick={() => setPicked(name)}
-                  >Report a defect</Button>
+                  >Report Error</Button>
                 </CardContent>
               </Card>
             );

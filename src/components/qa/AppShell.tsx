@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  LayoutDashboard, FileText, Globe, Bug, FileSpreadsheet, Plug, MessageSquare,
+  LayoutDashboard, FileText, Globe, FileSpreadsheet, Plug, MessageSquare,
   Cpu, Sparkles, Bell as BellIcon,
   BarChart3, Settings, ChevronLeft, ChevronRight, LogOut, Search, ListChecks,
 } from "lucide-react";
@@ -17,6 +17,7 @@ import { NotificationsBell } from "./NotificationsBell";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean };
 const nav: NavItem[] = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/forms", label: "Forms", icon: FileText },
   { to: "/online-1099", label: "1099 Online Forms", icon: Globe },
   { to: "/2290-forms", label: "2290 Forms", icon: FileSpreadsheet },
@@ -24,8 +25,6 @@ const nav: NavItem[] = [
   { to: "/chatbot-testing", label: "Chatbot Testing", icon: MessageSquare },
   { to: "/functionality-testing", label: "Functionality Testing", icon: Cpu },
   { to: "/tax1099-features", label: "Tax1099 Features", icon: Sparkles },
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/defects", label: "Defects", icon: Bug },
   { to: "/my-reported-errors", label: "My Reported Errors", icon: ListChecks },
   { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
   { to: "/notifications", label: "Notifications", icon: BellIcon },
@@ -44,7 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (q.trim()) navigate({ to: "/defects", search: { q: q.trim() } as never });
+    if (q.trim()) navigate({ to: "/my-reported-errors", search: { q: q.trim() } as never });
   };
 
   return (

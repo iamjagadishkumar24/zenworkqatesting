@@ -31,32 +31,40 @@ function isValidUrl(u: string) {
 
 export function ReportDefectDialog({
   open, onOpenChange, defaultForm = "", defaultModule = "1099 Forms",
-  defaultAgents,
+  defaultAgents, defaultIntegration = "",
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   defaultForm?: string;
   defaultModule?: Module;
   defaultAgents?: string[];
+  defaultIntegration?: string;
 }) {
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
   const agentOptions = defaultAgents && defaultAgents.length ? defaultAgents : AGENTS;
   const showIntegration = defaultModule === "Integrations";
+  const lockIntegration = showIntegration && !!defaultIntegration;
   const [draft, setDraft] = useState<Draft>(() => ({
     module: defaultModule, formFeature: "", title: "", description: "",
     stepsToReproduce: "", expectedResult: "", actualResult: "",
     jiraUrl: "", attachmentUrl: "", attachmentUrl2: "", evidenceUrl: "",
     status: "Reported", priority: "Medium", severity: "Medium",
     environment: env ?? "Production",
-    assignedAgent: agentOptions[0] ?? "", _form: defaultForm, _integration: "",
+    assignedAgent: agentOptions[0] ?? "", _form: defaultForm, _integration: defaultIntegration,
   }));
 
   useEffect(() => {
     if (open) {
-      setDraft((d) => ({ ...d, _form: defaultForm || d._form, module: defaultModule, environment: env ?? d.environment ?? "Production" }));
+      setDraft((d) => ({
+        ...d,
+        _form: defaultForm || d._form,
+        _integration: defaultIntegration || d._integration,
+        module: defaultModule,
+        environment: env ?? d.environment ?? "Production",
+      }));
     }
-  }, [open, defaultForm, defaultModule, env]);
+  }, [open, defaultForm, defaultModule, defaultIntegration, env]);
 
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
@@ -112,12 +120,16 @@ export function ReportDefectDialog({
           {showIntegration && (
             <div>
               <Label>Integration *</Label>
+              {lockIntegration ? (
+                <Input value={draft._integration} readOnly disabled aria-readonly />
+              ) : (
               <Select value={draft._integration} onValueChange={(v) => upd("_integration", v)}>
                 <SelectTrigger><SelectValue placeholder="Select integration" /></SelectTrigger>
                 <SelectContent>
                   {INTEGRATIONS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
                 </SelectContent>
               </Select>
+              )}
             </div>
           )}
           <div>
