@@ -6,7 +6,7 @@ import { scopeForUser, filterByEnvironment } from "@/lib/qa/scope";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TestStatusBadge } from "@/components/qa/StatusBadge";
-import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe, Wrench, RotateCw, CircleCheck } from "lucide-react";
+import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe, Wrench, RotateCw, FileSpreadsheet, Plug, MessageSquare, Cpu, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -34,10 +34,9 @@ function Dashboard() {
     const open = scopedDefects.filter((d) => !["Fixed", "Closed"].includes(d.status)).length;
     const valid = scopedDefects.filter((d) => d.validity === "Valid").length;
     const invalid = scopedDefects.filter((d) => d.validity === "Invalid").length;
-    const fixed = scopedDefects.filter((d) => d.status === "Fixed").length;
+    const fixed = scopedDefects.filter((d) => d.status === "Fixed" || d.status === "Closed").length;
     const retest = scopedDefects.filter((d) => d.status === "Retest Required").length;
-    const closed = scopedDefects.filter((d) => d.status === "Closed").length;
-    return { total, open, valid, invalid, fixed, retest, closed };
+    return { total, open, valid, invalid, fixed, retest };
   }, [scopedDefects]);
 
   const kpis = [
@@ -47,27 +46,34 @@ function Dashboard() {
     { label: "Invalid Errors", value: stats.invalid, Icon: XCircle, tone: "danger", to: "/my-reported-errors" },
     { label: "Fixed Errors", value: stats.fixed, Icon: Wrench, tone: "success", to: "/my-reported-errors" },
     { label: "Retest Errors", value: stats.retest, Icon: RotateCw, tone: "warning", to: "/my-reported-errors" },
-    { label: "Closed Errors", value: stats.closed, Icon: CircleCheck, tone: "primary", to: "/my-reported-errors" },
   ] as const;
 
-  const openCountByModule = (mod: string) =>
-    scopedDefects.filter((d) => d.module === mod && !["Fixed", "Closed"].includes(d.status)).length;
+  const countByModule = (mod: string) =>
+    scopedDefects.filter((d) => d.module === mod).length;
   const modules = [
-    {
-      name: "Forms", to: "/forms", Icon: FileText,
-      forms: forms.filter((f) => f.module === "1099 Forms").length,
-      bugs: openCountByModule("1099 Forms"),
-    },
-    {
-      name: "1099 Online Forms", to: "/online-1099", Icon: Globe,
-      forms: forms.filter((f) => f.module === "1099 Online").length,
-      bugs: openCountByModule("1099 Online"),
-    },
-  ];
+    { name: "Forms", to: "/forms", Icon: FileText, key: "1099 Forms" },
+    { name: "1099 Online Forms", to: "/online-1099", Icon: Globe, key: "1099 Online" },
+    { name: "2290 Forms", to: "/2290-forms", Icon: FileSpreadsheet, key: "2290 Forms" },
+    { name: "Integrations", to: "/integrations", Icon: Plug, key: "Integrations" },
+    { name: "Chatbot Testing", to: "/chatbot-testing", Icon: MessageSquare, key: "Chatbot Testing" },
+    { name: "Functionality Testing", to: "/functionality-testing", Icon: Cpu, key: "Functionality Testing" },
+    { name: "Tax1099 Features", to: "/tax1099-features", Icon: Sparkles, key: "Tax1099 Features" },
+  ].map((m) => ({ ...m, bugs: countByModule(m.key) }));
 
-  const featured = ["1099-NEC", "1099-MISC", "1099-HC", "1097-BTC", "990-T", "990-EZ"]
-    .map((id) => forms.find((f) => f.id === id))
-    .filter(Boolean) as typeof forms;
+  // Only show forms that actually have reported errors in scope
+  const reportedFormNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const d of scopedDefects) {
+      const name = (d.formFeature || "").trim();
+      if (name) set.add(name);
+    }
+    return Array.from(set);
+  }, [scopedDefects]);
+  const reportedForms = reportedFormNames.map((name) => {
+    const f = forms.find((x) => x.name === name || x.id === name);
+    const openDefects = scopedDefects.filter((d) => (d.formFeature || "") === name && !["Fixed", "Closed"].includes(d.status)).length;
+    return { id: f?.id ?? name, name, status: f?.status ?? "Open Bug" as const, openDefects };
+  });
 
   return (
     <div className="space-y-8">
@@ -134,9 +140,8 @@ function Dashboard() {
                     <h4 className="font-semibold">{m.name}</h4>
                   </div>
                   <div className="mt-4 space-y-1.5 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Forms</span><span className="font-medium">{m.forms}</span></div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Open Errors</span>
+                      <span className="text-muted-foreground">Reported Errors</span>
                       <span className={cn("font-medium", m.bugs > 0 ? "text-destructive" : "text-success")}>{m.bugs}</span>
                     </div>
                   </div>
@@ -152,8 +157,15 @@ function Dashboard() {
 
       <section>
         <h3 className="mb-4 text-lg font-semibold">Form Testing Status</h3>
+        {reportedForms.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="p-8 text-center text-sm text-muted-foreground">
+              No forms have reported errors yet.
+            </CardContent>
+          </Card>
+        ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {featured.map((f) => (
+          {reportedForms.map((f) => (
             <Link
               key={f.id}
               to="/my-reported-errors"
@@ -172,6 +184,7 @@ function Dashboard() {
             </Link>
           ))}
         </div>
+        )}
       </section>
     </div>
   );
