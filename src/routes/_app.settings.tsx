@@ -708,3 +708,74 @@ function AuditTable() {
     </Card>
   );
 }
+
+type RoleAuditRow = {
+  id: string;
+  target_user_id: string;
+  target_name: string;
+  old_role: string | null;
+  new_role: string;
+  changed_by_id: string;
+  changed_by_name: string;
+  changed_at: string;
+};
+
+function RoleAuditTable() {
+  const { currentUser } = useQA();
+  const [rows, setRows] = useState<RoleAuditRow[]>([]);
+  useEffect(() => {
+    if (currentUser?.role !== "admin") return;
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase
+        .from("role_audit_log")
+        .select("*")
+        .order("changed_at", { ascending: false })
+        .limit(200);
+      if (alive) setRows((data ?? []) as RoleAuditRow[]);
+    };
+    void load();
+    const ch = supabase
+      .channel("role-audit")
+      .on("postgres_changes", { event: "*", schema: "public", table: "role_audit_log" }, () => void load())
+      .subscribe();
+    return () => { alive = false; void supabase.removeChannel(ch); };
+  }, [currentUser]);
+
+  if (currentUser?.role !== "admin") return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Role Changes</CardTitle>
+        <CardDescription>History of admin/agent role updates. {rows.length} entries.</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>When</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>From</TableHead>
+              <TableHead>To</TableHead>
+              <TableHead>By</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="text-xs text-muted-foreground">{new Date(r.changed_at).toLocaleString()}</TableCell>
+                <TableCell>{r.target_name || r.target_user_id.slice(0, 8)}</TableCell>
+                <TableCell><span className="rounded bg-muted px-1.5 py-0.5 text-xs">{r.old_role ?? "—"}</span></TableCell>
+                <TableCell><span className="rounded bg-success/10 px-1.5 py-0.5 text-xs text-success">{r.new_role}</span></TableCell>
+                <TableCell className="text-sm">{r.changed_by_name || r.changed_by_id.slice(0, 8)}</TableCell>
+              </TableRow>
+            ))}
+            {rows.length === 0 && (
+              <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No role changes yet.</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
