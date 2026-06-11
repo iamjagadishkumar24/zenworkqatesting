@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { NotificationsBell } from "./NotificationsBell";
 import { toast } from "sonner";
 
@@ -106,29 +107,46 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card/80 px-6 backdrop-blur">
           <h1 className="text-lg font-semibold tracking-tight">Zenwork Testing Portal</h1>
           {env && (
-            <button
-              type="button"
-              onClick={() => {
-                const next = env === "Production" ? "Stage" : "Production";
-                setEnv(next);
-                if (next === "Production") {
-                  toast.success("Switched to Production", { description: "Dashboard now showing live data." });
-                } else {
-                  toast.warning("Switched to Stage", { description: "Dashboard now showing pre-release data." });
-                }
-              }}
-              className={cn(
-                "ml-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition-colors",
-                env === "Production"
-                  ? "bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 hover:bg-emerald-500/15 dark:text-emerald-300"
-                  : "bg-amber-500/10 text-amber-700 ring-amber-500/30 hover:bg-amber-500/15 dark:text-amber-300",
-              )}
-              title={`Click to switch to ${env === "Production" ? "Stage" : "Production"}`}
-              aria-label={`Environment: ${env}. Click to switch to ${env === "Production" ? "Stage" : "Production"}.`}
-            >
-              <span className={cn("h-1.5 w-1.5 rounded-full", env === "Production" ? "bg-emerald-500" : "bg-amber-500")} />
-              {env}
-            </button>
+            <div className="ml-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = env === "Production" ? "Stage" : "Production";
+                  setEnv(next);
+                  if (next === "Production") {
+                    toast.success("Switched to Production", { description: "Dashboard now showing live data." });
+                  } else {
+                    toast.warning("Switched to Stage", { description: "Dashboard now showing pre-release data." });
+                  }
+                }}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition-colors",
+                  env === "Production"
+                    ? "bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 hover:bg-emerald-500/15 dark:text-emerald-300"
+                    : "bg-amber-500/10 text-amber-700 ring-amber-500/30 hover:bg-amber-500/15 dark:text-amber-300",
+                )}
+                title={`Click to switch to ${env === "Production" ? "Stage" : "Production"}`}
+                aria-label={`Environment: ${env}. Click to switch to ${env === "Production" ? "Stage" : "Production"}.`}
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full", env === "Production" ? "bg-emerald-500" : "bg-amber-500")} />
+                {env}
+              </button>
+              <Switch
+                checked={env === "Production"}
+                onCheckedChange={(checked) => {
+                  const next = checked ? "Production" : "Stage";
+                  if (next === env) return;
+                  setEnv(next);
+                  if (next === "Production") {
+                    toast.success("Switched to Production", { description: "Dashboard now showing live data." });
+                  } else {
+                    toast.warning("Switched to Stage", { description: "Dashboard now showing pre-release data." });
+                  }
+                }}
+                aria-label="Toggle environment"
+                title={`Switch to ${env === "Production" ? "Stage" : "Production"}`}
+              />
+            </div>
           )}
           <form onSubmit={onSearch} className="relative ml-auto hidden md:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
