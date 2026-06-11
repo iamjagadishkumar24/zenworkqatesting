@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
+import { useTaxYear, matchesTaxYear } from "@/lib/qa/taxYear";
 import { scopeForUser, filterByEnvironment } from "@/lib/qa/scope";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/_app/my-reported-errors")({
 function ReportedErrorsPage() {
   const { defects, currentUser, deleteDefect, updateDefect } = useQA();
   const { env } = useEnvironment();
+  const { taxYear } = useTaxYear();
   const search = Route.useSearch();
   const isAdmin = currentUser?.role === "admin";
 
@@ -65,8 +67,9 @@ function ReportedErrorsPage() {
   // Scope: admins see everything; agents see only their reported errors.
   const scoped = useMemo(() => {
     const byUser = scopeForUser(defects, currentUser ? { name: currentUser.name, role: currentUser.role } : null);
-    return filterByEnvironment(byUser, env);
-  }, [defects, currentUser, env]);
+    const byEnv = filterByEnvironment(byUser, env);
+    return byEnv.filter((d) => matchesTaxYear(d.taxYear, taxYear));
+  }, [defects, currentUser, env, taxYear]);
 
   const reporters = useMemo(
     () => Array.from(new Set(defects.map((d) => d.createdBy).filter(Boolean))).sort(),
@@ -259,6 +262,7 @@ function ReportedErrorsPage() {
         isAdmin={isAdmin}
         filters={{
           environment: env,
+          taxYear: taxYear === "all" ? undefined : taxYear,
           module: mod,
           status,
           priority: prio,
