@@ -293,6 +293,116 @@ export type Database = {
         }
         Relationships: []
       }
+      retest_assignment_forms: {
+        Row: {
+          assignment_id: string
+          form_id: string
+          form_name: string
+          id: string
+        }
+        Insert: {
+          assignment_id: string
+          form_id: string
+          form_name: string
+          id?: string
+        }
+        Update: {
+          assignment_id?: string
+          form_id?: string
+          form_name?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retest_assignment_forms_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "retest_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      retest_assignments: {
+        Row: {
+          assigned_agent_id: string | null
+          assigned_agent_name: string
+          assigned_by_id: string | null
+          assigned_by_name: string
+          completed_at: string | null
+          created_at: string
+          due_date: string | null
+          environment: string
+          id: string
+          instructions: string
+          priority: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_agent_id?: string | null
+          assigned_agent_name?: string
+          assigned_by_id?: string | null
+          assigned_by_name?: string
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          environment?: string
+          id: string
+          instructions?: string
+          priority?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_agent_id?: string | null
+          assigned_agent_name?: string
+          assigned_by_id?: string | null
+          assigned_by_name?: string
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          environment?: string
+          id?: string
+          instructions?: string
+          priority?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      role_audit_log: {
+        Row: {
+          changed_at: string
+          changed_by_id: string
+          changed_by_name: string
+          id: string
+          new_role: Database["public"]["Enums"]["app_role"]
+          old_role: Database["public"]["Enums"]["app_role"] | null
+          target_name: string
+          target_user_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by_id: string
+          changed_by_name?: string
+          id?: string
+          new_role: Database["public"]["Enums"]["app_role"]
+          old_role?: Database["public"]["Enums"]["app_role"] | null
+          target_name?: string
+          target_user_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by_id?: string
+          changed_by_name?: string
+          id?: string
+          new_role?: Database["public"]["Enums"]["app_role"]
+          old_role?: Database["public"]["Enums"]["app_role"] | null
+          target_name?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -316,6 +426,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      change_user_role: {
+        Args: {
+          _new_role: Database["public"]["Enums"]["app_role"]
+          _target: string
+        }
+        Returns: Json
+      }
       current_user_name: { Args: never; Returns: string }
       has_role: {
         Args: {

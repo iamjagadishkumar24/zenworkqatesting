@@ -430,8 +430,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
 
     updateUser: async (id, patch) => {
       if (patch.role !== undefined) {
-        await supabase.from("user_roles").delete().eq("user_id", id);
-        const { error } = await supabase.from("user_roles").insert({ user_id: id, role: patch.role });
+        const { error } = await supabase.rpc("change_user_role", {
+          _target: id,
+          _new_role: patch.role,
+        });
         if (error) return { ok: false, error: error.message };
       }
       const profilePatch: Record<string, unknown> = {};
