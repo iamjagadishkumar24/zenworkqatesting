@@ -334,8 +334,11 @@ export type Database = {
           environment: string
           id: string
           instructions: string
+          module: string
           priority: string
           status: string
+          testing_type: string
+          title: string
           updated_at: string
         }
         Insert: {
@@ -349,8 +352,11 @@ export type Database = {
           environment?: string
           id: string
           instructions?: string
+          module?: string
           priority?: string
           status?: string
+          testing_type?: string
+          title?: string
           updated_at?: string
         }
         Update: {
@@ -364,8 +370,11 @@ export type Database = {
           environment?: string
           id?: string
           instructions?: string
+          module?: string
           priority?: string
           status?: string
+          testing_type?: string
+          title?: string
           updated_at?: string
         }
         Relationships: []
