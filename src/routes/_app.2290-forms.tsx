@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_app/2290-forms")({
       module="2290 Forms"
       items={FORMS_2290}
       itemLabel="form"
+      showHeaderReport={false}
     />
   ),
 });

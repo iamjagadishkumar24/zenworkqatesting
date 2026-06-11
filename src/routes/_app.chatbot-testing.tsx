@@ -11,6 +11,7 @@ export const Route = createFileRoute("/_app/chatbot-testing")({
       module="Chatbot Testing"
       items={ITEMS}
       itemLabel="flow"
+      showHeaderReport={false}
     />
   ),
 });
