@@ -343,6 +343,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         jira_url: d.jiraUrl || null,
         validity: d.validity || "Unverified",
         environment: d.environment || "Production",
+        tax_year: d.taxYear || null,
         status: d.status, priority: d.priority, severity: d.severity,
         assigned_agent: d.assignedAgent, created_by: me.name, updated_by: me.name,
       });
@@ -364,6 +365,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         videoUrl: "video_url", excelUrl: "excel_url", driveUrl: "drive_url",
         jiraUrl: "jira_url", validity: "validity",
         environment: "environment",
+        taxYear: "tax_year",
         status: "status", priority: "priority", severity: "severity",
         assignedAgent: "assigned_agent",
       };
