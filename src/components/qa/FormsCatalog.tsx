@@ -13,12 +13,14 @@ import { ReportDefectDialog } from "./ReportDefectDialog";
 import type { Module } from "@/lib/qa/types";
 
 export function FormsCatalog({
-  module, title, description, forms = FORM_LIST,
+  module, title, description, forms = FORM_LIST, featureMode = false,
 }: {
   module: Module;
   title: string;
   description: string;
   forms?: string[];
+  /** When true, the Report dialog hides the form dropdown and shows the picked form as a read-only Feature. */
+  featureMode?: boolean;
 }) {
   const { defects } = useQA();
   const { env } = useEnvironment();
@@ -104,6 +106,7 @@ export function FormsCatalog({
         onOpenChange={(o) => { if (!o) setPicked(null); }}
         defaultForm={picked ?? ""}
         defaultModule={module}
+        featureMode={featureMode}
       />
     </div>
   );
