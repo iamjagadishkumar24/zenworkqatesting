@@ -388,6 +388,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
         toast.error("Conflict: another agent updated this defect. Latest values were loaded.");
         return { ok: false, conflict: true, error: "Version conflict" };
       }
+      setState((s) => ({
+        ...s,
+        defects: s.defects.map((d) => (d.id === id ? rowToDefect(data as DefectRow, commentsRef.current) : d)),
+      }));
       return { ok: true };
     },
 
