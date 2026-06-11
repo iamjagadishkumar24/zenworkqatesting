@@ -61,8 +61,10 @@ describe("LoginPage failed login", () => {
 
     render(<LoginPage />);
 
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "user@x.com" } });
-    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "wrong-pass" } });
+    const email = document.getElementById("email") as HTMLInputElement;
+    const pwd = document.getElementById("pwd") as HTMLInputElement;
+    fireEvent.change(email, { target: { value: "user@x.com" } });
+    fireEvent.change(pwd, { target: { value: "wrong-pass" } });
     fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     const alert = await waitFor(() => screen.getByRole("alert"));
