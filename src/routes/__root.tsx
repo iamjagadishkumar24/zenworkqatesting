@@ -55,8 +55,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Zenwork QA Portal" },
-      { name: "description", content: "QA dashboard for forms, defects, integrations and reports." },
+      { title: "Zenwork Testing Portal" },
+      { name: "description", content: "Testing & defect management for tax forms, online filing, and integrations." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),

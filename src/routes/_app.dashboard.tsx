@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useQA } from "@/lib/qa/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { TestStatusBadge } from "@/components/qa/StatusBadge";
-import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, ClipboardList, Link2, Globe } from "lucide-react";
+import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -23,30 +23,19 @@ function Dashboard() {
 
   const kpis = [
     { label: "Total Tests", value: stats.total, Icon: ListChecks, tone: "primary", to: "/defects" },
-    { label: "Passed", value: stats.passed, Icon: CheckCircle2, tone: "success", to: "/forms-1099" },
+    { label: "Passed", value: stats.passed, Icon: CheckCircle2, tone: "success", to: "/forms" },
     { label: "Failed", value: stats.failed, Icon: XCircle, tone: "danger", to: "/defects", filter: "failed" },
     { label: "Open Defects", value: stats.open, Icon: Bug, tone: "warning", to: "/defects", filter: "open" },
   ] as const;
 
   const modules = [
     {
-      name: "1099 Forms", to: "/forms-1099", Icon: FileText,
+      name: "Forms", to: "/forms", Icon: FileText,
       forms: forms.filter((f) => f.module === "1099 Forms").length,
       bugs: forms.filter((f) => f.module === "1099 Forms").reduce((s, f) => s + f.openDefects, 0),
     },
     {
-      name: "990 Forms", to: "/forms-990", Icon: ClipboardList,
-      forms: forms.filter((f) => f.module === "990 Forms").length,
-      bugs: forms.filter((f) => f.module === "990 Forms").reduce((s, f) => s + f.openDefects, 0),
-    },
-    {
-      name: "Integrations", to: "/integrations", Icon: Link2,
-      forms: forms.filter((f) => f.module === "Integrations").length,
-      bugs: forms.filter((f) => f.module === "Integrations").reduce((s, f) => s + f.failed, 0),
-      bugLabel: "Failed Tests",
-    },
-    {
-      name: "1099 Online", to: "/online-1099", Icon: Globe,
+      name: "1099 Online Forms", to: "/online-1099", Icon: Globe,
       forms: forms.filter((f) => f.module === "1099 Online").length,
       bugs: forms.filter((f) => f.module === "1099 Online").reduce((s, f) => s + f.openDefects, 0),
     },
@@ -120,7 +109,7 @@ function Dashboard() {
                   <div className="mt-4 space-y-1.5 text-sm">
                     <div className="flex justify-between"><span className="text-muted-foreground">Forms</span><span className="font-medium">{m.forms}</span></div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{m.bugLabel ?? "Open Bugs"}</span>
+                      <span className="text-muted-foreground">Open Bugs</span>
                       <span className={cn("font-medium", m.bugs > 0 ? "text-destructive" : "text-success")}>{m.bugs}</span>
                     </div>
                   </div>

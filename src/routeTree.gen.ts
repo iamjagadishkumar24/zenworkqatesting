@@ -17,9 +17,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppMyErrorsRouteImport } from './routes/_app.my-errors'
-import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
-import { Route as AppForms990RouteImport } from './routes/_app.forms-990'
-import { Route as AppForms1099RouteImport } from './routes/_app.forms-1099'
+import { Route as AppFormsRouteImport } from './routes/_app.forms'
 import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 
@@ -62,19 +60,9 @@ const AppMyErrorsRoute = AppMyErrorsRouteImport.update({
   path: '/my-errors',
   getParentRoute: () => AppRoute,
 } as any)
-const AppIntegrationsRoute = AppIntegrationsRouteImport.update({
-  id: '/integrations',
-  path: '/integrations',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppForms990Route = AppForms990RouteImport.update({
-  id: '/forms-990',
-  path: '/forms-990',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppForms1099Route = AppForms1099RouteImport.update({
-  id: '/forms-1099',
-  path: '/forms-1099',
+const AppFormsRoute = AppFormsRouteImport.update({
+  id: '/forms',
+  path: '/forms',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDefectsRoute = AppDefectsRouteImport.update({
@@ -94,9 +82,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
-  '/forms-1099': typeof AppForms1099Route
-  '/forms-990': typeof AppForms990Route
-  '/integrations': typeof AppIntegrationsRoute
+  '/forms': typeof AppFormsRoute
   '/my-errors': typeof AppMyErrorsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
@@ -108,9 +94,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
-  '/forms-1099': typeof AppForms1099Route
-  '/forms-990': typeof AppForms990Route
-  '/integrations': typeof AppIntegrationsRoute
+  '/forms': typeof AppFormsRoute
   '/my-errors': typeof AppMyErrorsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
@@ -124,9 +108,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/defects': typeof AppDefectsRoute
-  '/_app/forms-1099': typeof AppForms1099Route
-  '/_app/forms-990': typeof AppForms990Route
-  '/_app/integrations': typeof AppIntegrationsRoute
+  '/_app/forms': typeof AppFormsRoute
   '/_app/my-errors': typeof AppMyErrorsRoute
   '/_app/online-1099': typeof AppOnline1099Route
   '/_app/reports': typeof AppReportsRoute
@@ -140,9 +122,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/dashboard'
     | '/defects'
-    | '/forms-1099'
-    | '/forms-990'
-    | '/integrations'
+    | '/forms'
     | '/my-errors'
     | '/online-1099'
     | '/reports'
@@ -154,9 +134,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/dashboard'
     | '/defects'
-    | '/forms-1099'
-    | '/forms-990'
-    | '/integrations'
+    | '/forms'
     | '/my-errors'
     | '/online-1099'
     | '/reports'
@@ -169,9 +147,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_app/dashboard'
     | '/_app/defects'
-    | '/_app/forms-1099'
-    | '/_app/forms-990'
-    | '/_app/integrations'
+    | '/_app/forms'
     | '/_app/my-errors'
     | '/_app/online-1099'
     | '/_app/reports'
@@ -243,25 +219,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMyErrorsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/integrations': {
-      id: '/_app/integrations'
-      path: '/integrations'
-      fullPath: '/integrations'
-      preLoaderRoute: typeof AppIntegrationsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/forms-990': {
-      id: '/_app/forms-990'
-      path: '/forms-990'
-      fullPath: '/forms-990'
-      preLoaderRoute: typeof AppForms990RouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/forms-1099': {
-      id: '/_app/forms-1099'
-      path: '/forms-1099'
-      fullPath: '/forms-1099'
-      preLoaderRoute: typeof AppForms1099RouteImport
+    '/_app/forms': {
+      id: '/_app/forms'
+      path: '/forms'
+      fullPath: '/forms'
+      preLoaderRoute: typeof AppFormsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/defects': {
@@ -284,9 +246,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDefectsRoute: typeof AppDefectsRoute
-  AppForms1099Route: typeof AppForms1099Route
-  AppForms990Route: typeof AppForms990Route
-  AppIntegrationsRoute: typeof AppIntegrationsRoute
+  AppFormsRoute: typeof AppFormsRoute
   AppMyErrorsRoute: typeof AppMyErrorsRoute
   AppOnline1099Route: typeof AppOnline1099Route
   AppReportsRoute: typeof AppReportsRoute
@@ -296,9 +256,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDefectsRoute: AppDefectsRoute,
-  AppForms1099Route: AppForms1099Route,
-  AppForms990Route: AppForms990Route,
-  AppIntegrationsRoute: AppIntegrationsRoute,
+  AppFormsRoute: AppFormsRoute,
   AppMyErrorsRoute: AppMyErrorsRoute,
   AppOnline1099Route: AppOnline1099Route,
   AppReportsRoute: AppReportsRoute,
