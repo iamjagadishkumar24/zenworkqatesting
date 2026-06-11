@@ -20,6 +20,7 @@ import { exportCsv, exportXlsx } from "@/lib/qa/export";
 import { useServerFn } from "@tanstack/react-start";
 import { inviteAgent, resetSampleAdmin } from "@/lib/qa/admin.functions";
 import { setAllowAgentExports } from "@/lib/qa/exportJobs.functions";
+import { ExportJobsPanel } from "@/components/qa/ExportJobsPanel";
 import {
   Users, Layers, FileText, Tag, BellRing, FileBarChart, Palette,
   LayoutDashboard, Database, History, ShieldCheck, Plus, X, Save, RotateCcw, Download,
@@ -425,6 +426,7 @@ function SettingsPage() {
               {isAdmin && <AgentExportToggle />}
             </CardContent>
           </Card>
+          {isAdmin && <ExportJobsPanel isAdmin={isAdmin} />}
         </TabsContent>
 
         {/* AUDIT */}
@@ -432,6 +434,7 @@ function SettingsPage() {
           <div className="space-y-4">
             <AuditTable />
             <RoleAuditTable />
+            <ExportAuditTable />
           </div>
         </TabsContent>
       </Tabs>
