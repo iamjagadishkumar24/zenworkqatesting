@@ -180,11 +180,12 @@ export function TestingModule({
       <ReportDefectDialog
         open={!!reportFor}
         onOpenChange={(o) => { if (!o) setReportFor(null); }}
-        defaultForm={reportFor ?? ""}
+        defaultForm={module === "Integrations" ? "" : (reportFor ?? "")}
         defaultModule={module}
         defaultAgents={allowedAgents}
         defaultIntegration={module === "Integrations" ? (reportFor ?? "") : ""}
         featureMode={featureMode}
+        formOptions={module === "Integrations" ? ["Form 1099-NEC", "Form 1099-MISC"] : undefined}
       />
       <DefectDetailSheet
         defectId={viewId}
