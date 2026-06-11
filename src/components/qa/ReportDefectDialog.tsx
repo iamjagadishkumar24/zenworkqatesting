@@ -42,6 +42,7 @@ export function ReportDefectDialog({
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
   const agentOptions = defaultAgents && defaultAgents.length ? defaultAgents : AGENTS;
+  const showIntegration = defaultModule === "Integrations";
   const [draft, setDraft] = useState<Draft>(() => ({
     module: defaultModule, formFeature: "", title: "", description: "",
     stepsToReproduce: "", expectedResult: "", actualResult: "",
@@ -61,8 +62,8 @@ export function ReportDefectDialog({
 
   const submit = async () => {
     if (!draft._form) return toast.error("Please select a form");
-    // Integration is only required for 1099 form testing
-    if (draft.module === "1099 Forms" && !draft._integration) return toast.error("Please select an integration");
+    // Integration only applies when reporting from the Integrations module
+    if (showIntegration && !draft._integration) return toast.error("Please select an integration");
     if (!draft.assignedAgent) return toast.error("Please select an assigned agent");
     if (!draft.title.trim()) return toast.error("Title is required");
     if (!draft.description.trim()) return toast.error("Description is required");
@@ -108,15 +109,17 @@ export function ReportDefectDialog({
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label>Integration{draft.module === "1099 Forms" ? " *" : ""}</Label>
-            <Select value={draft._integration} onValueChange={(v) => upd("_integration", v)}>
-              <SelectTrigger><SelectValue placeholder="Select integration" /></SelectTrigger>
-              <SelectContent>
-                {INTEGRATIONS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {showIntegration && (
+            <div>
+              <Label>Integration *</Label>
+              <Select value={draft._integration} onValueChange={(v) => upd("_integration", v)}>
+                <SelectTrigger><SelectValue placeholder="Select integration" /></SelectTrigger>
+                <SelectContent>
+                  {INTEGRATIONS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label>Environment</Label>
             <Select value={draft.environment ?? "Production"} onValueChange={(v) => upd("environment", v as Draft["environment"]) }>
