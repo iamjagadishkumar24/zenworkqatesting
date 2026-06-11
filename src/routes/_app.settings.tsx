@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "@/lib/qa/store";
 import { usePrefs, type AdminPrefs } from "@/lib/qa/prefs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -425,7 +427,10 @@ function SettingsPage() {
 
         {/* AUDIT */}
         <TabsContent value="audit">
-          <AuditTable />
+          <div className="space-y-4">
+            <AuditTable />
+            <RoleAuditTable />
+          </div>
         </TabsContent>
       </Tabs>
 
