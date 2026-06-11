@@ -1,8 +1,8 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  LayoutDashboard, FileText, ClipboardList, Link2, Globe, Bug,
-  BarChart3, Settings, Bell, ChevronLeft, ChevronRight, LogOut, Search, ListChecks,
+  LayoutDashboard, FileText, Globe, Bug,
+  BarChart3, Settings, ChevronLeft, ChevronRight, LogOut, Search, ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
@@ -11,14 +11,12 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { NotificationsBell } from "./NotificationsBell";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/forms-1099", label: "1099 Forms", icon: FileText },
-  { to: "/forms-990", label: "990 Forms", icon: ClipboardList },
-  { to: "/integrations", label: "Integrations", icon: Link2 },
-  { to: "/online-1099", label: "1099 Online", icon: Globe },
+  { to: "/forms", label: "Forms", icon: FileText },
+  { to: "/online-1099", label: "1099 Online Forms", icon: Globe },
   { to: "/defects", label: "Defects", icon: Bug },
   { to: "/my-errors", label: "My Errors", icon: ListChecks },
   { to: "/reports", label: "Reports", icon: BarChart3 },
@@ -26,13 +24,11 @@ const nav = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { currentUser, logout, defects } = useQA();
+  const { currentUser, logout } = useQA();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [collapsed, setCollapsed] = useState(false);
   const [q, setQ] = useState("");
-
-  const openDefects = defects.filter((d) => !["Fixed", "Closed"].includes(d.status)).length;
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 Z
               </div>
-              <span className="font-semibold text-sidebar-foreground">Zenwork QA</span>
+              <span className="font-semibold text-sidebar-foreground">Zenwork Testing</span>
             </div>
           )}
           <button
@@ -92,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card/80 px-6 backdrop-blur">
-          <h1 className="text-lg font-semibold tracking-tight">Zenwork QA Portal</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Zenwork Testing Portal</h1>
           <form onSubmit={onSearch} className="relative ml-auto hidden md:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -102,14 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className="w-72 pl-9"
             />
           </form>
-          <button className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-accent">
-            <Bell className="h-4 w-4" />
-            {openDefects > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
-                {openDefects}
-              </span>
-            )}
-          </button>
+          <NotificationsBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-accent">
