@@ -52,6 +52,9 @@ export function ReportDefectDialog({
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
   const isAgent = currentUser?.role === "agent";
+  const isAdmin = currentUser?.role === "admin";
+  // Admin can always edit, even when a default tax year is inherited from a task.
+  const taxYearLocked = lockTaxYear && !isAdmin;
   // Agents can only assign errors to themselves. Admins see the full list (or
   // a restricted list if the caller provided one).
   const agentOptions = isAgent && currentUser
@@ -179,13 +182,16 @@ export function ReportDefectDialog({
           </div>
           <div>
             <Label>Tax Year *</Label>
-            {lockTaxYear ? (
+            {taxYearLocked ? (
               <Input value={draft.taxYear ?? ""} readOnly disabled aria-readonly />
             ) : (
               <Select value={draft.taxYear ?? ""} onValueChange={(v) => upd("taxYear", v)}>
                 <SelectTrigger><SelectValue placeholder="Select Tax Year" /></SelectTrigger>
                 <SelectContent>{TAX_YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
               </Select>
+            )}
+            {lockTaxYear && isAdmin && (
+              <p className="mt-1 text-[10px] text-muted-foreground">Inherited from task — admin override enabled.</p>
             )}
           </div>
           <div>
