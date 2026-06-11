@@ -42,7 +42,12 @@ export function ReportDefectDialog({
 }) {
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
-  const agentOptions = defaultAgents && defaultAgents.length ? defaultAgents : AGENTS;
+  const isAgent = currentUser?.role === "agent";
+  // Agents can only assign errors to themselves. Admins see the full list (or
+  // a restricted list if the caller provided one).
+  const agentOptions = isAgent && currentUser
+    ? [currentUser.name]
+    : (defaultAgents && defaultAgents.length ? defaultAgents : AGENTS);
   const showIntegration = defaultModule === "Integrations";
   const lockIntegration = showIntegration && !!defaultIntegration;
   const [draft, setDraft] = useState<Draft>(() => ({
@@ -51,7 +56,8 @@ export function ReportDefectDialog({
     jiraUrl: "", attachmentUrl: "", attachmentUrl2: "", evidenceUrl: "",
     status: "Reported", priority: "Medium", severity: "Medium",
     environment: env ?? "Production",
-    assignedAgent: agentOptions[0] ?? "", _form: defaultForm, _integration: defaultIntegration,
+    assignedAgent: (isAgent && currentUser?.name) || agentOptions[0] || "",
+    _form: defaultForm, _integration: defaultIntegration,
   }));
 
   useEffect(() => {
@@ -62,9 +68,12 @@ export function ReportDefectDialog({
         _integration: defaultIntegration || d._integration,
         module: defaultModule,
         environment: env ?? d.environment ?? "Production",
+        assignedAgent: isAgent && currentUser?.name
+          ? currentUser.name
+          : (d.assignedAgent || agentOptions[0] || ""),
       }));
     }
-  }, [open, defaultForm, defaultModule, defaultIntegration, env]);
+  }, [open, defaultForm, defaultModule, defaultIntegration, env, isAgent, currentUser?.name]);
 
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
@@ -134,22 +143,20 @@ export function ReportDefectDialog({
           )}
           <div>
             <Label>Environment</Label>
-            <Select value={draft.environment ?? "Production"} onValueChange={(v) => upd("environment", v as Draft["environment"]) }>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Production">Production</SelectItem>
-                <SelectItem value="Stage">Stage</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input value={draft.environment ?? env ?? "Production"} readOnly disabled aria-readonly />
           </div>
           <div>
             <Label>Assigned Agent *</Label>
-            <Select value={draft.assignedAgent} onValueChange={(v) => upd("assignedAgent", v)}>
-              <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
-              <SelectContent className="max-h-72">
-                {agentOptions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            {isAgent ? (
+              <Input value={draft.assignedAgent} readOnly disabled aria-readonly />
+            ) : (
+              <Select value={draft.assignedAgent} onValueChange={(v) => upd("assignedAgent", v)}>
+                <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {agentOptions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <Label>Priority</Label>
