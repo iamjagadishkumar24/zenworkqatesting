@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { HelpCircle, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -35,6 +36,9 @@ function LoginPage() {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotBusy, setForgotBusy] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,12 +48,21 @@ function LoginPage() {
     return () => { cancelled = true; };
   }, [checkSample]);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("zenwork.rememberEmail");
+      if (saved) { setEmail(saved); setRemember(true); }
+    } catch {}
+  }, []);
+
   if (currentUser) return <Navigate to="/dashboard" replace />;
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setHint(null);
+    setSubmitting(true);
     const r = await login(email, password);
+    setSubmitting(false);
     if (!r.ok) {
       toast.error(r.error);
       try {
@@ -84,6 +97,10 @@ function LoginPage() {
       }
       return;
     }
+    try {
+      if (remember) localStorage.setItem("zenwork.rememberEmail", email.trim().toLowerCase());
+      else localStorage.removeItem("zenwork.rememberEmail");
+    } catch {}
     toast.success("Welcome back");
     navigate({ to: "/dashboard" });
   };
