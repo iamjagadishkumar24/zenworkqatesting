@@ -57,22 +57,31 @@ export type Database = {
           author: string
           created_at: string
           defect_id: string
+          edited: boolean
           id: string
           text: string
+          updated_at: string
+          updated_by: string | null
         }
         Insert: {
           author: string
           created_at?: string
           defect_id: string
+          edited?: boolean
           id?: string
           text: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           author?: string
           created_at?: string
           defect_id?: string
+          edited?: boolean
           id?: string
           text?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
