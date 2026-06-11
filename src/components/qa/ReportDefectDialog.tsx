@@ -123,16 +123,6 @@ export function ReportDefectDialog({
           <DialogDescription>Capture the reproduction details so engineering can act fast.</DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">Before you submit</p>
-          <ul className="mt-1 list-disc space-y-0.5 pl-4">
-            <li>Required fields are marked with *. {featureMode ? "Module and Feature are pre-filled." : (showIntegration ? "Integration and Form Type are pre-filled from the integration page." : "Pick the form you were testing.")}</li>
-            <li>Environment is auto-filled from the selected Production / Stage toggle.</li>
-            <li>Add a clear Title, what you expected vs what happened, and a Jira or evidence link if available.</li>
-            <li>{isAgent ? "You are auto-assigned as the agent on this error." : "Assign to the agent who should follow up."}</li>
-          </ul>
-        </div>
-
         <div className="grid gap-4 sm:grid-cols-2">
           {featureMode ? (
             <>
@@ -148,12 +138,16 @@ export function ReportDefectDialog({
           ) : (
             <div>
               <Label>Form *</Label>
-              <Select value={draft._form} onValueChange={(v) => upd("_form", v)}>
-                <SelectTrigger><SelectValue placeholder="Select a form" /></SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {formChoices.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              {defaultForm ? (
+                <Input value={draft._form} readOnly disabled aria-readonly />
+              ) : (
+                <Select value={draft._form} onValueChange={(v) => upd("_form", v)}>
+                  <SelectTrigger><SelectValue placeholder="Select a form" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {formChoices.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           )}
           {showIntegration && (
