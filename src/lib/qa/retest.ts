@@ -48,6 +48,8 @@ export function useRetests() {
   const { env } = useEnvironment();
   const [items, setItems] = useState<RetestAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [realtimeOk, setRealtimeOk] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,15 +58,21 @@ export function useRetests() {
         supabase.from("retest_assignments").select("*").order("created_at", { ascending: false }),
         supabase.from("retest_assignment_forms").select("*"),
       ]);
+      if (a.error) throw a.error;
+      if (f.error) throw f.error;
       const forms = (f.data ?? []) as RetestForm[];
       const rows = ((a.data ?? []) as Omit<RetestAssignment, "forms">[]).map((r) => ({
         ...r,
         forms: forms.filter((x) => x.assignment_id === r.id),
       }));
-      setItems(rows);
+      // Dedupe by id (defensive — protects against stale concurrent fetches).
+      const byId = new Map<string, RetestAssignment>();
+      for (const r of rows) byId.set(r.id, r);
+      setItems(Array.from(byId.values()));
+      setError(null);
     } catch (e) {
       console.warn("useRetests: load failed", e);
-      setItems([]);
+      setError(e instanceof Error ? e.message : "Failed to load tasks");
     } finally {
       setLoading(false);
     }
@@ -75,17 +83,23 @@ export function useRetests() {
     void load();
     let ch: ReturnType<typeof supabase.channel> | null = null;
     try {
-      const channelName = `retest-realtime-${Math.random().toString(36).slice(2, 9)}`;
+      // Key channel by user + env so switching environment tears down the
+      // previous channel (env change reruns this effect) and never duplicates.
+      const channelName = `retest-${currentUser.id}-${env ?? "any"}`;
       ch = supabase
         .channel(channelName)
         .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignments" }, () => void load())
         .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignment_forms" }, () => void load())
-        .subscribe();
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") setRealtimeOk(true);
+          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") setRealtimeOk(false);
+        });
     } catch (e) {
       console.warn("useRetests: realtime subscribe failed", e);
+      setRealtimeOk(false);
     }
     return () => { if (ch) { try { void supabase.removeChannel(ch); } catch { /* noop */ } } };
-  }, [currentUser, load]);
+  }, [currentUser, env, load]);
 
   const scoped = items.filter((r) => {
     if (env && r.environment !== env) return false;
@@ -185,5 +199,5 @@ export function useRetests() {
     return updateAssignment(id, { assigned_agent_id: agent.id, assigned_agent_name: agent.name });
   };
 
-  return { items: scoped, all: items, loading, createAssignment, updateAssignment, reassign, reload: load };
+  return { items: scoped, all: items, loading, error, realtimeOk, createAssignment, updateAssignment, reassign, reload: load };
 }
