@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useServerFn } from "@tanstack/react-start";
-import { resetSampleAdmin, sampleAdminStatus, accountStatus } from "@/lib/qa/admin.functions";
+import { accountStatus } from "@/lib/qa/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { HelpCircle, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
@@ -48,12 +48,8 @@ export function LoginPage() {
   const [name, setName] = useState("");
   const [sEmail, setSEmail] = useState("");
   const [sPwd, setSPwd] = useState("");
-  const [seeding, setSeeding] = useState(false);
-  const reset = useServerFn(resetSampleAdmin);
-  const checkSample = useServerFn(sampleAdminStatus);
   const checkAccount = useServerFn(accountStatus);
   const [hint, setHint] = useState<{ tone: "info" | "warn" | "error"; title: string; body: string } | null>(null);
-  const [sample, setSample] = useState<{ loading: boolean; exists?: boolean; isAdmin?: boolean; active?: boolean }>({ loading: true });
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotBusy, setForgotBusy] = useState(false);
@@ -63,14 +59,6 @@ export function LoginPage() {
   const emailRef = useRef<HTMLInputElement>(null);
   const pwdRef = useRef<HTMLInputElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    checkSample()
-      .then((r) => { if (!cancelled) setSample({ loading: false, ...r }); })
-      .catch(() => { if (!cancelled) setSample({ loading: false }); });
-    return () => { cancelled = true; };
-  }, [checkSample]);
 
   useEffect(() => {
     try {
