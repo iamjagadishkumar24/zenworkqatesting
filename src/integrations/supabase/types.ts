@@ -173,6 +173,7 @@ export type Database = {
           severity: string
           status: string
           steps_to_reproduce: string
+          tax_year: string | null
           title: string
           updated_at: string
           updated_by: string
@@ -202,6 +203,7 @@ export type Database = {
           severity?: string
           status?: string
           steps_to_reproduce?: string
+          tax_year?: string | null
           title: string
           updated_at?: string
           updated_by?: string
@@ -231,6 +233,7 @@ export type Database = {
           severity?: string
           status?: string
           steps_to_reproduce?: string
+          tax_year?: string | null
           title?: string
           updated_at?: string
           updated_by?: string
@@ -500,6 +503,7 @@ export type Database = {
           module: string
           priority: string
           status: string
+          tax_year: string | null
           testing_type: string
           title: string
           updated_at: string
@@ -519,6 +523,7 @@ export type Database = {
           module?: string
           priority?: string
           status?: string
+          tax_year?: string | null
           testing_type?: string
           title?: string
           updated_at?: string
@@ -538,6 +543,7 @@ export type Database = {
           module?: string
           priority?: string
           status?: string
+          tax_year?: string | null
           testing_type?: string
           title?: string
           updated_at?: string
