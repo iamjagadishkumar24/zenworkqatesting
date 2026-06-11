@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ClipboardCheck, Plus } from "lucide-react";
+import { ClipboardCheck, Plus, AlertCircle, RefreshCw, WifiOff } from "lucide-react";
 
 export const Route = createFileRoute("/_app/retest")({
   component: RetestPage,
@@ -29,7 +30,7 @@ const PRIORITIES: RetestPriority[] = ["Low", "Medium", "High", "Critical"];
 function RetestPage() {
   const { currentUser, users } = useQA();
   const { env } = useEnvironment();
-  const { items, loading, updateAssignment, reassign } = useRetests();
+  const { items, loading, error, realtimeOk, updateAssignment, reassign, reload } = useRetests();
   const isAdmin = currentUser?.role === "admin";
   const [open, setOpen] = useState(false);
 
@@ -52,6 +53,23 @@ function RetestPage() {
 
       {isAdmin && <AssignTaskDialog open={open} onOpenChange={setOpen} />}
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+          <p className="inline-flex items-center gap-2 text-sm font-medium">
+            <AlertCircle className="h-4 w-4" /> Unable to load task assignment data. Please try again.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{error}</p>
+          <Button size="sm" variant="outline" className="mt-3" onClick={() => void reload()}>
+            <RefreshCw className="mr-2 h-3 w-3" /> Retry
+          </Button>
+        </div>
+      )}
+      {!realtimeOk && !error && (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs inline-flex items-center gap-2">
+          <WifiOff className="h-3 w-3" /> Live updates temporarily unavailable. Retrying…
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base inline-flex items-center gap-2">
@@ -60,7 +78,13 @@ function RetestPage() {
           <CardDescription>{loading ? "Loading…" : `${items.length} task(s)`}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          {items.length === 0 ? (
+          {loading && items.length === 0 ? (
+            <div className="space-y-2 p-6">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-2/3" />
+            </div>
+          ) : items.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground">No tasks in this environment yet.</p>
           ) : (
             <Table>
