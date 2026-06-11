@@ -21,7 +21,7 @@ import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
 import { ExportMenu } from "@/components/qa/ExportMenu";
 import { AssignTaskDialog } from "@/components/qa/AssignTaskDialog";
 import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Plus } from "lucide-react";
-import type { DefectStatus, Module, Priority, Severity } from "@/lib/qa/types";
+import type { DefectStatus, Priority, Severity } from "@/lib/qa/types";
 import { AGENTS, MODULE_OPTIONS } from "@/lib/qa/constants";
 import { toast } from "sonner";
 import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
