@@ -2,35 +2,29 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
-import { useRetests, TESTING_TYPES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
+import { useRetests, RETEST_STATUSES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
+import { AssignTaskDialog } from "@/components/qa/AssignTaskDialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { ClipboardCheck, Plus, X } from "lucide-react";
-
-const MODULE_OPTIONS = [
-  "1099 Forms","1099 Online","990 Forms","2290 Forms","Integrations",
-  "Chatbot Testing","Excel Import Testing","Functionality Testing","Tax1099 Features",
-];
+import { ClipboardCheck, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_app/retest")({
   component: RetestPage,
 });
 
-const STATUSES: RetestStatus[] = ["Assigned", "In Progress", "Retested", "Completed", "Cancelled"];
+const STATUSES: RetestStatus[] = RETEST_STATUSES;
 const PRIORITIES: RetestPriority[] = ["Low", "Medium", "High", "Critical"];
 
 function RetestPage() {
-  const { currentUser, users, forms } = useQA();
+  const { currentUser, users } = useQA();
   const { env } = useEnvironment();
-  const { items, loading, createAssignment, updateAssignment, reassign, cancel } = useRetests();
+  const { items, loading, updateAssignment, reassign } = useRetests();
   const isAdmin = currentUser?.role === "admin";
   const [open, setOpen] = useState(false);
 
@@ -45,24 +39,13 @@ function RetestPage() {
           </p>
         </div>
         {isAdmin && (
-          <Button onClick={() => setOpen((o) => !o)}>
-            {open ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-            {open ? "Cancel" : "Assign Task"}
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Assign Task
           </Button>
         )}
       </div>
 
-      {isAdmin && open && (
-        <CreateForm
-          agents={users.filter((u) => u.active).map((u) => u.name)}
-          forms={forms.map((f) => ({ id: f.id, name: f.name }))}
-          onCreate={async (input) => {
-            const r = await createAssignment(input);
-            if (r.ok) { toast.success("Task assigned"); setOpen(false); }
-            else toast.error(r.error);
-          }}
-        />
-      )}
+      {isAdmin && <AssignTaskDialog open={open} onOpenChange={setOpen} />}
 
       <Card>
         <CardHeader>
