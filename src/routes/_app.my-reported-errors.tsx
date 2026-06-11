@@ -305,3 +305,39 @@ function FilterSelect({
     </Select>
   );
 }
+
+function ReassignDialog({
+  open, current, onOpenChange, onConfirm,
+}: {
+  open: boolean; current: string;
+  onOpenChange: (o: boolean) => void;
+  onConfirm: (newAgent: string) => void | Promise<void>;
+}) {
+  const [pick, setPick] = useState(current);
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Assign / Reassign defect</AlertDialogTitle>
+          <AlertDialogDescription>
+            Currently assigned to <span className="font-medium">{current || "—"}</span>. Choose a new agent.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="py-2">
+          <Select value={pick} onValueChange={setPick}>
+            <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              {AGENTS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={(e) => { e.preventDefault(); void onConfirm(pick); }}>
+            Confirm
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
