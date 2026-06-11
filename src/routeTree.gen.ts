@@ -29,6 +29,7 @@ import { Route as AppExcelImportTestingRouteImport } from './routes/_app.excel-i
 import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppChatbotTestingRouteImport } from './routes/_app.chatbot-testing'
+import { Route as AppAgentsRouteImport } from './routes/_app.agents'
 import { Route as App990FormsRouteImport } from './routes/_app.990-forms'
 import { Route as App2290FormsRouteImport } from './routes/_app.2290-forms'
 
@@ -131,6 +132,11 @@ const AppChatbotTestingRoute = AppChatbotTestingRouteImport.update({
   path: '/chatbot-testing',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAgentsRoute = AppAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AppRoute,
+} as any)
 const App990FormsRoute = App990FormsRouteImport.update({
   id: '/990-forms',
   path: '/990-forms',
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/2290-forms': typeof App2290FormsRoute
   '/990-forms': typeof App990FormsRoute
+  '/agents': typeof AppAgentsRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/2290-forms': typeof App2290FormsRoute
   '/990-forms': typeof App990FormsRoute
+  '/agents': typeof AppAgentsRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_app/2290-forms': typeof App2290FormsRoute
   '/_app/990-forms': typeof App990FormsRoute
+  '/_app/agents': typeof AppAgentsRoute
   '/_app/chatbot-testing': typeof AppChatbotTestingRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/defects': typeof AppDefectsRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/2290-forms'
     | '/990-forms'
+    | '/agents'
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/2290-forms'
     | '/990-forms'
+    | '/agents'
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_app/2290-forms'
     | '/_app/990-forms'
+    | '/_app/agents'
     | '/_app/chatbot-testing'
     | '/_app/dashboard'
     | '/_app/defects'
@@ -435,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatbotTestingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/agents': {
+      id: '/_app/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AppAgentsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/990-forms': {
       id: '/_app/990-forms'
       path: '/990-forms'
@@ -455,6 +474,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   App2290FormsRoute: typeof App2290FormsRoute
   App990FormsRoute: typeof App990FormsRoute
+  AppAgentsRoute: typeof AppAgentsRoute
   AppChatbotTestingRoute: typeof AppChatbotTestingRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDefectsRoute: typeof AppDefectsRoute
@@ -476,6 +496,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   App2290FormsRoute: App2290FormsRoute,
   App990FormsRoute: App990FormsRoute,
+  AppAgentsRoute: AppAgentsRoute,
   AppChatbotTestingRoute: AppChatbotTestingRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDefectsRoute: AppDefectsRoute,
