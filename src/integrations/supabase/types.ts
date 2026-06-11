@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_invites: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          name: string
+          notes: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          name: string
+          notes?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          name?: string
+          notes?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
@@ -450,6 +486,7 @@ export type Database = {
       }
       retest_assignments: {
         Row: {
+          all_forms: boolean
           assigned_agent_id: string | null
           assigned_agent_name: string
           assigned_by_id: string | null
@@ -468,6 +505,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          all_forms?: boolean
           assigned_agent_id?: string | null
           assigned_agent_name?: string
           assigned_by_id?: string | null
@@ -486,6 +524,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          all_forms?: boolean
           assigned_agent_id?: string | null
           assigned_agent_name?: string
           assigned_by_id?: string | null
@@ -502,6 +541,36 @@ export type Database = {
           testing_type?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      retest_pending_assignments: {
+        Row: {
+          created_at: string
+          created_by_id: string | null
+          created_by_name: string
+          email: string
+          forms: Json
+          id: string
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string
+          email: string
+          forms?: Json
+          id?: string
+          payload: Json
+        }
+        Update: {
+          created_at?: string
+          created_by_id?: string | null
+          created_by_name?: string
+          email?: string
+          forms?: Json
+          id?: string
+          payload?: Json
         }
         Relationships: []
       }
