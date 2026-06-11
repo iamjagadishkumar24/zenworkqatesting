@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Bug, FileText } from "lucide-react";
 import { FORM_LIST, decodeFormFeature } from "@/lib/qa/constants";
+import { excludeNonCatalogForms } from "@/lib/qa/scope";
 import { ReportDefectDialog } from "./ReportDefectDialog";
 import type { Module } from "@/lib/qa/types";
 
@@ -24,11 +25,9 @@ export function FormsCatalog({
   const [q, setQ] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
 
-  // 2290-related forms live under the dedicated "2290 Forms" module page.
-  const visibleForms = useMemo(
-    () => forms.filter((n) => !/2290/i.test(n)),
-    [forms],
-  );
+  // 2290-related forms and the retired "Form 1099 Corrections" never appear
+  // here — 2290 lives under its dedicated module page.
+  const visibleForms = useMemo(() => excludeNonCatalogForms(forms), [forms]);
 
   const list = useMemo(
     () => visibleForms.filter((n) => (q ? n.toLowerCase().includes(q.toLowerCase()) : true)),

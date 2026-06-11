@@ -24,8 +24,8 @@ function ReportsPage() {
     const passed = forms.reduce((s, f) => s + f.passed, 0);
     const failed = forms.reduce((s, f) => s + f.failed, 0);
     return [
-      { name: "Passed", value: passed },
-      { name: "Failed", value: failed },
+      { name: "Valid", value: passed },
+      { name: "Invalid Errors", value: failed },
     ];
   }, [forms]);
 
@@ -38,16 +38,27 @@ function ReportsPage() {
   }, [defects]);
 
   const statusTrend = useMemo(() => {
-    const days: { day: string; passed: number; failed: number }[] = [];
+    // Real, deterministic trend: how many real errors were reported / closed
+    // per day for the last 7 days. No fake/random values.
+    const days: { day: string; reported: number; closed: number }[] = [];
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000);
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const next = new Date(d); next.setDate(next.getDate() + 1);
       const label = d.toLocaleDateString("en-US", { weekday: "short" });
-      const passed = Math.round(forms.reduce((s, f) => s + f.passed, 0) / 7 + (Math.random() * 20 - 10));
-      const failed = Math.round(forms.reduce((s, f) => s + f.failed, 0) / 7 + (Math.random() * 4 - 2));
-      days.push({ day: label, passed, failed });
+      const reported = defects.filter((x) => {
+        const t = new Date(x.createdAt);
+        return t >= d && t < next;
+      }).length;
+      const closed = defects.filter((x) => {
+        const t = new Date(x.updatedAt);
+        return t >= d && t < next && ["Fixed", "Closed"].includes(x.status);
+      }).length;
+      days.push({ day: label, reported, closed });
     }
     return days;
-  }, [forms]);
+  }, [defects]);
 
   const agentDefects = useMemo(() => {
     const map: Record<string, number> = {};
@@ -103,7 +114,7 @@ function ReportsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>Passed vs Failed</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Valid vs Invalid Errors</CardTitle></CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -118,7 +129,7 @@ function ReportsPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Open Defects by Module</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Open Errors by Module</CardTitle></CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={defectsByModule}>
@@ -135,7 +146,7 @@ function ReportsPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Test Status Trend (7 days)</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Reported vs Closed Errors (7 days)</CardTitle></CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={statusTrend}>
@@ -144,15 +155,15 @@ function ReportsPage() {
                 <YAxis fontSize={12} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="passed" stroke="oklch(0.62 0.17 150)" strokeWidth={2} />
-                <Line type="monotone" dataKey="failed" stroke="oklch(0.6 0.22 27)" strokeWidth={2} />
+                <Line type="monotone" dataKey="reported" stroke="oklch(0.6 0.22 27)" strokeWidth={2} />
+                <Line type="monotone" dataKey="closed" stroke="oklch(0.62 0.17 150)" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Agent-wise Defect Load</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Agent-wise Error Load</CardTitle></CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={agentDefects} layout="vertical">
@@ -167,7 +178,7 @@ function ReportsPage() {
         </Card>
 
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>Form-wise Testing Coverage</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Form-wise Testing Coverage (Valid vs Invalid Errors)</CardTitle></CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={formCoverage}>

@@ -7,7 +7,6 @@ const ITEMS = [
   "Bulk Upload",
   "Vendor Management",
   "State Filing",
-  "Corrections",
   "E-Delivery",
   "Print & Mail",
 ];

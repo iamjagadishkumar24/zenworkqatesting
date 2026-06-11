@@ -79,7 +79,7 @@ export function LoginPage() {
     } catch {}
   }, []);
 
-  if (currentUser) return <Navigate to="/dashboard" replace />;
+  if (currentUser) return <Navigate to="/select-environment" replace />;
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,14 +133,14 @@ export function LoginPage() {
       else localStorage.removeItem("zenwork.rememberEmail");
     } catch {}
     toast.success("Welcome back");
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/select-environment" });
   };
   const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     const r = await signup(name, sEmail, sPwd);
     if (!r.ok) return toast.error(r.error);
     toast.success(users.length === 0 ? "Admin account created — signing you in" : "Account created — signing you in");
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/select-environment" });
   };
 
   const seedAdmin = async () => {

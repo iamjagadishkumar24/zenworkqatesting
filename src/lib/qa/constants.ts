@@ -5,7 +5,7 @@ export const FORM_LIST: string[] = [
   "Form 1099-R","Form 1099-S","Form 1099-PATR","Form 1099-B","Form 1099-C",
   "Form 1099-OID","Form 1099-A","Form 1099-SA","Form 1099-Q","Form 1099-G",
   "Form 1099-DA","Form 1099-HC","Form 1099-LS","Form 1097-BTC","Form 1099-QA",
-  "Form W-2G","Form 1099 Corrections","Form 940","Form 941","Form 941-X",
+  "Form W-2G","Form 940","Form 941","Form 941-X",
   "Form 943","Form 943-X","Form 944","Form 944-X","Form 945",
   "Form 3921","Form 3922","Form W-2","Form W-2C","Form W-2VI","Form W-2GU",
   "Form 592-B","Form 1095-B","Form 1095-C","Form ACA Corrections",
@@ -13,7 +13,7 @@ export const FORM_LIST: string[] = [
   "Form 1042","Form 1042-S",
   "Form 480.6A","Form 480.6B","Form 480.6D","Form 480.7A",
   "Form 8809","Form 7004","Form 4868","Form 8027","Form 8868","Form 8955-SSA",
-  "Form 5498","Form 5498-SA","Form 5498-ESA","Form 2290",
+  "Form 5498","Form 5498-SA","Form 5498-ESA",
 ];
 
 export const INTEGRATIONS: string[] = [

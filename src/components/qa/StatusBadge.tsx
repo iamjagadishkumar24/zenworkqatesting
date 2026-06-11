@@ -11,6 +11,15 @@ const testMap: Record<TestStatus, { cls: string; Icon: typeof CheckCircle2 }> = 
   "Retest Required": { cls: "bg-accent text-accent-foreground border-border", Icon: RefreshCw },
 };
 
+const testLabelMap: Record<TestStatus, string> = {
+  Passed: "Valid",
+  Failed: "Invalid Errors",
+  "Open Bug": "Open Errors",
+  "In Progress": "In Progress",
+  Pending: "Pending",
+  "Retest Required": "Retest Required",
+};
+
 export function TestStatusBadge({ status, className }: { status: TestStatus; className?: string }) {
   const { cls, Icon } = testMap[status];
   return (
@@ -22,7 +31,7 @@ export function TestStatusBadge({ status, className }: { status: TestStatus; cla
       )}
     >
       <Icon className="h-3.5 w-3.5" />
-      {status}
+      {testLabelMap[status]}
     </span>
   );
 }
