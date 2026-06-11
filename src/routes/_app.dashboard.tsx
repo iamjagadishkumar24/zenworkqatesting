@@ -53,6 +53,7 @@ function Dashboard() {
   const modules = [
     { name: "Forms", to: "/forms", Icon: FileText, key: "1099 Forms" },
     { name: "1099 Online Forms", to: "/online-1099", Icon: Globe, key: "1099 Online" },
+    { name: "990 Form Testing", to: "/990-forms", Icon: FileText, key: "990 Forms" },
     { name: "2290 Forms", to: "/2290-forms", Icon: FileSpreadsheet, key: "2290 Forms" },
     { name: "Integrations", to: "/integrations", Icon: Plug, key: "Integrations" },
     { name: "Chatbot Testing", to: "/chatbot-testing", Icon: MessageSquare, key: "Chatbot Testing" },
