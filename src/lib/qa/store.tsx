@@ -222,6 +222,9 @@ export function QAProvider({ children }: { children: ReactNode }) {
         if (payload.eventType === "INSERT") {
           const c = payload.new as CommentRow;
           commentsRef.current = [...commentsRef.current, c];
+        } else if (payload.eventType === "UPDATE") {
+          const c = payload.new as CommentRow;
+          commentsRef.current = commentsRef.current.map((x) => (x.id === c.id ? c : x));
         } else if (payload.eventType === "DELETE") {
           const oldId = (payload.old as { id: string }).id;
           commentsRef.current = commentsRef.current.filter((c) => c.id !== oldId);
@@ -232,7 +235,12 @@ export function QAProvider({ children }: { children: ReactNode }) {
             ...d,
             comments: commentsRef.current
               .filter((c) => c.defect_id === d.id)
-              .map((c) => ({ id: c.id, author: c.author, text: c.text, createdAt: c.created_at })),
+              .map((c) => ({
+                id: c.id, author: c.author, text: c.text, createdAt: c.created_at,
+                updatedAt: c.updated_at ?? undefined,
+                updatedBy: c.updated_by ?? undefined,
+                edited: !!c.edited,
+              })),
           })),
         }));
       })
