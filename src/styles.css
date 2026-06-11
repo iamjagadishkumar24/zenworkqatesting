@@ -128,3 +128,38 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Accent overrides (Settings → Theme → Accent) */
+:root[data-accent="violet"] {
+  --primary: oklch(0.55 0.22 295);
+  --primary-glow: oklch(0.68 0.2 295);
+  --ring: oklch(0.55 0.22 295);
+  --sidebar-primary: oklch(0.55 0.22 295);
+  --sidebar-accent-foreground: oklch(0.55 0.22 295);
+  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.22 295), oklch(0.68 0.2 295));
+}
+:root[data-accent="emerald"] {
+  --primary: oklch(0.6 0.17 155);
+  --primary-glow: oklch(0.72 0.15 160);
+  --ring: oklch(0.6 0.17 155);
+  --sidebar-primary: oklch(0.6 0.17 155);
+  --sidebar-accent-foreground: oklch(0.6 0.17 155);
+  --gradient-primary: linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160));
+}
+:root[data-accent="rose"] {
+  --primary: oklch(0.62 0.22 15);
+  --primary-glow: oklch(0.73 0.2 15);
+  --ring: oklch(0.62 0.22 15);
+  --sidebar-primary: oklch(0.62 0.22 15);
+  --sidebar-accent-foreground: oklch(0.62 0.22 15);
+  --gradient-primary: linear-gradient(135deg, oklch(0.62 0.22 15), oklch(0.73 0.2 15));
+}
+
+/* Density overrides (Settings → Theme → Density) */
+:root[data-density="compact"] {
+  --radius: 0.5rem;
+}
+:root[data-density="compact"] main { padding-top: 1rem; padding-bottom: 1rem; }
+:root[data-density="compact"] .p-5 { padding: 0.875rem; }
+:root[data-density="compact"] .p-4 { padding: 0.625rem; }
+:root[data-density="compact"] td, :root[data-density="compact"] th { padding-top: 0.375rem; padding-bottom: 0.375rem; }
