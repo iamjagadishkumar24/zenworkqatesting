@@ -1,91 +1,86 @@
+## Goal
+Wire the UI for the server-side export jobs system already in place: preview → background job → realtime progress → signed download. Enforce the `allow_agent_exports` toggle in the UI, apply the styled XLSX formatting to the generic exporter, and add an Audit Log viewer to Settings.
 
-# Zenwork Testing — Platform Expansion Plan
+## 1. Reported Errors export flow (`src/routes/_app.my-reported-errors.tsx`)
 
-This is a large, multi-area change. I'll keep the existing login animation, auth, dashboard, defects engine, and database intact, and add new modules around them.
+Replace the current inline `exportReportedErrorsXlsx(filtered, env)` button with a new `ExportReportedErrorsButton` component that:
 
-## 1. Environment selection (Production / Stage)
+- Reads `allow_agent_exports` from `app_settings` on mount (or via shared hook).
+- Admins: button always enabled.
+- Agents: when setting is `false`, button is hidden; when `true`, button enabled and export is scoped to their own rows (already enforced server-side, but UI matches).
+- On click → opens `ExportPreviewDialog` (see below) with the current filters + `filtered` rows.
+- On "Run export" → calls `createExportJob({ filters })`, gets `jobId`, then subscribes to realtime updates on `export_jobs` for that id, shows progress, and on `completed` calls `getExportDownloadUrl({ jobId })` to trigger a browser download via the signed URL.
+- On error → toast, allow retry from the dialog (admins only via `retryExportJob`).
 
-- Add `environment` to client session state via a new `EnvironmentProvider` (React context + `localStorage` key `zenwork.env`).
-- After login, if no env is selected, render an `EnvironmentSelect` screen at `/select-environment` instead of `/dashboard`.
-- `_app` layout redirects to `/select-environment` whenever `env` is null.
-- Header shows current env as a badge and a dropdown to switch (clears query caches and reloads data).
-- All defect/form/report queries filter by `environment` column (added to DB).
+## 2. Export Preview Dialog (`src/components/qa/ExportPreviewDialog.tsx` — new)
 
-## 2. Database migration
+Shared dialog used by Reported Errors (and reusable later by Defects). Props: `open`, `onOpenChange`, `rows: Defect[]`, `filters`, `environment`, `onConfirm()`.
 
-Add to existing tables:
-- `defects.environment text not null default 'Production'` (check Production|Stage)
-- `forms.environment text not null default 'Production'`
-- New table `notifications (id, user_id, type, title, body, defect_id, read, created_at)` with RLS (user sees own).
-- Update `defects.validity` enum usage to also accept `Pending Review | Valid Error | Invalid Error` (keep backwards-compatible with existing `Unverified/Valid/Invalid`). New constant set used in UI; map old values.
-- Seed: insert 25 agent profiles into `profiles` (no auth users — they appear as assignable names). Store as a static list in `src/lib/qa/constants.ts` (AGENTS array) since seeding `auth.users` from the client is not possible. Assigned agent is already a free-text name field — using the constant list ensures consistent dropdown.
+Contents:
+- Summary row: environment, applied filters (chips), total row count.
+- Column list: shows the 8 columns from `REPORTED_ERROR_HEADERS` with a small note "all included".
+- Preview table: first 10 rows mapped through `toReportedErrorRow` (Agent, Section, truncated Description, Expected, Screenshot/Link icons, Date Reported).
+- Footer: "Cancel" + primary "Run as background job".
+- After confirm: switches into "Job progress" mode embedded in the same dialog showing a Progress bar bound to the live `export_jobs` row (status + progress + row_count + error). Buttons swap to "Download" (when completed), "Retry" (admin, when failed), "Close".
 
-## 3. Sidebar restructure
+A small `useExportJob(jobId)` hook colocated in the dialog file (or `src/lib/qa/useExportJob.ts`) handles the realtime channel + initial select.
 
-Order: Forms, 1099 Online Forms, 2290 Forms, Integrations, Chatbot Testing, Functionality Testing, Tax1099 Features, Dashboard, Defects, My Reported Errors, Reports, Notifications, Settings.
+## 3. Jobs Panel (`src/components/qa/ExportJobsPanel.tsx` — new)
 
-Routes to add:
-- `/2290-forms` (sub: EZ2290, 2290.us, GT2290)
-- `/integrations` (with the 9 listed integrations, no Excel)
-- `/chatbot-testing`
-- `/functionality-testing`
-- `/tax1099-features`
-- `/notifications`
-- Rename `/my-errors` → `/my-reported-errors` (keep old as redirect).
+Card listing recent `export_jobs` (last 25) with realtime updates:
+- Columns: Requested by, Scope, Environment, Status badge, Progress, Rows, Started, Actions.
+- Actions: Download (if completed and viewer is owner or admin) → uses `getExportDownloadUrl`; Retry (admin only, failed jobs) → uses `retryExportJob`.
+- Mounted under Settings → Import / Export (above the Audit Log) so admins/agents can monitor.
 
-Agent role hides admin-only items (none of the new ones are admin-only except Reports + Settings admin sections, which already gate internally).
+## 4. Settings → Audit Log viewer
 
-## 4. Generic TestingModule component
+Extend the existing `audit` tab (`src/routes/_app.settings.tsx`) by adding a new `ExportAuditTable` card alongside the current `AuditTable` and `RoleAuditTable`.
 
-New `src/components/qa/TestingModule.tsx` powers Integrations, Chatbot, Functionality, Tax1099, 2290 sub-forms. Props: `module` name, optional `subItems`. Reuses existing defect list + `ReportDefectDialog` + `DefectDetailSheet` filtered by `module + formFeature + environment`.
+`ExportAuditTable` (admin-only, same tab):
+- Fetches `export_audit_log` ordered by `created_at desc`, limit 200.
+- Subscribes to inserts via realtime.
+- Columns: When, User, Role, Scope, Environment, Filters (collapsible JSON pill), Rows, Status (success/failed), Error.
+- Search box + status filter (success / failed / all).
+- "Export CSV" button reusing existing `exportCsv`.
 
-## 5. Form Testing Status click fix
+Also surface the new `ExportJobsPanel` inside the "Import / Export" tab (admin only) so it's discoverable alongside the agent-export toggle.
 
-Dashboard form rows already exist — make each row a `<Link to="/forms" search={{ q: form.name }}>` so clicking opens Forms filtered to that form. Same for any "form testing status" widget on dashboard.
+## 5. Apply xlsx-js-style formatting in `src/lib/qa/export.ts`
 
-## 6. Error Validation (admin-only)
+Refactor the generic `exportXlsx` to use `xlsx-js-style` (already a dependency) and the same formatting helpers used by Reported Errors:
 
-Use existing `validity` column. Introduce constants `PENDING_REVIEW | VALID | INVALID`. In `DefectDetailSheet`, validity dropdown is disabled for non-admin. Activity log already records validity changes via the existing `log_defect_changes` trigger.
+- Bold white-on-slate header row.
+- Wrap text on any column whose header includes `Description`, `Notes`, `Comments`, `Steps`, `Expected`, `Actual`, `Body`.
+- Hyperlink + blue underline for any cell whose value is an `http(s)://` URL.
+- Date formatting (`yyyy-mm-dd hh:mm`) for cells whose value is a `Date` instance or whose header includes `Date`, `Created`, `Updated`, `Reported`, `Completed`, `Due` (parse ISO strings to Date before insertion).
+- Auto column widths capped to 60 (same as Reported Errors).
 
-## 7. Notifications
+Keep the same public signature so existing callsites (settings snapshot, defect/forms exports) keep working — they automatically gain the styling. `exportCsv` stays unchanged.
 
-- New `notifications` table + RLS (`user_id = auth.uid()`).
-- `NotificationsBell` (existing) reads from this table in realtime instead of/in addition to current synthesized notifications.
-- New `/notifications` page lists all, mark-as-read, empty state.
-- Triggers on `defects` insert/update generate notifications for assigned agent (by name → profile lookup) for: assigned, status change, validity change, reassigned, deleted. Comment inserts → notify assigned agent + reporter.
+## 6. Defects export parity
 
-## 8. UI polish
+The site-wide Defects exports already go through `exportXlsx` in `src/routes/_app.settings.tsx`. Once step 5 lands, hyperlink/wrap/date rules apply automatically. No additional changes required beyond verifying the snapshot button renders correctly.
 
-- Sidebar: gradient active state, smooth hover, collapsed icon mode (already supported), env badge in header.
-- Cards/badges/modals use existing design tokens (`--gradient-primary`, etc.) — no token churn.
+## 7. Verification
 
-## 9. Out of scope (kept as-is)
+- Build passes (TS strict).
+- Manually verify in preview:
+  - Admin: Export button on Reported Errors → preview opens → run job → progress fills → download succeeds → row appears in Audit Log.
+  - Admin: simulate a failure (toggle setting off then call as agent) → Retry from Jobs Panel works.
+  - Agent with `allow_agent_exports=false`: Export button hidden.
+  - Agent with toggle on: only own rows in preview + downloaded file.
+  - Settings snapshot Excel: hyperlinks clickable, dates formatted, long text wraps.
 
-- Login page (animation, error boundary, tests untouched).
-- Auth flow / Supabase clients.
-- Existing dashboard charts.
-- Existing defects engine (only adds env filter + validation labels).
+## Files
 
-## Files to add/change (high level)
+New:
+- `src/components/qa/ExportPreviewDialog.tsx`
+- `src/components/qa/ExportJobsPanel.tsx`
+- `src/lib/qa/useExportJob.ts` (small realtime hook)
 
-- DB migration (1 file): env columns, notifications table+RLS+triggers, validity mapping.
-- `src/lib/qa/environment.tsx` (new context).
-- `src/lib/qa/constants.ts` (AGENTS list, INTEGRATIONS, TEST_MODULES, FORMS_2290, VALIDATION).
-- `src/components/qa/AppShell.tsx` (new sidebar order, env badge/switcher, role filtering).
-- `src/components/qa/TestingModule.tsx` (new, generic page).
-- `src/components/qa/NotificationsBell.tsx` (realtime from notifications table).
-- Routes: `_app.2290-forms.tsx`, `_app.integrations.tsx`, `_app.chatbot-testing.tsx`, `_app.functionality-testing.tsx`, `_app.tax1099-features.tsx`, `_app.notifications.tsx`, `_app.my-reported-errors.tsx`, `_app.select-environment.tsx`.
-- `src/routes/_app.tsx` (env guard).
-- `src/routes/_app.dashboard.tsx` (clickable form rows, env-filtered, env badge).
-- `src/routes/_app.defects.tsx`, `_app.my-errors.tsx`, `_app.reports.tsx`, `_app.forms.tsx`, `_app.online-1099.tsx` (env filter + validation filter).
-- `src/components/qa/DefectDetailSheet.tsx` (admin-gated validation, env field).
-- `src/components/qa/ReportDefectDialog.tsx` (env auto-tagged, module preset).
-- `src/lib/qa/store.tsx` (load env-filtered, notifications realtime).
+Edited:
+- `src/routes/_app.my-reported-errors.tsx` (replace Export button + enforce toggle)
+- `src/routes/_app.settings.tsx` (add `ExportAuditTable` + mount `ExportJobsPanel`)
+- `src/lib/qa/export.ts` (xlsx-js-style + formatting rules)
 
-## Risks / notes
-
-- Adding `environment NOT NULL` to existing rows: default = 'Production' so existing data backfills cleanly.
-- Existing `validity` values (`Valid/Invalid/Unverified`) are mapped to (`Valid Error/Invalid Error/Pending Review`) in UI; DB values preserved to avoid breaking the audit trigger.
-- Agents are added as constants (not auth users). Creating real auth accounts for 25 people needs admin server-side and their emails — out of scope unless you provide them.
-
-Estimated edits: ~18 files + 1 DB migration. I'll do the migration first, then ship code after it's approved.
+No DB migrations needed — schema, RLS, and storage bucket already exist.
