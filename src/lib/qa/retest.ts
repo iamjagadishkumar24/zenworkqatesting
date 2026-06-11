@@ -6,6 +6,20 @@ import { useEnvironment } from "./environment";
 export type RetestStatus = "Assigned" | "In Progress" | "Retested" | "Completed" | "Cancelled";
 export type RetestPriority = "Low" | "Medium" | "High" | "Critical";
 
+export const TESTING_TYPES = [
+  "Form testing",
+  "Functionality testing",
+  "Integration testing",
+  "Excel import testing",
+  "Chatbot testing",
+  "Tax1099 feature testing",
+  "1099 Online testing",
+  "2290 Forms testing",
+  "990 Forms testing",
+  "Retest",
+] as const;
+export type TestingType = (typeof TESTING_TYPES)[number];
+
 export type RetestForm = { id: string; assignment_id: string; form_id: string; form_name: string };
 export type RetestAssignment = {
   id: string;
@@ -18,6 +32,9 @@ export type RetestAssignment = {
   priority: RetestPriority;
   due_date: string | null;
   status: RetestStatus;
+  testing_type: string;
+  title: string;
+  module: string;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -63,34 +80,52 @@ export function useRetests() {
   });
 
   const createAssignment = async (input: {
-    agentName: string;
+    agentName?: string;
+    /** When true, ignore agentName and create one assignment per active agent. */
+    assignToAll?: boolean;
     forms: { id: string; name: string }[];
     instructions: string;
     priority: RetestPriority;
     dueDate: string | null;
+    testingType?: string;
+    title?: string;
+    module?: string;
   }) => {
     if (!currentUser) return { ok: false, error: "Not signed in" };
-    const agent = users.find((u) => u.name === input.agentName);
-    if (!agent) return { ok: false, error: "Select an agent" };
-    if (!input.forms.length) return { ok: false, error: "Select at least one form" };
-    const id = `RT-${Date.now()}`;
-    const { error } = await supabase.from("retest_assignments").insert({
-      id,
-      environment: env ?? "Production",
-      assigned_agent_id: agent.id,
-      assigned_agent_name: agent.name,
-      assigned_by_id: currentUser.id,
-      assigned_by_name: currentUser.name,
-      instructions: input.instructions,
-      priority: input.priority,
-      due_date: input.dueDate,
-      status: "Assigned",
-    });
-    if (error) return { ok: false, error: error.message };
-    const rows = input.forms.map((f) => ({ assignment_id: id, form_id: f.id, form_name: f.name }));
-    const { error: e2 } = await supabase.from("retest_assignment_forms").insert(rows);
-    if (e2) return { ok: false, error: e2.message };
-    return { ok: true, id };
+    const targets = input.assignToAll
+      ? users.filter((u) => u.active && u.role === "agent")
+      : (() => {
+          const a = users.find((u) => u.name === input.agentName);
+          return a ? [a] : [];
+        })();
+    if (!targets.length) return { ok: false, error: "Select at least one agent" };
+    const created: string[] = [];
+    for (const agent of targets) {
+      const id = `RT-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const { error } = await supabase.from("retest_assignments").insert({
+        id,
+        environment: env ?? "Production",
+        assigned_agent_id: agent.id,
+        assigned_agent_name: agent.name,
+        assigned_by_id: currentUser.id,
+        assigned_by_name: currentUser.name,
+        instructions: input.instructions,
+        priority: input.priority,
+        due_date: input.dueDate,
+        status: "Assigned",
+        testing_type: input.testingType ?? "Retest",
+        title: input.title ?? "",
+        module: input.module ?? "",
+      });
+      if (error) return { ok: false, error: error.message };
+      if (input.forms.length) {
+        const rows = input.forms.map((f) => ({ assignment_id: id, form_id: f.id, form_name: f.name }));
+        const { error: e2 } = await supabase.from("retest_assignment_forms").insert(rows);
+        if (e2) return { ok: false, error: e2.message };
+      }
+      created.push(id);
+    }
+    return { ok: true, ids: created };
   };
 
   const updateAssignment = async (id: string, patch: Partial<Pick<RetestAssignment,

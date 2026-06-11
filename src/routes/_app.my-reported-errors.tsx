@@ -28,7 +28,17 @@ import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidat
 const DEFECT_STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
 const PRIORITIES: Priority[] = ["Low","Medium","High","Critical"];
 const SEVERITIES: Severity[] = ["Low","Medium","High","Critical"];
-const MODULES: Module[] = ["1099 Forms","990 Forms","Integrations","1099 Online"];
+const MODULES: Module[] = [
+  "1099 Forms",
+  "1099 Online",
+  "990 Forms",
+  "2290 Forms",
+  "Integrations",
+  "Chatbot Testing",
+  "Excel Import Testing",
+  "Functionality Testing",
+  "Tax1099 Features",
+];
 
 export const Route = createFileRoute("/_app/my-reported-errors")({
   validateSearch: (s: Record<string, unknown>) => ({

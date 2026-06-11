@@ -29,7 +29,7 @@ const nav: NavItem[] = [
   { to: "/functionality-testing", label: "Functionality Testing", icon: Cpu },
   { to: "/tax1099-features", label: "Tax1099 Features", icon: Sparkles },
   { to: "/my-reported-errors", label: "My Reported Errors", icon: ListChecks },
-  { to: "/retest", label: "Retest Testing Errors", icon: ClipboardCheck },
+  { to: "/retest", label: "Task Assignments", icon: ClipboardCheck },
   { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
   { to: "/notifications", label: "Notifications", icon: BellIcon },
   { to: "/settings", label: "Settings", icon: Settings },

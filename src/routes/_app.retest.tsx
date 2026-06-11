@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
-import { useRetests, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
+import { useRetests, TESTING_TYPES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { ClipboardCheck, Plus, X } from "lucide-react";
+
+const MODULE_OPTIONS = [
+  "1099 Forms","1099 Online","990 Forms","2290 Forms","Integrations",
+  "Chatbot Testing","Excel Import Testing","Functionality Testing","Tax1099 Features",
+];
 
 export const Route = createFileRoute("/_app/retest")({
   component: RetestPage,
@@ -33,16 +38,16 @@ function RetestPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Retest Testing Errors</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Task Assignments</h2>
           <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
-            {isAdmin ? "Assign retest testing errors to agents and track progress." : "Retest testing errors assigned to you."}
+            {isAdmin ? "Assign testing tasks to agents and track progress." : "Tasks assigned to you."}
             {env && <Badge variant="outline">{env}</Badge>}
           </p>
         </div>
         {isAdmin && (
           <Button onClick={() => setOpen((o) => !o)}>
             {open ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-            {open ? "Cancel" : "Assign Retest Testing Errors"}
+            {open ? "Cancel" : "Assign Task"}
           </Button>
         )}
       </div>
@@ -53,7 +58,7 @@ function RetestPage() {
           forms={forms.map((f) => ({ id: f.id, name: f.name }))}
           onCreate={async (input) => {
             const r = await createAssignment(input);
-            if (r.ok) { toast.success("Retest assigned"); setOpen(false); }
+            if (r.ok) { toast.success("Task assigned"); setOpen(false); }
             else toast.error(r.error);
           }}
         />
@@ -62,19 +67,20 @@ function RetestPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base inline-flex items-center gap-2">
-            <ClipboardCheck className="h-4 w-4" /> {isAdmin ? "All retest testing errors" : "My retest testing errors"}
+            <ClipboardCheck className="h-4 w-4" /> {isAdmin ? "All tasks" : "My tasks"}
           </CardTitle>
-          <CardDescription>{loading ? "Loading…" : `${items.length} retest testing error(s)`}</CardDescription>
+          <CardDescription>{loading ? "Loading…" : `${items.length} task(s)`}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {items.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground">No retest testing errors in this environment yet.</p>
+            <p className="p-6 text-sm text-muted-foreground">No tasks in this environment yet.</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Forms</TableHead>
+                  <TableHead>Task</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Agent</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Due</TableHead>
@@ -90,11 +96,14 @@ function RetestPage() {
                     <TableRow key={r.id}>
                       <TableCell className="font-mono text-xs">{r.id}</TableCell>
                       <TableCell className="max-w-[260px]">
+                        {r.title && <p className="text-sm font-medium">{r.title}</p>}
+                        {r.module && <p className="text-xs text-muted-foreground">{r.module}</p>}
                         <div className="flex flex-wrap gap-1">
                           {r.forms.map((f) => <Badge key={f.id} variant="secondary">{f.form_name}</Badge>)}
                         </div>
                         {r.instructions && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{r.instructions}</p>}
                       </TableCell>
+                      <TableCell className="text-xs">{r.testing_type || "—"}</TableCell>
                       <TableCell>
                         {isAdmin ? (
                           <Select value={r.assigned_agent_name} onValueChange={async (v) => {
@@ -157,9 +166,23 @@ function CreateForm({
 }: {
   agents: string[];
   forms: { id: string; name: string }[];
-  onCreate: (i: { agentName: string; forms: { id: string; name: string }[]; instructions: string; priority: RetestPriority; dueDate: string | null }) => Promise<void>;
+  onCreate: (i: {
+    agentName?: string;
+    assignToAll?: boolean;
+    forms: { id: string; name: string }[];
+    instructions: string;
+    priority: RetestPriority;
+    dueDate: string | null;
+    testingType?: string;
+    title?: string;
+    module?: string;
+  }) => Promise<void>;
 }) {
   const [agent, setAgent] = useState(agents[0] ?? "");
+  const [assignAll, setAssignAll] = useState(false);
+  const [title, setTitle] = useState("");
+  const [moduleSel, setModuleSel] = useState<string>(MODULE_OPTIONS[0]);
+  const [testingType, setTestingType] = useState<string>(TESTING_TYPES[0]);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [instructions, setInstructions] = useState("");
   const [priority, setPriority] = useState<RetestPriority>("Medium");
@@ -173,16 +196,38 @@ function CreateForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Assign Retest Testing Errors</CardTitle>
-        <CardDescription>Select one or more forms and assign them to an agent in the current environment.</CardDescription>
+        <CardTitle className="text-base">Assign Task</CardTitle>
+        <CardDescription>Assign a testing task to a single agent or to all active agents in the current environment.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <Label>Task title</Label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Verify 2290 form e-file flow" />
+        </div>
+        <div>
+          <Label>Module / Category</Label>
+          <Select value={moduleSel} onValueChange={setModuleSel}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{MODULE_OPTIONS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Testing type</Label>
+          <Select value={testingType} onValueChange={setTestingType}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{TESTING_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
         <div>
           <Label>Agent</Label>
-          <Select value={agent} onValueChange={setAgent}>
+          <Select value={agent} onValueChange={setAgent} disabled={assignAll}>
             <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
             <SelectContent>{agents.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
           </Select>
+          <label className="mt-2 flex items-center gap-2 text-sm">
+            <Checkbox checked={assignAll} onCheckedChange={(c) => setAssignAll(!!c)} />
+            <span>Assign to all active agents</span>
+          </label>
         </div>
         <div>
           <Label>Priority</Label>
@@ -196,11 +241,11 @@ function CreateForm({
           <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </div>
         <div>
-          <Label>Filter forms</Label>
+          <Label>Filter forms (optional)</Label>
           <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Search by name…" />
         </div>
         <div className="md:col-span-2">
-          <Label>Forms ({picked.size} selected)</Label>
+          <Label>Forms / features ({picked.size} selected, optional)</Label>
           <div className="mt-1 max-h-56 overflow-auto rounded-md border p-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((f) => {
               const checked = picked.has(f.id);
@@ -221,20 +266,24 @@ function CreateForm({
           </div>
         </div>
         <div className="md:col-span-2">
-          <Label>Retest instructions</Label>
+          <Label>Description / instructions</Label>
           <Textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={3} />
         </div>
         <div className="md:col-span-2 flex justify-end">
           <Button onClick={() => {
             const selected = forms.filter((f) => picked.has(f.id));
             void onCreate({
-              agentName: agent,
+              agentName: assignAll ? undefined : agent,
+              assignToAll: assignAll,
               forms: selected,
               instructions,
               priority,
               dueDate: dueDate || null,
+              testingType,
+              title,
+              module: moduleSel,
             });
-          }}>Assign</Button>
+          }}>Assign Task</Button>
         </div>
       </CardContent>
     </Card>
