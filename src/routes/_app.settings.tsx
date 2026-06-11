@@ -25,7 +25,9 @@ import {
   Users, Layers, FileText, Tag, BellRing, FileBarChart, Palette,
   LayoutDashboard, Database, History, ShieldCheck, Plus, X, Save, RotateCcw, Download,
   Mail, KeyRound, Copy,
+  Upload, Trash2,
 } from "lucide-react";
+import { UserAvatar } from "@/components/qa/UserAvatar";
 
 export const Route = createFileRoute("/_app/settings")({
   component: SettingsPage,
@@ -69,17 +71,7 @@ function SettingsPage() {
 
         {/* PROFILE */}
         <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Profile</CardTitle>
-              <CardDescription>Account details for the signed-in user.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-3">
-              <div><Label>Name</Label><Input value={currentUser?.name ?? ""} disabled /></div>
-              <div><Label>Email</Label><Input value={currentUser?.email ?? ""} disabled /></div>
-              <div><Label>Role</Label><Input value={currentUser?.role ?? ""} disabled className="capitalize" /></div>
-            </CardContent>
-          </Card>
+          <ProfilePictureCard />
         </TabsContent>
 
         {/* TEAM */}
