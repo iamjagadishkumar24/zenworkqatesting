@@ -19,26 +19,17 @@ import {
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
 import { ExportMenu } from "@/components/qa/ExportMenu";
-import { Eye, Pencil, Search, Bug, Trash2 } from "lucide-react";
+import { AssignTaskDialog } from "@/components/qa/AssignTaskDialog";
+import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Plus } from "lucide-react";
 import type { DefectStatus, Module, Priority, Severity } from "@/lib/qa/types";
-import { AGENTS } from "@/lib/qa/constants";
+import { AGENTS, MODULE_OPTIONS } from "@/lib/qa/constants";
 import { toast } from "sonner";
 import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
 
 const DEFECT_STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
 const PRIORITIES: Priority[] = ["Low","Medium","High","Critical"];
 const SEVERITIES: Severity[] = ["Low","Medium","High","Critical"];
-const MODULES: Module[] = [
-  "1099 Forms",
-  "1099 Online",
-  "990 Forms",
-  "2290 Forms",
-  "Integrations",
-  "Chatbot Testing",
-  "Excel Import Testing",
-  "Functionality Testing",
-  "Tax1099 Features",
-];
+const MODULES: string[] = MODULE_OPTIONS;
 
 export const Route = createFileRoute("/_app/my-reported-errors")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -48,7 +39,7 @@ export const Route = createFileRoute("/_app/my-reported-errors")({
 });
 
 function ReportedErrorsPage() {
-  const { defects, currentUser, deleteDefect } = useQA();
+  const { defects, currentUser, deleteDefect, updateDefect } = useQA();
   const { env } = useEnvironment();
   const search = Route.useSearch();
   const isAdmin = currentUser?.role === "admin";
@@ -64,6 +55,8 @@ function ReportedErrorsPage() {
   const [sev, setSev] = useState<string>("all");
   const [agent, setAgent] = useState<string>("all");
   const [reporter, setReporter] = useState<string>("all");
+  const [assignTaskOpen, setAssignTaskOpen] = useState(false);
+  const [reassignFor, setReassignFor] = useState<{ id: string; current: string } | null>(null);
 
   // Scope: admins see everything; agents see only their reported errors.
   const scoped = useMemo(() => {
@@ -131,14 +124,21 @@ function ReportedErrorsPage() {
           <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
           <p className="text-sm text-muted-foreground">{description} {filtered.length} shown.</p>
         </div>
-        <ExportMenu
+        <div className="flex flex-wrap items-center gap-2">
+          {isAdmin && (
+            <Button onClick={() => setAssignTaskOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Assign Task
+            </Button>
+          )}
+          <ExportMenu
           filename="reported-errors"
           title="Reported errors export"
           filters={{ Scope: isAdmin ? "All" : (currentUser?.name ?? "—"), Environment: env ?? "All", Count: filtered.length }}
           rows={filtered.map(({ comments, ...d }) => ({ ...d, commentsCount: comments.length }))}
           columns={["id","module","formFeature","title","status","priority","severity","validity","assignedAgent","createdBy","environment","updatedAt"]}
           defaultSelected={["id","module","formFeature","title","status","priority","validity","createdBy","updatedAt"]}
-        />
+          />
+        </div>
       </div>
 
       <Card>
@@ -202,6 +202,12 @@ function ReportedErrorsPage() {
                       <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setOpenId(d.id); }} aria-label="View">
                         <Eye className="h-4 w-4" />
                       </Button>
+                      {isAdmin && (
+                        <Button size="icon" variant="ghost" aria-label="Assign / Reassign"
+                          onClick={(e) => { e.stopPropagation(); setReassignFor({ id: d.id, current: d.assignedAgent }); }}>
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                      )}
                       {(isAdmin || d.createdBy === currentUser?.name) && (
                         <Button size="icon" variant="ghost" aria-label="Edit"
                           onClick={(e) => { e.stopPropagation(); setEditId(d.id); }}>
@@ -234,6 +240,21 @@ function ReportedErrorsPage() {
 
       <DefectDetailSheet defectId={openId} open={!!openId} onOpenChange={(o) => { if (!o) setOpenId(null); }} />
       <DefectDetailSheet defectId={editId} open={!!editId} initialEdit onOpenChange={(o) => { if (!o) setEditId(null); }} />
+
+      {isAdmin && <AssignTaskDialog open={assignTaskOpen} onOpenChange={setAssignTaskOpen} />}
+
+      {isAdmin && reassignFor && (
+        <ReassignDialog
+          open={!!reassignFor}
+          current={reassignFor.current}
+          onOpenChange={(o) => { if (!o) setReassignFor(null); }}
+          onConfirm={async (newAgent) => {
+            const res = await updateDefect(reassignFor.id, { assignedAgent: newAgent });
+            if (!res.ok) toast.error(res.error ?? "Reassign failed");
+            else { toast.success(`Reassigned to ${newAgent}`); setReassignFor(null); }
+          }}
+        />
+      )}
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => { if (!o && !deleting) setDeleteId(null); }}>
         <AlertDialogContent>
