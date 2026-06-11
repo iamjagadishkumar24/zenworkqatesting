@@ -20,7 +20,8 @@ import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
 import { AssignTaskDialog } from "@/components/qa/AssignTaskDialog";
 import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Plus, Download } from "lucide-react";
-import { exportReportedErrorsXlsx } from "@/lib/qa/exportReportedErrors";
+import { ExportPreviewDialog } from "@/components/qa/ExportPreviewDialog";
+import { useAllowAgentExports } from "@/lib/qa/useExportJob";
 import type { DefectStatus, Priority, Severity } from "@/lib/qa/types";
 import { AGENTS, MODULE_OPTIONS } from "@/lib/qa/constants";
 import { toast } from "sonner";
@@ -57,6 +58,9 @@ function ReportedErrorsPage() {
   const [reporter, setReporter] = useState<string>("all");
   const [assignTaskOpen, setAssignTaskOpen] = useState(false);
   const [reassignFor, setReassignFor] = useState<{ id: string; current: string } | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const allowAgentExports = useAllowAgentExports();
+  const canExport = isAdmin || allowAgentExports === true;
 
   // Scope: admins see everything; agents see only their reported errors.
   const scoped = useMemo(() => {
@@ -130,14 +134,16 @@ function ReportedErrorsPage() {
               <Plus className="mr-2 h-4 w-4" /> Assign Task
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => exportReportedErrorsXlsx(filtered, env)}
-            disabled={!filtered.length}
-          >
-            <Download className="mr-2 h-4 w-4" /> Export
-          </Button>
+          {canExport && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setExportOpen(true)}
+              disabled={!filtered.length}
+            >
+              <Download className="mr-2 h-4 w-4" /> Export
+            </Button>
+          )}
         </div>
       </div>
 
@@ -242,6 +248,24 @@ function ReportedErrorsPage() {
       <DefectDetailSheet defectId={editId} open={!!editId} initialEdit onOpenChange={(o) => { if (!o) setEditId(null); }} />
 
       {isAdmin && <AssignTaskDialog open={assignTaskOpen} onOpenChange={setAssignTaskOpen} />}
+
+      <ExportPreviewDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        rows={filtered}
+        environment={env}
+        isAdmin={isAdmin}
+        filters={{
+          environment: env,
+          module: mod,
+          status,
+          priority: prio,
+          severity: sev,
+          assignedAgent: agent,
+          reporter,
+          q,
+        }}
+      />
 
       {isAdmin && reassignFor && (
         <ReassignDialog
