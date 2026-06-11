@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTax1099FeaturesRouteImport } from './routes/_app.tax1099-features'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSelectEnvironmentRouteImport } from './routes/_app.select-environment'
+import { Route as AppRetestRouteImport } from './routes/_app.retest'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
@@ -61,6 +62,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppSelectEnvironmentRoute = AppSelectEnvironmentRouteImport.update({
   id: '/select-environment',
   path: '/select-environment',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRetestRoute = AppRetestRouteImport.update({
+  id: '/retest',
+  path: '/retest',
   getParentRoute: () => AppRoute,
 } as any)
 const AppReportsRoute = AppReportsRouteImport.update({
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
+  '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
+  '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
   '/_app/reports': typeof AppReportsRoute
+  '/_app/retest': typeof AppRetestRoute
   '/_app/select-environment': typeof AppSelectEnvironmentRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tax1099-features': typeof AppTax1099FeaturesRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/online-1099'
     | '/reports'
+    | '/retest'
     | '/select-environment'
     | '/settings'
     | '/tax1099-features'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/online-1099'
     | '/reports'
+    | '/retest'
     | '/select-environment'
     | '/settings'
     | '/tax1099-features'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/_app/notifications'
     | '/_app/online-1099'
     | '/_app/reports'
+    | '/_app/retest'
     | '/_app/select-environment'
     | '/_app/settings'
     | '/_app/tax1099-features'
@@ -306,6 +318,13 @@ declare module '@tanstack/react-router' {
       path: '/select-environment'
       fullPath: '/select-environment'
       preLoaderRoute: typeof AppSelectEnvironmentRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/retest': {
+      id: '/_app/retest'
+      path: '/retest'
+      fullPath: '/retest'
+      preLoaderRoute: typeof AppRetestRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/reports': {
@@ -408,6 +427,7 @@ interface AppRouteChildren {
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
   AppReportsRoute: typeof AppReportsRoute
+  AppRetestRoute: typeof AppRetestRoute
   AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTax1099FeaturesRoute: typeof AppTax1099FeaturesRoute
@@ -426,6 +446,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnline1099Route: AppOnline1099Route,
   AppReportsRoute: AppReportsRoute,
+  AppRetestRoute: AppRetestRoute,
   AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTax1099FeaturesRoute: AppTax1099FeaturesRoute,
