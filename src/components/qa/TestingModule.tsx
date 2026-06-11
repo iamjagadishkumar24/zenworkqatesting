@@ -11,7 +11,7 @@ import {
 import { DefectStatusBadge, PriorityBadge } from "./StatusBadge";
 import { DefectDetailSheet } from "./DefectDetailSheet";
 import { ReportDefectDialog } from "./ReportDefectDialog";
-import { Bug, Plus, Search, ArrowRight } from "lucide-react";
+import { Bug, Plus, Search } from "lucide-react";
 import { AGENTS } from "@/lib/qa/constants";
 import type { Module } from "@/lib/qa/types";
 
@@ -97,22 +97,25 @@ export function TestingModule({
               <Card key={name} className="group border-border transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold leading-tight">{name}</p>
+                    <button
+                      type="button"
+                      onClick={() => setPicked(name)}
+                      className="text-left font-semibold leading-tight hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                    >
+                      {name}
+                    </button>
                     {open > 0 && (
-                      <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400">
-                        <Bug className="h-3 w-3" /> {open}
-                      </Badge>
+                      <button type="button" onClick={() => setPicked(name)} aria-label={`View ${open} reported error(s)`}>
+                        <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10">
+                          <Bug className="h-3 w-3" /> {open}
+                        </Badge>
+                      </button>
                     )}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground capitalize">{itemLabel}</p>
-                  <div className="mt-3 flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setPicked(name)}>
-                      Open <ArrowRight className="ml-1 h-3 w-3" />
-                    </Button>
-                    <Button size="sm" className="flex-1" onClick={() => setReportFor(name)}>
-                      Report
-                    </Button>
-                  </div>
+                  <Button size="sm" className="mt-3 w-full" onClick={() => setReportFor(name)}>
+                    Report Error
+                  </Button>
                 </CardContent>
               </Card>
             );
