@@ -26,12 +26,39 @@ export const Route = createFileRoute("/_app/agents")({
 });
 
 function AgentsPage() {
-  const { currentUser, users } = useQA();
+  const { currentUser, users, defects } = useQA();
   const { items, loading, create, setStatus, remove } = useAgentInvites();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!currentUser || currentUser.role !== "admin") return;
+    void (async () => {
+      try {
+        const { data } = await supabase
+          .from("retest_assignments")
+          .select("assigned_agent_id");
+        const map: Record<string, number> = {};
+        for (const r of data ?? []) {
+          const id = (r as { assigned_agent_id: string | null }).assigned_agent_id;
+          if (id) map[id] = (map[id] ?? 0) + 1;
+        }
+        setTaskCounts(map);
+      } catch { /* noop */ }
+    })();
+  }, [currentUser, items.length]);
+
+  const errorCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const d of defects) {
+      const k = (d.createdBy || "").toLowerCase();
+      if (k) m[k] = (m[k] ?? 0) + 1;
+    }
+    return m;
+  }, [defects]);
 
   if (!currentUser) return null;
   if (currentUser.role !== "admin") return <Navigate to="/dashboard" replace />;
@@ -49,9 +76,24 @@ function AgentsPage() {
   const inviteEmails = new Set(items.map((i) => i.email.toLowerCase()));
   const directAgents = users
     .filter((u) => u.role === "agent" && !inviteEmails.has(u.email.toLowerCase()))
-    .map((u) => ({ id: u.id, email: u.email, name: u.name, status: (u.active ? "active" : "inactive") as AgentInviteStatus, notes: "", user_id: u.id, isInvite: false }));
+    .map((u) => ({
+      id: u.id, email: u.email, name: u.name,
+      status: (u.active ? "active" : "inactive") as AgentInviteStatus,
+      notes: "", user_id: u.id, created_at: "", isInvite: false,
+    }));
   const inviteRows = items.map((i) => ({ ...i, isInvite: true }));
   const rows = [...inviteRows, ...directAgents];
+
+  const resendInvite = async (row: { email: string; name: string }) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const link = `${origin}/login?signup=1&email=${encodeURIComponent(row.email)}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success(`Invite link copied for ${row.name}`);
+    } catch {
+      toast.message("Invite link", { description: link });
+    }
+  };
 
   return (
     <div className="space-y-6">
