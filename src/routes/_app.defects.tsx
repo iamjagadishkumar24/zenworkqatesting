@@ -1,38 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useQA } from "@/lib/qa/store";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
-import { Bug, Plus, Search, Eye, Pencil, Trash2 } from "lucide-react";
-import { ExportMenu } from "@/components/qa/ExportMenu";
-import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
-import type {
-  Defect, DefectStatus, Module, Priority, Severity,
-} from "@/lib/qa/types";
-import { toast } from "sonner";
-import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
-import { useEnvironment } from "@/lib/qa/environment";
-
-export const Route = createFileRoute("/_app/defects")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    q: typeof s.q === "string" ? s.q : undefined,
-    filter: typeof s.filter === "string" ? s.filter : undefined,
-  }),
-  component: DefectsPage,
-});
 
 const DEFECT_STATUSES: DefectStatus[] = [
   "Reported", "Pending", "Ongoing", "In Progress", "Fixed", "Retest Required", "Reopened", "Closed",
