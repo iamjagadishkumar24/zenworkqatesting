@@ -14,6 +14,7 @@ import { MODULE_OPTIONS } from "@/lib/qa/constants";
 import { useAgentInvites } from "@/lib/qa/agents";
 
 const PRIORITIES: RetestPriority[] = ["Low", "Medium", "High", "Critical"];
+const ALL_MODULES = "All Modules";
 
 export function AssignTaskDialog({
   open, onOpenChange, defaultAgent, defaultModule, defaultTitle,
@@ -37,7 +38,7 @@ export function AssignTaskDialog({
     [invites],
   );
   const [title, setTitle] = useState(defaultTitle ?? "");
-  const [moduleSel, setModuleSel] = useState<string>(defaultModule ?? MODULE_OPTIONS[0] ?? "");
+  const [moduleSel, setModuleSel] = useState<string>(defaultModule ?? ALL_MODULES);
   const [testingType, setTestingType] = useState<string>(TESTING_TYPES[0] ?? "Retest");
   const [selectedAgents, setSelectedAgents] = useState<Set<string>>(() => new Set(defaultAgent ? [defaultAgent] : []));
   const [selectedPending, setSelectedPending] = useState<Set<string>>(new Set());
@@ -49,9 +50,13 @@ export function AssignTaskDialog({
   const [instructions, setInstructions] = useState("");
   const [filter, setFilter] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  const scopedForms = useMemo(
+    () => (moduleSel && moduleSel !== ALL_MODULES ? forms.filter((f) => f.module === moduleSel) : forms),
+    [forms, moduleSel],
+  );
   const filtered = useMemo(
-    () => forms.filter((f) => f.name.toLowerCase().includes(filter.toLowerCase())),
-    [forms, filter],
+    () => scopedForms.filter((f) => f.name.toLowerCase().includes(filter.toLowerCase())),
+    [scopedForms, filter],
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -104,9 +109,10 @@ export function AssignTaskDialog({
           </div>
           <div>
             <Label>Module / Category</Label>
-            <Select value={moduleSel} onValueChange={setModuleSel}>
+            <Select value={moduleSel} onValueChange={(v) => { setModuleSel(v); setPicked(new Set()); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
+                <SelectItem value={ALL_MODULES}>All Modules (every form/feature)</SelectItem>
                 {MODULE_OPTIONS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
               </SelectContent>
             </Select>

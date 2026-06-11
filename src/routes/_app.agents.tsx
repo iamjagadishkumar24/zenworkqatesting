@@ -1,7 +1,8 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useAgentInvites, type AgentInviteStatus } from "@/lib/qa/agents";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Users } from "lucide-react";
+import { UserPlus, Trash2, Users, Send } from "lucide-react";
 
 export const Route = createFileRoute("/_app/agents")({
   component: AgentsPage,
@@ -25,12 +26,39 @@ export const Route = createFileRoute("/_app/agents")({
 });
 
 function AgentsPage() {
-  const { currentUser, users } = useQA();
+  const { currentUser, users, defects } = useQA();
   const { items, loading, create, setStatus, remove } = useAgentInvites();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!currentUser || currentUser.role !== "admin") return;
+    void (async () => {
+      try {
+        const { data } = await supabase
+          .from("retest_assignments")
+          .select("assigned_agent_id");
+        const map: Record<string, number> = {};
+        for (const r of data ?? []) {
+          const id = (r as { assigned_agent_id: string | null }).assigned_agent_id;
+          if (id) map[id] = (map[id] ?? 0) + 1;
+        }
+        setTaskCounts(map);
+      } catch { /* noop */ }
+    })();
+  }, [currentUser, items.length]);
+
+  const errorCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const d of defects) {
+      const k = (d.createdBy || "").toLowerCase();
+      if (k) m[k] = (m[k] ?? 0) + 1;
+    }
+    return m;
+  }, [defects]);
 
   if (!currentUser) return null;
   if (currentUser.role !== "admin") return <Navigate to="/dashboard" replace />;
@@ -48,9 +76,24 @@ function AgentsPage() {
   const inviteEmails = new Set(items.map((i) => i.email.toLowerCase()));
   const directAgents = users
     .filter((u) => u.role === "agent" && !inviteEmails.has(u.email.toLowerCase()))
-    .map((u) => ({ id: u.id, email: u.email, name: u.name, status: (u.active ? "active" : "inactive") as AgentInviteStatus, notes: "", user_id: u.id, isInvite: false }));
+    .map((u) => ({
+      id: u.id, email: u.email, name: u.name,
+      status: (u.active ? "active" : "inactive") as AgentInviteStatus,
+      notes: "", user_id: u.id, created_at: "", isInvite: false,
+    }));
   const inviteRows = items.map((i) => ({ ...i, isInvite: true }));
   const rows = [...inviteRows, ...directAgents];
+
+  const resendInvite = async (row: { email: string; name: string }) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const link = `${origin}/login?signup=1&email=${encodeURIComponent(row.email)}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success(`Invite link copied for ${row.name}`);
+    } catch {
+      toast.message("Invite link", { description: link });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -100,6 +143,9 @@ function AgentsPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-center">Tasks</TableHead>
+                  <TableHead className="text-center">Errors</TableHead>
+                  <TableHead>Created</TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -110,12 +156,19 @@ function AgentsPage() {
                     !r.user_id && r.status === "pending" ? "Pending Registration"
                       : r.status === "active" ? "Active" : "Inactive";
                   const variant = !r.user_id ? "outline" : r.status === "active" ? "default" : "secondary";
+                  const tasks = r.user_id ? (taskCounts[r.user_id] ?? 0) : 0;
+                  const errs = errorCounts[r.name.toLowerCase()] ?? 0;
                   return (
                     <TableRow key={`${r.isInvite ? "i" : "u"}-${r.id}`}>
                       <TableCell className="font-medium">{r.name}</TableCell>
                       <TableCell className="text-sm">{r.email}</TableCell>
                       <TableCell><Badge variant={variant as never}>{statusLabel}</Badge></TableCell>
-                      <TableCell className="max-w-[260px] truncate text-xs text-muted-foreground">{r.notes || "—"}</TableCell>
+                      <TableCell className="text-center text-sm">{tasks}</TableCell>
+                      <TableCell className="text-center text-sm">{errs}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
+                      </TableCell>
+                      <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground">{r.notes || "—"}</TableCell>
                       <TableCell className="text-right">
                         {r.isInvite ? (
                           <div className="inline-flex items-center gap-2">
@@ -134,12 +187,17 @@ function AgentsPage() {
                               </SelectContent>
                             </Select>
                             {!r.user_id && (
-                              <Button size="sm" variant="ghost" onClick={async () => {
-                                const res = await remove(r.id);
-                                if (!res.ok) toast.error(res.error); else toast.success("Removed");
-                              }}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <>
+                                <Button size="sm" variant="ghost" title="Resend invite" onClick={() => resendInvite(r)}>
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" title="Remove" onClick={async () => {
+                                  const res = await remove(r.id);
+                                  if (!res.ok) toast.error(res.error); else toast.success("Removed");
+                                }}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
                             )}
                           </div>
                         ) : (
