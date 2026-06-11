@@ -20,6 +20,7 @@ import { exportCsv, exportXlsx } from "@/lib/qa/export";
 import { useServerFn } from "@tanstack/react-start";
 import { inviteAgent, resetSampleAdmin } from "@/lib/qa/admin.functions";
 import { setAllowAgentExports } from "@/lib/qa/exportJobs.functions";
+import { ExportJobsPanel } from "@/components/qa/ExportJobsPanel";
 import {
   Users, Layers, FileText, Tag, BellRing, FileBarChart, Palette,
   LayoutDashboard, Database, History, ShieldCheck, Plus, X, Save, RotateCcw, Download,
@@ -425,6 +426,7 @@ function SettingsPage() {
               {isAdmin && <AgentExportToggle />}
             </CardContent>
           </Card>
+          {isAdmin && <ExportJobsPanel isAdmin={isAdmin} />}
         </TabsContent>
 
         {/* AUDIT */}
@@ -432,6 +434,7 @@ function SettingsPage() {
           <div className="space-y-4">
             <AuditTable />
             <RoleAuditTable />
+            <ExportAuditTable />
           </div>
         </TabsContent>
       </Tabs>
@@ -803,6 +806,122 @@ function RoleAuditTable() {
             ))}
             {rows.length === 0 && (
               <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No role changes yet.</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+type ExportAuditRow = {
+  id: string;
+  user_id: string | null;
+  user_name: string;
+  role: string;
+  scope: string;
+  environment: string | null;
+  filters: unknown;
+  row_count: number;
+  status: string;
+  error: string | null;
+  job_id: string | null;
+  created_at: string;
+};
+
+function ExportAuditTable() {
+  const { currentUser } = useQA();
+  const [rows, setRows] = useState<ExportAuditRow[]>([]);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  useEffect(() => {
+    if (currentUser?.role !== "admin") return;
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase
+        .from("export_audit_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (alive) setRows((data ?? []) as ExportAuditRow[]);
+    };
+    void load();
+    const ch = supabase
+      .channel(`export-audit-${Math.random().toString(36).slice(2, 8)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "export_audit_log" }, () => void load())
+      .subscribe();
+    return () => { alive = false; void supabase.removeChannel(ch); };
+  }, [currentUser]);
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (statusFilter !== "all" && r.status !== statusFilter) return false;
+      if (!term) return true;
+      return [r.user_name, r.role, r.scope, r.environment ?? "", r.status, r.error ?? "", JSON.stringify(r.filters ?? {})]
+        .join(" ").toLowerCase().includes(term);
+    });
+  }, [rows, q, statusFilter]);
+
+  if (currentUser?.role !== "admin") return null;
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+        <div>
+          <CardTitle>Export Audit Log</CardTitle>
+          <CardDescription>Who exported what, when, and with which filters. {rows.length} entries.</CardDescription>
+        </div>
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="success">Success</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input className="w-60" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Button variant="outline" onClick={() => exportCsv("export-audit", filtered as unknown as Record<string, unknown>[])}>
+            <Download className="mr-1 h-4 w-4" />Export
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>When</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Scope</TableHead>
+              <TableHead>Env</TableHead>
+              <TableHead>Filters</TableHead>
+              <TableHead className="text-right">Rows</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</TableCell>
+                <TableCell className="text-sm">{r.user_name}</TableCell>
+                <TableCell className="text-xs capitalize">{r.role}</TableCell>
+                <TableCell className="text-xs">{r.scope}</TableCell>
+                <TableCell className="text-xs">{r.environment ?? "All"}</TableCell>
+                <TableCell className="max-w-[260px] truncate font-mono text-xs text-muted-foreground" title={JSON.stringify(r.filters ?? {})}>
+                  {JSON.stringify(r.filters ?? {})}
+                </TableCell>
+                <TableCell className="text-right text-sm">{r.row_count}</TableCell>
+                <TableCell>
+                  <Badge variant={r.status === "success" ? "default" : "destructive"} className="capitalize">{r.status}</Badge>
+                  {r.error && <div className="mt-1 text-xs text-destructive">{r.error}</div>}
+                </TableCell>
+              </TableRow>
+            ))}
+            {filtered.length === 0 && (
+              <TableRow><TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">No export audit entries.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
