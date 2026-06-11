@@ -266,12 +266,12 @@ function LoginPage() {
                 <form onSubmit={onLogin} className="space-y-4 pt-4">
                   <div>
                     <Label htmlFor="email" className="text-white/80">Email</Label>
-                    <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/40" placeholder="you@company.com" />
+                    <Input ref={emailRef} id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/40" placeholder="you@company.com" />
                   </div>
                   <div>
                     <Label htmlFor="pwd" className="text-white/80">Password</Label>
                     <div className="relative">
-                      <Input id="pwd" type={showPwd ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40 focus-visible:ring-white/40" placeholder="••••••••" />
+                      <Input ref={pwdRef} id="pwd" type={showPwd ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40 focus-visible:ring-white/40" placeholder="••••••••" />
                       <button
                         type="button"
                         onClick={() => setShowPwd((v) => !v)}
@@ -300,7 +300,10 @@ function LoginPage() {
                   </Button>
                   {hint && (
                     <div
-                      role="status"
+                      ref={hintRef}
+                      role="alert"
+                      aria-live="assertive"
+                      tabIndex={-1}
                       className={
                         "rounded-md border p-3 text-xs " +
                         (hint.tone === "error"
