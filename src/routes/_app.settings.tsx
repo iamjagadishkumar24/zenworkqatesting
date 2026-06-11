@@ -677,6 +677,7 @@ function AddFormRow({
 
 function AuditTable() {
   const { audit, currentUser } = useQA();
+  void audit;
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
