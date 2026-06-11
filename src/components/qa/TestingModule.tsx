@@ -180,6 +180,7 @@ export function TestingModule({
         defaultForm={reportFor ?? ""}
         defaultModule={module}
         defaultAgents={allowedAgents}
+        defaultIntegration={module === "Integrations" ? (reportFor ?? "") : ""}
       />
       <DefectDetailSheet
         defectId={viewId}
