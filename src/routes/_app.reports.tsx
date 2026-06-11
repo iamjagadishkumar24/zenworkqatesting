@@ -53,7 +53,7 @@ function ReportsPage() {
       const m = (map[d.module] ??= { module: d.module, open: 0, fixed: 0, retest: 0, total: 0 });
       m.total += 1;
       if (d.status === "Fixed" || d.status === "Closed") m.fixed += 1;
-      else if (d.status === "Retest") m.retest += 1;
+      else if (d.status === "Retest Required" || d.status === "Reopened") m.retest += 1;
       else m.open += 1;
     });
     return Object.values(map);
