@@ -24,6 +24,7 @@ import type {
 } from "@/lib/qa/types";
 import { toast } from "sonner";
 import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
+import { useEnvironment } from "@/lib/qa/environment";
 
 export const Route = createFileRoute("/_app/defects")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -58,6 +59,7 @@ const emptyDraft = (currentUser?: { name: string } | null): Omit<Defect, "id" | 
 
 function DefectsPage() {
   const { defects, addDefect, updateDefect, deleteDefect, currentUser, users } = useQA();
+  const { env } = useEnvironment();
   const search = Route.useSearch();
   const [q, setQ] = useState(search.q ?? "");
   const [mod, setMod] = useState<string>("all");
@@ -79,6 +81,8 @@ function DefectsPage() {
     const term = q.trim().toLowerCase();
     const me = currentUser?.name ?? "";
     return defects.filter((d) => {
+      // Environment scope
+      if (env && d.environment && d.environment !== env) return false;
       // Agents only see defects they reported or are assigned to
       if (!isAdmin && d.createdBy !== me && d.assignedAgent !== me) return false;
       if (search.filter === "open" && ["Fixed", "Closed"].includes(d.status)) return false;
@@ -92,7 +96,7 @@ function DefectsPage() {
       return [d.id, d.title, d.formFeature, d.module, d.assignedAgent, d.status, d.priority, d.severity]
         .join(" ").toLowerCase().includes(term);
     });
-  }, [defects, q, mod, status, prio, sev, agent, search.filter, isAdmin, currentUser]);
+  }, [defects, q, mod, status, prio, sev, agent, search.filter, isAdmin, currentUser, env]);
 
   const agentOptions = useMemo(() => {
     const set = new Set<string>();
