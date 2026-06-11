@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { exportCsv, exportXlsx } from "@/lib/qa/export";
 import { useServerFn } from "@tanstack/react-start";
 import { inviteAgent, resetSampleAdmin } from "@/lib/qa/admin.functions";
+import { setAllowAgentExports } from "@/lib/qa/exportJobs.functions";
 import {
   Users, Layers, FileText, Tag, BellRing, FileBarChart, Palette,
   LayoutDashboard, Database, History, ShieldCheck, Plus, X, Save, RotateCcw, Download,
@@ -421,6 +422,7 @@ function SettingsPage() {
                   <Download className="mr-2 h-4 w-4" /> Export settings
                 </Button>
               </div>
+              {isAdmin && <AgentExportToggle />}
             </CardContent>
           </Card>
         </TabsContent>
