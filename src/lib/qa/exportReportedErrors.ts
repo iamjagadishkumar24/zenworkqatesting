@@ -110,6 +110,10 @@ export function exportReportedErrorsXlsx(defects: Defect[], env: Environment | n
         cell.l = { Target: cell.v, Tooltip: "Open link" };
         baseStyle.font = { color: { rgb: "1D4ED8" }, underline: true };
       }
+      if (c === 7 && cell.v instanceof Date) {
+        cell.t = "d";
+        cell.z = "yyyy-mm-dd hh:mm";
+      }
       cell.s = baseStyle;
     }
   }
