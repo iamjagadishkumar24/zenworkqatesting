@@ -12,7 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Users, Send } from "lucide-react";
+import { UserPlus, Trash2, Users, Send, Eye } from "lucide-react";
+import { AgentDetailDrawer } from "@/components/qa/AgentDetailDrawer";
 
 export const Route = createFileRoute("/_app/agents")({
   component: AgentsPage,
@@ -33,6 +34,7 @@ function AgentsPage() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
+  const [viewing, setViewing] = useState<{ id: string | null; name: string; email: string } | null>(null);
 
   useEffect(() => {
     if (!currentUser || currentUser.role !== "admin") return;
@@ -199,9 +201,16 @@ function AgentsPage() {
                                 </Button>
                               </>
                             )}
+                            <Button size="sm" variant="ghost" title="View tasks & errors"
+                              onClick={() => setViewing({ id: r.user_id, name: r.name, email: r.email })}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Direct signup</span>
+                          <Button size="sm" variant="ghost" title="View tasks & errors"
+                            onClick={() => setViewing({ id: r.user_id, name: r.name, email: r.email })}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -212,6 +221,7 @@ function AgentsPage() {
           )}
         </CardContent>
       </Card>
+      <AgentDetailDrawer open={!!viewing} onOpenChange={(o) => !o && setViewing(null)} agent={viewing} />
     </div>
   );
 }
