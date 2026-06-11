@@ -182,6 +182,7 @@ function ReportedErrorsPage() {
                 <TableHead>ID</TableHead>
                 <TableHead>Module</TableHead>
                 <TableHead>Form / Feature</TableHead>
+                <TableHead>Tax Year</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
@@ -197,6 +198,7 @@ function ReportedErrorsPage() {
                   <TableCell className="font-mono text-xs">{d.id}</TableCell>
                   <TableCell className="text-sm">{d.module}</TableCell>
                   <TableCell className="text-sm">{d.formFeature}</TableCell>
+                  <TableCell className="text-xs">{d.taxYear ?? "—"}</TableCell>
                   <TableCell className="max-w-[280px] truncate font-medium">{d.title}</TableCell>
                   <TableCell><DefectStatusBadge status={d.status} /></TableCell>
                   <TableCell><PriorityBadge value={d.priority} /></TableCell>
