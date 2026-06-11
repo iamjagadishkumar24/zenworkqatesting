@@ -125,11 +125,11 @@ function RetestPage() {
                         {new Date(r.updated_at).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        {isAdmin && r.status !== "Cancelled" && r.status !== "Completed" && (
+                        {isAdmin && r.status !== "Completed" && (
                           <Button size="sm" variant="ghost" onClick={async () => {
-                            const res = await cancel(r.id);
-                            if (!res.ok) toast.error(res.error); else toast.success("Cancelled");
-                          }}>Cancel</Button>
+                            const res = await updateAssignment(r.id, { status: "Completed" });
+                            if (!res.ok) toast.error(res.error); else toast.success("Marked completed");
+                          }}>Mark completed</Button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -141,134 +141,5 @@ function RetestPage() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function CreateForm({
-  agents, forms, onCreate,
-}: {
-  agents: string[];
-  forms: { id: string; name: string }[];
-  onCreate: (i: {
-    agentName?: string;
-    assignToAll?: boolean;
-    forms: { id: string; name: string }[];
-    instructions: string;
-    priority: RetestPriority;
-    dueDate: string | null;
-    testingType?: string;
-    title?: string;
-    module?: string;
-  }) => Promise<void>;
-}) {
-  const [agent, setAgent] = useState(agents[0] ?? "");
-  const [assignAll, setAssignAll] = useState(false);
-  const [title, setTitle] = useState("");
-  const [moduleSel, setModuleSel] = useState<string>(MODULE_OPTIONS[0]);
-  const [testingType, setTestingType] = useState<string>(TESTING_TYPES[0]);
-  const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [instructions, setInstructions] = useState("");
-  const [priority, setPriority] = useState<RetestPriority>("Medium");
-  const [dueDate, setDueDate] = useState("");
-  const [filter, setFilter] = useState("");
-  const filtered = useMemo(
-    () => forms.filter((f) => f.name.toLowerCase().includes(filter.toLowerCase())),
-    [forms, filter],
-  );
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Assign Task</CardTitle>
-        <CardDescription>Assign a testing task to a single agent or to all active agents in the current environment.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-2">
-        <div className="md:col-span-2">
-          <Label>Task title</Label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Verify 2290 form e-file flow" />
-        </div>
-        <div>
-          <Label>Module / Category</Label>
-          <Select value={moduleSel} onValueChange={setModuleSel}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{MODULE_OPTIONS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Testing type</Label>
-          <Select value={testingType} onValueChange={setTestingType}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{TESTING_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Agent</Label>
-          <Select value={agent} onValueChange={setAgent} disabled={assignAll}>
-            <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
-            <SelectContent>{agents.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
-          </Select>
-          <label className="mt-2 flex items-center gap-2 text-sm">
-            <Checkbox checked={assignAll} onCheckedChange={(c) => setAssignAll(!!c)} />
-            <span>Assign to all active agents</span>
-          </label>
-        </div>
-        <div>
-          <Label>Priority</Label>
-          <Select value={priority} onValueChange={(v) => setPriority(v as RetestPriority)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Due date</Label>
-          <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-        </div>
-        <div>
-          <Label>Filter forms (optional)</Label>
-          <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Search by name…" />
-        </div>
-        <div className="md:col-span-2">
-          <Label>Forms / features ({picked.size} selected, optional)</Label>
-          <div className="mt-1 max-h-56 overflow-auto rounded-md border p-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((f) => {
-              const checked = picked.has(f.id);
-              return (
-                <label key={f.id} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted text-sm">
-                  <Checkbox checked={checked} onCheckedChange={(c) => {
-                    setPicked((s) => {
-                      const n = new Set(s);
-                      if (c) n.add(f.id); else n.delete(f.id);
-                      return n;
-                    });
-                  }} />
-                  <span className="truncate">{f.name}</span>
-                </label>
-              );
-            })}
-            {filtered.length === 0 && <p className="text-xs text-muted-foreground">No forms match.</p>}
-          </div>
-        </div>
-        <div className="md:col-span-2">
-          <Label>Description / instructions</Label>
-          <Textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={3} />
-        </div>
-        <div className="md:col-span-2 flex justify-end">
-          <Button onClick={() => {
-            const selected = forms.filter((f) => picked.has(f.id));
-            void onCreate({
-              agentName: assignAll ? undefined : agent,
-              assignToAll: assignAll,
-              forms: selected,
-              instructions,
-              priority,
-              dueDate: dueDate || null,
-              testingType,
-              title,
-              module: moduleSel,
-            });
-          }}>Assign Task</Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
