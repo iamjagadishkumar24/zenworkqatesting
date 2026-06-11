@@ -24,7 +24,6 @@ import { Route as AppMyErrorsRouteImport } from './routes/_app.my-errors'
 import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
 import { Route as AppFunctionalityTestingRouteImport } from './routes/_app.functionality-testing'
 import { Route as AppFormsRouteImport } from './routes/_app.forms'
-import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppChatbotTestingRouteImport } from './routes/_app.chatbot-testing'
 import { Route as App2290FormsRouteImport } from './routes/_app.2290-forms'
@@ -103,11 +102,6 @@ const AppFormsRoute = AppFormsRouteImport.update({
   path: '/forms',
   getParentRoute: () => AppRoute,
 } as any)
-const AppDefectsRoute = AppDefectsRouteImport.update({
-  id: '/defects',
-  path: '/defects',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -131,7 +125,6 @@ export interface FileRoutesByFullPath {
   '/2290-forms': typeof App2290FormsRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
-  '/defects': typeof AppDefectsRoute
   '/forms': typeof AppFormsRoute
   '/functionality-testing': typeof AppFunctionalityTestingRoute
   '/integrations': typeof AppIntegrationsRoute
@@ -151,7 +144,6 @@ export interface FileRoutesByTo {
   '/2290-forms': typeof App2290FormsRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
-  '/defects': typeof AppDefectsRoute
   '/forms': typeof AppFormsRoute
   '/functionality-testing': typeof AppFunctionalityTestingRoute
   '/integrations': typeof AppIntegrationsRoute
@@ -173,7 +165,6 @@ export interface FileRoutesById {
   '/_app/2290-forms': typeof App2290FormsRoute
   '/_app/chatbot-testing': typeof AppChatbotTestingRoute
   '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/defects': typeof AppDefectsRoute
   '/_app/forms': typeof AppFormsRoute
   '/_app/functionality-testing': typeof AppFunctionalityTestingRoute
   '/_app/integrations': typeof AppIntegrationsRoute
@@ -195,7 +186,6 @@ export interface FileRouteTypes {
     | '/2290-forms'
     | '/chatbot-testing'
     | '/dashboard'
-    | '/defects'
     | '/forms'
     | '/functionality-testing'
     | '/integrations'
@@ -215,7 +205,6 @@ export interface FileRouteTypes {
     | '/2290-forms'
     | '/chatbot-testing'
     | '/dashboard'
-    | '/defects'
     | '/forms'
     | '/functionality-testing'
     | '/integrations'
@@ -236,7 +225,6 @@ export interface FileRouteTypes {
     | '/_app/2290-forms'
     | '/_app/chatbot-testing'
     | '/_app/dashboard'
-    | '/_app/defects'
     | '/_app/forms'
     | '/_app/functionality-testing'
     | '/_app/integrations'
@@ -364,13 +352,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFormsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/defects': {
-      id: '/_app/defects'
-      path: '/defects'
-      fullPath: '/defects'
-      preLoaderRoute: typeof AppDefectsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -399,7 +380,6 @@ interface AppRouteChildren {
   App2290FormsRoute: typeof App2290FormsRoute
   AppChatbotTestingRoute: typeof AppChatbotTestingRoute
   AppDashboardRoute: typeof AppDashboardRoute
-  AppDefectsRoute: typeof AppDefectsRoute
   AppFormsRoute: typeof AppFormsRoute
   AppFunctionalityTestingRoute: typeof AppFunctionalityTestingRoute
   AppIntegrationsRoute: typeof AppIntegrationsRoute
@@ -417,7 +397,6 @@ const AppRouteChildren: AppRouteChildren = {
   App2290FormsRoute: App2290FormsRoute,
   AppChatbotTestingRoute: AppChatbotTestingRoute,
   AppDashboardRoute: AppDashboardRoute,
-  AppDefectsRoute: AppDefectsRoute,
   AppFormsRoute: AppFormsRoute,
   AppFunctionalityTestingRoute: AppFunctionalityTestingRoute,
   AppIntegrationsRoute: AppIntegrationsRoute,
