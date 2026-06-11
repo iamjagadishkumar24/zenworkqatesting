@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_app/integrations")({
       module="Integrations"
       items={INTEGRATIONS}
       itemLabel="integration"
+      showHeaderReport={false}
     />
   ),
 });

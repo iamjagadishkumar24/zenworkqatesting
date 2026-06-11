@@ -29,12 +29,14 @@ export function TestingModule({
   module,
   items,
   itemLabel = "item",
+  showHeaderReport = true,
 }: {
   title: string;
   description: string;
   module: Module; // DB-stored module
   items: string[];
   itemLabel?: string;
+  showHeaderReport?: boolean;
 }) {
   const { defects, currentUser } = useQA();
   const { env } = useEnvironment();
@@ -86,9 +88,11 @@ export function TestingModule({
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${itemLabel}s…`} className="pl-9" />
           </div>
-          <Button onClick={() => { setReportFor(picked ?? items[0] ?? ""); }}>
-            <Plus className="mr-2 h-4 w-4" /> Report defect
-          </Button>
+          {showHeaderReport && (
+            <Button onClick={() => { setReportFor(picked ?? items[0] ?? ""); }}>
+              <Plus className="mr-2 h-4 w-4" /> Report defect
+            </Button>
+          )}
         </div>
       </div>
 

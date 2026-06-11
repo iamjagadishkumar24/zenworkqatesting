@@ -33,6 +33,10 @@ vi.mock("@/lib/qa/store", () => ({
   }),
 }));
 
+vi.mock("@/lib/qa/environment", () => ({
+  useEnvironment: () => ({ env: null, ready: true, setEnv: vi.fn() }),
+}));
+
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }));

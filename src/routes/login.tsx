@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
+import { useEnvironment } from "@/lib/qa/environment";
 import { useServerFn } from "@tanstack/react-start";
 import { accountStatus } from "@/lib/qa/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/login")({
 
 export function LoginPage() {
   const { currentUser, login, signup, users } = useQA();
+  const { env, ready } = useEnvironment();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,7 +68,7 @@ export function LoginPage() {
     } catch {}
   }, []);
 
-  if (currentUser) return <Navigate to="/select-environment" replace />;
+  if (currentUser && ready) return <Navigate to={env ? "/dashboard" : "/select-environment"} replace />;
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,14 +122,14 @@ export function LoginPage() {
       else localStorage.removeItem("zenwork.rememberEmail");
     } catch {}
     toast.success("Welcome back");
-    navigate({ to: "/select-environment" });
+    navigate({ to: env ? "/dashboard" : "/select-environment" });
   };
   const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     const r = await signup(name, sEmail, sPwd);
     if (!r.ok) return toast.error(r.error);
     toast.success(users.length === 0 ? "Admin account created — signing you in" : "Account created — signing you in");
-    navigate({ to: "/select-environment" });
+    navigate({ to: env ? "/dashboard" : "/select-environment" });
   };
 
   const sendReset = async () => {
