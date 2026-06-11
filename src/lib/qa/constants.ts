@@ -30,6 +30,24 @@ export const INTEGRATIONS: string[] = [
 
 export const FORMS_2290: string[] = ["EZ2290", "2290.us", "GT2290"];
 
+// Shared module/category dropdown options used everywhere (Reported Errors
+// filter, Task Assignment, etc.). Keep this as the single source of truth so
+// new modules show up in every dropdown automatically.
+export const MODULE_OPTIONS: string[] = [
+  "1099 Forms",
+  "1099 Online",
+  "990 Forms",
+  "2290 Forms",
+  "W-2 Forms",
+  "ACA Forms",
+  "Payroll Forms",
+  "Integrations",
+  "Chatbot Testing",
+  "Excel Import Testing",
+  "Functionality Testing",
+  "Tax1099 Features",
+];
+
 export const TEST_MODULES = {
   CHATBOT: "Chatbot Testing",
   FUNCTIONALITY: "Functionality Testing",
