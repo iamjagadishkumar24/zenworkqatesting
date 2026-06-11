@@ -5,7 +5,7 @@ import { buildReportedErrorsWorkbook, buildReportedErrorsFilename } from "./expo
 import type { Defect, Environment } from "./types";
 import type { Database } from "@/integrations/supabase/types";
 
-type Json = Database["public"]["Tables"]["export_jobs"]["Insert"]["filters"];
+type Json = NonNullable<Database["public"]["Tables"]["export_jobs"]["Insert"]["filters"]>;
 const toJson = (v: unknown): Json => JSON.parse(JSON.stringify(v)) as Json;
 
 const FiltersSchema = z.object({
