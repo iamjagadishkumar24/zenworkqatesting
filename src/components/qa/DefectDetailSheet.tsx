@@ -279,7 +279,16 @@ export function DefectDetailSheet({
               </div>
             ) : (
               <div className="space-y-4 text-sm">
-                <Field label="Module">{defect.module} • {defect.formFeature}</Field>
+                <Field label="Module">
+                  <Link
+                    to={moduleRoute(defect.module)}
+                    onClick={() => onOpenChange(false)}
+                    className="text-primary underline-offset-2 hover:underline"
+                  >
+                    {defect.module}
+                  </Link>
+                  {defect.formFeature && <span className="text-muted-foreground"> • {defect.formFeature}</span>}
+                </Field>
                 <Field label="Description">{defect.description || <span className="text-muted-foreground">—</span>}</Field>
                 <Field label="Steps to Reproduce"><pre className="whitespace-pre-wrap font-sans">{defect.stepsToReproduce || "—"}</pre></Field>
                 <div className="grid gap-4 sm:grid-cols-2">
