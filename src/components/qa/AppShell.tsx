@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { NotificationsBell } from "./NotificationsBell";
+import { toast } from "sonner";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean };
 const nav: NavItem[] = [
@@ -107,7 +108,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {env && (
             <button
               type="button"
-              onClick={() => setEnv(env === "Production" ? "Stage" : "Production")}
+              onClick={() => {
+                const next = env === "Production" ? "Stage" : "Production";
+                setEnv(next);
+                if (next === "Production") {
+                  toast.success("Switched to Production", { description: "Dashboard now showing live data." });
+                } else {
+                  toast.warning("Switched to Stage", { description: "Dashboard now showing pre-release data." });
+                }
+              }}
               className={cn(
                 "ml-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition-colors",
                 env === "Production"
