@@ -73,7 +73,7 @@ export function NotificationsBell() {
                       onClick={() => {
                         setOpen(false);
                         if (!n.read) void markNotificationsRead([n.id]);
-                        if (n.defectId) navigate({ to: "/defects", search: { q: n.defectId } as never });
+                        if (n.defectId) navigate({ to: "/my-reported-errors", search: { q: n.defectId } as never });
                       }}
                     >
                       <span
