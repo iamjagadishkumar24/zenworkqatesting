@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_app/functionality-testing")({
     <TestingModule
       title="Functionality Testing"
       description="End-to-end functional regression across core platform areas."
-      module="Integrations"
+      module="Functionality Testing"
       items={ITEMS}
       itemLabel="feature"
     />

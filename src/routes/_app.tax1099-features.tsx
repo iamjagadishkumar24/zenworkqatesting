@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_app/tax1099-features")({
     <TestingModule
       title="Tax1099 Features"
       description="Validate Tax1099 product features in the selected environment."
-      module="1099 Online"
+      module="Tax1099 Features"
       items={ITEMS}
       itemLabel="feature"
     />

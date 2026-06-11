@@ -3,7 +3,7 @@ import { TestingModule } from "@/components/qa/TestingModule";
 
 const ITEMS = ["Knowledge Base", "Conversation Flows", "Hand-off to Agent", "Tone & Tone-style", "Multilingual"];
 
-export const Route = createFileRoute("/_app/chatbot-testing")({
+export const Route = createFileRoute("/_app/excel-import-testing")({
   component: () => (
     <TestingModule
       title="Chatbot Testing"
