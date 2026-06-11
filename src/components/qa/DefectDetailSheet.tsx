@@ -380,8 +380,22 @@ export function DefectDetailSheet({
 
           <TabsContent value="history" className="mt-4">
             <ScrollArea className="h-80 rounded-md border p-3">
-              <ol className="relative space-y-3">
-                <li className="rounded-md border bg-card p-2 text-xs">
+              {(() => {
+                type HItem =
+                  | { kind: "created"; at: string; actor: string }
+                  | { kind: "comment"; id: string; at: string; actor: string; text: string }
+                  | { kind: "change"; id: string; at: string; actor: string; field: string; oldVal: string | null; newVal: string | null };
+                const items: HItem[] = [
+                  { kind: "created" as const, at: defect.createdAt, actor: defect.createdBy },
+                  ...defect.comments.map((c) => ({ kind: "comment" as const, id: c.id, at: c.createdAt, actor: c.author, text: c.text })),
+                  ...history.map((h) => ({ kind: "change" as const, id: h.id, at: h.changedAt, actor: h.changedBy, field: h.field, oldVal: h.oldValue, newVal: h.newValue })),
+                ].sort((a, b) => +new Date(a.at) - +new Date(b.at));
+                return (
+                  <ol className="relative space-y-3">
+                    {items.map((it) => {
+                      if (it.kind === "created") {
+                        return (
+                          <li key="created" className="rounded-md border bg-card p-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">Reported defect</span>
                     <span className="text-muted-foreground">{new Date(defect.createdAt).toLocaleString()}</span>
@@ -391,21 +405,39 @@ export function DefectDetailSheet({
                     <span className="ml-auto">by {defect.createdBy}</span>
                   </div>
                 </li>
-                {history.map((h) => (
-                  <li key={h.id} className="rounded-md border bg-card p-2 text-xs">
+                        );
+                      }
+                      if (it.kind === "comment") {
+                        return (
+                          <li key={`c-${it.id}`} className="rounded-md border bg-muted/40 p-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">Added a comment</span>
+                              <span className="text-muted-foreground">{new Date(it.at).toLocaleString()}</span>
+                            </div>
+                            <p className="mt-1 whitespace-pre-wrap text-foreground">{it.text}</p>
+                            <p className="mt-1 text-muted-foreground">by {it.actor}</p>
+                          </li>
+                        );
+                      }
+                      const h = it;
+                      return (
+                        <li key={`h-${h.id}`} className="rounded-md border bg-card p-2 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium">{historyLabel(h.field, h.oldValue, h.newValue)}</span>
-                      <span className="text-muted-foreground">{new Date(h.changedAt).toLocaleString()}</span>
+                            <span className="font-medium">{historyLabel(h.field, h.oldVal, h.newVal)}</span>
+                            <span className="text-muted-foreground">{new Date(h.at).toLocaleString()}</span>
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground line-through">{h.oldValue ?? "—"}</span>
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground line-through">{h.oldVal ?? "—"}</span>
                       <span>→</span>
-                      <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">{h.newValue ?? "—"}</span>
-                      <span className="ml-auto text-muted-foreground">by {h.changedBy}</span>
+                            <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">{h.newVal ?? "—"}</span>
+                            <span className="ml-auto text-muted-foreground">by {h.actor}</span>
                     </div>
                   </li>
-                ))}
-              </ol>
+                      );
+                    })}
+                  </ol>
+                );
+              })()}
             </ScrollArea>
           </TabsContent>
 
