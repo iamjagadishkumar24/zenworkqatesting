@@ -17,7 +17,6 @@ export const FORM_LIST: string[] = [
 ];
 
 export const INTEGRATIONS: string[] = [
-  "Excel Spreadsheet",
   "QuickBooks Desktop",
   "QuickBooks Online",
   "Bill",
@@ -28,6 +27,14 @@ export const INTEGRATIONS: string[] = [
   "Entrata",
   "FreshBooks",
 ];
+
+export const FORMS_2290: string[] = ["EZ2290", "2290.us", "GT2290"];
+
+export const TEST_MODULES = {
+  CHATBOT: "Chatbot Testing",
+  FUNCTIONALITY: "Functionality Testing",
+  TAX1099: "Tax1099 Features",
+} as const;
 
 export const AGENTS: string[] = Array.from(new Set([
   "Uma Sri Myneni","Manojkumar Sami","Swathi Selam","Mounika Bai Thakur",
