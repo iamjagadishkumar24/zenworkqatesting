@@ -131,27 +131,6 @@ export function LoginPage() {
     navigate({ to: "/select-environment" });
   };
 
-  const seedAdmin = async () => {
-    setSeeding(true);
-    try {
-      const r = await reset();
-      setEmail(r.email);
-      setPassword(r.password);
-      const li = await login(r.email, r.password);
-      if (!li.ok) {
-        toast.success(`Sample admin ready — email: ${r.email}, password: ${r.password}`);
-      } else {
-        toast.success("Signed in as sample admin");
-        navigate({ to: "/dashboard" });
-      }
-      setSample({ loading: false, exists: true, isAdmin: true, active: true });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not create sample admin");
-    } finally {
-      setSeeding(false);
-    }
-  };
-
   const sendReset = async () => {
     if (!forgotEmail) return;
     setForgotBusy(true);
@@ -163,35 +142,6 @@ export function LoginPage() {
     toast.success("If an account exists for that email, a reset link is on its way.");
     setForgotOpen(false);
     setForgotEmail("");
-  };
-
-  const renderSampleStatus = () => {
-    if (sample.loading) {
-      return (
-        <Badge variant="secondary" className="gap-1">
-          <Loader2 className="h-3 w-3 animate-spin" /> Checking…
-        </Badge>
-      );
-    }
-    if (!sample.exists) {
-      return (
-        <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400">
-          <AlertCircle className="h-3 w-3" /> Not created
-        </Badge>
-      );
-    }
-    if (sample.isAdmin && sample.active) {
-      return (
-        <Badge variant="outline" className="gap-1 border-emerald-500/40 text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="h-3 w-3" /> Ready
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400">
-        <AlertCircle className="h-3 w-3" /> Needs reset
-      </Badge>
-    );
   };
 
   return (
