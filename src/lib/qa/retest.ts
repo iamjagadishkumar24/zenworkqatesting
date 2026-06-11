@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "./store";
 import { useEnvironment } from "./environment";
 
-export type RetestStatus = "Assigned" | "In Progress" | "Retested" | "Completed" | "Cancelled";
+export type RetestStatus = "Pending" | "In Progress" | "Completed";
+export const RETEST_STATUSES: RetestStatus[] = ["Pending", "In Progress", "Completed"];
 export type RetestPriority = "Low" | "Medium" | "High" | "Critical";
 
 export const TESTING_TYPES = [
@@ -112,7 +113,7 @@ export function useRetests() {
         instructions: input.instructions,
         priority: input.priority,
         due_date: input.dueDate,
-        status: "Assigned",
+        status: "Pending",
         testing_type: input.testingType ?? "Retest",
         title: input.title ?? "",
         module: input.module ?? "",
@@ -141,7 +142,5 @@ export function useRetests() {
     return updateAssignment(id, { assigned_agent_id: agent.id, assigned_agent_name: agent.name });
   };
 
-  const cancel = (id: string) => updateAssignment(id, { status: "Cancelled" });
-
-  return { items: scoped, all: items, loading, createAssignment, updateAssignment, reassign, cancel, reload: load };
+  return { items: scoped, all: items, loading, createAssignment, updateAssignment, reassign, reload: load };
 }
