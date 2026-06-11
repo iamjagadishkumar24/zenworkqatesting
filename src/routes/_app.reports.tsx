@@ -7,7 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
   LineChart, Line, CartesianGrid,
 } from "recharts";
-import { Download } from "lucide-react";
+import { Download, Inbox } from "lucide-react";
 import { exportXlsx } from "@/lib/qa/export";
 import { ExportMenu } from "@/components/qa/ExportMenu";
 
@@ -16,6 +16,16 @@ export const Route = createFileRoute("/_app/reports")({
 });
 
 const COLORS = ["oklch(0.55 0.18 255)", "oklch(0.62 0.17 150)", "oklch(0.75 0.16 75)", "oklch(0.6 0.22 27)", "oklch(0.65 0.15 300)"];
+
+function EmptyBreakdown({ message }: { message: string }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-sm text-muted-foreground">
+      <Inbox className="h-8 w-8 opacity-40" />
+      <p>{message}</p>
+      <p className="text-xs">Report your first error from any module (e.g. Integrations or Excel Import Testing) to populate this breakdown.</p>
+    </div>
+  );
+}
 
 function ReportsPage() {
   const { forms, defects } = useQA();
@@ -35,6 +45,18 @@ function ReportsPage() {
       map[d.module] = (map[d.module] ?? 0) + 1;
     });
     return Object.entries(map).map(([module, count]) => ({ module, count }));
+  }, [defects]);
+
+  const statusByModule = useMemo(() => {
+    const map: Record<string, { module: string; open: number; fixed: number; retest: number; total: number }> = {};
+    defects.forEach((d) => {
+      const m = (map[d.module] ??= { module: d.module, open: 0, fixed: 0, retest: 0, total: 0 });
+      m.total += 1;
+      if (d.status === "Fixed" || d.status === "Closed") m.fixed += 1;
+      else if (d.status === "Retest Required" || d.status === "Reopened") m.retest += 1;
+      else m.open += 1;
+    });
+    return Object.values(map);
   }, [defects]);
 
   const statusTrend = useMemo(() => {
@@ -76,7 +98,7 @@ function ReportsPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Reports</h2>
-          <p className="text-sm text-muted-foreground">Power BI-style insights on testing performance.</p>
+          <p className="text-sm text-muted-foreground">Power BI-style insights on testing performance. Counts refresh in real time as defects are added, edited, or deleted.</p>
         </div>
         <div className="flex gap-2">
           <ExportMenu
@@ -101,6 +123,7 @@ function ReportsPage() {
                 [
                   { name: "Passed vs Failed", rows: passedVsFailed },
                   { name: "Defects by Module", rows: defectsByModule },
+                  { name: "Status by Module", rows: statusByModule },
                   { name: "Status Trend", rows: statusTrend },
                   { name: "Agent Load", rows: agentDefects },
                   { name: "Form Coverage", rows: formCoverage },
@@ -114,8 +137,15 @@ function ReportsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>Valid vs Invalid Errors</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Valid vs Invalid Errors</CardTitle>
+            <ExportMenu label="Export" filename="valid-vs-invalid" title="Valid vs Invalid Errors"
+              rows={passedVsFailed as unknown as Record<string, unknown>[]} columns={["name","value"]} />
+          </CardHeader>
           <CardContent className="h-72">
+            {passedVsFailed.every((p) => p.value === 0) ? (
+              <EmptyBreakdown message="No Valid or Invalid Errors recorded yet." />
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={passedVsFailed} dataKey="value" nameKey="name" outerRadius={90} label>
@@ -125,12 +155,20 @@ function ReportsPage() {
                 <Tooltip /><Legend />
               </PieChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Open Errors by Module</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Open Errors by Module</CardTitle>
+            <ExportMenu label="Export" filename="open-by-module" title="Open Errors by Module"
+              rows={defectsByModule as unknown as Record<string, unknown>[]} columns={["module","count"]} />
+          </CardHeader>
           <CardContent className="h-72">
+            {defectsByModule.length === 0 ? (
+              <EmptyBreakdown message="No open errors across modules." />
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={defectsByModule}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -142,12 +180,45 @@ function ReportsPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Reported vs Closed Errors (7 days)</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Open / Fixed / Retest by Module</CardTitle>
+            <ExportMenu label="Export" filename="status-by-module" title="Status by Module"
+              rows={statusByModule as unknown as Record<string, unknown>[]} columns={["module","open","fixed","retest","total"]} />
+          </CardHeader>
           <CardContent className="h-72">
+            {statusByModule.length === 0 ? (
+              <EmptyBreakdown message="No defects logged in any module yet." />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statusByModule}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="module" fontSize={11} />
+                  <YAxis fontSize={12} />
+                  <Tooltip /><Legend />
+                  <Bar dataKey="open" stackId="s" fill="oklch(0.6 0.22 27)" />
+                  <Bar dataKey="retest" stackId="s" fill="oklch(0.75 0.16 75)" />
+                  <Bar dataKey="fixed" stackId="s" fill="oklch(0.62 0.17 150)" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Reported vs Closed Errors (7 days)</CardTitle>
+            <ExportMenu label="Export" filename="status-trend-7d" title="Reported vs Closed (7 days)"
+              rows={statusTrend as unknown as Record<string, unknown>[]} columns={["day","reported","closed"]} />
+          </CardHeader>
+          <CardContent className="h-72">
+            {statusTrend.every((d) => d.reported === 0 && d.closed === 0) ? (
+              <EmptyBreakdown message="No errors reported or closed in the last 7 days." />
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={statusTrend}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -159,12 +230,20 @@ function ReportsPage() {
                 <Line type="monotone" dataKey="closed" stroke="oklch(0.62 0.17 150)" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Agent-wise Error Load</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Agent-wise Error Load</CardTitle>
+            <ExportMenu label="Export" filename="agent-load" title="Agent-wise Error Load"
+              rows={agentDefects as unknown as Record<string, unknown>[]} columns={["agent","count"]} />
+          </CardHeader>
           <CardContent className="h-72">
+            {agentDefects.length === 0 ? (
+              <EmptyBreakdown message="No errors assigned to any agent yet." />
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={agentDefects} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -174,12 +253,20 @@ function ReportsPage() {
                 <Bar dataKey="count" fill="oklch(0.55 0.18 255)" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>Form-wise Testing Coverage (Valid vs Invalid Errors)</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Form-wise Testing Coverage (Valid vs Invalid Errors)</CardTitle>
+            <ExportMenu label="Export" filename="form-coverage" title="Form-wise Coverage"
+              rows={formCoverage as unknown as Record<string, unknown>[]} columns={["form","passed","failed"]} />
+          </CardHeader>
           <CardContent className="h-80">
+            {formCoverage.length === 0 ? (
+              <EmptyBreakdown message="No form testing activity recorded yet." />
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={formCoverage}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -191,6 +278,7 @@ function ReportsPage() {
                 <Bar dataKey="failed" stackId="a" fill="oklch(0.6 0.22 27)" />
               </BarChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
