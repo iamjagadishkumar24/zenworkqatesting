@@ -63,13 +63,6 @@ export function AssignTaskDialog({
       title: title.trim(),
       module: moduleSel,
     });
-    if (r.ok && status !== "Pending" && r.ids) {
-      // apply non-default status to all just-created assignments
-      const { updateAssignment } = await import("@/lib/qa/retest").then((m) => ({ updateAssignment: async () => ({ ok: true }) }));
-      // status updates are best-effort: the create returns ids; status edit happens via realtime hook in retest page
-      // Skipping inline status update here keeps the dialog stateless.
-      void updateAssignment;
-    }
     setSubmitting(false);
     if (!r.ok) return toast.error(r.error);
     toast.success(assignAll ? "Task assigned to all active agents" : "Task assigned");
