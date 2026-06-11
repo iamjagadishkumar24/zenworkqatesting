@@ -129,6 +129,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuItem onClick={() => { setEnv(null); navigate({ to: "/select-environment" }); }}>
                   Change environment…
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => { setEnv(null); navigate({ to: "/select-environment" }); }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  Reset testing environment
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
