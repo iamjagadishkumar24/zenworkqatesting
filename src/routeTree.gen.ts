@@ -29,6 +29,7 @@ import { Route as AppExcelImportTestingRouteImport } from './routes/_app.excel-i
 import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppChatbotTestingRouteImport } from './routes/_app.chatbot-testing'
+import { Route as App990FormsRouteImport } from './routes/_app.990-forms'
 import { Route as App2290FormsRouteImport } from './routes/_app.2290-forms'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -130,6 +131,11 @@ const AppChatbotTestingRoute = AppChatbotTestingRouteImport.update({
   path: '/chatbot-testing',
   getParentRoute: () => AppRoute,
 } as any)
+const App990FormsRoute = App990FormsRouteImport.update({
+  id: '/990-forms',
+  path: '/990-forms',
+  getParentRoute: () => AppRoute,
+} as any)
 const App2290FormsRoute = App2290FormsRouteImport.update({
   id: '/2290-forms',
   path: '/2290-forms',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/2290-forms': typeof App2290FormsRoute
+  '/990-forms': typeof App990FormsRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/2290-forms': typeof App2290FormsRoute
+  '/990-forms': typeof App990FormsRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/2290-forms': typeof App2290FormsRoute
+  '/_app/990-forms': typeof App990FormsRoute
   '/_app/chatbot-testing': typeof AppChatbotTestingRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/defects': typeof AppDefectsRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/2290-forms'
+    | '/990-forms'
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/2290-forms'
+    | '/990-forms'
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/_app/2290-forms'
+    | '/_app/990-forms'
     | '/_app/chatbot-testing'
     | '/_app/dashboard'
     | '/_app/defects'
@@ -423,6 +435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatbotTestingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/990-forms': {
+      id: '/_app/990-forms'
+      path: '/990-forms'
+      fullPath: '/990-forms'
+      preLoaderRoute: typeof App990FormsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/2290-forms': {
       id: '/_app/2290-forms'
       path: '/2290-forms'
@@ -435,6 +454,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   App2290FormsRoute: typeof App2290FormsRoute
+  App990FormsRoute: typeof App990FormsRoute
   AppChatbotTestingRoute: typeof AppChatbotTestingRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDefectsRoute: typeof AppDefectsRoute
@@ -455,6 +475,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   App2290FormsRoute: App2290FormsRoute,
+  App990FormsRoute: App990FormsRoute,
   AppChatbotTestingRoute: AppChatbotTestingRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDefectsRoute: AppDefectsRoute,
@@ -484,3 +505,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
