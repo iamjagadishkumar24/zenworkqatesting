@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useServerFn } from "@tanstack/react-start";
 import { resetSampleAdmin, sampleAdminStatus, accountStatus } from "@/lib/qa/admin.functions";
@@ -15,8 +15,29 @@ import { HelpCircle, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, ShieldChec
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
+function LoginErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+  return (
+    <div className="grid min-h-dvh place-items-center bg-slate-950 p-6 text-white">
+      <div className="w-full max-w-md rounded-xl border border-white/15 bg-white/5 p-6 shadow-xl">
+        <h1 className="text-xl font-semibold">Sign in is temporarily unavailable</h1>
+        <p className="mt-2 text-sm text-white/70">
+          We hit a problem rendering the login page. Your account and data are safe.
+        </p>
+        <pre className="mt-3 max-h-32 overflow-auto rounded bg-black/40 p-2 text-xs text-white/60">
+          {error?.message ?? "Unknown error"}
+        </pre>
+        <div className="mt-4 flex gap-2">
+          <Button onClick={reset} className="bg-white text-slate-900 hover:bg-white/90">Try again</Button>
+          <Button variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => window.location.reload()}>Reload</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/login")({
   component: LoginPage,
+  errorComponent: LoginErrorFallback,
 });
 
 function LoginPage() {
@@ -39,6 +60,9 @@ function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [remember, setRemember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const pwdRef = useRef<HTMLInputElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,6 +84,8 @@ function LoginPage() {
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setHint(null);
+    if (!email.trim()) { emailRef.current?.focus(); return; }
+    if (!password) { pwdRef.current?.focus(); return; }
     setSubmitting(true);
     const r = await login(email, password);
     setSubmitting(false);
@@ -95,6 +121,11 @@ function LoginPage() {
       } catch {
         /* ignore — generic toast already shown */
       }
+      // Move focus to hint banner (announces via role=alert) then to invalid field
+      setTimeout(() => {
+        if (hintRef.current) hintRef.current.focus();
+        else pwdRef.current?.focus();
+      }, 30);
       return;
     }
     try {
@@ -235,12 +266,12 @@ function LoginPage() {
                 <form onSubmit={onLogin} className="space-y-4 pt-4">
                   <div>
                     <Label htmlFor="email" className="text-white/80">Email</Label>
-                    <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/40" placeholder="you@company.com" />
+                    <Input ref={emailRef} id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/40" placeholder="you@company.com" />
                   </div>
                   <div>
                     <Label htmlFor="pwd" className="text-white/80">Password</Label>
                     <div className="relative">
-                      <Input id="pwd" type={showPwd ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40 focus-visible:ring-white/40" placeholder="••••••••" />
+                      <Input ref={pwdRef} id="pwd" type={showPwd ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40 focus-visible:ring-white/40" placeholder="••••••••" />
                       <button
                         type="button"
                         onClick={() => setShowPwd((v) => !v)}
@@ -269,7 +300,10 @@ function LoginPage() {
                   </Button>
                   {hint && (
                     <div
-                      role="status"
+                      ref={hintRef}
+                      role="alert"
+                      aria-live="assertive"
+                      tabIndex={-1}
                       className={
                         "rounded-md border p-3 text-xs " +
                         (hint.tone === "error"
