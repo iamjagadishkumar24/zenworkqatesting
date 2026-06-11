@@ -56,6 +56,7 @@ type DefectRow = {
   jira_url: string | null; validity: string;
   status: string; priority: string; severity: string;
   environment: string;
+  tax_year: string | null;
   assigned_agent: string; created_by: string; updated_by: string;
   version: number; created_at: string; updated_at: string;
 };
