@@ -94,6 +94,7 @@ export type Database = {
           created_by: string
           description: string
           drive_url: string | null
+          environment: string
           evidence_url: string | null
           excel_url: string | null
           expected_result: string
@@ -122,6 +123,7 @@ export type Database = {
           created_by?: string
           description?: string
           drive_url?: string | null
+          environment?: string
           evidence_url?: string | null
           excel_url?: string | null
           expected_result?: string
@@ -150,6 +152,7 @@ export type Database = {
           created_by?: string
           description?: string
           drive_url?: string | null
+          environment?: string
           evidence_url?: string | null
           excel_url?: string | null
           expected_result?: string
@@ -174,6 +177,7 @@ export type Database = {
       forms: {
         Row: {
           assigned_agent: string
+          environment: string
           failed: number
           id: string
           last_tested: string
@@ -186,6 +190,7 @@ export type Database = {
         }
         Insert: {
           assigned_agent?: string
+          environment?: string
           failed?: number
           id: string
           last_tested?: string
@@ -198,6 +203,7 @@ export type Database = {
         }
         Update: {
           assigned_agent?: string
+          environment?: string
           failed?: number
           id?: string
           last_tested?: string
@@ -209,6 +215,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          defect_id: string | null
+          environment: string | null
+          id: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          defect_id?: string | null
+          environment?: string | null
+          id?: string
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          defect_id?: string | null
+          environment?: string | null
+          id?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_defect_id_fkey"
+            columns: ["defect_id"]
+            isOneToOne: false
+            referencedRelation: "defects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -265,6 +315,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_id_for_name: { Args: { _name: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "agent"
