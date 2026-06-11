@@ -87,8 +87,6 @@ export function useRetests() {
       status: "Assigned",
     });
     if (error) return { ok: false, error: error.message };
-    const { forms } = await import("./forms-isolation.test").catch(() => ({ forms: [] as never[] }));
-    void forms;
     const rows = input.formIds.map((fid) => ({ assignment_id: id, form_id: fid, form_name: fid }));
     const { error: e2 } = await supabase.from("retest_assignment_forms").insert(rows);
     if (e2) return { ok: false, error: e2.message };
