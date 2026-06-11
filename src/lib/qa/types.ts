@@ -91,7 +91,15 @@ export type Defect = {
   updatedAt: string;
   updatedBy: string;
   createdBy: string;
-  comments: { id: string; author: string; text: string; createdAt: string }[];
+  comments: {
+    id: string;
+    author: string;
+    text: string;
+    createdAt: string;
+    updatedAt?: string;
+    updatedBy?: string;
+    edited?: boolean;
+  }[];
 };
 
 export type AuditEntry = {
