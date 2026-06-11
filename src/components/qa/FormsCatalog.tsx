@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
+import { useEnvironment } from "@/lib/qa/environment";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ export function FormsCatalog({
   forms?: string[];
 }) {
   const { defects } = useQA();
+  const { env } = useEnvironment();
   const [q, setQ] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
 
@@ -30,12 +32,13 @@ export function FormsCatalog({
     const map = new Map<string, number>();
     defects.forEach((d) => {
       if (d.module !== module) return;
+      if (env && d.environment && d.environment !== env) return;
       if (["Fixed", "Closed"].includes(d.status)) return;
       const { form } = decodeFormFeature(d.formFeature);
       map.set(form, (map.get(form) ?? 0) + 1);
     });
     return map;
-  }, [defects, module]);
+  }, [defects, module, env]);
 
   return (
     <div className="space-y-6">

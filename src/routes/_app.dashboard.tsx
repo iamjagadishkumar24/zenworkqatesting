@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQA } from "@/lib/qa/store";
+import { useEnvironment } from "@/lib/qa/environment";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TestStatusBadge } from "@/components/qa/StatusBadge";
 import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe } from "lucide-react";
@@ -12,14 +14,20 @@ export const Route = createFileRoute("/_app/dashboard")({
 
 function Dashboard() {
   const { forms, defects } = useQA();
+  const { env } = useEnvironment();
   const navigate = useNavigate();
+
+  const scopedDefects = useMemo(
+    () => defects.filter((d) => !env || !d.environment || d.environment === env),
+    [defects, env],
+  );
 
   const stats = useMemo(() => {
     const passed = forms.reduce((s, f) => s + f.passed, 0);
     const failed = forms.reduce((s, f) => s + f.failed, 0);
-    const open = defects.filter((d) => !["Fixed", "Closed"].includes(d.status)).length;
+    const open = scopedDefects.filter((d) => !["Fixed", "Closed"].includes(d.status)).length;
     return { total: passed + failed, passed, failed, open };
-  }, [forms, defects]);
+  }, [forms, scopedDefects]);
 
   const kpis = [
     { label: "Total Tests", value: stats.total, Icon: ListChecks, tone: "primary", to: "/defects" },
@@ -49,7 +57,10 @@ function Dashboard() {
     <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-sm text-muted-foreground">Real-time QA testing overview across all modules.</p>
+        <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
+          Real-time QA testing overview across all modules.
+          {env && <Badge variant="outline">{env}</Badge>}
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

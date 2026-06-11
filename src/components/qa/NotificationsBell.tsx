@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, BellOff, CheckCheck } from "lucide-react";
 import {
@@ -7,84 +7,30 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useQA } from "@/lib/qa/store";
-
-type N = {
-  id: string;
-  at: string;
-  defectId: string;
-  title: string;
-  detail: string;
-};
-
-const READ_KEY = "zw.notif.readAt.v1";
+import { useEnvironment } from "@/lib/qa/environment";
 
 export function NotificationsBell() {
-  const { defects, audit, currentUser } = useQA();
+  const { notifications, currentUser, markNotificationsRead } = useQA();
+  const { env } = useEnvironment();
   const navigate = useNavigate();
-  const [readAt, setReadAt] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    return Number(localStorage.getItem(READ_KEY) ?? 0);
-  });
   const [open, setOpen] = useState(false);
 
-  const items: N[] = useMemo(() => {
+  const items = useMemo(() => {
     if (!currentUser) return [];
-    const me = currentUser.name;
-    const myDefectIds = new Set(
-      defects.filter((d) => d.assignedAgent === me || d.createdBy === me).map((d) => d.id),
-    );
-    const byId = new Map(defects.map((d) => [d.id, d] as const));
-    const events: N[] = [];
-    audit.forEach((a) => {
-      if (!myDefectIds.has(a.defectId)) return;
-      const d = byId.get(a.defectId);
-      if (!d) return;
-      const field = a.field.replace(/_/g, " ");
-      events.push({
-        id: `a-${a.id}`, at: a.changedAt, defectId: a.defectId,
-        title: `${d.id} • ${field} changed`,
-        detail: `${a.oldValue ?? "—"} → ${a.newValue ?? "—"} by ${a.changedBy}`,
-      });
-    });
-    defects.forEach((d) => {
-      if (!myDefectIds.has(d.id)) return;
-      d.comments.forEach((c) => {
-        if (c.author === me) return;
-        events.push({
-          id: `c-${c.id}`, at: c.createdAt, defectId: d.id,
-          title: `New comment on ${d.id}`,
-          detail: `${c.author}: ${c.text.slice(0, 120)}`,
-        });
-      });
-      // newly assigned
-      if (d.assignedAgent === me && d.createdBy !== me) {
-        events.push({
-          id: `assign-${d.id}`, at: d.updatedAt, defectId: d.id,
-          title: `Assigned to you: ${d.id}`,
-          detail: d.title,
-        });
-      }
-    });
-    // dedupe by id
-    const seen = new Set<string>();
-    return events
-      .filter((e) => (seen.has(e.id) ? false : (seen.add(e.id), true)))
-      .sort((a, b) => +new Date(b.at) - +new Date(a.at))
+    return notifications
+      .filter((n) => !env || !n.environment || n.environment === env)
       .slice(0, 30);
-  }, [defects, audit, currentUser]);
+  }, [notifications, currentUser, env]);
 
-  const unread = items.filter((i) => +new Date(i.at) > readAt).length;
+  const unread = items.filter((i) => !i.read).length;
 
-  useEffect(() => {
-    if (open && unread > 0) {
-      const now = Date.now();
-      setReadAt(now);
-      try { localStorage.setItem(READ_KEY, String(now)); } catch { /* ignore */ }
-    }
-  }, [open, unread]);
+  const markAll = () => {
+    const ids = items.filter((i) => !i.read).map((i) => i.id);
+    if (ids.length) void markNotificationsRead(ids);
+  };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={(o) => { setOpen(o); if (o && unread > 0) markAll(); }}>
       <DropdownMenuTrigger asChild>
         <button
           className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-accent transition-colors"
@@ -105,11 +51,7 @@ export function NotificationsBell() {
             <Button
               variant="ghost" size="sm"
               className="h-7 px-2 text-xs"
-              onClick={() => {
-                const now = Date.now();
-                setReadAt(now);
-                try { localStorage.setItem(READ_KEY, String(now)); } catch { /* ignore */ }
-              }}
+              onClick={markAll}
             ><CheckCheck className="mr-1 h-3 w-3" /> Mark all read</Button>
           )}
         </div>
@@ -123,14 +65,15 @@ export function NotificationsBell() {
           <ScrollArea className="h-80">
             <ul className="divide-y">
               {items.map((n) => {
-                const isNew = +new Date(n.at) > readAt;
+                const isNew = !n.read;
                 return (
                   <li key={n.id}>
                     <button
                       className="flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-accent transition-colors"
                       onClick={() => {
                         setOpen(false);
-                        navigate({ to: "/defects", search: { q: n.defectId } as never });
+                        if (!n.read) void markNotificationsRead([n.id]);
+                        if (n.defectId) navigate({ to: "/defects", search: { q: n.defectId } as never });
                       }}
                     >
                       <span
@@ -139,9 +82,9 @@ export function NotificationsBell() {
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{n.title}</p>
-                        <p className="truncate text-xs text-muted-foreground">{n.detail}</p>
+                        <p className="truncate text-xs text-muted-foreground">{n.body}</p>
                         <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {new Date(n.at).toLocaleString()}
+                          {new Date(n.createdAt).toLocaleString()}
                         </p>
                       </div>
                     </button>
