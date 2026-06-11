@@ -117,3 +117,14 @@
   66% { transform: translate(-30px, 30px) scale(0.95); }
 }
 .animate-blob { animation: blob 14s ease-in-out infinite; will-change: transform; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob,
+  .animate-fade-in,
+  .animate-scale-in {
+    animation: none !important;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}
