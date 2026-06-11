@@ -1,15 +1,27 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { AuditEntry, Defect, DefectStatus, FormItem, Module, Priority, Role, Severity, TestStatus, User } from "./types";
+import type { AuditEntry, Defect, DefectStatus, Environment, FormItem, Module, Priority, Role, Severity, TestStatus, User } from "./types";
 
 type DefectWithVersion = Defect & { version: number };
+
+export type NotificationItem = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  defectId: string | null;
+  environment: Environment | null;
+  read: boolean;
+  createdAt: string;
+};
 
 type State = {
   users: User[];
   forms: FormItem[];
   defects: DefectWithVersion[];
   audit: AuditEntry[];
+  notifications: NotificationItem[];
   currentUser: User | null;
   loading: boolean;
 };
@@ -28,6 +40,7 @@ type Ctx = State & {
   removeUser: (id: string) => Promise<Result>;
   updateForm: (id: string, patch: Partial<FormItem>) => Promise<Result>;
   addForm: (f: Omit<FormItem, "id">) => Promise<Result>;
+  markNotificationsRead: (ids?: string[]) => Promise<void>;
 };
 
 const Context = createContext<Ctx | null>(null);
@@ -40,12 +53,14 @@ type DefectRow = {
   video_url: string | null; excel_url: string | null; drive_url: string | null;
   jira_url: string | null; validity: string;
   status: string; priority: string; severity: string;
+  environment: string;
   assigned_agent: string; created_by: string; updated_by: string;
   version: number; created_at: string; updated_at: string;
 };
 type CommentRow = { id: string; defect_id: string; author: string; text: string; created_at: string };
 type AuditRow = { id: string; defect_id: string; field: string; old_value: string | null; new_value: string | null; changed_by: string; changed_at: string };
-type FormRow = { id: string; name: string; module: string; status: string; passed: number; failed: number; open_defects: number; last_tested: string; assigned_agent: string };
+type FormRow = { id: string; name: string; module: string; status: string; passed: number; failed: number; open_defects: number; last_tested: string; assigned_agent: string; environment?: string };
+type NotifRow = { id: string; type: string; title: string; body: string; defect_id: string | null; environment: string | null; read: boolean; created_at: string };
 
 function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersion {
   return {
@@ -62,6 +77,7 @@ function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersi
     driveUrl: r.drive_url ?? undefined,
     jiraUrl: r.jira_url ?? undefined,
     validity: (r.validity as Defect["validity"]) ?? "Unverified",
+    environment: (r.environment as Environment) ?? "Production",
     status: r.status as DefectStatus, priority: r.priority as Priority, severity: r.severity as Severity,
     assignedAgent: r.assigned_agent, createdBy: r.created_by, updatedBy: r.updated_by,
     createdAt: r.created_at, updatedAt: r.updated_at, version: r.version,
@@ -89,7 +105,7 @@ function rowToForm(r: FormRow): FormItem {
 
 export function QAProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({
-    users: [], forms: [], defects: [], audit: [], currentUser: null, loading: true,
+    users: [], forms: [], defects: [], audit: [], notifications: [], currentUser: null, loading: true,
   });
   const commentsRef = useRef<CommentRow[]>([]);
 
@@ -136,13 +152,14 @@ export function QAProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, loading: true }));
 
     const loadAll = async () => {
-      const [profilesR, rolesR, formsR, defectsR, commentsR, auditR] = await Promise.all([
+      const [profilesR, rolesR, formsR, defectsR, commentsR, auditR, notifR] = await Promise.all([
         supabase.from("profiles").select("id, name, email, active"),
         supabase.from("user_roles").select("user_id, role"),
         supabase.from("forms").select("*"),
         supabase.from("defects").select("*").order("updated_at", { ascending: false }),
         supabase.from("defect_comments").select("*").order("created_at", { ascending: true }),
         supabase.from("defect_audit_log").select("*").order("changed_at", { ascending: false }),
+        supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(200),
       ]);
       if (cancelled) return;
       const rolesByUser = new Map<string, Role>();
@@ -163,6 +180,11 @@ export function QAProvider({ children }: { children: ReactNode }) {
         forms: (formsR.data ?? []).map((f) => rowToForm(f as FormRow)),
         defects: (defectsR.data ?? []).map((d) => rowToDefect(d as DefectRow, comments)),
         audit: (auditR.data ?? []).map((a) => rowToAudit(a as AuditRow)),
+        notifications: ((notifR.data ?? []) as NotifRow[]).map((n) => ({
+          id: n.id, type: n.type, title: n.title, body: n.body,
+          defectId: n.defect_id, environment: (n.environment as Environment | null) ?? null,
+          read: n.read, createdAt: n.created_at,
+        })),
       }));
     };
     void loadAll();
@@ -233,6 +255,26 @@ export function QAProvider({ children }: { children: ReactNode }) {
         const entry = rowToAudit(payload.new as AuditRow);
         setState((s) => ({ ...s, audit: [entry, ...s.audit] }));
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, (payload) => {
+        setState((s) => {
+          let next = s.notifications;
+          if (payload.eventType === "INSERT") {
+            const n = payload.new as NotifRow;
+            next = [{
+              id: n.id, type: n.type, title: n.title, body: n.body,
+              defectId: n.defect_id, environment: (n.environment as Environment | null) ?? null,
+              read: n.read, createdAt: n.created_at,
+            }, ...next].slice(0, 200);
+          } else if (payload.eventType === "UPDATE") {
+            const n = payload.new as NotifRow;
+            next = next.map((x) => x.id === n.id ? { ...x, read: n.read } : x);
+          } else if (payload.eventType === "DELETE") {
+            const oldId = (payload.old as { id: string }).id;
+            next = next.filter((x) => x.id !== oldId);
+          }
+          return { ...s, notifications: next };
+        });
+      })
       .subscribe();
 
     return () => { cancelled = true; void supabase.removeChannel(channel); };
@@ -277,6 +319,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         drive_url: d.driveUrl || null,
         jira_url: d.jiraUrl || null,
         validity: d.validity || "Unverified",
+        environment: d.environment || "Production",
         status: d.status, priority: d.priority, severity: d.severity,
         assigned_agent: d.assignedAgent, created_by: me.name, updated_by: me.name,
       });
@@ -297,6 +340,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         evidenceUrl: "evidence_url", screenshotUrl: "screenshot_url",
         videoUrl: "video_url", excelUrl: "excel_url", driveUrl: "drive_url",
         jiraUrl: "jira_url", validity: "validity",
+        environment: "environment",
         status: "status", priority: "priority", severity: "severity",
         assignedAgent: "assigned_agent",
       };
@@ -379,6 +423,11 @@ export function QAProvider({ children }: { children: ReactNode }) {
       });
       if (error) return { ok: false, error: error.message };
       return { ok: true };
+    },
+    markNotificationsRead: async (ids) => {
+      const q = supabase.from("notifications").update({ read: true } as never);
+      const r = ids && ids.length ? await q.in("id", ids) : await q.eq("read", false);
+      if (r.error) toast.error(r.error.message);
     },
   };
 
