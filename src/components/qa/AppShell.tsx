@@ -105,38 +105,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card/80 px-6 backdrop-blur">
           <h1 className="text-lg font-semibold tracking-tight">Zenwork Testing Portal</h1>
           {env && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={cn(
-                    "ml-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition-colors",
-                    env === "Production"
-                      ? "bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 hover:bg-emerald-500/15 dark:text-emerald-300"
-                      : "bg-amber-500/10 text-amber-700 ring-amber-500/30 hover:bg-amber-500/15 dark:text-amber-300",
-                  )}
-                  aria-label={`Environment: ${env}. Click to switch.`}
-                >
-                  <span className={cn("h-1.5 w-1.5 rounded-full", env === "Production" ? "bg-emerald-500" : "bg-amber-500")} />
-                  {env}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuLabel>Switch environment</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setEnv("Production")}>Production</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setEnv("Stage")}>Stage</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { setEnv(null); navigate({ to: "/select-environment" }); }}>
-                  Change environment…
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => { setEnv(null); navigate({ to: "/select-environment" }); }}
-                  className="text-destructive focus:text-destructive"
-                >
-                  Reset testing environment
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button
+              type="button"
+              onClick={() => setEnv(env === "Production" ? "Stage" : "Production")}
+              className={cn(
+                "ml-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition-colors",
+                env === "Production"
+                  ? "bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 hover:bg-emerald-500/15 dark:text-emerald-300"
+                  : "bg-amber-500/10 text-amber-700 ring-amber-500/30 hover:bg-amber-500/15 dark:text-amber-300",
+              )}
+              title={`Click to switch to ${env === "Production" ? "Stage" : "Production"}`}
+              aria-label={`Environment: ${env}. Click to switch to ${env === "Production" ? "Stage" : "Production"}.`}
+            >
+              <span className={cn("h-1.5 w-1.5 rounded-full", env === "Production" ? "bg-emerald-500" : "bg-amber-500")} />
+              {env}
+            </button>
           )}
           <form onSubmit={onSearch} className="relative ml-auto hidden md:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
