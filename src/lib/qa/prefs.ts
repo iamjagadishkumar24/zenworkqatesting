@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type AdminPrefs = {
   // Configurable enums
@@ -58,12 +59,18 @@ const DEFAULTS: AdminPrefs = {
   importMergeStrategy: "skip-existing",
 };
 
-const KEY = "qa.admin.prefs.v1";
+const BASE_KEY = "qa.admin.prefs.v1";
 
-function read(): AdminPrefs {
+function userKey(uid: string | null): string {
+  return uid ? `${BASE_KEY}:${uid}` : BASE_KEY;
+}
+
+function readFor(uid: string | null): AdminPrefs {
   if (typeof window === "undefined") return DEFAULTS;
   try {
-    const raw = window.localStorage.getItem(KEY);
+    const raw =
+      window.localStorage.getItem(userKey(uid)) ??
+      window.localStorage.getItem(BASE_KEY);
     if (!raw) return DEFAULTS;
     return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<AdminPrefs>) };
   } catch {
@@ -72,18 +79,46 @@ function read(): AdminPrefs {
 }
 
 export function usePrefs() {
-  const [prefs, setPrefs] = useState<AdminPrefs>(() => read());
+  const [uid, setUid] = useState<string | null>(null);
+  const [prefs, setPrefs] = useState<AdminPrefs>(() => readFor(null));
+
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
+      const id = data.session?.user.id ?? null;
+      setUid(id);
+      setPrefs(readFor(id));
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      const id = session?.user.id ?? null;
+      setUid(id);
+      setPrefs(readFor(id));
+    });
+    return () => { alive = false; sub.subscription.unsubscribe(); };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(KEY, JSON.stringify(prefs));
+    window.localStorage.setItem(userKey(uid), JSON.stringify(prefs));
     // Apply theme
     const root = document.documentElement;
     const wantDark = prefs.theme === "dark" || (prefs.theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     root.classList.toggle("dark", wantDark);
     root.dataset.accent = prefs.accent;
     root.dataset.density = prefs.density;
-  }, [prefs]);
+  }, [prefs, uid]);
+
+  // Re-apply when system color scheme changes (for "system" mode)
+  useEffect(() => {
+    if (typeof window === "undefined" || prefs.theme !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => {
+      document.documentElement.classList.toggle("dark", mq.matches);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [prefs.theme]);
 
   const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) =>
     setPrefs((p) => ({ ...p, [k]: v }));

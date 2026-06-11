@@ -10,6 +10,8 @@ import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useTaxYear } from "@/lib/qa/taxYear";
 import { TAX_YEARS } from "@/lib/qa/constants";
+import { usePrefs } from "@/lib/qa/prefs";
+import { UserAvatar } from "./UserAvatar";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -44,6 +46,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { currentUser, logout } = useQA();
   const { env, setEnv } = useEnvironment();
   const { taxYear, setTaxYear } = useTaxYear();
+  // Apply user theme/accent/density globally on every page.
+  usePrefs();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [collapsed, setCollapsed] = useState(false);
@@ -185,9 +189,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-accent">
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                  {currentUser?.name?.[0] ?? "U"}
-                </div>
+                <UserAvatar
+                  name={currentUser?.name}
+                  email={currentUser?.email}
+                  avatarUrl={currentUser?.avatarUrl}
+                  size="md"
+                />
                 <span className="hidden text-sm font-medium sm:inline">{currentUser?.name}</span>
               </button>
             </DropdownMenuTrigger>
