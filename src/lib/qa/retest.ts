@@ -66,8 +66,9 @@ export function useRetests() {
   useEffect(() => {
     if (!currentUser) return;
     void load();
+    const channelName = `retest-realtime-${Math.random().toString(36).slice(2, 9)}`;
     const ch = supabase
-      .channel("retest-realtime")
+      .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignments" }, () => void load())
       .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignment_forms" }, () => void load())
       .subscribe();
