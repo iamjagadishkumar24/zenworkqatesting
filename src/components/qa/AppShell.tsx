@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FileText, Globe, FileSpreadsheet, Plug, MessageSquare,
   Cpu, Sparkles, Bell as BellIcon, FileUp,
@@ -48,6 +48,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { taxYear, setTaxYear } = useTaxYear();
   // Apply user theme/accent/density globally on every page.
   usePrefs();
+  // Apply environment theme globally so all pages, modals, tables, etc.
+  // pick up the Production/Stage palette automatically.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    if (env) root.dataset.env = env;
+    else delete root.dataset.env;
+    return () => { /* keep across pages */ };
+  }, [env]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [collapsed, setCollapsed] = useState(false);

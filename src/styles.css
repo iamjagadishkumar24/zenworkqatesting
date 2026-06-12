@@ -163,3 +163,49 @@
 :root[data-density="compact"] .p-5 { padding: 0.875rem; }
 :root[data-density="compact"] .p-4 { padding: 0.625rem; }
 :root[data-density="compact"] td, :root[data-density="compact"] th { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+
+/* ============================================================
+   Environment themes (Production vs Stage)
+   Applied on <html data-env="Production|Stage"> from AppShell.
+   Overrides primary/accent/background tints so users instantly
+   recognize which environment they're working in.
+   ============================================================ */
+:root[data-env="Production"] {
+  --background: oklch(0.985 0.012 160);
+  --primary: oklch(0.58 0.16 155);
+  --primary-glow: oklch(0.72 0.15 160);
+  --ring: oklch(0.58 0.16 155);
+  --sidebar: oklch(0.99 0.015 160);
+  --sidebar-primary: oklch(0.58 0.16 155);
+  --sidebar-accent: oklch(0.94 0.04 155);
+  --sidebar-accent-foreground: oklch(0.45 0.15 155);
+  --accent: oklch(0.94 0.04 155);
+  --accent-foreground: oklch(0.3 0.1 155);
+  --gradient-primary: linear-gradient(135deg, oklch(0.58 0.16 155), oklch(0.72 0.15 160));
+  --shadow-elevated: 0 10px 30px -10px oklch(0.58 0.16 155 / 0.25);
+}
+:root[data-env="Production"].dark {
+  --background: oklch(0.18 0.025 160);
+  --card: oklch(0.22 0.03 160);
+  --sidebar: oklch(0.2 0.03 160);
+}
+
+:root[data-env="Stage"] {
+  --background: oklch(0.985 0.018 80);
+  --primary: oklch(0.62 0.17 65);
+  --primary-glow: oklch(0.75 0.16 75);
+  --ring: oklch(0.62 0.17 65);
+  --sidebar: oklch(0.99 0.02 80);
+  --sidebar-primary: oklch(0.62 0.17 65);
+  --sidebar-accent: oklch(0.94 0.05 80);
+  --sidebar-accent-foreground: oklch(0.45 0.16 65);
+  --accent: oklch(0.94 0.05 80);
+  --accent-foreground: oklch(0.3 0.12 65);
+  --gradient-primary: linear-gradient(135deg, oklch(0.62 0.17 65), oklch(0.78 0.16 80));
+  --shadow-elevated: 0 10px 30px -10px oklch(0.62 0.17 65 / 0.25);
+}
+:root[data-env="Stage"].dark {
+  --background: oklch(0.2 0.03 70);
+  --card: oklch(0.24 0.035 70);
+  --sidebar: oklch(0.22 0.035 70);
+}

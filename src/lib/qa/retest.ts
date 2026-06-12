@@ -83,6 +83,7 @@ export function useRetests() {
     if (!currentUser) return;
     void load();
     let ch: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
     try {
       // Key channel by user + env so switching environment tears down the
       // previous channel (env change reruns this effect) and never duplicates.
@@ -92,14 +93,20 @@ export function useRetests() {
         .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignments" }, () => void load())
         .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignment_forms" }, () => void load())
         .subscribe((status) => {
+          if (cancelled) return;
+          // CLOSED fires during intentional teardown (env switch / unmount) —
+          // do not surface it as an error. Only flag genuine failures.
           if (status === "SUBSCRIBED") setRealtimeOk(true);
-          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") setRealtimeOk(false);
+          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setRealtimeOk(false);
         });
     } catch (e) {
       console.warn("useRetests: realtime subscribe failed", e);
       setRealtimeOk(false);
     }
-    return () => { if (ch) { try { void supabase.removeChannel(ch); } catch { /* noop */ } } };
+    return () => {
+      cancelled = true;
+      if (ch) { try { void supabase.removeChannel(ch); } catch { /* noop */ } }
+    };
   }, [currentUser, env, load]);
 
   const scoped = items.filter((r) => {
