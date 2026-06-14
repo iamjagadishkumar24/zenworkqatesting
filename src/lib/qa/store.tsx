@@ -168,7 +168,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
 
     const loadAll = async () => {
       const [profilesR, rolesR, formsR, defectsR, commentsR, auditR, notifR] = await Promise.all([
-        supabase.from("profiles").select("id, name, email, active, avatar_url"),
+        supabase.from("profiles_safe").select("id, name, active, avatar_url"),
         supabase.from("user_roles").select("user_id, role"),
         supabase.from("forms").select("*"),
         supabase.from("defects").select("*").order("updated_at", { ascending: false }),
@@ -182,11 +182,25 @@ export function QAProvider({ children }: { children: ReactNode }) {
         if (r.role === "admin") rolesByUser.set(r.user_id, "admin");
         else if (!rolesByUser.has(r.user_id)) rolesByUser.set(r.user_id, "agent");
       });
-      const users: User[] = (profilesR.data ?? []).map((p) => ({
-        id: p.id, name: p.name, email: p.email, active: p.active,
-        avatarUrl: (p as { avatar_url?: string | null }).avatar_url ?? null,
-        role: rolesByUser.get(p.id) ?? "agent",
-      }));
+      // Admins may additionally fetch emails (RLS allows it). Non-admins get empty email.
+      const isAdmin = rolesByUser.get(state.currentUser!.id) === "admin";
+      const emailsById = new Map<string, string>();
+      if (isAdmin) {
+        const { data: full } = await supabase.from("profiles").select("id, email");
+        (full ?? []).forEach((r) => { if (r.email) emailsById.set(r.id, r.email); });
+      } else if (state.currentUser) {
+        emailsById.set(state.currentUser.id, state.currentUser.email ?? "");
+      }
+      const users: User[] = (profilesR.data ?? [])
+        .filter((p): p is { id: string; name: string | null; active: boolean | null; avatar_url: string | null } => !!p.id)
+        .map((p) => ({
+          id: p.id,
+          name: p.name ?? "",
+          email: emailsById.get(p.id) ?? "",
+          active: p.active ?? true,
+          avatarUrl: p.avatar_url ?? null,
+          role: rolesByUser.get(p.id) ?? "agent",
+        }));
       const comments = (commentsR.data ?? []) as CommentRow[];
       commentsRef.current = comments;
       setState((s) => ({
