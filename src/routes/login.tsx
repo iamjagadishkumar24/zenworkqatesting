@@ -149,10 +149,11 @@ export function LoginPage() {
     const r = await signup(cleanName, cleanEmail, sPwd);
     setSigningUp(false);
     if (!r.ok) {
+      const err = r.error ?? "Could not create account.";
       // Generic message — don't disclose whether the email is already registered
-      const msg = /already|registered|exists/i.test(r.error)
+      const msg = /already|registered|exists/i.test(err)
         ? "If that email is available, your account has been created. Otherwise, try signing in or resetting your password."
-        : r.error;
+        : err;
       return toast.error(msg);
     }
     toast.success(users.length === 0 ? "Admin account created — signing you in" : "Account created — signing you in");
