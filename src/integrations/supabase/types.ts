@@ -636,7 +636,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_safe: {
+        Row: {
+          active: boolean | null
+          avatar_url: string | null
+          id: string | null
+          name: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          avatar_url?: string | null
+          id?: string | null
+          name?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          avatar_url?: string | null
+          id?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       change_user_role: {
