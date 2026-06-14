@@ -357,9 +357,12 @@ export function LoginPage() {
                   </div>
                   <div>
                     <Label htmlFor="sp" className="text-white/80">Password</Label>
-                    <Input id="sp" type="password" value={sPwd} onChange={(e) => setSPwd(e.target.value)} required minLength={6} className="border-white/20 bg-white/10 text-white placeholder:text-white/40" />
+                    <Input id="sp" type="password" autoComplete="new-password" value={sPwd} onChange={(e) => setSPwd(e.target.value)} required minLength={8} maxLength={128} className="border-white/20 bg-white/10 text-white placeholder:text-white/40" />
+                    <p className="mt-1 text-[10px] text-white/50">At least 8 characters, including a letter and a number. No spaces.</p>
                   </div>
-                  <Button type="submit" className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:from-indigo-400 hover:to-fuchsia-400">Create account</Button>
+                  <Button type="submit" disabled={signingUp} className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:from-indigo-400 hover:to-fuchsia-400">
+                    {signingUp ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account…</>) : "Create account"}
+                  </Button>
                   <p className="text-center text-xs text-white/60">
                     First signup becomes Admin. Subsequent accounts are QA Agents.
                   </p>
