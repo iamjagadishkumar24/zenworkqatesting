@@ -191,11 +191,16 @@ export function QAProvider({ children }: { children: ReactNode }) {
       } else if (state.currentUser) {
         emailsById.set(state.currentUser.id, state.currentUser.email ?? "");
       }
-      const users: User[] = (profilesR.data ?? []).map((p) => ({
-        id: p.id, name: p.name, email: emailsById.get(p.id) ?? "", active: p.active,
-        avatarUrl: (p as { avatar_url?: string | null }).avatar_url ?? null,
-        role: rolesByUser.get(p.id) ?? "agent",
-      }));
+      const users: User[] = (profilesR.data ?? [])
+        .filter((p): p is { id: string; name: string | null; active: boolean | null; avatar_url: string | null } => !!p.id)
+        .map((p) => ({
+          id: p.id,
+          name: p.name ?? "",
+          email: emailsById.get(p.id) ?? "",
+          active: p.active ?? true,
+          avatarUrl: p.avatar_url ?? null,
+          role: rolesByUser.get(p.id) ?? "agent",
+        }));
       const comments = (commentsR.data ?? []) as CommentRow[];
       commentsRef.current = comments;
       setState((s) => ({
