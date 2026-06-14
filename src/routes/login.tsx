@@ -2,8 +2,6 @@ import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
-import { useServerFn } from "@tanstack/react-start";
-import { accountStatus } from "@/lib/qa/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +47,6 @@ export function LoginPage() {
   const [name, setName] = useState("");
   const [sEmail, setSEmail] = useState("");
   const [sPwd, setSPwd] = useState("");
-  const checkAccount = useServerFn(accountStatus);
   const [hint, setHint] = useState<{ tone: "info" | "warn" | "error"; title: string; body: string } | null>(null);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -57,6 +54,9 @@ export function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [remember, setRemember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [signingUp, setSigningUp] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState<number>(0);
   const emailRef = useRef<HTMLInputElement>(null);
   const pwdRef = useRef<HTMLInputElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
@@ -73,43 +73,50 @@ export function LoginPage() {
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setHint(null);
-    if (!email.trim()) { emailRef.current?.focus(); return; }
-    if (!password) { pwdRef.current?.focus(); return; }
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setHint({ tone: "warn", title: "Enter your email", body: "Email is required to sign in." });
+      emailRef.current?.focus();
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setHint({ tone: "warn", title: "Invalid email format", body: "Please enter a valid email address." });
+      emailRef.current?.focus();
+      return;
+    }
+    if (!password) {
+      setHint({ tone: "warn", title: "Enter your password", body: "Password is required to sign in." });
+      pwdRef.current?.focus();
+      return;
+    }
+    if (password.length > 128) {
+      setHint({ tone: "warn", title: "Password too long", body: "Passwords are limited to 128 characters." });
+      return;
+    }
+    if (cooldownUntil > Date.now()) {
+      const secs = Math.ceil((cooldownUntil - Date.now()) / 1000);
+      setHint({ tone: "error", title: "Too many attempts", body: `Please wait ${secs}s before trying again.` });
+      return;
+    }
     setSubmitting(true);
-    const r = await login(email, password);
+    const r = await login(cleanEmail, password);
     setSubmitting(false);
     if (!r.ok) {
-      toast.error(r.error);
-      try {
-        const s = await checkAccount({ data: { email: email.trim().toLowerCase() } });
-        if (!s.exists) {
-          setHint({
-            tone: "warn",
-            title: "No account found for that email",
-            body: "Use the Create account tab, or ask an admin to invite you from Settings → Team & Roles.",
-          });
-        } else if (!s.active) {
-          setHint({
-            tone: "error",
-            title: "This account is inactive",
-            body: `${s.name ?? "This user"} was deactivated by an admin. Ask an admin to reactivate it from Settings → Team & Roles.`,
-          });
-        } else if (!s.hasRole) {
-          setHint({
-            tone: "warn",
-            title: "Account has no role assigned",
-            body: "An admin must assign Admin or QA Agent role before sign-in works. Settings → Team & Roles.",
-          });
-        } else {
-          setHint({
-            tone: "info",
-            title: `Wrong password for a ${s.isAdmin ? "Admin" : "QA Agent"} account`,
-            body: "Double-check the password, or use Forgot password? to email yourself a reset link.",
-          });
-        }
-      } catch {
-        /* ignore — generic toast already shown */
+      // Generic message — never disclose whether email or password was wrong (prevents user enumeration)
+      const next = failedAttempts + 1;
+      setFailedAttempts(next);
+      if (next >= 5) {
+        setCooldownUntil(Date.now() + 30_000);
+        setFailedAttempts(0);
       }
+      setHint({
+        tone: "error",
+        title: "Invalid email or password",
+        body: next >= 5
+          ? "Too many failed attempts. Please wait 30 seconds before trying again or use Forgot password?"
+          : "Please try again, or use Forgot password? to email yourself a reset link.",
+      });
+      toast.error("Invalid email or password. Please try again.");
       // Move focus to hint banner (announces via role=alert) then to invalid field
       setTimeout(() => {
         if (hintRef.current) hintRef.current.focus();
@@ -117,8 +124,9 @@ export function LoginPage() {
       }, 30);
       return;
     }
+    setFailedAttempts(0);
     try {
-      if (remember) localStorage.setItem("zenwork.rememberEmail", email.trim().toLowerCase());
+      if (remember) localStorage.setItem("zenwork.rememberEmail", cleanEmail);
       else localStorage.removeItem("zenwork.rememberEmail");
     } catch {}
     toast.success("Welcome back");
@@ -126,20 +134,43 @@ export function LoginPage() {
   };
   const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    const r = await signup(name, sEmail, sPwd);
-    if (!r.ok) return toast.error(r.error);
+    const cleanName = name.trim();
+    const cleanEmail = sEmail.trim().toLowerCase();
+    if (!cleanName) return toast.error("Please enter your full name.");
+    if (cleanName.length > 100) return toast.error("Name must be 100 characters or fewer.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return toast.error("Please enter a valid email address.");
+    if (sPwd.length < 8) return toast.error("Password must be at least 8 characters.");
+    if (sPwd.length > 128) return toast.error("Password must be 128 characters or fewer.");
+    if (!/[A-Za-z]/.test(sPwd) || !/[0-9]/.test(sPwd)) {
+      return toast.error("Password must include at least one letter and one number.");
+    }
+    if (/\s/.test(sPwd)) return toast.error("Password cannot contain spaces.");
+    setSigningUp(true);
+    const r = await signup(cleanName, cleanEmail, sPwd);
+    setSigningUp(false);
+    if (!r.ok) {
+      // Generic message — don't disclose whether the email is already registered
+      const msg = /already|registered|exists/i.test(r.error)
+        ? "If that email is available, your account has been created. Otherwise, try signing in or resetting your password."
+        : r.error;
+      return toast.error(msg);
+    }
     toast.success(users.length === 0 ? "Admin account created — signing you in" : "Account created — signing you in");
     navigate({ to: env ? "/dashboard" : "/select-environment" });
   };
 
   const sendReset = async () => {
-    if (!forgotEmail) return;
+    const cleanEmail = forgotEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return toast.error("Please enter a valid email address.");
+    }
     setForgotBusy(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim().toLowerCase(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setForgotBusy(false);
-    if (error) return toast.error(error.message);
+    // Always show generic success — do not leak whether the email exists
+    if (error) console.warn("[reset] non-fatal:", error.message);
     toast.success("If an account exists for that email, a reset link is on its way.");
     setForgotOpen(false);
     setForgotEmail("");
