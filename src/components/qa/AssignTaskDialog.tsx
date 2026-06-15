@@ -12,6 +12,8 @@ import { useEnvironment } from "@/lib/qa/environment";
 import { useRetests, TESTING_TYPES, RETEST_STATUSES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
 import { MODULE_OPTIONS, TAX_YEARS, DEFAULT_TAX_YEAR } from "@/lib/qa/constants";
 import { useAgentInvites } from "@/lib/qa/agents";
+import { useServerFn } from "@tanstack/react-start";
+import { sendTaskAssignmentEmail } from "@/lib/qa/email.functions";
 
 const PRIORITIES: RetestPriority[] = ["Low", "Medium", "High", "Critical"];
 const ALL_MODULES = "All Modules";
@@ -29,6 +31,7 @@ export function AssignTaskDialog({
   const { env } = useEnvironment();
   const { createAssignment } = useRetests();
   const { items: invites } = useAgentInvites();
+  const notifyByEmail = useServerFn(sendTaskAssignmentEmail);
   const agentNames = useMemo(
     () => users.filter((u) => u.active && u.role === "agent").map((u) => u.name),
     [users],
@@ -84,11 +87,57 @@ export function AssignTaskDialog({
     });
     setSubmitting(false);
     if (!r.ok) return toast.error(r.error);
-    toast.success(
-      assignAll ? "Task assigned to all active agents"
-        : selectedPending.size > 0 ? "Task assigned (pending agents receive it on signup)"
-        : "Task assigned",
-    );
+
+    // Build recipient list (active agents who got a real assignment) + pending invites.
+    const targetUsers = assignAll
+      ? users.filter((u) => u.active && u.role === "agent")
+      : users.filter((u) => selectedAgents.has(u.name));
+    const recipients = [
+      ...targetUsers
+        .filter((u) => !!u.email)
+        .map((u) => ({ email: u.email, name: u.name })),
+      ...Array.from(selectedPending).map((email) => ({ email })),
+    ];
+    const firstId = r.ids?.[0] ?? "";
+
+    let emailNotice = "";
+    if (recipients.length && firstId) {
+      try {
+        const res = await notifyByEmail({
+          data: {
+            recipients,
+            task: {
+              id: firstId,
+              title: title.trim(),
+              module: moduleSel,
+              testingType,
+              priority,
+              dueDate: dueDate || null,
+              instructions,
+              environment: env ?? undefined,
+            },
+          },
+        });
+        if (!res.configured) {
+          emailNotice = " Email notification is not configured yet.";
+        } else if (res.failed > 0 && res.sent === 0) {
+          emailNotice = " Email notification failed.";
+        } else if (res.failed > 0) {
+          emailNotice = ` Email sent to ${res.sent}/${res.total} agents.`;
+        } else {
+          emailNotice = ` Email sent to ${res.sent} agent${res.sent === 1 ? "" : "s"}.`;
+        }
+      } catch {
+        emailNotice = " Email notification could not be triggered.";
+      }
+    }
+
+    const baseMsg = assignAll
+      ? "Task assigned to all active agents."
+      : selectedPending.size > 0
+        ? "Task assigned (pending agents receive it on signup)."
+        : "Task assigned successfully.";
+    toast.success(baseMsg + emailNotice);
     onOpenChange(false);
     setTitle(""); setPicked(new Set()); setInstructions(""); setDueDate("");
     setAssignAll(false); setAllForms(false);
