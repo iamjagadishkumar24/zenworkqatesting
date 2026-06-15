@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card/80 px-6 backdrop-blur">
-          <h1 className="text-lg font-semibold tracking-tight">Zenwork Testing Portal</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Zenwork Testing</h1>
           {env && (
             <div className="ml-2 flex items-center gap-2">
               <button

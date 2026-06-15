@@ -57,10 +57,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Zenwork Testing Portal" },
+      { title: "Zenwork Testing" },
       { name: "description", content: "Testing & defect management for tax forms, online filing, and integrations." },
-      { property: "og:title", content: "Zenwork Testing Portal" },
-      { name: "twitter:title", content: "Zenwork Testing Portal" },
+      { property: "og:title", content: "Zenwork Testing" },
+      { name: "twitter:title", content: "Zenwork Testing" },
       { property: "og:description", content: "Testing & defect management for tax forms, online filing, and integrations." },
       { name: "twitter:description", content: "Testing & defect management for tax forms, online filing, and integrations." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/854205f4-a85f-45d6-81af-40d4f33e5434/id-preview-2369ccfe--87014af9-f373-4dbd-bd76-040fa2668684.lovable.app-1781192162260.png" },
