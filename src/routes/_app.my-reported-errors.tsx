@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
@@ -45,9 +45,27 @@ function ReportedErrorsPage() {
   const { env } = useEnvironment();
   const { taxYear } = useTaxYear();
   const search = Route.useSearch();
+  const navigate = useNavigate();
   const isAdmin = currentUser?.role === "admin";
 
-  const [q, setQ] = useState(search.q ?? "");
+  // URL `?q=` is the single source of truth. Input mirrors it with debounce.
+  const q = search.q ?? "";
+  const [qInput, setQInput] = useState(q);
+  // Keep local input in sync when URL changes externally (header search, reset, nav).
+  useEffect(() => { setQInput(q); }, [q]);
+  // Debounced write-through from input -> URL.
+  useEffect(() => {
+    const trimmed = qInput.trim();
+    if (trimmed === (search.q ?? "")) return;
+    const t = setTimeout(() => {
+      navigate({
+        to: "/my-reported-errors",
+        search: trimmed ? { q: trimmed } : ({} as never),
+        replace: true,
+      });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [qInput, search.q, navigate]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -92,7 +110,9 @@ function ReportedErrorsPage() {
   }, [scoped, q, mod, status, prio, sev, agent, reporter]);
 
   const resetFilters = () => {
-    setQ(""); setMod("all"); setStatus("all"); setPrio("all"); setSev("all"); setAgent("all"); setReporter("all");
+    setQInput("");
+    setMod("all"); setStatus("all"); setPrio("all"); setSev("all"); setAgent("all"); setReporter("all");
+    navigate({ to: "/my-reported-errors", search: {} as never, replace: true });
   };
 
   const lastToastRef = useRef<string>("");
@@ -155,7 +175,12 @@ function ReportedErrorsPage() {
           <div className="grid gap-3 md:grid-cols-7">
             <div className="relative md:col-span-2">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-9" />
+              <Input
+                value={qInput}
+                onChange={(e) => setQInput(e.target.value)}
+                placeholder="Search…"
+                className="pl-9"
+              />
             </div>
             <FilterSelect value={mod} onChange={setMod} placeholder="Module" options={[{ v: "all", l: "All modules" }, ...MODULES.map((m) => ({ v: m, l: m }))]} />
             <FilterSelect value={status} onChange={setStatus} placeholder="Status" options={[{ v: "all", l: "All statuses" }, ...DEFECT_STATUSES.map((s) => ({ v: s, l: s }))]} />
