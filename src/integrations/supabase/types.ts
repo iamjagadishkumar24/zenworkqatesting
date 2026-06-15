@@ -243,6 +243,60 @@ export type Database = {
         }
         Relationships: []
       }
+      email_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          payload: Json | null
+          provider: string
+          related_defect_id: string | null
+          related_task_id: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          template: string
+          to_email: string
+          to_name: string | null
+          triggered_by_id: string | null
+          triggered_by_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          provider?: string
+          related_defect_id?: string | null
+          related_task_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template: string
+          to_email: string
+          to_name?: string | null
+          triggered_by_id?: string | null
+          triggered_by_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          provider?: string
+          related_defect_id?: string | null
+          related_task_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template?: string
+          to_email?: string
+          to_name?: string | null
+          triggered_by_id?: string | null
+          triggered_by_name?: string | null
+        }
+        Relationships: []
+      }
       export_audit_log: {
         Row: {
           created_at: string
