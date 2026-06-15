@@ -48,6 +48,28 @@ export const MODULE_OPTIONS: string[] = [
   "Tax1099 Features",
 ];
 
+// Route path for each module — used to deep-link assigned tasks
+// from dashboards and the Task Assignments table to the right page.
+export const MODULE_ROUTES: Record<string, string> = {
+  "1099 Forms": "/forms",
+  "1099 Online": "/online-1099",
+  "990 Forms": "/990-forms",
+  "2290 Forms": "/2290-forms",
+  "W-2 Forms": "/forms",
+  "ACA Forms": "/forms",
+  "Payroll Forms": "/forms",
+  "Integrations": "/integrations",
+  "Chatbot Testing": "/chatbot-testing",
+  "Excel Import Testing": "/excel-import-testing",
+  "Functionality Testing": "/functionality-testing",
+  "Tax1099 Features": "/tax1099-features",
+};
+
+export function routeForModule(module: string | null | undefined): string {
+  if (!module) return "/retest";
+  return MODULE_ROUTES[module] ?? "/retest";
+}
+
 export const TEST_MODULES = {
   CHATBOT: "Chatbot Testing",
   FUNCTIONALITY: "Functionality Testing",

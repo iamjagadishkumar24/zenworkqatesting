@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearch } from "@tanstack/react-router";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import { FORM_LIST, decodeFormFeature } from "@/lib/qa/constants";
 import { excludeNonCatalogForms } from "@/lib/qa/scope";
 import { ReportDefectDialog } from "./ReportDefectDialog";
 import type { Module } from "@/lib/qa/types";
+import { useRetests } from "@/lib/qa/retest";
+import { cn } from "@/lib/utils";
 
 export function FormsCatalog({
   module, title, description, forms = FORM_LIST, featureMode = false,
@@ -22,10 +24,34 @@ export function FormsCatalog({
   /** When true, the Report dialog hides the form dropdown and shows the picked form as a read-only Feature. */
   featureMode?: boolean;
 }) {
-  const { defects } = useQA();
+  const { defects, currentUser } = useQA();
   const { env } = useEnvironment();
   const [q, setQ] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
+
+  // Honor `?q=` and `?assignment=` deep-links from dashboard / task list.
+  const search = useSearch({ strict: false }) as { q?: string; assignment?: string };
+  useEffect(() => {
+    if (typeof search?.q === "string") setQ(search.q);
+  }, [search?.q]);
+
+  // Forms currently assigned (open) — used to badge cards.
+  const { items: retestItems } = useRetests();
+  const assignedFormsByName = useMemo(() => {
+    const map = new Map<string, { mine: boolean; agent: string }>();
+    for (const r of retestItems) {
+      if (r.status === "Completed") continue;
+      const mine = r.assigned_agent_id === currentUser?.id;
+      for (const f of r.forms) {
+        const prev = map.get(f.form_name);
+        // Prefer "mine" over someone else's assignment
+        if (!prev || (mine && !prev.mine)) {
+          map.set(f.form_name, { mine, agent: r.assigned_agent_name });
+        }
+      }
+    }
+    return map;
+  }, [retestItems, currentUser]);
 
   // 2290-related forms and the retired "Form 1099 Corrections" never appear
   // here — 2290 lives under its dedicated module page.
@@ -73,8 +99,13 @@ export function FormsCatalog({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {list.map((name) => {
             const open = openCountByForm.get(name) ?? 0;
+            const assigned = assignedFormsByName.get(name);
             return (
-              <Card key={name} className="group border-border transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]">
+              <Card key={name} className={cn(
+                "group border-border transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]",
+                assigned?.mine && "border-primary/60 ring-1 ring-primary/20",
+                assigned && !assigned.mine && "border-amber-500/40",
+              )}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <Link
@@ -93,6 +124,17 @@ export function FormsCatalog({
                     )}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{module}</p>
+                  {assigned && (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "mt-2 text-[10px]",
+                        assigned.mine ? "border-primary/50 text-primary" : "border-amber-500/40 text-amber-700 dark:text-amber-400",
+                      )}
+                    >
+                      {assigned.mine ? "Assigned to you" : `Assigned: ${assigned.agent}`}
+                    </Badge>
+                  )}
                   <Button
                     size="sm" className="mt-3 w-full"
                     onClick={() => setPicked(name)}

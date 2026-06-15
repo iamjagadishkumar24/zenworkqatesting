@@ -7,8 +7,10 @@ import { scopeForUser, filterByEnvironment } from "@/lib/qa/scope";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TestStatusBadge } from "@/components/qa/StatusBadge";
-import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe, Wrench, RotateCw, FileSpreadsheet, Plug, MessageSquare, Cpu, Sparkles, FileUp } from "lucide-react";
+import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe, Wrench, RotateCw, FileSpreadsheet, Plug, MessageSquare, Cpu, Sparkles, FileUp, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRetests } from "@/lib/qa/retest";
+import { routeForModule } from "@/lib/qa/constants";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -19,6 +21,28 @@ function Dashboard() {
   const { env } = useEnvironment();
   const { taxYear } = useTaxYear();
   const navigate = useNavigate();
+  const { items: retestItems } = useRetests();
+
+  // Tasks assigned to current user (or all, for admins) scoped by env + tax year
+  const myTasks = useMemo(() => {
+    return retestItems.filter((r) => {
+      if (env && r.environment !== env) return false;
+      if (!matchesTaxYear(r.tax_year ?? null, taxYear)) return false;
+      if (currentUser?.role === "agent") return r.assigned_agent_id === currentUser.id;
+      return true;
+    });
+  }, [retestItems, env, taxYear, currentUser]);
+
+  // Names of forms currently assigned to the logged-in user — used to badge
+  // them on the Form Testing Status grid.
+  const assignedFormNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of myTasks) {
+      if (r.status === "Completed") continue;
+      for (const f of r.forms) set.add(f.form_name);
+    }
+    return set;
+  }, [myTasks]);
 
   const scopedDefects = useMemo(
     () => {
@@ -81,17 +105,17 @@ function Dashboard() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
+        <h2 className="text-xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-xs text-muted-foreground inline-flex items-center gap-2">
           Real-time QA testing overview across all modules.
           {env && <Badge variant="outline">{env}</Badge>}
           <Badge variant="outline">Tax Year: {taxYear === "all" ? "All" : taxYear}</Badge>
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
         {kpis.map((k) => (
           <button
             key={k.label}
@@ -99,15 +123,15 @@ function Dashboard() {
             className="group text-left"
           >
             <Card className="overflow-hidden border-border transition-all hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5">
-              <CardContent className="p-5">
+              <CardContent className="p-3">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{k.label}</p>
-                    <p className="mt-2 text-3xl font-bold tracking-tight">{k.value.toLocaleString()}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground truncate">{k.label}</p>
+                    <p className="mt-1 text-xl font-bold tracking-tight">{k.value.toLocaleString()}</p>
                   </div>
                   <div
                     className={cn(
-                      "grid h-11 w-11 place-items-center rounded-xl text-white",
+                      "grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white",
                     )}
                     style={{
                       background:
@@ -117,11 +141,8 @@ function Dashboard() {
                         "var(--gradient-primary)",
                     }}
                   >
-                    <k.Icon className="h-5 w-5" />
+                    <k.Icon className="h-4 w-4" />
                   </div>
-                </div>
-                <div className="mt-4 flex items-center text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                  View details <ArrowRight className="ml-1 h-3 w-3" />
                 </div>
               </CardContent>
             </Card>
@@ -130,67 +151,134 @@ function Dashboard() {
       </div>
 
       <section>
-        <h3 className="mb-4 text-lg font-semibold">Modules</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {modules.map((m) => (
-            <Link key={m.name} to={m.to}>
-              <Card className="h-full border-border transition-all hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="grid h-10 w-10 place-items-center rounded-lg text-primary-foreground"
-                      style={{ background: "var(--gradient-primary)" }}
-                    >
-                      <m.Icon className="h-5 w-5" />
-                    </div>
-                    <h4 className="font-semibold">{m.name}</h4>
-                  </div>
-                  <div className="mt-4 space-y-1.5 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Reported Errors</span>
-                      <span className={cn("font-medium", m.bugs > 0 ? "text-destructive" : "text-success")}>{m.bugs}</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center text-xs font-medium text-primary">
-                    View Details <ArrowRight className="ml-1 h-3 w-3" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold inline-flex items-center gap-2">
+            <ClipboardCheck className="h-4 w-4" />
+            {currentUser?.role === "agent" ? "My Assigned Tasks" : "Assigned Tasks"}
+          </h3>
+          <Link to="/retest" className="text-xs font-medium text-primary inline-flex items-center gap-1">
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
+        {myTasks.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="p-4 text-center text-xs text-muted-foreground">
+              No tasks assigned yet.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {myTasks.slice(0, 8).map((t) => {
+              const firstForm = t.forms[0]?.form_name;
+              const target = routeForModule(t.module);
+              const search = firstForm ? ({ q: firstForm, assignment: t.id } as never) : ({ assignment: t.id } as never);
+              const statusTone =
+                t.status === "Completed" ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                : t.status === "In Progress" ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
+                : "border-primary/40 text-primary";
+              const mine = t.assigned_agent_id === currentUser?.id;
+              return (
+                <Link
+                  key={t.id}
+                  to={target}
+                  search={search}
+                  className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                >
+                  <Card className="h-full border-border transition-all hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5">
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold leading-tight line-clamp-2">
+                          {firstForm || t.title || t.module || "Task"}
+                        </p>
+                        <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusTone)}>{t.status}</Badge>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                        {t.module && <span>{t.module}</span>}
+                        {t.tax_year && <span>· TY {t.tax_year}</span>}
+                        {t.due_date && <span>· Due {t.due_date}</span>}
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between">
+                        <Badge variant="secondary" className="text-[10px]">
+                          {mine ? "Assigned to you" : `Assigned: ${t.assigned_agent_name}`}
+                        </Badge>
+                        {t.forms.length > 1 && (
+                          <span className="text-[10px] text-muted-foreground">+{t.forms.length - 1} more</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section>
-        <h3 className="mb-4 text-lg font-semibold">Form Testing Status</h3>
+        <h3 className="mb-2 text-sm font-semibold">Form Testing Status</h3>
         {reportedForms.length === 0 ? (
           <Card className="border-dashed">
-            <CardContent className="p-8 text-center text-sm text-muted-foreground">
+            <CardContent className="p-4 text-center text-xs text-muted-foreground">
               No forms have reported errors yet.
             </CardContent>
           </Card>
         ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {reportedForms.map((f) => (
+        <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          {reportedForms.map((f) => {
+            const isAssigned = assignedFormNames.has(f.name);
+            return (
             <Link
               key={f.id}
               to="/my-reported-errors"
               search={{ q: f.name } as never}
               className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
             >
-              <Card className="cursor-pointer border-border transition-all hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5">
-                <CardContent className="p-4">
-                  <p className="text-sm font-semibold truncate">{f.name}</p>
-                  <div className="mt-3"><TestStatusBadge status={f.status} /></div>
+              <Card className={cn(
+                "cursor-pointer border-border transition-all hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5",
+                isAssigned && "border-primary/50 ring-1 ring-primary/20",
+              )}>
+                <CardContent className="p-3">
+                  <div className="flex items-start justify-between gap-1">
+                    <p className="text-xs font-semibold truncate">{f.name}</p>
+                    {isAssigned && <Badge variant="outline" className="shrink-0 text-[9px] border-primary/40 text-primary">Assigned</Badge>}
+                  </div>
+                  <div className="mt-2"><TestStatusBadge status={f.status} /></div>
                   {f.openDefects > 0 && (
-                    <p className="mt-2 text-xs text-muted-foreground">{f.openDefects} open error(s)</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">{f.openDefects} open error(s)</p>
                   )}
+                </CardContent>
+              </Card>
+            </Link>
+          );})}
+        </div>
+        )}
+      </section>
+
+      <section>
+        <h3 className="mb-2 text-sm font-semibold">Modules</h3>
+        <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
+          {modules.map((m) => (
+            <Link key={m.name} to={m.to}>
+              <Card className="h-full border-border transition-all hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-primary-foreground"
+                      style={{ background: "var(--gradient-primary)" }}
+                    >
+                      <m.Icon className="h-3.5 w-3.5" />
+                    </div>
+                    <h4 className="text-xs font-semibold leading-tight line-clamp-2">{m.name}</h4>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground">Errors</span>
+                    <span className={cn("font-semibold", m.bugs > 0 ? "text-destructive" : "text-success")}>{m.bugs}</span>
+                  </div>
                 </CardContent>
               </Card>
             </Link>
           ))}
         </div>
-        )}
       </section>
     </div>
   );

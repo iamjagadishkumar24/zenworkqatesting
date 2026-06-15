@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ClipboardCheck, Plus, AlertCircle, RefreshCw, WifiOff } from "lucide-react";
+import { ClipboardCheck, Plus, AlertCircle, RefreshCw, WifiOff, ExternalLink } from "lucide-react";
+import { routeForModule } from "@/lib/qa/constants";
 
 export const Route = createFileRoute("/_app/retest")({
   component: RetestPage,
@@ -156,12 +157,24 @@ function RetestPage() {
                         {new Date(r.updated_at).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        {isAdmin && r.status !== "Completed" && (
-                          <Button size="sm" variant="ghost" onClick={async () => {
-                            const res = await updateAssignment(r.id, { status: "Completed" });
-                            if (!res.ok) toast.error(res.error); else toast.success("Marked completed");
-                          }}>Mark completed</Button>
-                        )}
+                        <div className="inline-flex items-center gap-1">
+                          <Button asChild size="sm" variant="outline">
+                            <Link
+                              to={routeForModule(r.module)}
+                              search={(r.forms[0]?.form_name
+                                ? { q: r.forms[0].form_name, assignment: r.id }
+                                : { assignment: r.id }) as never}
+                            >
+                              <ExternalLink className="mr-1 h-3 w-3" /> Open
+                            </Link>
+                          </Button>
+                          {isAdmin && r.status !== "Completed" && (
+                            <Button size="sm" variant="ghost" onClick={async () => {
+                              const res = await updateAssignment(r.id, { status: "Completed" });
+                              if (!res.ok) toast.error(res.error); else toast.success("Marked completed");
+                            }}>Mark completed</Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
