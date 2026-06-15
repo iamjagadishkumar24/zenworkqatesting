@@ -32,12 +32,12 @@ function shell(title: string, bodyHtml: string): string {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7fb;padding:24px 0">
     <tr><td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
-        <tr><td style="padding:20px 24px;background:#0f172a;color:#fff;font-weight:600;font-size:16px">Zenwork Testing Portal</td></tr>
+        <tr><td style="padding:20px 24px;background:#0f172a;color:#fff;font-weight:600;font-size:16px">Zenwork Testing</td></tr>
         <tr><td style="padding:24px">
           <h1 style="margin:0 0 12px 0;font-size:18px;color:#0f172a">${escape(title)}</h1>
           ${bodyHtml}
         </td></tr>
-        <tr><td style="padding:14px 24px;background:#f8fafc;color:#64748b;font-size:12px">You're receiving this because you have an account in the Zenwork Testing Portal.</td></tr>
+        <tr><td style="padding:14px 24px;background:#f8fafc;color:#64748b;font-size:12px">You're receiving this because you have an account in Zenwork Testing.</td></tr>
       </table>
     </td></tr>
   </table></body></html>`;
