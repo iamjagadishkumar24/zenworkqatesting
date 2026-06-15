@@ -39,7 +39,7 @@ export const Route = createFileRoute("/login")({
 });
 
 export function LoginPage() {
-  const { currentUser, login, signup, users } = useQA();
+  const { currentUser, login, signup } = useQA();
   const { env, ready } = useEnvironment();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -47,6 +47,9 @@ export function LoginPage() {
   const [name, setName] = useState("");
   const [sEmail, setSEmail] = useState("");
   const [sPwd, setSPwd] = useState("");
+  const [sPwd2, setSPwd2] = useState("");
+  const [showSPwd, setShowSPwd] = useState(false);
+  const [showSPwd2, setShowSPwd2] = useState(false);
   const [hint, setHint] = useState<{ tone: "info" | "warn" | "error"; title: string; body: string } | null>(null);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -141,10 +144,12 @@ export function LoginPage() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return toast.error("Please enter a valid email address.");
     if (sPwd.length < 8) return toast.error("Password must be at least 8 characters.");
     if (sPwd.length > 128) return toast.error("Password must be 128 characters or fewer.");
-    if (!/[A-Za-z]/.test(sPwd) || !/[0-9]/.test(sPwd)) {
-      return toast.error("Password must include at least one letter and one number.");
-    }
     if (/\s/.test(sPwd)) return toast.error("Password cannot contain spaces.");
+    if (!/[A-Z]/.test(sPwd)) return toast.error("Password must include at least one uppercase letter.");
+    if (!/[a-z]/.test(sPwd)) return toast.error("Password must include at least one lowercase letter.");
+    if (!/[0-9]/.test(sPwd)) return toast.error("Password must include at least one number.");
+    if (!/[^A-Za-z0-9]/.test(sPwd)) return toast.error("Password must include at least one special character.");
+    if (sPwd !== sPwd2) return toast.error("Passwords do not match.");
     setSigningUp(true);
     const r = await signup(cleanName, cleanEmail, sPwd);
     setSigningUp(false);
@@ -156,7 +161,7 @@ export function LoginPage() {
         : err;
       return toast.error(msg);
     }
-    toast.success(users.length === 0 ? "Admin account created — signing you in" : "Account created — signing you in");
+    toast.success("Account created — signing you in");
     navigate({ to: env ? "/dashboard" : "/select-environment" });
   };
 
@@ -330,11 +335,11 @@ export function LoginPage() {
                         </div>
                         <div>
                           <p className="font-medium text-white">Signed in but can't see admin tools</p>
-                          <p>Your account is a QA Agent, not Admin. Only the <span className="font-medium">first</span> account becomes Admin automatically. Ask an existing admin to promote you from <span className="font-medium">Settings → Team &amp; Roles</span>.</p>
+                          <p>Your account is a QA Agent, not Admin. Ask an existing admin to promote you from <span className="font-medium">Settings → Team &amp; Roles</span>.</p>
                         </div>
                         <div>
                           <p className="font-medium text-white">No account at all yet</p>
-                          <p>Use the <span className="font-medium">Create account</span> tab — the first signup is auto-promoted to Admin.</p>
+                          <p>Use the <span className="font-medium">Create account</span> tab to register, then ask an admin to grant you access.</p>
                         </div>
                         <div>
                           <p className="font-medium text-white">Forgot your password</p>
@@ -357,15 +362,36 @@ export function LoginPage() {
                   </div>
                   <div>
                     <Label htmlFor="sp" className="text-white/80">Password</Label>
-                    <Input id="sp" type="password" autoComplete="new-password" value={sPwd} onChange={(e) => setSPwd(e.target.value)} required minLength={8} maxLength={128} className="border-white/20 bg-white/10 text-white placeholder:text-white/40" />
-                    <p className="mt-1 text-[10px] text-white/50">At least 8 characters, including a letter and a number. No spaces.</p>
+                    <div className="relative">
+                      <Input id="sp" type={showSPwd ? "text" : "password"} autoComplete="new-password" value={sPwd} onChange={(e) => setSPwd(e.target.value)} required minLength={8} maxLength={128} className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40" />
+                      <button type="button" onClick={() => setShowSPwd((v) => !v)} aria-label={showSPwd ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white">
+                        {showSPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-[10px] text-white/50">Min 8 chars with uppercase, lowercase, number, and special character. No spaces.</p>
                   </div>
-                  <Button type="submit" disabled={signingUp} className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:from-indigo-400 hover:to-fuchsia-400">
-                    {signingUp ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account…</>) : "Create account"}
-                  </Button>
-                  <p className="text-center text-xs text-white/60">
-                    First signup becomes Admin. Subsequent accounts are QA Agents.
-                  </p>
+                  <div>
+                    <Label htmlFor="sp2" className="text-white/80">Confirm password</Label>
+                    <div className="relative">
+                      <Input id="sp2" type={showSPwd2 ? "text" : "password"} autoComplete="new-password" value={sPwd2} onChange={(e) => setSPwd2(e.target.value)} required minLength={8} maxLength={128} className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40" />
+                      <button type="button" onClick={() => setShowSPwd2((v) => !v)} aria-label={showSPwd2 ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white">
+                        {showSPwd2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {sPwd2.length > 0 && sPwd !== sPwd2 && (
+                      <p className="mt-1 text-[11px] text-red-200">Passwords do not match.</p>
+                    )}
+                  </div>
+                  {(() => {
+                    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sEmail.trim().toLowerCase());
+                    const pwdStrong = sPwd.length >= 8 && !/\s/.test(sPwd) && /[A-Z]/.test(sPwd) && /[a-z]/.test(sPwd) && /[0-9]/.test(sPwd) && /[^A-Za-z0-9]/.test(sPwd);
+                    const canSubmit = !!name.trim() && emailOk && pwdStrong && sPwd2.length > 0 && sPwd === sPwd2;
+                    return (
+                      <Button type="submit" disabled={signingUp || !canSubmit} className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:from-indigo-400 hover:to-fuchsia-400">
+                        {signingUp ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account…</>) : "Create account"}
+                      </Button>
+                    );
+                  })()}
                 </form>
               </TabsContent>
             </Tabs>

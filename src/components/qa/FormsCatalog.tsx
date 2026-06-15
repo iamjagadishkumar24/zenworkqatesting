@@ -32,7 +32,10 @@ export function FormsCatalog({
   const visibleForms = useMemo(() => excludeNonCatalogForms(forms), [forms]);
 
   const list = useMemo(
-    () => visibleForms.filter((n) => (q ? n.toLowerCase().includes(q.toLowerCase()) : true)),
+    () => {
+      const term = q.trim().toLowerCase();
+      return visibleForms.filter((n) => (term ? n.toLowerCase().includes(term) : true));
+    },
     [visibleForms, q],
   );
 
