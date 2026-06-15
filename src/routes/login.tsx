@@ -47,6 +47,9 @@ export function LoginPage() {
   const [name, setName] = useState("");
   const [sEmail, setSEmail] = useState("");
   const [sPwd, setSPwd] = useState("");
+  const [sPwd2, setSPwd2] = useState("");
+  const [showSPwd, setShowSPwd] = useState(false);
+  const [showSPwd2, setShowSPwd2] = useState(false);
   const [hint, setHint] = useState<{ tone: "info" | "warn" | "error"; title: string; body: string } | null>(null);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
