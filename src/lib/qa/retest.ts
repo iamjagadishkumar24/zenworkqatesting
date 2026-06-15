@@ -84,27 +84,51 @@ export function useRetests() {
     void load();
     let ch: ReturnType<typeof supabase.channel> | null = null;
     let cancelled = false;
-    try {
-      // Key channel by user + env so switching environment tears down the
-      // previous channel (env change reruns this effect) and never duplicates.
-      const channelName = `retest-${currentUser.id}-${env ?? "any"}`;
-      ch = supabase
-        .channel(channelName)
-        .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignments" }, () => void load())
-        .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignment_forms" }, () => void load())
-        .subscribe((status) => {
-          if (cancelled) return;
-          // CLOSED fires during intentional teardown (env switch / unmount) —
-          // do not surface it as an error. Only flag genuine failures.
-          if (status === "SUBSCRIBED") setRealtimeOk(true);
-          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setRealtimeOk(false);
-        });
-    } catch (e) {
-      console.warn("useRetests: realtime subscribe failed", e);
-      setRealtimeOk(false);
-    }
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempts = 0;
+    const connect = () => {
+      if (cancelled) return;
+      // Unique channel name per attempt so a stale CHANNEL_ERROR socket can't
+      // collide with the retry. Includes user+env so switching environment
+      // tears down the previous channel and never duplicates.
+      const channelName = `retest-${currentUser.id}-${env ?? "any"}-${Date.now()}`;
+      try {
+        ch = supabase
+          .channel(channelName)
+          .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignments" }, () => void load())
+          .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignment_forms" }, () => void load())
+          .subscribe((status) => {
+            if (cancelled) return;
+            if (status === "SUBSCRIBED") {
+              attempts = 0;
+              setRealtimeOk(true);
+              return;
+            }
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+              // Refresh on reconnect so we don't miss events while offline.
+              void load();
+              // Tear down this channel and schedule a backoff retry.
+              const dead = ch;
+              ch = null;
+              if (dead) { try { void supabase.removeChannel(dead); } catch { /* noop */ } }
+              attempts += 1;
+              // Only surface the warning after a few sustained failures.
+              if (attempts >= 3) setRealtimeOk(false);
+              const delay = Math.min(30000, 1000 * 2 ** Math.min(attempts, 5));
+              retryTimer = setTimeout(connect, delay);
+            }
+          });
+      } catch (e) {
+        console.warn("useRetests: realtime subscribe failed", e);
+        attempts += 1;
+        if (attempts >= 3) setRealtimeOk(false);
+        retryTimer = setTimeout(connect, Math.min(30000, 1000 * 2 ** Math.min(attempts, 5)));
+      }
+    };
+    connect();
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
       if (ch) { try { void supabase.removeChannel(ch); } catch { /* noop */ } }
     };
   }, [currentUser, env, load]);
