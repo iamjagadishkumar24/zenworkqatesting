@@ -7,6 +7,32 @@ function validateEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function generateStrongPassword(): string {
+  // 18 chars, mix of letter classes + symbols. Avoid ambiguous chars.
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#$%^&*?-_";
+  const all = upper + lower + digits + symbols;
+  const bytes = new Uint8Array(18);
+  // crypto is available in the Worker runtime
+  crypto.getRandomValues(bytes);
+  const pick = (set: string, n: number) => set[n % set.length];
+  const out = [
+    pick(upper, bytes[0]),
+    pick(lower, bytes[1]),
+    pick(digits, bytes[2]),
+    pick(symbols, bytes[3]),
+  ];
+  for (let i = 4; i < bytes.length; i++) out.push(pick(all, bytes[i]));
+  // Shuffle
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = bytes[i] % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out.join("");
+}
+
 export const inviteAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: InviteInput) => {
@@ -53,7 +79,11 @@ export const resetSampleAdmin = createServerFn({ method: "POST" })
     // (b) the caller is already an authenticated admin. This lets a brand-new
     // workspace mint the sample admin without first needing to log in.
     const SAMPLE_EMAIL = "admin@qaportal.app";
-    const SAMPLE_PASSWORD = "Admin@12345";
+    // Generate a fresh random password each call so source-code access alone
+    // does not yield working credentials. The plaintext is returned exactly
+    // once to the caller (the authenticated Settings UI) and is never stored
+    // alongside the account in plaintext.
+    const SAMPLE_PASSWORD = generateStrongPassword();
     const SAMPLE_NAME = "Portal Admin";
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -114,29 +144,47 @@ export const resetSampleAdmin = createServerFn({ method: "POST" })
     return { ok: true as const, email: SAMPLE_EMAIL, password: SAMPLE_PASSWORD, name: SAMPLE_NAME };
   });
 
-export const sampleAdminStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("profiles")
-    .select("id, active")
-    .eq("email", "admin@qaportal.app")
-    .maybeSingle();
-  if (!data?.id) return { exists: false as const };
-  const { data: roles } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", data.id);
-  const isAdmin = (roles ?? []).some((r) => r.role === "admin");
-  return { exists: true as const, isAdmin, active: !!data.active };
-});
+export const sampleAdminStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Restrict to admin callers; non-admins should not be able to enumerate
+    // whether the sample admin exists.
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("profiles")
+      .select("id, active")
+      .eq("email", "admin@qaportal.app")
+      .maybeSingle();
+    if (!data?.id) return { exists: false as const };
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.id);
+    const isAdminAcct = (roles ?? []).some((r) => r.role === "admin");
+    return { exists: true as const, isAdmin: isAdminAcct, active: !!data.active };
+  });
 
 export const accountStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { email: string }) => {
     const email = String(input?.email || "").trim().toLowerCase();
     if (!validateEmail(email)) throw new Error("Enter a valid email address");
     return { email };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Only allow callers to look up their OWN account, to prevent using this
+    // endpoint as an email/role enumeration oracle.
+    const callerEmail = String(
+      (context.claims as { email?: string } | null | undefined)?.email ?? "",
+    ).trim().toLowerCase();
+    if (!callerEmail || callerEmail !== data.email) {
+      throw new Error("Forbidden");
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
       .from("profiles")
