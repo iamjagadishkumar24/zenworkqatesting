@@ -32,6 +32,7 @@ import { Route as AppChatbotTestingRouteImport } from './routes/_app.chatbot-tes
 import { Route as AppAgentsRouteImport } from './routes/_app.agents'
 import { Route as App990FormsRouteImport } from './routes/_app.990-forms'
 import { Route as App2290FormsRouteImport } from './routes/_app.2290-forms'
+import { Route as AppTasksTaskIdRouteImport } from './routes/_app.tasks.$taskId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -147,6 +148,11 @@ const App2290FormsRoute = App2290FormsRouteImport.update({
   path: '/2290-forms',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTasksTaskIdRoute = AppTasksTaskIdRouteImport.update({
+  id: '/tasks/$taskId',
+  path: '/tasks/$taskId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
+  '/tasks/$taskId': typeof AppTasksTaskIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
+  '/tasks/$taskId': typeof AppTasksTaskIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/_app/select-environment': typeof AppSelectEnvironmentRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tax1099-features': typeof AppTax1099FeaturesRoute
+  '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/select-environment'
     | '/settings'
     | '/tax1099-features'
+    | '/tasks/$taskId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/select-environment'
     | '/settings'
     | '/tax1099-features'
+    | '/tasks/$taskId'
   id:
     | '__root__'
     | '/'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/_app/select-environment'
     | '/_app/settings'
     | '/_app/tax1099-features'
+    | '/_app/tasks/$taskId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -468,6 +480,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof App2290FormsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/tasks/$taskId': {
+      id: '/_app/tasks/$taskId'
+      path: '/tasks/$taskId'
+      fullPath: '/tasks/$taskId'
+      preLoaderRoute: typeof AppTasksTaskIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -491,6 +510,7 @@ interface AppRouteChildren {
   AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTax1099FeaturesRoute: typeof AppTax1099FeaturesRoute
+  AppTasksTaskIdRoute: typeof AppTasksTaskIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -513,6 +533,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTax1099FeaturesRoute: AppTax1099FeaturesRoute,
+  AppTasksTaskIdRoute: AppTasksTaskIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
