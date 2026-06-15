@@ -39,7 +39,7 @@ export const Route = createFileRoute("/login")({
 });
 
 export function LoginPage() {
-  const { currentUser, login, signup, users } = useQA();
+  const { currentUser, login, signup } = useQA();
   const { env, ready } = useEnvironment();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
