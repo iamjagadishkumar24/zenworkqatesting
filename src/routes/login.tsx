@@ -144,10 +144,12 @@ export function LoginPage() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return toast.error("Please enter a valid email address.");
     if (sPwd.length < 8) return toast.error("Password must be at least 8 characters.");
     if (sPwd.length > 128) return toast.error("Password must be 128 characters or fewer.");
-    if (!/[A-Za-z]/.test(sPwd) || !/[0-9]/.test(sPwd)) {
-      return toast.error("Password must include at least one letter and one number.");
-    }
     if (/\s/.test(sPwd)) return toast.error("Password cannot contain spaces.");
+    if (!/[A-Z]/.test(sPwd)) return toast.error("Password must include at least one uppercase letter.");
+    if (!/[a-z]/.test(sPwd)) return toast.error("Password must include at least one lowercase letter.");
+    if (!/[0-9]/.test(sPwd)) return toast.error("Password must include at least one number.");
+    if (!/[^A-Za-z0-9]/.test(sPwd)) return toast.error("Password must include at least one special character.");
+    if (sPwd !== sPwd2) return toast.error("Passwords do not match.");
     setSigningUp(true);
     const r = await signup(cleanName, cleanEmail, sPwd);
     setSigningUp(false);
@@ -159,7 +161,7 @@ export function LoginPage() {
         : err;
       return toast.error(msg);
     }
-    toast.success(users.length === 0 ? "Admin account created — signing you in" : "Account created — signing you in");
+    toast.success("Account created — signing you in");
     navigate({ to: env ? "/dashboard" : "/select-environment" });
   };
 
