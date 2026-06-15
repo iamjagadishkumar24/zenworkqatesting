@@ -100,6 +100,46 @@
   --shadow-elevated: 0 10px 30px -10px oklch(0.55 0.18 255 / 0.2);
 }
 
+/* ============================================================
+   Dark mode base tokens. Applied when <html> has the .dark class
+   (toggled in src/lib/qa/prefs.ts). Without these the .dark class
+   only inverted a few env-specific surfaces, leaving foreground
+   text unreadable for agents using dark mode.
+   ============================================================ */
+:root.dark {
+  --background: oklch(0.16 0.02 255);
+  --foreground: oklch(0.97 0.005 250);
+  --card: oklch(0.21 0.025 255);
+  --card-foreground: oklch(0.97 0.005 250);
+  --popover: oklch(0.21 0.025 255);
+  --popover-foreground: oklch(0.97 0.005 250);
+  --primary: oklch(0.68 0.18 255);
+  --primary-foreground: oklch(0.14 0.02 255);
+  --primary-glow: oklch(0.78 0.16 255);
+  --secondary: oklch(0.26 0.03 255);
+  --secondary-foreground: oklch(0.97 0.005 250);
+  --muted: oklch(0.26 0.03 255);
+  --muted-foreground: oklch(0.72 0.025 255);
+  --accent: oklch(0.3 0.05 255);
+  --accent-foreground: oklch(0.97 0.005 250);
+  --destructive: oklch(0.65 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.3 0.03 255);
+  --input: oklch(0.3 0.03 255);
+  --ring: oklch(0.68 0.18 255);
+  --sidebar: oklch(0.19 0.025 255);
+  --sidebar-foreground: oklch(0.95 0.01 250);
+  --sidebar-primary: oklch(0.68 0.18 255);
+  --sidebar-primary-foreground: oklch(0.14 0.02 255);
+  --sidebar-accent: oklch(0.28 0.04 255);
+  --sidebar-accent-foreground: oklch(0.95 0.01 250);
+  --sidebar-border: oklch(0.3 0.03 255);
+  --sidebar-ring: oklch(0.68 0.18 255);
+  --gradient-primary: linear-gradient(135deg, oklch(0.68 0.18 255), oklch(0.78 0.16 255));
+  --shadow-card: 0 1px 3px 0 oklch(0 0 0 / 0.4), 0 1px 2px 0 oklch(0 0 0 / 0.3);
+  --shadow-elevated: 0 10px 30px -10px oklch(0 0 0 / 0.5);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -127,32 +167,6 @@
   * {
     scroll-behavior: auto !important;
   }
-}
-
-/* Accent overrides (Settings → Theme → Accent) */
-:root[data-accent="violet"] {
-  --primary: oklch(0.55 0.22 295);
-  --primary-glow: oklch(0.68 0.2 295);
-  --ring: oklch(0.55 0.22 295);
-  --sidebar-primary: oklch(0.55 0.22 295);
-  --sidebar-accent-foreground: oklch(0.55 0.22 295);
-  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.22 295), oklch(0.68 0.2 295));
-}
-:root[data-accent="emerald"] {
-  --primary: oklch(0.6 0.17 155);
-  --primary-glow: oklch(0.72 0.15 160);
-  --ring: oklch(0.6 0.17 155);
-  --sidebar-primary: oklch(0.6 0.17 155);
-  --sidebar-accent-foreground: oklch(0.6 0.17 155);
-  --gradient-primary: linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160));
-}
-:root[data-accent="rose"] {
-  --primary: oklch(0.62 0.22 15);
-  --primary-glow: oklch(0.73 0.2 15);
-  --ring: oklch(0.62 0.22 15);
-  --sidebar-primary: oklch(0.62 0.22 15);
-  --sidebar-accent-foreground: oklch(0.62 0.22 15);
-  --gradient-primary: linear-gradient(135deg, oklch(0.62 0.22 15), oklch(0.73 0.2 15));
 }
 
 /* Density overrides (Settings → Theme → Density) */
@@ -209,3 +223,37 @@
   --card: oklch(0.24 0.035 70);
   --sidebar: oklch(0.22 0.035 70);
 }
+
+/* ============================================================
+   Accent overrides (Settings → Theme → Accent).
+   Defined AFTER env themes so the user's accent choice always
+   wins over the environment tint for primary/ring/sidebar accents.
+   "blue" is the default; no override needed.
+   ============================================================ */
+:root[data-accent="violet"] {
+  --primary: oklch(0.55 0.22 295);
+  --primary-glow: oklch(0.68 0.2 295);
+  --ring: oklch(0.55 0.22 295);
+  --sidebar-primary: oklch(0.55 0.22 295);
+  --sidebar-accent-foreground: oklch(0.55 0.22 295);
+  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.22 295), oklch(0.68 0.2 295));
+}
+:root[data-accent="emerald"] {
+  --primary: oklch(0.6 0.17 155);
+  --primary-glow: oklch(0.72 0.15 160);
+  --ring: oklch(0.6 0.17 155);
+  --sidebar-primary: oklch(0.6 0.17 155);
+  --sidebar-accent-foreground: oklch(0.6 0.17 155);
+  --gradient-primary: linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160));
+}
+:root[data-accent="rose"] {
+  --primary: oklch(0.62 0.22 15);
+  --primary-glow: oklch(0.73 0.2 15);
+  --ring: oklch(0.62 0.22 15);
+  --sidebar-primary: oklch(0.62 0.22 15);
+  --sidebar-accent-foreground: oklch(0.62 0.22 15);
+  --gradient-primary: linear-gradient(135deg, oklch(0.62 0.22 15), oklch(0.73 0.2 15));
+}
+:root.dark[data-accent="violet"] { --primary: oklch(0.7 0.2 295); --primary-glow: oklch(0.78 0.18 295); --ring: oklch(0.7 0.2 295); --sidebar-primary: oklch(0.7 0.2 295); }
+:root.dark[data-accent="emerald"] { --primary: oklch(0.7 0.16 155); --primary-glow: oklch(0.8 0.14 160); --ring: oklch(0.7 0.16 155); --sidebar-primary: oklch(0.7 0.16 155); }
+:root.dark[data-accent="rose"] { --primary: oklch(0.72 0.2 15); --primary-glow: oklch(0.82 0.18 15); --ring: oklch(0.72 0.2 15); --sidebar-primary: oklch(0.72 0.2 15); }
