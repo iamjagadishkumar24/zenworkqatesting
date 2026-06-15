@@ -335,11 +335,11 @@ export function LoginPage() {
                         </div>
                         <div>
                           <p className="font-medium text-white">Signed in but can't see admin tools</p>
-                          <p>Your account is a QA Agent, not Admin. Only the <span className="font-medium">first</span> account becomes Admin automatically. Ask an existing admin to promote you from <span className="font-medium">Settings → Team &amp; Roles</span>.</p>
+                          <p>Your account is a QA Agent, not Admin. Ask an existing admin to promote you from <span className="font-medium">Settings → Team &amp; Roles</span>.</p>
                         </div>
                         <div>
                           <p className="font-medium text-white">No account at all yet</p>
-                          <p>Use the <span className="font-medium">Create account</span> tab — the first signup is auto-promoted to Admin.</p>
+                          <p>Use the <span className="font-medium">Create account</span> tab to register, then ask an admin to grant you access.</p>
                         </div>
                         <div>
                           <p className="font-medium text-white">Forgot your password</p>
