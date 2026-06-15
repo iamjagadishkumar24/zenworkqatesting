@@ -28,6 +28,10 @@ import {
   renderRetestAssignmentEmail,
   type TaskAssignmentEmailInput,
 } from "./emailTemplates";
+import type { Database } from "@/integrations/supabase/types";
+
+type Json = Database["public"]["Tables"]["email_log"]["Insert"]["payload"];
+const toJson = (v: unknown): Json => JSON.parse(JSON.stringify(v)) as Json;
 
 type ProviderResult = { provider: string; status: "sent" | "failed"; error?: string };
 
@@ -162,7 +166,7 @@ async function recordAndSend(
       related_task_id: payload.taskId,
       triggered_by_id: triggeredBy.id,
       triggered_by_name: triggeredBy.name,
-      payload: payload as unknown as Record<string, unknown>,
+      payload: toJson(payload),
     });
     return { status: "not_configured" };
   }
@@ -179,7 +183,7 @@ async function recordAndSend(
     related_task_id: payload.taskId,
     triggered_by_id: triggeredBy.id,
     triggered_by_name: triggeredBy.name,
-    payload: payload as unknown as Record<string, unknown>,
+    payload: toJson(payload),
     sent_at: result.status === "sent" ? new Date().toISOString() : null,
   });
   return { status: result.status, error: result.error };
