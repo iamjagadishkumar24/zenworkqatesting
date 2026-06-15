@@ -309,7 +309,7 @@ export function LoginPage() {
                     </div>
                   )}
                   <p className="text-center text-xs text-white/60">
-                    No account yet? Use <span className="font-medium">Create account</span> — the first signup becomes Admin.
+                    No account yet? Use <span className="font-medium">Create account</span>.
                   </p>
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="trouble" className="border-white/15">
