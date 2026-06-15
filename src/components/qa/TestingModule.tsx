@@ -48,7 +48,10 @@ export function TestingModule({
   const [q, setQ] = useState("");
 
   const visibleItems = useMemo(
-    () => items.filter((n) => (q ? n.toLowerCase().includes(q.toLowerCase()) : true)),
+    () => {
+      const term = q.trim().toLowerCase();
+      return items.filter((n) => (term ? n.toLowerCase().includes(term) : true));
+    },
     [items, q],
   );
 
