@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
+import { routeForNotification } from "@/lib/qa/notificationRouting";
 
 export function NotificationsBell() {
   const { notifications, currentUser, markNotificationsRead } = useQA();
@@ -73,7 +74,8 @@ export function NotificationsBell() {
                       onClick={() => {
                         setOpen(false);
                         if (!n.read) void markNotificationsRead([n.id]);
-                        if (n.defectId) navigate({ to: "/my-reported-errors", search: { q: n.defectId } as never });
+                        const target = routeForNotification(n);
+                        navigate({ to: target.to, search: (target.search ?? {}) as never });
                       }}
                     >
                       <span
