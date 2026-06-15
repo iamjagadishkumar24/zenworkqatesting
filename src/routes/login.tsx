@@ -362,15 +362,36 @@ export function LoginPage() {
                   </div>
                   <div>
                     <Label htmlFor="sp" className="text-white/80">Password</Label>
-                    <Input id="sp" type="password" autoComplete="new-password" value={sPwd} onChange={(e) => setSPwd(e.target.value)} required minLength={8} maxLength={128} className="border-white/20 bg-white/10 text-white placeholder:text-white/40" />
-                    <p className="mt-1 text-[10px] text-white/50">At least 8 characters, including a letter and a number. No spaces.</p>
+                    <div className="relative">
+                      <Input id="sp" type={showSPwd ? "text" : "password"} autoComplete="new-password" value={sPwd} onChange={(e) => setSPwd(e.target.value)} required minLength={8} maxLength={128} className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40" />
+                      <button type="button" onClick={() => setShowSPwd((v) => !v)} aria-label={showSPwd ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white">
+                        {showSPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-[10px] text-white/50">Min 8 chars with uppercase, lowercase, number, and special character. No spaces.</p>
                   </div>
-                  <Button type="submit" disabled={signingUp} className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:from-indigo-400 hover:to-fuchsia-400">
-                    {signingUp ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account…</>) : "Create account"}
-                  </Button>
-                  <p className="text-center text-xs text-white/60">
-                    First signup becomes Admin. Subsequent accounts are QA Agents.
-                  </p>
+                  <div>
+                    <Label htmlFor="sp2" className="text-white/80">Confirm password</Label>
+                    <div className="relative">
+                      <Input id="sp2" type={showSPwd2 ? "text" : "password"} autoComplete="new-password" value={sPwd2} onChange={(e) => setSPwd2(e.target.value)} required minLength={8} maxLength={128} className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40" />
+                      <button type="button" onClick={() => setShowSPwd2((v) => !v)} aria-label={showSPwd2 ? "Hide password" : "Show password"} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white">
+                        {showSPwd2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {sPwd2.length > 0 && sPwd !== sPwd2 && (
+                      <p className="mt-1 text-[11px] text-red-200">Passwords do not match.</p>
+                    )}
+                  </div>
+                  {(() => {
+                    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sEmail.trim().toLowerCase());
+                    const pwdStrong = sPwd.length >= 8 && !/\s/.test(sPwd) && /[A-Z]/.test(sPwd) && /[a-z]/.test(sPwd) && /[0-9]/.test(sPwd) && /[^A-Za-z0-9]/.test(sPwd);
+                    const canSubmit = !!name.trim() && emailOk && pwdStrong && sPwd2.length > 0 && sPwd === sPwd2;
+                    return (
+                      <Button type="submit" disabled={signingUp || !canSubmit} className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:from-indigo-400 hover:to-fuchsia-400">
+                        {signingUp ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account…</>) : "Create account"}
+                      </Button>
+                    );
+                  })()}
                 </form>
               </TabsContent>
             </Tabs>
