@@ -327,7 +327,7 @@ export function LoginPage() {
                       <AccordionContent className="space-y-3 text-xs text-white/70">
                         <div>
                           <p className="font-medium text-white">"Invalid login credentials"</p>
-                          <p>The sample admin hasn't been created yet, or the password was changed. Click <span className="font-medium">Create / reset sample admin &amp; sign in</span> above to mint <span className="font-mono">admin@qaportal.app</span> / <span className="font-mono">Admin@12345</span> and sign in.</p>
+                          <p>Double-check the email and password. If you're a new user, ask an admin to invite you from <span className="font-medium">Settings → Team &amp; Roles</span>. Sample-admin credentials, when used, are generated in <span className="font-medium">Settings → Sample admin</span> and shown only to the signed-in admin.</p>
                         </div>
                         <div>
                           <p className="font-medium text-white">"Your account is inactive"</p>
@@ -343,7 +343,7 @@ export function LoginPage() {
                         </div>
                         <div>
                           <p className="font-medium text-white">Forgot your password</p>
-                          <p>Ask an admin to invite you again from <span className="font-medium">Settings → Team &amp; Roles → Invite agent</span> with a fresh password, or use <span className="font-medium">Create / reset sample admin</span> if you're using the sample account.</p>
+                          <p>Use <span className="font-medium">Forgot password?</span> above to email yourself a reset link, or ask an admin to re-invite you from <span className="font-medium">Settings → Team &amp; Roles → Invite agent</span> with a fresh password.</p>
                         </div>
                       </AccordionContent>
                     </AccordionItem>
