@@ -11,9 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Users, Send, Eye } from "lucide-react";
+import { UserPlus, Trash2, Users, Send, Eye, RotateCcw } from "lucide-react";
 import { AgentDetailDrawer } from "@/components/qa/AgentDetailDrawer";
+
+const PROTECTED_ADMIN_EMAIL = "admin@qaportal.app";
 
 export const Route = createFileRoute("/_app/agents")({
   component: AgentsPage,
@@ -28,13 +35,15 @@ export const Route = createFileRoute("/_app/agents")({
 
 function AgentsPage() {
   const { currentUser, users, defects } = useQA();
-  const { items, loading, create, setStatus, remove } = useAgentInvites();
+  const { items, loading, create, setStatus, remove, deactivate, reactivate } = useAgentInvites();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
   const [viewing, setViewing] = useState<{ id: string | null; name: string; email: string } | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ userId: string | null; inviteId: string | null; name: string } | null>(null);
 
   useEffect(() => {
     if (!currentUser || currentUser.role !== "admin") return;
@@ -97,19 +106,40 @@ function AgentsPage() {
     }
   };
 
+  const visibleRows = rows.filter((r) => {
+    const isProtectedAdmin = r.email.toLowerCase() === PROTECTED_ADMIN_EMAIL;
+    if (isProtectedAdmin) return false; // shown separately
+    if (showInactive) return r.status === "inactive";
+    return r.status !== "inactive";
+  });
+  const adminRow = rows.find((r) => r.email.toLowerCase() === PROTECTED_ADMIN_EMAIL);
+
+  const onDeleteConfirmed = async () => {
+    if (!confirmDelete) return;
+    if (confirmDelete.userId) {
+      const res = await deactivate(confirmDelete.userId);
+      if (!res.ok) toast.error(res.error);
+      else toast.success(`${confirmDelete.name} removed. Their reported errors remain in history.`);
+    } else if (confirmDelete.inviteId) {
+      const res = await remove(confirmDelete.inviteId);
+      if (!res.ok) toast.error(res.error); else toast.success("Invite removed");
+    }
+    setConfirmDelete(null);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Agent Management</h2>
         <p className="text-sm text-muted-foreground">
-          Add agents by email. They become active once they sign up using the same email; any pre-assigned tasks appear automatically.
+          Invite-only access: agents can register only after you add their email below. Removed agents lose login access immediately, but their reported errors remain saved for reports & audits.
         </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base inline-flex items-center gap-2"><UserPlus className="h-4 w-4" /> Add Agent</CardTitle>
-          <CardDescription>The agent must sign up with the same email to gain access.</CardDescription>
+          <CardDescription>The agent must register with the same email — uninvited emails are blocked.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
           <div>
@@ -132,28 +162,56 @@ function AgentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base inline-flex items-center gap-2"><Users className="h-4 w-4" /> Agents</CardTitle>
-          <CardDescription>{loading ? "Loading…" : `${rows.length} agent(s)`}</CardDescription>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <CardTitle className="text-base inline-flex items-center gap-2"><Users className="h-4 w-4" /> Agents</CardTitle>
+              <CardDescription>
+                {loading ? "Loading…" : showInactive
+                  ? `${visibleRows.length} removed/inactive`
+                  : `${visibleRows.length} active`}
+              </CardDescription>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Switch checked={showInactive} onCheckedChange={setShowInactive} />
+              Show removed/inactive
+            </label>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
-          {rows.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground">No agents yet. Add one above.</p>
+          {visibleRows.length === 0 && !adminRow ? (
+            <p className="p-6 text-sm text-muted-foreground">
+              {showInactive ? "No removed agents." : "No agents yet. Add one above."}
+            </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-center">Tasks</TableHead>
                   <TableHead className="text-center">Errors</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead>Notes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r) => {
+                {!showInactive && adminRow && (
+                  <TableRow key={`admin-${adminRow.id}`}>
+                    <TableCell className="font-medium">{adminRow.name}</TableCell>
+                    <TableCell className="text-sm">{adminRow.email}</TableCell>
+                    <TableCell><Badge>Admin</Badge></TableCell>
+                    <TableCell><Badge>Active</Badge></TableCell>
+                    <TableCell className="text-center text-sm">—</TableCell>
+                    <TableCell className="text-center text-sm">{errorCounts[adminRow.name.toLowerCase()] ?? 0}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {adminRow.created_at ? new Date(adminRow.created_at).toLocaleDateString() : "—"}
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground">Protected</TableCell>
+                  </TableRow>
+                )}
+                {visibleRows.map((r) => {
                   const statusLabel =
                     !r.user_id && r.status === "pending" ? "Pending Registration"
                       : r.status === "active" ? "Active" : "Inactive";
@@ -164,16 +222,16 @@ function AgentsPage() {
                     <TableRow key={`${r.isInvite ? "i" : "u"}-${r.id}`}>
                       <TableCell className="font-medium">{r.name}</TableCell>
                       <TableCell className="text-sm">{r.email}</TableCell>
+                      <TableCell><Badge variant="outline">Agent</Badge></TableCell>
                       <TableCell><Badge variant={variant as never}>{statusLabel}</Badge></TableCell>
                       <TableCell className="text-center text-sm">{tasks}</TableCell>
                       <TableCell className="text-center text-sm">{errs}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
                       </TableCell>
-                      <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground">{r.notes || "—"}</TableCell>
                       <TableCell className="text-right">
-                        {r.isInvite ? (
-                          <div className="inline-flex items-center gap-2">
+                        <div className="inline-flex items-center gap-1">
+                          {r.isInvite && (
                             <Select
                               value={r.status}
                               onValueChange={async (v) => {
@@ -181,37 +239,41 @@ function AgentsPage() {
                                 if (!res.ok) toast.error(res.error); else toast.success("Status updated");
                               }}
                             >
-                              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="active">Active</SelectItem>
                                 <SelectItem value="inactive">Inactive</SelectItem>
                               </SelectContent>
                             </Select>
-                            {!r.user_id && (
-                              <>
-                                <Button size="sm" variant="ghost" title="Resend invite" onClick={() => resendInvite(r)}>
-                                  <Send className="h-4 w-4" />
-                                </Button>
-                                <Button size="sm" variant="ghost" title="Remove" onClick={async () => {
-                                  const res = await remove(r.id);
-                                  if (!res.ok) toast.error(res.error); else toast.success("Removed");
-                                }}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                            <Button size="sm" variant="ghost" title="View tasks & errors"
-                              onClick={() => setViewing({ id: r.user_id, name: r.name, email: r.email })}>
-                              <Eye className="h-4 w-4" />
+                          )}
+                          {r.isInvite && !r.user_id && (
+                            <Button size="sm" variant="ghost" title="Resend invite" onClick={() => resendInvite(r)}>
+                              <Send className="h-4 w-4" />
                             </Button>
-                          </div>
-                        ) : (
+                          )}
                           <Button size="sm" variant="ghost" title="View tasks & errors"
                             onClick={() => setViewing({ id: r.user_id, name: r.name, email: r.email })}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                        )}
+                          {r.status === "inactive" && r.user_id ? (
+                            <Button size="sm" variant="ghost" title="Reactivate agent"
+                              onClick={async () => {
+                                const res = await reactivate(r.user_id!);
+                                if (!res.ok) toast.error(res.error); else toast.success(`${r.name} reactivated`);
+                              }}>
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="ghost" title="Remove agent"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setConfirmDelete({
+                                userId: r.user_id, inviteId: r.isInvite ? r.id : null, name: r.name,
+                              })}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -222,6 +284,24 @@ function AgentsPage() {
         </CardContent>
       </Card>
       <AgentDetailDrawer open={!!viewing} onOpenChange={(o) => !o && setViewing(null)} agent={viewing} />
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {confirmDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They will lose login access immediately. Their previously reported defects and
+              audit history remain available for reports and Excel exports. You can re-invite
+              them later from this page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onDeleteConfirmed} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remove agent
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

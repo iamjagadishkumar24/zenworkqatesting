@@ -140,7 +140,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         setState((s) => ({ ...s, currentUser: null }));
         if (typeof window !== "undefined") {
           const { toast } = await import("sonner");
-          toast.error("Your account has been deactivated. Contact an administrator.");
+          toast.error("Your account is not active. Please contact the admin.");
         }
         return;
       }
@@ -332,8 +332,21 @@ export function QAProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     },
     signup: async (name, email, password) => {
+      const cleanEmail = email.trim().toLowerCase();
+      try {
+        const { checkInviteEmail } = await import("./admin.functions");
+        const check = await checkInviteEmail({ data: { email: cleanEmail } });
+        if (!check.allowed) {
+          if (check.reason === "inactive") {
+            return { ok: false, error: "Your account is not active. Please contact the admin." };
+          }
+          return { ok: false, error: "Your email is not invited. Please contact the admin." };
+        }
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "Could not verify invitation" };
+      }
       const { error } = await supabase.auth.signUp({
-        email, password,
+        email: cleanEmail, password,
         options: { data: { name }, emailRedirectTo: `${window.location.origin}/dashboard` },
       });
       if (error) return { ok: false, error: error.message };
