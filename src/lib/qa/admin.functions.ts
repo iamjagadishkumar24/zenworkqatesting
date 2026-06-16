@@ -209,3 +209,80 @@ export const accountStatus = createServerFn({ method: "POST" })
       name: profile.name as string | null,
     };
   });
+
+/**
+ * Soft-delete an agent: deactivate the auth user (block login), mark profile
+ * inactive, and mark any agent_invites row as inactive. Defects/audit logs
+ * are preserved because defects reference users by display name (text), not
+ * by user_id.
+ */
+export const deactivateAgent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => {
+    const userId = String(input?.userId || "").trim();
+    if (!userId) throw new Error("userId required");
+    return { userId };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Only admins can remove agents");
+    if (data.userId === context.userId) throw new Error("You cannot remove your own account");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
+      .from("profiles").select("email").eq("id", data.userId).maybeSingle();
+    if (profile?.email?.toLowerCase() === PROTECTED_ADMIN_EMAIL) {
+      throw new Error("The main admin account cannot be removed");
+    }
+    // Mark profile inactive (blocks dashboard access via hydrate signOut)
+    await supabaseAdmin.from("profiles").update({ active: false }).eq("id", data.userId);
+    // Mark invite row inactive (if any)
+    await supabaseAdmin.from("agent_invites").update({ status: "inactive" }).eq("user_id", data.userId);
+    // Revoke the password so the user cannot sign in again
+    await supabaseAdmin.auth.admin.updateUserById(data.userId, { ban_duration: "876000h" }).catch(() => {});
+    return { ok: true as const };
+  });
+
+export const reactivateAgent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => {
+    const userId = String(input?.userId || "").trim();
+    if (!userId) throw new Error("userId required");
+    return { userId };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Only admins can reactivate agents");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("profiles").update({ active: true }).eq("id", data.userId);
+    await supabaseAdmin.from("agent_invites").update({ status: "active" }).eq("user_id", data.userId);
+    await supabaseAdmin.auth.admin.updateUserById(data.userId, { ban_duration: "none" }).catch(() => {});
+    return { ok: true as const };
+  });
+
+/**
+ * Public (unauthenticated) check: is this email allowed to self-register?
+ * Returns true only if an agent_invites row exists for the email and it is
+ * not marked inactive. Used by the signup flow to enforce invite-only access.
+ */
+export const checkInviteEmail = createServerFn({ method: "POST" })
+  .inputValidator((input: { email: string }) => {
+    const email = String(input?.email || "").trim().toLowerCase();
+    if (!validateEmail(email)) throw new Error("Enter a valid email address");
+    return { email };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: invite } = await supabaseAdmin
+      .from("agent_invites")
+      .select("status, user_id")
+      .eq("email", data.email)
+      .maybeSingle();
+    if (!invite) return { allowed: false as const, reason: "not_invited" as const };
+    if (invite.status === "inactive") return { allowed: false as const, reason: "inactive" as const };
+    return { allowed: true as const, alreadyRegistered: !!invite.user_id };
+  });
