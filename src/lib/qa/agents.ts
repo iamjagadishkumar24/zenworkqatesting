@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "./store";
+import { deactivateAgent, reactivateAgent } from "./admin.functions";
 
 export type AgentInviteStatus = "pending" | "active" | "inactive";
 export type AgentInvite = {
@@ -75,5 +76,23 @@ export function useAgentInvites() {
     return { ok: true };
   };
 
-  return { items, loading, reload: load, create, setStatus, remove };
+  const deactivate = async (userId: string) => {
+    try {
+      await deactivateAgent({ data: { userId } });
+      return { ok: true as const };
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Failed to remove agent" };
+    }
+  };
+
+  const reactivate = async (userId: string) => {
+    try {
+      await reactivateAgent({ data: { userId } });
+      return { ok: true as const };
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Failed to reactivate agent" };
+    }
+  };
+
+  return { items, loading, reload: load, create, setStatus, remove, deactivate, reactivate };
 }
