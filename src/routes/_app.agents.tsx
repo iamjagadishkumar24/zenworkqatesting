@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_app/agents")({
 
 function AgentsPage() {
   const { currentUser, users, defects } = useQA();
-  const { items, loading, create, setStatus, remove, deactivate, reactivate } = useAgentInvites();
+  const { items, loading, create, setStatus, remove, deactivate, reactivate, resend } = useAgentInvites();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
@@ -96,13 +96,25 @@ function AgentsPage() {
   const rows = [...inviteRows, ...directAgents];
 
   const resendInvite = async (row: { email: string; name: string }) => {
+    const r = await resend(row.email);
+    if (!r.ok) {
+      // Clear, status-aware feedback
+      if (r.status === "already_active") {
+        toast.warning(r.message);
+      } else if (r.status === "inactive") {
+        toast.error(r.message);
+      } else {
+        toast.error(r.message);
+      }
+      return;
+    }
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const link = `${origin}/login?signup=1&email=${encodeURIComponent(row.email)}`;
     try {
       await navigator.clipboard.writeText(link);
-      toast.success(`Invite link copied for ${row.name}`);
+      toast.success(`Invite refreshed — link copied for ${row.name} (status: Pending Registration)`);
     } catch {
-      toast.message("Invite link", { description: link });
+      toast.message(`Invite refreshed for ${row.name}`, { description: link });
     }
   };
 
