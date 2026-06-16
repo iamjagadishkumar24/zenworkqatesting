@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "./store";
-import { deactivateAgent, reactivateAgent } from "./admin.functions";
+import { deactivateAgent, reactivateAgent, resendAgentInvite } from "./admin.functions";
 
 export type AgentInviteStatus = "pending" | "active" | "inactive";
 export type AgentInvite = {
@@ -61,6 +61,10 @@ export function useAgentInvites() {
       email, name, notes: input.notes ?? "", created_by: currentUser?.id ?? null,
     });
     if (error) return { ok: false, error: error.message };
+    await supabase.from("agent_audit_log").insert({
+      action: "invite_created", target_email: email, target_name: name,
+      performed_by_id: currentUser?.id ?? null, performed_by_name: currentUser?.name ?? null,
+    });
     return { ok: true };
   };
 
@@ -71,8 +75,15 @@ export function useAgentInvites() {
   };
 
   const remove = async (id: string) => {
+    const target = items.find((i) => i.id === id);
     const { error } = await supabase.from("agent_invites").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
+    if (target) {
+      await supabase.from("agent_audit_log").insert({
+        action: "invite_removed", target_email: target.email, target_name: target.name,
+        performed_by_id: currentUser?.id ?? null, performed_by_name: currentUser?.name ?? null,
+      });
+    }
     return { ok: true };
   };
 
@@ -94,5 +105,17 @@ export function useAgentInvites() {
     }
   };
 
-  return { items, loading, reload: load, create, setStatus, remove, deactivate, reactivate };
+  const resend = async (email: string) => {
+    try {
+      const r = await resendAgentInvite({ data: { email } });
+      return r;
+    } catch (e) {
+      return {
+        ok: false as const, status: "error" as const,
+        message: e instanceof Error ? e.message : "Failed to resend invite",
+      };
+    }
+  };
+
+  return { items, loading, reload: load, create, setStatus, remove, deactivate, reactivate, resend };
 }
