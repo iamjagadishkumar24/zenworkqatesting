@@ -9,6 +9,48 @@ function validateEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+type AgentAuditAction =
+  | "invite_created" | "invite_resent" | "invite_removed"
+  | "agent_deactivated" | "agent_reactivated" | "agent_deleted";
+
+async function logAgentAudit(
+  supabaseAdmin: { from: (t: string) => { insert: (r: unknown) => Promise<{ error: unknown }> } },
+  entry: {
+    action: AgentAuditAction;
+    targetUserId?: string | null;
+    targetEmail: string;
+    targetName?: string | null;
+    performedById?: string | null;
+    performedByName?: string | null;
+    details?: Record<string, unknown>;
+  },
+) {
+  try {
+    await supabaseAdmin.from("agent_audit_log").insert({
+      action: entry.action,
+      target_user_id: entry.targetUserId ?? null,
+      target_email: entry.targetEmail,
+      target_name: entry.targetName ?? null,
+      performed_by_id: entry.performedById ?? null,
+      performed_by_name: entry.performedByName ?? null,
+      details: entry.details ?? {},
+    });
+  } catch (e) {
+    // Audit logging is best-effort; never block the action.
+    console.warn("[agent_audit_log] write failed", e);
+  }
+}
+
+async function getActorName(
+  supabaseAdmin: { from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: { name?: string | null } | null }> } } } },
+  userId: string,
+): Promise<string | null> {
+  try {
+    const { data } = await supabaseAdmin.from("profiles").select("name").eq("id", userId).maybeSingle();
+    return data?.name ?? null;
+  } catch { return null; }
+}
+
 function generateStrongPassword(): string {
   // 18 chars, mix of letter classes + symbols. Avoid ambiguous chars.
   const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
