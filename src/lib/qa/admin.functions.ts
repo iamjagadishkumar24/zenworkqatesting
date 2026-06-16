@@ -294,6 +294,13 @@ export const deactivateAgent = createServerFn({ method: "POST" })
     await supabaseAdmin.from("agent_invites").update({ status: "inactive" }).eq("user_id", data.userId);
     // Revoke the password so the user cannot sign in again
     await supabaseAdmin.auth.admin.updateUserById(data.userId, { ban_duration: "876000h" }).catch(() => {});
+    const performedByName = await getActorName(supabaseAdmin, context.userId);
+    await logAgentAudit(supabaseAdmin, {
+      action: "agent_deactivated",
+      targetUserId: data.userId,
+      targetEmail: profile?.email ?? "",
+      performedById: context.userId, performedByName,
+    });
     return { ok: true as const };
   });
 
@@ -310,9 +317,19 @@ export const reactivateAgent = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("Only admins can reactivate agents");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
+      .from("profiles").select("email, name").eq("id", data.userId).maybeSingle();
     await supabaseAdmin.from("profiles").update({ active: true }).eq("id", data.userId);
     await supabaseAdmin.from("agent_invites").update({ status: "active" }).eq("user_id", data.userId);
     await supabaseAdmin.auth.admin.updateUserById(data.userId, { ban_duration: "none" }).catch(() => {});
+    const performedByName = await getActorName(supabaseAdmin, context.userId);
+    await logAgentAudit(supabaseAdmin, {
+      action: "agent_reactivated",
+      targetUserId: data.userId,
+      targetEmail: profile?.email ?? "",
+      targetName: profile?.name ?? null,
+      performedById: context.userId, performedByName,
+    });
     return { ok: true as const };
   });
 
@@ -337,4 +354,66 @@ export const checkInviteEmail = createServerFn({ method: "POST" })
     if (!invite) return { allowed: false as const, reason: "not_invited" as const };
     if (invite.status === "inactive") return { allowed: false as const, reason: "inactive" as const };
     return { allowed: true as const, alreadyRegistered: !!invite.user_id };
+  });
+
+/**
+ * Admin action: validate and "resend" an invite. Returns a clear status
+ * so the UI can tell the admin whether the agent is still pending, is
+ * already active, or was previously deactivated.
+ */
+export const resendAgentInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { email: string }) => {
+    const email = String(input?.email || "").trim().toLowerCase();
+    if (!validateEmail(email)) throw new Error("Enter a valid email address");
+    return { email };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Only admins can resend invites");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: invite } = await supabaseAdmin
+      .from("agent_invites")
+      .select("id, email, name, status, user_id")
+      .eq("email", data.email)
+      .maybeSingle();
+    if (!invite) {
+      return {
+        ok: false as const, status: "not_invited" as const,
+        message: "No invite exists for this email. Use Add Agent first.",
+      };
+    }
+    if (invite.status === "inactive") {
+      return {
+        ok: false as const, status: "inactive" as const,
+        message: "This agent was removed. Reactivate the account before resending an invite.",
+      };
+    }
+    if (invite.user_id) {
+      return {
+        ok: false as const, status: "already_active" as const,
+        message: `${invite.name} has already registered and is active. No invite is needed.`,
+      };
+    }
+
+    // Touch updated_at so admins can see when the invite was last resent.
+    await supabaseAdmin.from("agent_invites")
+      .update({ status: "pending", updated_at: new Date().toISOString() })
+      .eq("id", invite.id);
+
+    const performedByName = await getActorName(supabaseAdmin, context.userId);
+    await logAgentAudit(supabaseAdmin, {
+      action: "invite_resent",
+      targetUserId: null, targetEmail: invite.email, targetName: invite.name,
+      performedById: context.userId, performedByName,
+    });
+
+    return {
+      ok: true as const, status: "pending" as const,
+      message: `Invite link refreshed for ${invite.name}. They can now register at /login.`,
+      email: invite.email, name: invite.name,
+    };
   });
