@@ -13,8 +13,14 @@ type AgentAuditAction =
   | "invite_created" | "invite_resent" | "invite_removed"
   | "agent_deactivated" | "agent_reactivated" | "agent_deleted";
 
+// Loose typing on the admin client: importing the typed client at module
+// scope would pull `client.server` into the client bundle. We accept `any`
+// for the runtime-loaded admin client here.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseAdminLike = any;
+
 async function logAgentAudit(
-  supabaseAdmin: { from: (t: string) => { insert: (r: unknown) => Promise<{ error: unknown }> } },
+  supabaseAdmin: SupabaseAdminLike,
   entry: {
     action: AgentAuditAction;
     targetUserId?: string | null;
@@ -41,10 +47,7 @@ async function logAgentAudit(
   }
 }
 
-async function getActorName(
-  supabaseAdmin: { from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: { name?: string | null } | null }> } } } },
-  userId: string,
-): Promise<string | null> {
+async function getActorName(supabaseAdmin: SupabaseAdminLike, userId: string): Promise<string | null> {
   try {
     const { data } = await supabaseAdmin.from("profiles").select("name").eq("id", userId).maybeSingle();
     return data?.name ?? null;
