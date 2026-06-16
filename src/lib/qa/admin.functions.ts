@@ -3,6 +3,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type InviteInput = { email: string; name: string; password: string };
 
+const PROTECTED_ADMIN_EMAIL = "admin@qaportal.app";
+
 function validateEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
