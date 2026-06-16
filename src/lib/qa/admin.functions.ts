@@ -114,6 +114,13 @@ export const inviteAgent = createServerFn({ method: "POST" })
     await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "agent" });
     await supabaseAdmin.from("profiles").update({ active: true, name: data.name }).eq("id", userId);
 
+    const performedByName = await getActorName(supabaseAdmin, context.userId);
+    await logAgentAudit(supabaseAdmin, {
+      action: "invite_created",
+      targetUserId: userId, targetEmail: data.email, targetName: data.name,
+      performedById: context.userId, performedByName,
+    });
+
     return { ok: true as const, userId, email: data.email };
   });
 
