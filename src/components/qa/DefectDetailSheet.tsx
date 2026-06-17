@@ -19,7 +19,7 @@ import { DefectStatusBadge, PriorityBadge } from "./StatusBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import {
-  CheckCircle2, XCircle, MessageSquare, History as HistoryIcon,
+  MessageSquare, History as HistoryIcon,
   Link as LinkIcon, ExternalLink, ShieldCheck, ShieldX,
   Activity as ActivityIcon, Pencil, UserPlus, Plus, MessageCircle, Check, X,
 } from "lucide-react";
@@ -525,8 +525,8 @@ export function DefectDetailSheet({
                       if (it.kind === "created") {
                         return (
                           <li key="created" className="rounded-md border bg-card p-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Reported defect</span>
+                   <div className="flex items-center justify-between">
+                     <span className="font-medium">Reported error</span>
                     <span className="text-muted-foreground">{new Date(defect.createdAt).toLocaleString()}</span>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
