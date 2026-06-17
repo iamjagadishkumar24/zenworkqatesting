@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQA } from "@/lib/qa/store";
-import type { Defect, DefectStatus, Priority, Severity } from "@/lib/qa/types";
+import type { Defect, DefectStatus, Priority } from "@/lib/qa/types";
+import { supabase } from "@/integrations/supabase/client";
+import { encodeRetestTitle } from "@/lib/qa/retestLink";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -26,6 +28,26 @@ const STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","
 const LEVELS: Priority[] = ["Low","Medium","High","Critical"];
 const MODULES = ["1099 Forms","990 Forms","Integrations","1099 Online"] as const;
 
+// Single review-status dropdown shown to admins. Maps to defect status/validity.
+const ADMIN_REVIEW_STATUSES = [
+  "Pending",
+  "Ongoing",
+  "Valid Error",
+  "Invalid Error",
+  "Retest Required",
+  "Fixed",
+] as const;
+type AdminReviewStatus = typeof ADMIN_REVIEW_STATUSES[number];
+
+function currentAdminReview(d: Defect): AdminReviewStatus {
+  if (d.validity === "Invalid") return "Invalid Error";
+  if (d.validity === "Valid" && (d.status === "Reported" || d.status === "Pending")) return "Valid Error";
+  if (d.status === "Retest Required") return "Retest Required";
+  if (d.status === "Fixed" || d.status === "Closed") return "Fixed";
+  if (d.status === "Ongoing" || d.status === "In Progress") return "Ongoing";
+  return "Pending";
+}
+
 function moduleRoute(module: string): string {
   switch (module) {
     case "Integrations": return "/integrations";
@@ -40,8 +62,8 @@ function moduleRoute(module: string): string {
 function historyLabel(field: string, oldVal: string | null, newVal: string | null): string {
   if (field === "comment") return "Edited a comment";
   if (field === "status") {
-    if (newVal === "Closed") return "Closed defect";
-    if (newVal === "Reopened") return "Reopened defect";
+    if (newVal === "Closed") return "Closed error";
+    if (newVal === "Reopened") return "Reopened error";
     if (newVal === "Fixed") return "Marked Fixed";
     if (newVal === "Retest Required") return "Requested retest";
     return `Status: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
@@ -49,7 +71,6 @@ function historyLabel(field: string, oldVal: string | null, newVal: string | nul
   if (field === "assigned_agent") return `Assigned to ${newVal ?? "—"}`;
   if (field === "validity") return `Validated as ${newVal ?? "—"}`;
   if (field === "priority") return `Priority: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
-  if (field === "severity") return `Severity: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
   if (field === "title") return `Renamed title`;
   if (field === "environment") return `Environment: ${oldVal ?? "—"} → ${newVal ?? "—"}`;
   return `Edited ${field.replace(/_/g, " ")}`;
@@ -93,7 +114,7 @@ export function DefectDetailSheet({
   type TimelineItem = {
     id: string;
     at: string;
-    kind: "created" | "comment" | "status" | "assigned_agent" | "priority" | "severity" | "validity" | "title" | "edit";
+    kind: "created" | "comment" | "status" | "assigned_agent" | "priority" | "validity" | "title" | "edit";
     actor: string;
     summary: string;
     detail?: string;
@@ -116,7 +137,7 @@ export function DefectDetailSheet({
       });
     });
     history.forEach((h) => {
-      const kind = (["status","assigned_agent","priority","severity","validity","title"] as const)
+      const kind = (["status","assigned_agent","priority","validity","title"] as const)
         .includes(h.field as never) ? (h.field as TimelineItem["kind"]) : "edit";
       const label = h.field.replace(/_/g, " ");
       items.push({
@@ -149,7 +170,7 @@ export function DefectDetailSheet({
   const cancelEdit = () => { setEditMode(false); setDraft({}); };
   const save = async () => {
     const res = await updateDefect(defect.id, draft);
-    if (res.ok) { toast.success("Defect updated"); setEditMode(false); }
+    if (res.ok) { toast.success("Error updated"); setEditMode(false); }
     else if (!res.conflict) toast.error(res.error ?? "Update failed");
   };
 
@@ -157,6 +178,52 @@ export function DefectDetailSheet({
     const res = await updateDefect(defect.id, patch);
     if (res.ok) toast.success(msg);
     else if (!res.conflict) toast.error(res.error ?? "Failed");
+  };
+
+  // Look up the user id for the original reporter so we can assign the
+  // retest task back to them.
+  const reporterUser = users.find((u) => u.name === defect.createdBy);
+
+  const createRetestForReporter = async (adminComment: string) => {
+    if (!currentUser) return;
+    if (!reporterUser) {
+      toast.error("Original reporter not found — cannot assign retest.");
+      return;
+    }
+    const id = `RT-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const { error } = await supabase.from("retest_assignments").insert({
+      id,
+      environment: defect.environment ?? "Production",
+      assigned_agent_id: reporterUser.id,
+      assigned_agent_name: reporterUser.name,
+      assigned_by_id: currentUser.id,
+      assigned_by_name: currentUser.name,
+      instructions: adminComment || "Please retest this reported error.",
+      priority: defect.priority,
+      due_date: null,
+      status: "Pending",
+      testing_type: "Retest",
+      title: encodeRetestTitle(defect.id, defect.title),
+      module: defect.module,
+      all_forms: false,
+      tax_year: defect.taxYear ?? null,
+    });
+    if (error) toast.error(error.message);
+  };
+
+  const applyAdminReview = async (next: AdminReviewStatus) => {
+    let patch: Partial<Defect> = {};
+    if (next === "Valid Error") patch = { validity: "Valid", status: "Pending" };
+    else if (next === "Invalid Error") patch = { validity: "Invalid", status: "Closed" };
+    else if (next === "Retest Required") patch = { status: "Retest Required" };
+    else if (next === "Fixed") patch = { status: "Fixed" };
+    else if (next === "Ongoing") patch = { status: "Ongoing" };
+    else if (next === "Pending") patch = { status: "Pending" };
+    await quickPatch(patch, `Review status: ${next}`);
+    if (next === "Retest Required") {
+      await createRetestForReporter(`Retest required for ${defect.id}: ${defect.title}`);
+      toast.success(`Retest assigned to ${defect.createdBy}`);
+    }
   };
 
   const v = (k: keyof Defect) => (editMode ? (draft[k] as string | undefined) ?? "" : (defect[k] as string | undefined) ?? "");
@@ -173,7 +240,6 @@ export function DefectDetailSheet({
           <SheetDescription className="flex flex-wrap gap-2 pt-2">
             <DefectStatusBadge status={defect.status} />
             <PriorityBadge value={defect.priority} />
-            <PriorityBadge value={defect.severity} />
             <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
               {defect.validity === "Valid" && <ShieldCheck className="h-3 w-3 text-success" />}
               {defect.validity === "Invalid" && <ShieldX className="h-3 w-3 text-destructive" />}
@@ -192,18 +258,25 @@ export function DefectDetailSheet({
             <Button size="sm" onClick={startEdit}>Edit</Button>
           )}
           {isAdmin && (
-            <>
-              <Button size="sm" variant="outline" onClick={() => quickPatch({ validity: "Valid" }, "Marked Valid Error")}>
-                <CheckCircle2 className="mr-1 h-4 w-4" /> Valid Error
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Admin review</span>
+              <Select
+                value={currentAdminReview(defect)}
+                onValueChange={(v) => void applyAdminReview(v as AdminReviewStatus)}
+              >
+                <SelectTrigger className="h-8 w-44 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ADMIN_REVIEW_STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant="ghost" onClick={() => quickPatch({ status: "Reopened" }, "Reopened")}>
+                Reopen
               </Button>
-              <Button size="sm" variant="outline" onClick={() => quickPatch({ validity: "Invalid" }, "Marked Invalid Error")}>
-                <XCircle className="mr-1 h-4 w-4" /> Invalid Error
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => quickPatch({ status: "Fixed" }, "Marked Fixed")}>Fixed</Button>
-              <Button size="sm" variant="outline" onClick={() => quickPatch({ status: "Retest Required" }, "Retest requested")}>Retest</Button>
-              <Button size="sm" variant="outline" onClick={() => quickPatch({ status: "Reopened" }, "Reopened")}>Reopen</Button>
-              <Button size="sm" variant="outline" onClick={() => quickPatch({ status: "Closed" }, "Closed")}>Close</Button>
-            </>
+            </div>
           )}
         </div>
 
@@ -257,12 +330,6 @@ export function DefectDetailSheet({
                     <SelectContent>{LEVELS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
-                <Field label="Severity">
-                  <Select value={v("severity")} onValueChange={(x) => set("severity", x)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{(LEVELS as readonly Severity[]).map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
                 </>
                 )}
                 <Field label="Description" className="sm:col-span-2"><Textarea rows={3} value={v("description")} onChange={(e) => set("description", e.target.value)} /></Field>
@@ -272,9 +339,7 @@ export function DefectDetailSheet({
                 <Field label="Attachment Link 1"><Input value={v("attachmentUrl")} onChange={(e) => set("attachmentUrl", e.target.value)} placeholder="https://…" /></Field>
                 <Field label="Attachment Link 2"><Input value={v("attachmentUrl2")} onChange={(e) => set("attachmentUrl2", e.target.value)} placeholder="https://…" /></Field>
                 <Field label="Evidence Link" className="sm:col-span-2"><Input value={v("evidenceUrl")} onChange={(e) => set("evidenceUrl", e.target.value)} placeholder="https://…" /></Field>
-                <Field label="Steps to Reproduce" className="sm:col-span-2"><Textarea rows={3} value={v("stepsToReproduce")} onChange={(e) => set("stepsToReproduce", e.target.value)} /></Field>
-                <Field label="Expected Result"><Textarea rows={2} value={v("expectedResult")} onChange={(e) => set("expectedResult", e.target.value)} /></Field>
-                <Field label="Actual Result"><Textarea rows={2} value={v("actualResult")} onChange={(e) => set("actualResult", e.target.value)} /></Field>
+                <Field label="Expected Result / Outcome" className="sm:col-span-2"><Textarea rows={2} value={v("expectedResult")} onChange={(e) => set("expectedResult", e.target.value)} /></Field>
                 <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={cancelEdit}>Cancel</Button>
                   <Button onClick={save}>{isAdmin ? "Save changes" : "Resubmit for review"}</Button>
@@ -293,11 +358,7 @@ export function DefectDetailSheet({
                   {defect.formFeature && <span className="text-muted-foreground"> • {defect.formFeature}</span>}
                 </Field>
                 <Field label="Description">{defect.description || <span className="text-muted-foreground">—</span>}</Field>
-                <Field label="Steps to Reproduce"><pre className="whitespace-pre-wrap font-sans">{defect.stepsToReproduce || "—"}</pre></Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Expected Result">{defect.expectedResult || "—"}</Field>
-                  <Field label="Actual Result">{defect.actualResult || "—"}</Field>
-                </div>
+                <Field label="Expected Result / Outcome">{defect.expectedResult || "—"}</Field>
                 <div className="grid gap-3 sm:grid-cols-2 text-xs">
                   <Field label="Assigned Agent">{defect.assignedAgent}</Field>
                   <Field label="Reported By">{defect.createdBy}</Field>
