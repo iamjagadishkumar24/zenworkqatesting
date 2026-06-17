@@ -114,7 +114,7 @@ function ReportsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Reports</h2>
           <p className="text-sm text-muted-foreground inline-flex flex-wrap items-center gap-2">
-            Power BI-style insights on testing performance. Counts refresh in real time as defects are added, edited, or deleted.
+            Power BI-style insights on testing performance. Counts refresh in real time as errors are added, edited, or deleted.
             {env && <Badge variant="outline">{env}</Badge>}
             <Badge variant="outline">Tax Year: {taxYear === "all" ? "All" : taxYear}</Badge>
           </p>
@@ -137,9 +137,9 @@ function ReportsPage() {
             columns={["id","name","module","status","passed","failed","openDefects","lastTested","assignedAgent"]}
           />
           <ExportMenu
-            label="Defects"
-            filename="defects"
-            title="Defects export"
+            label="Errors"
+            filename="errors"
+            title="Errors export"
             rows={defects.map(({ comments, ...d }) => ({ ...d, commentsCount: comments.length }))}
             columns={["id","module","formFeature","taxYear","environment","title","status","priority","severity","assignedAgent","createdBy","createdAt","updatedAt","updatedBy","commentsCount"]}
             filters={{ environment: env ?? "All", taxYear: taxYear === "all" ? "All" : taxYear }}
@@ -151,7 +151,7 @@ function ReportsPage() {
                 "qa-report",
                 [
                   { name: "Passed vs Failed", rows: passedVsFailed },
-                  { name: "Defects by Module", rows: defectsByModule },
+                  { name: "Errors by Module", rows: defectsByModule },
                   { name: "Status by Module", rows: statusByModule },
                   { name: "Status Trend", rows: statusTrend },
                   { name: "Agent Load", rows: agentDefects },
@@ -221,7 +221,7 @@ function ReportsPage() {
           </CardHeader>
           <CardContent className="h-72">
             {statusByModule.length === 0 ? (
-              <EmptyBreakdown message="No defects logged in any module yet." />
+              <EmptyBreakdown message="No errors logged in any module yet." />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={statusByModule}>

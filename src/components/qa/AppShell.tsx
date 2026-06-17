@@ -219,7 +219,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   navigate({ to: "/my-reported-errors", search: {} as never, replace: true });
                 }
               }}
-              placeholder="Search defects, forms, agents…"
+              placeholder="Search errors, forms, agents…"
               className="w-72 pl-9"
             />
           </form>
