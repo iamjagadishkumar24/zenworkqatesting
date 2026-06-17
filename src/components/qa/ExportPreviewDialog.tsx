@@ -35,7 +35,7 @@ export function ExportPreviewDialog({ open, onOpenChange, rows, filters, environ
     if (!open) { setJobId(null); setStarting(false); setDownloaded(false); }
   }, [open]);
 
-  const preview = rows.slice(0, 10).map(toReportedErrorRow);
+  const preview = rows.slice(0, 10).map((d) => toReportedErrorRow(d));
 
   const startJob = async () => {
     setStarting(true);

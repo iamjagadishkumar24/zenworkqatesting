@@ -23,14 +23,13 @@ import { AssignTaskDialog } from "@/components/qa/AssignTaskDialog";
 import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Plus, Download } from "lucide-react";
 import { ExportPreviewDialog } from "@/components/qa/ExportPreviewDialog";
 import { useAllowAgentExports } from "@/lib/qa/useExportJob";
-import type { DefectStatus, Priority, Severity } from "@/lib/qa/types";
+import type { DefectStatus, Priority } from "@/lib/qa/types";
 import { AGENTS, MODULE_OPTIONS } from "@/lib/qa/constants";
 import { toast } from "sonner";
 import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
 
 const DEFECT_STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
 const PRIORITIES: Priority[] = ["Low","Medium","High","Critical"];
-const SEVERITIES: Severity[] = ["Low","Medium","High","Critical"];
 const MODULES: string[] = MODULE_OPTIONS;
 
 export const Route = createFileRoute("/_app/my-reported-errors")({
@@ -73,7 +72,6 @@ function ReportedErrorsPage() {
   const [mod, setMod] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [prio, setPrio] = useState<string>("all");
-  const [sev, setSev] = useState<string>("all");
   const [agent, setAgent] = useState<string>("all");
   const [reporter, setReporter] = useState<string>("all");
   const [assignTaskOpen, setAssignTaskOpen] = useState(false);
@@ -100,24 +98,23 @@ function ReportedErrorsPage() {
       if (mod !== "all" && d.module !== mod) return false;
       if (status !== "all" && d.status !== status) return false;
       if (prio !== "all" && d.priority !== prio) return false;
-      if (sev !== "all" && d.severity !== sev) return false;
       if (agent !== "all" && d.assignedAgent !== agent) return false;
       if (reporter !== "all" && d.createdBy !== reporter) return false;
       if (!term) return true;
-      return [d.id, d.title, d.formFeature, d.module, d.status, d.priority, d.severity, d.assignedAgent, d.createdBy]
+      return [d.id, d.title, d.formFeature, d.module, d.status, d.priority, d.assignedAgent, d.createdBy]
         .join(" ").toLowerCase().includes(term);
     });
-  }, [scoped, q, mod, status, prio, sev, agent, reporter]);
+  }, [scoped, q, mod, status, prio, agent, reporter]);
 
   const resetFilters = () => {
     setQInput("");
-    setMod("all"); setStatus("all"); setPrio("all"); setSev("all"); setAgent("all"); setReporter("all");
+    setMod("all"); setStatus("all"); setPrio("all"); setAgent("all"); setReporter("all");
     navigate({ to: "/my-reported-errors", search: {} as never, replace: true });
   };
 
   const lastToastRef = useRef<string>("");
   useEffect(() => {
-    const filters = { q, module: mod, status, priority: prio, severity: sev, assignedAgent: agent };
+    const filters = { q, module: mod, status, priority: prio, assignedAgent: agent };
     const warnings = validateFilters(filters, scoped);
     if (warnings.length) {
       const key = "warn:" + warnings.join("|");
@@ -137,11 +134,11 @@ function ReportedErrorsPage() {
     } else {
       lastToastRef.current = "";
     }
-  }, [q, mod, status, prio, sev, agent, filtered.length, scoped]);
+  }, [q, mod, status, prio, agent, filtered.length, scoped]);
 
   const title = isAdmin ? "Reported Errors" : "My Reported Errors";
   const description = isAdmin
-    ? "All defects reported across agents. Use filters to drill down."
+    ? "All errors reported across agents. Use filters to drill down."
     : "Errors you reported. Other agents' reports are not shown.";
 
   return (
@@ -185,7 +182,6 @@ function ReportedErrorsPage() {
             <FilterSelect value={mod} onChange={setMod} placeholder="Module" options={[{ v: "all", l: "All modules" }, ...MODULES.map((m) => ({ v: m, l: m }))]} />
             <FilterSelect value={status} onChange={setStatus} placeholder="Status" options={[{ v: "all", l: "All statuses" }, ...DEFECT_STATUSES.map((s) => ({ v: s, l: s }))]} />
             <FilterSelect value={prio} onChange={setPrio} placeholder="Priority" options={[{ v: "all", l: "All priorities" }, ...PRIORITIES.map((p) => ({ v: p, l: p }))]} />
-            <FilterSelect value={sev} onChange={setSev} placeholder="Severity" options={[{ v: "all", l: "All severities" }, ...SEVERITIES.map((p) => ({ v: p, l: p }))]} />
             {isAdmin && (
               <>
                 <FilterSelect value={agent} onChange={setAgent} placeholder="Assigned"
@@ -291,7 +287,6 @@ function ReportedErrorsPage() {
           module: mod,
           status,
           priority: prio,
-          severity: sev,
           assignedAgent: agent,
           reporter,
           q,

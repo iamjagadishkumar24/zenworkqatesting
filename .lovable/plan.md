@@ -1,48 +1,113 @@
-# Agent Management, Task Assignment, Per-Reporter Visibility & Env Scoping
+# Error Reporting & Retest Workflow Overhaul
 
-## 1. Agent Management (admin only)
+This is a large, cross-cutting change. Below is the plan I'll execute. I'll confirm before touching code.
 
-New page **Settings → Agents** (admin-only tab) + DB support for pending invites.
+## 1. Terminology: Defect → Error (UI only)
 
-- New table `public.agent_invites` (email, name, status `pending|active|inactive`, notes, created_by). RLS: admins full access; agents may select their own row by email.
-- On user signup, `handle_new_user` trigger is extended: if an `agent_invites` row exists for `NEW.email`, mark it `active`, link `user_id`, and ensure `user_roles.role = 'agent'` (override the "first user = admin" branch only when an invite exists).
-- Admin UI lists invites + registered agents in one table with status badges (Pending Registration / Active / Inactive), actions: Add Agent (name + email + notes), Deactivate/Activate, Delete (pending only).
-- "Add Agent" inserts an invite row; no auth user is created until the person signs up with the matching email.
+Rename across ALL user-facing strings: page titles, nav items, buttons, table headers, toasts, dashboard cards, dialogs, empty states, exports.
 
-## 2. Task Assignment — multi-agent + All Forms / Specific Forms
+- "Report Defect" → "Report Error"
+- "Open Defects" → "Open Errors"
+- "My Reported Defects" → "My Reported Errors"
+- "Defect Details" → "Error Details"
+- "Create Defect" → "Create Error"
+- Nav item "Defects" → "Errors"
 
-Rework `AssignTaskDialog`:
+Internal code (DB tables `defects`, types `Defect`, functions `addDefect`, routes `/defects`) will stay as-is to avoid a destructive schema migration and a massive route rename. Only the visible text changes. (If you want me to also rename routes/files/DB, say so — that's a much larger change.)
 
-- Replace single-agent Select with a multi-select chip picker over active agents, plus checkbox "Assign to all active agents" and a new "Include pending agents" toggle (pre-assigns; becomes visible when they register).
-- Forms picker gains a top "All Forms" checkbox. When checked, store assignment with `all_forms = true` and zero rows in `retest_assignment_forms`; the agent dashboard then shows every form in the shared `MODULE_OPTIONS`/`forms` list for that environment.
-- Add `all_forms boolean default false` column on `retest_assignments`.
-- `createAssignment` loops over selected agents (including pending invite ids stored as `pending_email`) and writes one assignment per agent in a single batch.
+## 2. Report-Error form simplification
 
-For pending agents, write a `retest_pending_assignments` row keyed by email + payload JSON. On signup the same trigger materializes those into real `retest_assignments` for the new user_id.
+In `ReportDefectDialog.tsx` (and any edit/view surfaces — `DefectDetailSheet.tsx`):
 
-## 3. Per-Reporter Visibility
+- Remove **Steps to Reproduce** field
+- Remove **Actual Result** field
+- Remove **Severity** field (everywhere — form, detail, filters, columns, exports)
+- Keep **Priority** with options: Low, Medium, High, Critical
 
-- `retest_assignments` RLS already scopes agents to `assigned_agent_id = auth.uid()`; keep it.
-- `defects` RLS: add policy so agents can `SELECT` only rows where `created_by = current_user_name()` OR `assigned_agent = current_user_name()`. Admins keep full access.
-- "Fixed errors" counts/lists in agent dashboard filter by `created_by = me` so an agent only sees their own fixed errors. Admin dashboard remains global.
-- My Reported Errors page already filters by reporter; verify it also filters fixed-status updates client-side.
+The underlying DB columns will stay (to preserve historical data) but be hidden from UI and exports. New errors will leave them null.
 
-## 4. Environment Toggle Wiring
+## 3. Admin review status
 
-Audit every list/count surface and ensure it filters by `useEnvironment().env`:
+Extend admin review on an error to support these statuses:
+`Valid Error`, `Invalid Error`, `Retest Required`, `Fixed`, `Ongoing`, `Pending`.
 
-- Dashboard counts (tasks, errors, fixed) — re-derive from `env`-filtered queries.
-- Forms catalog, Task Assignment table, Reported Errors, Defects — all already env-aware; add the missing filters in Dashboard tiles.
-- Realtime: each list hook already subscribes to its table; on env change, the derived `scoped` arrays recompute, so counts update live. Add a `key={env}` on Dashboard cards so transitions are clean.
+These map to the existing `defects.status` + `validity` fields. Concretely:
+- `Pending` (default), `Ongoing`, `Fixed` → status
+- `Valid Error` / `Invalid Error` → validity flag
+- `Retest Required` → triggers the retest workflow below
 
-## Technical notes
+Admin gets a single "Review Status" dropdown in the Error Detail sheet that writes the right combination.
 
-- Migrations: `agent_invites`, `retest_pending_assignments`, `all_forms` column, updated `handle_new_user` trigger, RLS policies + GRANTs.
-- New files: `src/routes/_app.agents.tsx` (admin-only), `src/lib/qa/agents.ts` hook, updates to `AssignTaskDialog`, `useRetests.createAssignment`, `_app.dashboard.tsx`, `store.tsx` defect scoping.
-- Constants: keep the shared `MODULE_OPTIONS` + `forms` list as the single source of truth for "All Forms".
-- No edge functions; all logic via `createServerFn` + RLS.
+## 4. Invalid Error behavior
 
-## Out of scope (call out for follow-up)
+When admin sets status to **Invalid Error**:
+- Persist validity = Invalid; status label shows "Invalid Error"
+- Insert a `notifications` row for the original reporter ("Your error X was marked invalid")
+- Record stays visible in admin reports, history, and the agent's "My Reported Errors"
+- No deletion
 
-- UI redesign / dark premium restyle.
-- Highlighting "Assigned" badges across every Forms page (will land in a follow-up after the data model is in place).
+## 5. Retest Required workflow
+
+When admin sets status to **Retest Required**:
+- Create a `retest_assignments` row with `assigned_agent_id = original reporter`, linked to the defect id, priority copied, admin comment copied as instructions
+- Notify only that agent
+- Status on the error becomes "Retest Required"
+
+Reuses the existing `retest_assignments` table — no schema migration needed.
+
+## 6. Agent dashboard: "Retest Errors" section
+
+On `_app.dashboard.tsx`, add a new section **Retest Errors** for the signed-in agent only. Shows their open `retest_assignments`:
+- Error title/summary, Form/Module, Priority, Admin comment, Current status, **Open / Retest** action button
+
+## 7. Retest action
+
+Clicking the action opens a dialog where the agent can:
+- View the linked error
+- Add retest comments
+- Set retest result = Passed / Failed
+- Add screenshot/recording link (optional)
+- Submit → updates `retest_assignments.status` to Completed, notifies admin, writes back to the defect (status → Fixed if Passed, stays Retest Required / reopens if Failed)
+
+## 8. Retest visibility
+
+RLS on `retest_assignments` already scopes to assigned agent. Dashboard query filters by `assigned_agent_id = auth.uid()`. No other agent sees it.
+
+## 9. Admin tracking on Reported Errors page
+
+In Admin "Errors" / Reports views, add columns/fields:
+- Original reporting agent
+- Retest assigned agent
+- Retest status
+- Retest comments
+- Retest updated date
+- Admin review status
+
+## 10. Excel export updates (`exportReportedErrors.ts`)
+
+Remove columns: Steps to Reproduce, Actual Result, Severity.
+
+Keep / add columns (in order):
+Date Reported, Agent Name, Section/Form/Module, Error Description, Expected Result/Outcome, Priority, Screenshots/Recordings Link, General Link, Jira Link, Additional Comments, Admin Review Status, Retest Status, Retest Comments, Retest Updated Date.
+
+Join with `retest_assignments` to fill retest columns.
+
+## Files I expect to touch
+
+- `src/components/qa/ReportDefectDialog.tsx` (remove fields, rename labels)
+- `src/components/qa/DefectDetailSheet.tsx` (admin review dropdown, retest trigger, hide removed fields)
+- `src/components/qa/AppShell.tsx` (nav label)
+- `src/routes/_app.dashboard.tsx` (Retest Errors section + rename cards)
+- `src/routes/_app.defects.tsx` (rename to "Errors" UI, remove severity column)
+- `src/routes/_app.my-reported-errors.tsx`, `_app.my-errors.tsx`, `_app.reports.tsx`, `_app.retest.tsx` (terminology + columns)
+- `src/lib/qa/exportReportedErrors.ts` (column changes)
+- `src/lib/qa/store.tsx` / `admin.functions.ts` (Retest Required handler creates retest assignment)
+- New small dialog: `src/components/qa/RetestSubmitDialog.tsx`
+
+## Things I will NOT do unless you confirm
+
+- Rename DB tables/columns or route file paths (would break historical data + URLs)
+- Rename TypeScript types like `Defect` or function names like `addDefect`
+- Delete the `severity`, `steps_to_reproduce`, `actual_result` DB columns (kept for historical data, just hidden)
+
+Reply "go" to proceed, or tell me what to adjust.

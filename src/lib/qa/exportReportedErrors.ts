@@ -1,27 +1,23 @@
 import XLSXStyle from "xlsx-js-style";
 import { toast } from "sonner";
 import type { Defect, Environment } from "./types";
+import { extractDefectId } from "./retestLink";
 
 export const REPORTED_ERROR_HEADERS = [
   "Date Reported",
   "Agent Name",
-  "Environment",
-  "Tax Year",
-  "Module / Section",
-  "Form / Feature",
+  "Section / Form / Module",
   "Error Description",
   "Expected Result / Outcome",
-  "Status",
   "Priority",
-  "Severity",
-  "Screenshots / Recordings",
-  "Attachment / Reference Link",
+  "Screenshots / Recordings Link",
+  "General Link",
   "Jira Link",
   "Additional Comments",
-  "Admin Comments",
-  "Valid / Invalid",
-  "Fixed / Retest Status",
-  "Last Updated",
+  "Admin Review Status",
+  "Retest Status",
+  "Retest Comments",
+  "Retest Updated Date",
 ] as const;
 
 const HEADERS = REPORTED_ERROR_HEADERS;
@@ -29,62 +25,57 @@ const HEADERS = REPORTED_ERROR_HEADERS;
 export type ReportedErrorRow = {
   reportedAt: string | null;
   agent: string;
-  environment: string;
-  taxYear: string;
-  module: string;
-  formFeature: string;
   /** legacy alias kept so existing UI tables that read `r.section` still work. */
   section: string;
   description: string;
   expected: string;
-  status: string;
   priority: string;
-  severity: string;
   screenshot: string;
   link: string;
   jira: string;
   comments: string;
-  adminComments: string;
-  validity: string;
-  fixedStatus: string;
-  lastUpdated: string | null;
+  adminReview: string;
+  retestStatus: string;
+  retestComments: string;
+  retestUpdatedAt: string | null;
 };
 
-export function toReportedErrorRow(d: Defect): ReportedErrorRow {
+export type RetestSummary = {
+  defectId: string;
+  status: string;
+  comments: string;
+  updatedAt: string | null;
+};
+
+function adminReviewLabel(d: Defect): string {
+  if (d.validity === "Invalid") return "Invalid Error";
+  if (d.validity === "Valid" && (d.status === "Reported" || d.status === "Pending")) return "Valid Error";
+  if (d.status === "Retest Required") return "Retest Required";
+  if (d.status === "Fixed" || d.status === "Closed") return "Fixed";
+  if (d.status === "Ongoing" || d.status === "In Progress") return "Ongoing";
+  return "Pending";
+}
+
+export function toReportedErrorRow(d: Defect, retest?: RetestSummary | null): ReportedErrorRow {
   const all = d.comments ?? [];
   const own = all.filter((c) => c.author === d.createdBy);
-  const other = all.filter((c) => c.author !== d.createdBy);
   const fmtComments = (xs: typeof all) =>
     xs.map((c) => `${c.author}: ${c.text}`).join("\n\n");
-  const fixedStatus =
-    d.status === "Fixed" || d.status === "Closed"
-      ? d.status
-      : d.status === "Retest Required" || d.status === "Reopened"
-        ? d.status
-        : d.status === "In Progress" || d.status === "Ongoing" || d.status === "Pending" || d.status === "Reported"
-          ? "Pending"
-          : d.status;
   return {
     reportedAt: d.createdAt || null,
     agent: d.createdBy ?? "",
-    environment: d.environment ?? "",
-    taxYear: d.taxYear ?? "",
-    module: d.module ?? "",
-    formFeature: d.formFeature ?? "",
     section: [d.module, d.formFeature].filter(Boolean).join(" / "),
-    description: [d.description, d.actualResult].filter(Boolean).join("\n\n"),
+    description: d.description ?? "",
     expected: d.expectedResult ?? "",
-    status: d.status ?? "",
     priority: d.priority ?? "",
-    severity: d.severity ?? "",
     screenshot: pickScreenshot(d),
     link: pickLink(d),
     jira: d.jiraUrl ?? "",
     comments: fmtComments(own),
-    adminComments: fmtComments(other),
-    validity: d.validity ?? "",
-    fixedStatus,
-    lastUpdated: d.updatedAt || null,
+    adminReview: adminReviewLabel(d),
+    retestStatus: retest?.status ?? "",
+    retestComments: retest?.comments ?? "",
+    retestUpdatedAt: retest?.updatedAt ?? null,
   };
 }
 
@@ -100,29 +91,29 @@ function rowToTuple(r: ReportedErrorRow): (string | number | Date | null)[] {
   return [
     r.reportedAt ? toDate(r.reportedAt) : null,
     r.agent,
-    r.environment,
-    r.taxYear,
-    r.module,
-    r.formFeature,
+    r.section,
     r.description,
     r.expected,
-    r.status,
     r.priority,
-    r.severity,
     r.screenshot,
     r.link,
     r.jira,
     r.comments,
-    r.adminComments,
-    r.validity,
-    r.fixedStatus,
-    r.lastUpdated ? toDate(r.lastUpdated) : null,
+    r.adminReview,
+    r.retestStatus,
+    r.retestComments,
+    r.retestUpdatedAt ? toDate(r.retestUpdatedAt) : null,
   ];
 }
 
 /** Pure builder usable in browser or server runtime. Returns a workbook buffer. */
-export function buildReportedErrorsWorkbook(defects: Defect[]): ArrayBuffer {
-  const rowsTyped: (string | number | Date | null)[][] = defects.map((d) => rowToTuple(toReportedErrorRow(d)));
+export function buildReportedErrorsWorkbook(
+  defects: Defect[],
+  retestsByDefectId?: Map<string, RetestSummary>,
+): ArrayBuffer {
+  const rowsTyped: (string | number | Date | null)[][] = defects.map((d) =>
+    rowToTuple(toReportedErrorRow(d, retestsByDefectId?.get(d.id) ?? null)),
+  );
   const ws = buildSheet(rowsTyped);
   const buf = XLSXStyle.write(
     { SheetNames: ["Reported Errors"], Sheets: { "Reported Errors": ws } },
@@ -179,13 +170,12 @@ function buildSheet(rows: (string | number | Date | null)[][]) {
   });
   ws["!rows"] = [{ hpt: 22 }];
 
-  // Column indices for the expanded layout (see REPORTED_ERROR_HEADERS).
-  // 0:Date  1:Agent  2:Env  3:TaxYear  4:Module  5:Form  6:Desc  7:Expected
-  // 8:Status 9:Priority 10:Severity 11:Screenshot 12:Link 13:Jira
-  // 14:Comments 15:AdminComments 16:Validity 17:Fixed 18:LastUpdated
-  const wrapCols = new Set([6, 7, 14, 15]);
-  const linkCols = new Set([11, 12, 13]);
-  const dateCols = new Set([0, 18]);
+  // Column indices for the simplified layout (see REPORTED_ERROR_HEADERS).
+  // 0:Date 1:Agent 2:Section 3:Desc 4:Expected 5:Priority 6:Screenshot 7:Link
+  // 8:Jira 9:AdditionalComments 10:AdminReview 11:RetestStatus 12:RetestComments 13:RetestUpdated
+  const wrapCols = new Set([3, 4, 9, 12]);
+  const linkCols = new Set([6, 7, 8]);
+  const dateCols = new Set([0, 13]);
   for (let r = 0; r < rows.length; r++) {
     for (let c = 0; c < HEADERS.length; c++) {
       const addr = XLSXStyle.utils.encode_cell({ r: r + 1, c });
@@ -214,14 +204,23 @@ function buildSheet(rows: (string | number | Date | null)[][]) {
   return ws;
 }
 
-export function exportReportedErrorsXlsx(defects: Defect[], env: Environment | null | undefined) {
+export function exportReportedErrorsXlsx(
+  defects: Defect[],
+  env: Environment | null | undefined,
+  retestsByDefectId?: Map<string, RetestSummary>,
+) {
   if (!defects.length) {
     toast.info("No reported errors available to export.");
     return;
   }
   const filename = buildReportedErrorsFilename(env);
-  const rowsTyped: (string | number | Date | null)[][] = defects.map((d) => rowToTuple(toReportedErrorRow(d)));
+  const rowsTyped: (string | number | Date | null)[][] = defects.map((d) =>
+    rowToTuple(toReportedErrorRow(d, retestsByDefectId?.get(d.id) ?? null)),
+  );
   const ws = buildSheet(rowsTyped);
   XLSXStyle.writeFile({ SheetNames: ["Reported Errors"], Sheets: { "Reported Errors": ws } }, filename);
   toast.success(`Exported ${filename}`);
 }
+
+// Re-exported for callers that build retest lookups
+export { extractDefectId };
