@@ -25,19 +25,26 @@ export function SubmitRetestDialog({ open, onOpenChange, assignment }: Props) {
   const [result, setResult] = useState<Result>("Passed");
   const [comments, setComments] = useState("");
   const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState(false);
 
   useEffect(() => {
-    if (open) { setResult("Passed"); setComments(""); }
+    if (open) { setResult("Passed"); setComments(""); setTouched(false); }
   }, [open, assignment?.id]);
 
   if (!assignment) return null;
   const defectId = extractDefectId(assignment.title);
   const cleanTitle = stripDefectTag(assignment.title) || assignment.title;
+  const alreadyCompleted = assignment.status === "Completed";
+  const trimmedComments = comments.trim();
+  const commentsError = touched && !trimmedComments ? "Comments are required." : "";
+  const canSubmit = !busy && !alreadyCompleted && trimmedComments.length > 0;
 
   const submit = async () => {
     if (!currentUser) return;
-    const trimmed = comments.trim();
-    if (!trimmed) { toast.error("Please add retest comments."); return; }
+    setTouched(true);
+    if (alreadyCompleted) { toast.error("This retest has already been submitted."); return; }
+    const trimmed = trimmedComments;
+    if (!trimmed) { toast.error("Please add retest comments before submitting."); return; }
     setBusy(true);
     try {
       const stamp = `[Retest ${result}] ${trimmed}`;
@@ -46,16 +53,26 @@ export function SubmitRetestDialog({ open, onOpenChange, assignment }: Props) {
         .from("retest_assignments")
         .update({ status: "Completed", instructions: newInstructions })
         .eq("id", assignment.id);
-      if (e1) { toast.error(e1.message); return; }
+      if (e1) { toast.error(`Failed to submit retest: ${e1.message}`); return; }
 
       if (defectId) {
-        await addComment(defectId, stamp);
-        await updateDefect(defectId, {
-          status: result === "Passed" ? "Fixed" : "Reopened",
-        });
+        try {
+          await addComment(defectId, stamp);
+          await updateDefect(defectId, {
+            status: result === "Passed" ? "Fixed" : "Reopened",
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Unknown error";
+          toast.error(`Retest saved, but failed to update the linked error: ${msg}`);
+          onOpenChange(false);
+          return;
+        }
       }
       toast.success(`Retest submitted: ${result}`);
       onOpenChange(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unexpected error while submitting.";
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -92,22 +109,36 @@ export function SubmitRetestDialog({ open, onOpenChange, assignment }: Props) {
             </RadioGroup>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="retest-comments">Comments</Label>
+            <Label htmlFor="retest-comments">
+              Comments <span className="text-destructive">*</span>
+            </Label>
             <Textarea
               id="retest-comments"
               placeholder="Describe what you tested and the outcome…"
               rows={5}
               value={comments}
               onChange={(e) => setComments(e.target.value)}
+              onBlur={() => setTouched(true)}
+              aria-invalid={!!commentsError}
+              aria-describedby="retest-comments-error"
+              disabled={alreadyCompleted}
               maxLength={2000}
             />
+            {commentsError ? (
+              <p id="retest-comments-error" className="text-xs text-destructive">{commentsError}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Required. {trimmedComments.length}/2000 characters.</p>
+            )}
+            {alreadyCompleted && (
+              <p className="text-xs text-muted-foreground">This retest has already been submitted and cannot be changed.</p>
+            )}
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
-          <Button onClick={submit} disabled={busy}>
-            {busy ? "Submitting…" : "Submit result"}
+          <Button onClick={submit} disabled={!canSubmit}>
+            {busy ? "Submitting…" : alreadyCompleted ? "Already submitted" : "Submit result"}
           </Button>
         </DialogFooter>
       </DialogContent>
