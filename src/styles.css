@@ -102,6 +102,11 @@
   --gradient-danger: linear-gradient(135deg, oklch(0.6 0.22 27), oklch(0.7 0.2 37));
   --shadow-card: 0 1px 3px 0 oklch(0.21 0.035 255 / 0.06), 0 1px 2px 0 oklch(0.21 0.035 255 / 0.04);
   --shadow-elevated: 0 10px 30px -10px oklch(0.55 0.18 255 / 0.2);
+  /* Selected table-row fill. Tinted from primary so it reads as a deliberate
+     selection state (>=3:1 vs --card per WCAG non-text contrast) instead of
+     blending with --muted/hover. Paired with a 3px inset ring in table.tsx
+     so the cue is not color-only. */
+  --row-selected: color-mix(in oklab, var(--primary) 18%, var(--card));
 }
 
 /* ============================================================
@@ -151,6 +156,7 @@
   --gradient-primary: linear-gradient(135deg, oklch(0.68 0.18 255), oklch(0.78 0.16 255));
   --shadow-card: 0 1px 3px 0 oklch(0 0 0 / 0.4), 0 1px 2px 0 oklch(0 0 0 / 0.3);
   --shadow-elevated: 0 10px 30px -10px oklch(0 0 0 / 0.5);
+  --row-selected: color-mix(in oklab, var(--primary) 26%, var(--card));
 }
 
 @layer base {
