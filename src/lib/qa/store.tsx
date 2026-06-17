@@ -289,6 +289,8 @@ export function QAProvider({ children }: { children: ReactNode }) {
         void loadAll();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => { void loadAll(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "agent_invites" }, () => { void loadAll(); })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "agent_audit_log" }, () => { void loadAll(); })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "defect_audit_log" }, (payload) => {
         const entry = rowToAudit(payload.new as AuditRow);
         setState((s) => ({ ...s, audit: [entry, ...s.audit] }));
