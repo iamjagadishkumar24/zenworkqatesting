@@ -29,6 +29,7 @@ import { Route as AppExcelImportTestingRouteImport } from './routes/_app.excel-i
 import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppChatbotTestingRouteImport } from './routes/_app.chatbot-testing'
+import { Route as AppAuditLogRouteImport } from './routes/_app.audit-log'
 import { Route as AppAgentsRouteImport } from './routes/_app.agents'
 import { Route as App990FormsRouteImport } from './routes/_app.990-forms'
 import { Route as App2290FormsRouteImport } from './routes/_app.2290-forms'
@@ -133,6 +134,11 @@ const AppChatbotTestingRoute = AppChatbotTestingRouteImport.update({
   path: '/chatbot-testing',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAuditLogRoute = AppAuditLogRouteImport.update({
+  id: '/audit-log',
+  path: '/audit-log',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAgentsRoute = AppAgentsRouteImport.update({
   id: '/agents',
   path: '/agents',
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/2290-forms': typeof App2290FormsRoute
   '/990-forms': typeof App990FormsRoute
   '/agents': typeof AppAgentsRoute
+  '/audit-log': typeof AppAuditLogRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/2290-forms': typeof App2290FormsRoute
   '/990-forms': typeof App990FormsRoute
   '/agents': typeof AppAgentsRoute
+  '/audit-log': typeof AppAuditLogRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/_app/2290-forms': typeof App2290FormsRoute
   '/_app/990-forms': typeof App990FormsRoute
   '/_app/agents': typeof AppAgentsRoute
+  '/_app/audit-log': typeof AppAuditLogRoute
   '/_app/chatbot-testing': typeof AppChatbotTestingRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/defects': typeof AppDefectsRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/2290-forms'
     | '/990-forms'
     | '/agents'
+    | '/audit-log'
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/2290-forms'
     | '/990-forms'
     | '/agents'
+    | '/audit-log'
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/_app/2290-forms'
     | '/_app/990-forms'
     | '/_app/agents'
+    | '/_app/audit-log'
     | '/_app/chatbot-testing'
     | '/_app/dashboard'
     | '/_app/defects'
@@ -459,6 +471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatbotTestingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/audit-log': {
+      id: '/_app/audit-log'
+      path: '/audit-log'
+      fullPath: '/audit-log'
+      preLoaderRoute: typeof AppAuditLogRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/agents': {
       id: '/_app/agents'
       path: '/agents'
@@ -494,6 +513,7 @@ interface AppRouteChildren {
   App2290FormsRoute: typeof App2290FormsRoute
   App990FormsRoute: typeof App990FormsRoute
   AppAgentsRoute: typeof AppAgentsRoute
+  AppAuditLogRoute: typeof AppAuditLogRoute
   AppChatbotTestingRoute: typeof AppChatbotTestingRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDefectsRoute: typeof AppDefectsRoute
@@ -517,6 +537,7 @@ const AppRouteChildren: AppRouteChildren = {
   App2290FormsRoute: App2290FormsRoute,
   App990FormsRoute: App990FormsRoute,
   AppAgentsRoute: AppAgentsRoute,
+  AppAuditLogRoute: AppAuditLogRoute,
   AppChatbotTestingRoute: AppChatbotTestingRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDefectsRoute: AppDefectsRoute,
