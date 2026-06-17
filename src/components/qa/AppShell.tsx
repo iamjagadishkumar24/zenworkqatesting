@@ -207,8 +207,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Select>
           </div>
           <form onSubmit={onSearch} className="relative ml-auto hidden md:block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <label htmlFor="qa-header-search" className="sr-only">Search errors, forms, and agents</label>
+            <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              id="qa-header-search"
+              type="search"
               value={q}
               onChange={(e) => {
                 const next = e.target.value;
@@ -226,7 +229,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NotificationsBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-accent">
+              <button
+                type="button"
+                aria-label={currentUser?.name ? `Open account menu for ${currentUser.name}` : "Open account menu"}
+                className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
                 <UserAvatar
                   name={currentUser?.name}
                   email={currentUser?.email}

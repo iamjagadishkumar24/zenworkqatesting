@@ -519,7 +519,7 @@ function InviteAgentCard() {
           <Label htmlFor="invite-pwd">Temporary password</Label>
           <div className="flex gap-1">
             <Input id="invite-pwd" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 chars" />
-            <Button type="button" variant="outline" size="icon" title="Generate" onClick={genPassword}><KeyRound className="h-4 w-4" /></Button>
+            <Button type="button" variant="outline" size="icon" title="Generate" aria-label="Generate temporary password" onClick={genPassword}><KeyRound aria-hidden="true" className="h-4 w-4" /></Button>
           </div>
         </div>
         <Button onClick={submit} disabled={busy}><Plus className="mr-1 h-4 w-4" />{busy ? "Inviting…" : "Invite agent"}</Button>
@@ -568,13 +568,13 @@ function SampleAdminCard() {
             <div>
               <div className="text-xs text-muted-foreground">Email</div>
               <div className="flex items-center gap-1 font-mono">{creds.email}
-                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(creds.email)}><Copy className="h-3 w-3" /></Button>
+                <Button size="icon" variant="ghost" className="h-6 w-6" aria-label="Copy email to clipboard" onClick={() => copy(creds.email)}><Copy aria-hidden="true" className="h-3 w-3" /></Button>
               </div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Password</div>
               <div className="flex items-center gap-1 font-mono">{creds.password}
-                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copy(creds.password)}><Copy className="h-3 w-3" /></Button>
+                <Button size="icon" variant="ghost" className="h-6 w-6" aria-label="Copy password to clipboard" onClick={() => copy(creds.password)}><Copy aria-hidden="true" className="h-3 w-3" /></Button>
               </div>
             </div>
           </div>

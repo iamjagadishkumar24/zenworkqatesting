@@ -388,7 +388,14 @@ export function DefectDetailSheet({
                       />
                       {value && (
                         <Button size="icon" variant="ghost" asChild>
-                          <a href={value} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a>
+                          <a
+                            href={value}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`Open ${f.label} link in a new tab`}
+                          >
+                            <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                          </a>
                         </Button>
                       )}
                     </div>
