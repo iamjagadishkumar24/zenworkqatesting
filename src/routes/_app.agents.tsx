@@ -17,8 +17,11 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Users, Send, Eye, RotateCcw } from "lucide-react";
+import { UserPlus, Trash2, Users, Send, Eye, RotateCcw, KeyRound, Pencil } from "lucide-react";
 import { AgentDetailDrawer } from "@/components/qa/AgentDetailDrawer";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 
 const PROTECTED_ADMIN_EMAIL = "admin@qaportal.app";
 
@@ -35,7 +38,10 @@ export const Route = createFileRoute("/_app/agents")({
 
 function AgentsPage() {
   const { currentUser, users, defects } = useQA();
-  const { items, loading, create, setStatus, remove, deactivate, reactivate, resend } = useAgentInvites();
+  const {
+    items, loading, create, setStatus, remove, deactivate, reactivate, resend,
+    resetPassword, updateProfile,
+  } = useAgentInvites();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
@@ -44,6 +50,13 @@ function AgentsPage() {
   const [viewing, setViewing] = useState<{ id: string | null; name: string; email: string } | null>(null);
   const [showInactive, setShowInactive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ userId: string | null; inviteId: string | null; name: string } | null>(null);
+  const [pwTarget, setPwTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [pwValue, setPwValue] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [editTarget, setEditTarget] = useState<
+    { userId: string; name: string; email: string; role: "admin" | "agent"; active: boolean } | null
+  >(null);
+  const [editSaving, setEditSaving] = useState(false);
 
   useEffect(() => {
     if (!currentUser || currentUser.role !== "admin") return;
@@ -137,6 +150,30 @@ function AgentsPage() {
       if (!res.ok) toast.error(res.error); else toast.success("Invite removed");
     }
     setConfirmDelete(null);
+  };
+
+  const submitPasswordReset = async () => {
+    if (!pwTarget) return;
+    if (pwValue.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    setPwSaving(true);
+    const res = await resetPassword(pwTarget.userId, pwValue);
+    setPwSaving(false);
+    if (!res.ok) { toast.error(res.error); return; }
+    toast.success(`Password updated for ${pwTarget.name}`);
+    setPwTarget(null); setPwValue("");
+  };
+
+  const submitEdit = async () => {
+    if (!editTarget) return;
+    setEditSaving(true);
+    const res = await updateProfile(editTarget.userId, {
+      name: editTarget.name, email: editTarget.email,
+      role: editTarget.role, active: editTarget.active,
+    });
+    setEditSaving(false);
+    if (!res.ok) { toast.error(res.error); return; }
+    toast.success("Agent updated");
+    setEditTarget(null);
   };
 
   return (
@@ -268,6 +305,21 @@ function AgentsPage() {
                             onClick={() => setViewing({ id: r.user_id, name: r.name, email: r.email })}>
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {r.user_id && (
+                            <>
+                              <Button size="sm" variant="ghost" title="Edit agent"
+                                onClick={() => setEditTarget({
+                                  userId: r.user_id!, name: r.name, email: r.email,
+                                  role: "agent", active: r.status !== "inactive",
+                                })}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" title="Reset password"
+                                onClick={() => { setPwTarget({ userId: r.user_id!, name: r.name }); setPwValue(""); }}>
+                                <KeyRound className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                           {r.status === "inactive" && r.user_id ? (
                             <Button size="sm" variant="ghost" title="Reactivate agent"
                               onClick={async () => {
@@ -314,6 +366,69 @@ function AgentsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!pwTarget} onOpenChange={(o) => { if (!o) { setPwTarget(null); setPwValue(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset password — {pwTarget?.name}</DialogTitle>
+            <DialogDescription>
+              The new password is stored securely (hashed). Share it with the agent over a secure channel.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>New password</Label>
+            <Input type="text" value={pwValue} onChange={(e) => setPwValue(e.target.value)}
+              placeholder="At least 8 characters" autoComplete="new-password" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPwTarget(null); setPwValue(""); }}>Cancel</Button>
+            <Button onClick={submitPasswordReset} disabled={pwSaving}>{pwSaving ? "Saving…" : "Save password"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editTarget} onOpenChange={(o) => { if (!o) setEditTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit agent</DialogTitle>
+            <DialogDescription>Update name, email, role, or active status.</DialogDescription>
+          </DialogHeader>
+          {editTarget && (
+            <div className="space-y-3">
+              <div>
+                <Label>Name</Label>
+                <Input value={editTarget.name}
+                  onChange={(e) => setEditTarget({ ...editTarget, name: e.target.value })} />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input type="email" value={editTarget.email}
+                  onChange={(e) => setEditTarget({ ...editTarget, email: e.target.value })} />
+              </div>
+              <div>
+                <Label>Role</Label>
+                <Select value={editTarget.role}
+                  onValueChange={(v) => setEditTarget({ ...editTarget, role: v as "admin" | "agent" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="agent">QA Agent</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={editTarget.active}
+                  onCheckedChange={(v) => setEditTarget({ ...editTarget, active: v })} />
+                <Label className="!mt-0">Active (login enabled)</Label>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
+            <Button onClick={submitEdit} disabled={editSaving}>{editSaving ? "Saving…" : "Save changes"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
