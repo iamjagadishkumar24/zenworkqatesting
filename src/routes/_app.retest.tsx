@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
-import { useRetests, RETEST_STATUSES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
+import { useRetests, RETEST_STATUSES, type RetestAssignment, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
 import { AssignTaskDialog } from "@/components/qa/AssignTaskDialog";
 import { SubmitRetestDialog } from "@/components/qa/SubmitRetestDialog";
 import { isRetestForDefect, stripDefectTag } from "@/lib/qa/retestLink";
@@ -38,7 +38,7 @@ function RetestPage() {
   const isAdmin = currentUser?.role === "admin";
   const [open, setOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
-  const [submitTarget, setSubmitTarget] = useState<typeof items[number] | null>(null);
+  const [submitTarget, setSubmitTarget] = useState<RetestAssignment | null>(null);
 
   return (
     <div className="space-y-6">
