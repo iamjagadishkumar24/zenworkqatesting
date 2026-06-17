@@ -4,6 +4,8 @@ import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useRetests, RETEST_STATUSES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
 import { AssignTaskDialog } from "@/components/qa/AssignTaskDialog";
+import { SubmitRetestDialog } from "@/components/qa/SubmitRetestDialog";
+import { isRetestForDefect, stripDefectTag } from "@/lib/qa/retestLink";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ClipboardCheck, Plus, AlertCircle, RefreshCw, WifiOff, ExternalLink } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { routeForModule } from "@/lib/qa/constants";
 
 export const Route = createFileRoute("/_app/retest")({
@@ -34,6 +37,8 @@ function RetestPage() {
   const { items, loading, error, realtimeOk, updateAssignment, reassign, reload } = useRetests();
   const isAdmin = currentUser?.role === "admin";
   const [open, setOpen] = useState(false);
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [submitTarget, setSubmitTarget] = useState<typeof items[number] | null>(null);
 
   return (
     <div className="space-y-6">
@@ -53,6 +58,7 @@ function RetestPage() {
       </div>
 
       {isAdmin && <AssignTaskDialog open={open} onOpenChange={setOpen} />}
+      <SubmitRetestDialog open={submitOpen} onOpenChange={setSubmitOpen} assignment={submitTarget} />
 
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
@@ -106,11 +112,20 @@ function RetestPage() {
               <TableBody>
                 {items.map((r) => {
                   const canEditStatus = isAdmin || r.assigned_agent_id === currentUser?.id;
+                  const isMine = r.assigned_agent_id === currentUser?.id;
+                  const isRetestForError = isRetestForDefect(r.title);
+                  const canSubmitRetest = isMine && isRetestForError && r.status !== "Completed";
+                  const displayTitle = stripDefectTag(r.title) || r.title;
                   return (
                     <TableRow key={r.id}>
                       <TableCell className="font-mono text-xs">{r.id}</TableCell>
                       <TableCell className="max-w-[260px]">
-                        {r.title && <p className="text-sm font-medium">{r.title}</p>}
+                        {r.title && (
+                          <p className="text-sm font-medium">
+                            {isRetestForError && <Badge variant="outline" className="mr-1 text-[10px]">Retest</Badge>}
+                            {displayTitle}
+                          </p>
+                        )}
                         {r.module && <p className="text-xs text-muted-foreground">{r.module}</p>}
                         <div className="flex flex-wrap gap-1">
                           {r.forms.map((f) => <Badge key={f.id} variant="secondary">{f.form_name}</Badge>)}
@@ -158,6 +173,11 @@ function RetestPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="inline-flex items-center gap-1">
+                          {canSubmitRetest && (
+                            <Button size="sm" onClick={() => { setSubmitTarget(r); setSubmitOpen(true); }}>
+                              <ClipboardList className="mr-1 h-3 w-3" /> Submit result
+                            </Button>
+                          )}
                           <Button asChild size="sm" variant="outline">
                             <Link
                               to={routeForModule(r.module)}
