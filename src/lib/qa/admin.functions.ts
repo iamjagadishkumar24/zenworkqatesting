@@ -417,3 +417,96 @@ export const resendAgentInvite = createServerFn({ method: "POST" })
       email: invite.email, name: invite.name,
     };
   });
+
+/**
+ * Admin action: reset/change an agent's password. The new password is stored
+ * securely (hashed) by Supabase Auth; we never persist plaintext.
+ */
+export const resetAgentPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; password: string }) => {
+    const userId = String(input?.userId || "").trim();
+    const password = String(input?.password || "");
+    if (!userId) throw new Error("userId required");
+    if (password.length < 8) throw new Error("Password must be at least 8 characters");
+    return { userId, password };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Only admins can reset agent passwords");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
+      .from("profiles").select("email, name").eq("id", data.userId).maybeSingle();
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      password: data.password,
+    });
+    if (error) throw new Error(error.message);
+    const performedByName = await getActorName(supabaseAdmin, context.userId);
+    await logAgentAudit(supabaseAdmin, {
+      action: "invite_resent", // reuse existing action enum value as best-fit
+      targetUserId: data.userId,
+      targetEmail: profile?.email ?? "",
+      targetName: profile?.name ?? null,
+      performedById: context.userId, performedByName,
+      details: { kind: "password_reset" },
+    });
+    return { ok: true as const };
+  });
+
+/**
+ * Admin action: update an agent's profile (name and/or role). Email changes
+ * also propagate to the auth user.
+ */
+export const updateAgentProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: {
+    userId: string; name?: string; email?: string; role?: "admin" | "agent"; active?: boolean;
+  }) => {
+    const userId = String(input?.userId || "").trim();
+    if (!userId) throw new Error("userId required");
+    const name = input.name == null ? undefined : String(input.name).trim();
+    const email = input.email == null ? undefined : String(input.email).trim().toLowerCase();
+    if (email !== undefined && !validateEmail(email)) throw new Error("Enter a valid email address");
+    if (name !== undefined && name.length < 2) throw new Error("Name is required");
+    const role = input.role;
+    if (role !== undefined && role !== "admin" && role !== "agent") throw new Error("Invalid role");
+    return { userId, name, email, role, active: input.active };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Only admins can edit agents");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("profiles").select("email, name").eq("id", data.userId).maybeSingle();
+
+    const profileUpdate: { name?: string; email?: string; active?: boolean } = {};
+    if (data.name !== undefined) profileUpdate.name = data.name;
+    if (data.email !== undefined) profileUpdate.email = data.email;
+    if (data.active !== undefined) profileUpdate.active = data.active;
+    if (Object.keys(profileUpdate).length > 0) {
+      const { error } = await supabaseAdmin.from("profiles").update(profileUpdate).eq("id", data.userId);
+      if (error) throw new Error(error.message);
+    }
+
+    if (data.email !== undefined && data.email !== existing?.email) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+        email: data.email, email_confirm: true,
+      });
+      if (error) throw new Error(error.message);
+    }
+    if (data.name !== undefined) {
+      await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+        user_metadata: { name: data.name },
+      }).catch(() => {});
+    }
+
+    if (data.role !== undefined) {
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
+      await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: data.role });
+    }
+    return { ok: true as const };
+  });
