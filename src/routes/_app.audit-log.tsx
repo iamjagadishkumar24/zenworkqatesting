@@ -111,15 +111,18 @@ function AuditLogPage() {
 
   const onExport = () => {
     exportXlsx(
-      filtered.map((r) => ({
-        Date: new Date(r.created_at).toLocaleString(),
-        Action: r.action,
-        "Target email": r.target_email,
-        "Target name": r.target_name ?? "",
-        "Performed by": r.performed_by_name ?? "",
-      })),
       `agent-audit-log-${new Date().toISOString().slice(0, 10)}.xlsx`,
-      "Audit Log",
+      [{
+        name: "Audit Log",
+        rows: filtered.map((r) => ({
+          Date: new Date(r.created_at).toLocaleString(),
+          Action: r.action,
+          "Target email": r.target_email,
+          "Target name": r.target_name ?? "",
+          "Performed by": r.performed_by_name ?? "",
+        })),
+      }],
+      { title: "Agent Audit Log" },
     );
   };
 
