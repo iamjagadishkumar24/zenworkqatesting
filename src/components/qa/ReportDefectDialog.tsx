@@ -15,10 +15,9 @@ import { useEnvironment } from "@/lib/qa/environment";
 import {
   FORM_LIST, INTEGRATIONS, AGENTS, encodeFormFeature, TAX_YEARS, DEFAULT_TAX_YEAR,
 } from "@/lib/qa/constants";
-import type { Defect, Module, Priority, Severity } from "@/lib/qa/types";
+import type { Defect, Module, Priority } from "@/lib/qa/types";
 
 const PRIORITIES: Priority[] = ["Low", "Medium", "High", "Critical"];
-const SEVERITIES: Severity[] = ["Low", "Medium", "High", "Critical"];
 
 type Draft = Omit<Defect, "id" | "createdAt" | "updatedAt" | "updatedBy" | "createdBy" | "comments"> & {
   _form: string; _integration: string;
@@ -114,7 +113,7 @@ export function ReportDefectDialog({
 
     const r = await addDefect(payload);
     if (!r.ok) return toast.error(r.error ?? "Could not save");
-    toast.success("Defect reported");
+    toast.success("Error reported");
     onOpenChange(false);
     setDraft({
       module: defaultModule, formFeature: "", title: "", description: "",
@@ -130,8 +129,8 @@ export function ReportDefectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Report a defect</DialogTitle>
-          <DialogDescription>Capture the reproduction details so engineering can act fast.</DialogDescription>
+          <DialogTitle>Report an error</DialogTitle>
+          <DialogDescription>Capture the issue so engineering can act fast.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -214,13 +213,6 @@ export function ReportDefectDialog({
               <SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div>
-            <Label>Severity</Label>
-            <Select value={draft.severity} onValueChange={(v) => upd("severity", v as Severity)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{SEVERITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
           <div className="sm:col-span-2">
             <Label>Error Title *</Label>
             <Input value={draft.title} onChange={(e) => upd("title", e.target.value)} placeholder="Short summary of the issue" />
@@ -230,16 +222,8 @@ export function ReportDefectDialog({
             <Textarea rows={3} value={draft.description} onChange={(e) => upd("description", e.target.value)} />
           </div>
           <div className="sm:col-span-2">
-            <Label>Steps to Reproduce</Label>
-            <Textarea rows={3} value={draft.stepsToReproduce} onChange={(e) => upd("stepsToReproduce", e.target.value)} />
-          </div>
-          <div>
-            <Label>Expected Result</Label>
+            <Label>Expected Result / Outcome</Label>
             <Textarea rows={2} value={draft.expectedResult} onChange={(e) => upd("expectedResult", e.target.value)} />
-          </div>
-          <div>
-            <Label>Actual Result</Label>
-            <Textarea rows={2} value={draft.actualResult} onChange={(e) => upd("actualResult", e.target.value)} />
           </div>
           <div className="sm:col-span-2">
             <Label>Jira Ticket URL</Label>
@@ -254,14 +238,14 @@ export function ReportDefectDialog({
             <Input value={draft.attachmentUrl2 ?? ""} onChange={(e) => upd("attachmentUrl2", e.target.value)} placeholder="https://…" />
           </div>
           <div className="sm:col-span-2">
-            <Label>Evidence / Screenshot URL</Label>
+            <Label>Screenshots / Recordings Link</Label>
             <Input value={draft.evidenceUrl ?? ""} onChange={(e) => upd("evidenceUrl", e.target.value)} placeholder="https://…" />
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>Create defect</Button>
+          <Button onClick={submit}>Create Error</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
