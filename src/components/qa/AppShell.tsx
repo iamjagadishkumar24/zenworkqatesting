@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FileText, Globe, FileSpreadsheet, Plug, MessageSquare,
   Cpu, Sparkles, Bell as BellIcon, FileUp,
-  BarChart3, Settings, ChevronLeft, ChevronRight, LogOut, Search, ListChecks, ClipboardCheck, UserCog,
+  BarChart3, Settings, ChevronLeft, ChevronRight, LogOut, Search, ListChecks, ClipboardCheck, UserCog, ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
@@ -37,6 +37,7 @@ const nav: NavItem[] = [
   { to: "/my-reported-errors", label: "My Reported Errors", icon: ListChecks },
   { to: "/retest", label: "Task Assignments", icon: ClipboardCheck },
   { to: "/agents", label: "Agent Management", icon: UserCog, adminOnly: true },
+  { to: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
   { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
   { to: "/notifications", label: "Notifications", icon: BellIcon },
   { to: "/settings", label: "Settings", icon: Settings },
