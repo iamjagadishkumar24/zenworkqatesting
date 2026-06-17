@@ -483,7 +483,7 @@ export const updateAgentProfile = createServerFn({ method: "POST" })
     const { data: existing } = await supabaseAdmin
       .from("profiles").select("email, name").eq("id", data.userId).maybeSingle();
 
-    const profileUpdate: Record<string, unknown> = {};
+    const profileUpdate: { name?: string; email?: string; active?: boolean } = {};
     if (data.name !== undefined) profileUpdate.name = data.name;
     if (data.email !== undefined) profileUpdate.email = data.email;
     if (data.active !== undefined) profileUpdate.active = data.active;
