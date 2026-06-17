@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "./store";
-import { deactivateAgent, reactivateAgent, resendAgentInvite } from "./admin.functions";
+import {
+  deactivateAgent, reactivateAgent, resendAgentInvite,
+  resetAgentPassword, updateAgentProfile,
+} from "./admin.functions";
 
 export type AgentInviteStatus = "pending" | "active" | "inactive";
 export type AgentInvite = {
@@ -117,5 +120,29 @@ export function useAgentInvites() {
     }
   };
 
-  return { items, loading, reload: load, create, setStatus, remove, deactivate, reactivate, resend };
+  const resetPassword = async (userId: string, password: string) => {
+    try {
+      await resetAgentPassword({ data: { userId, password } });
+      return { ok: true as const };
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Failed to reset password" };
+    }
+  };
+
+  const updateProfile = async (
+    userId: string,
+    patch: { name?: string; email?: string; role?: "admin" | "agent"; active?: boolean },
+  ) => {
+    try {
+      await updateAgentProfile({ data: { userId, ...patch } });
+      return { ok: true as const };
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Failed to update agent" };
+    }
+  };
+
+  return {
+    items, loading, reload: load, create, setStatus, remove,
+    deactivate, reactivate, resend, resetPassword, updateProfile,
+  };
 }
