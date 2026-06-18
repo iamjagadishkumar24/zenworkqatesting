@@ -36,3 +36,51 @@ export function isTwoTwoNinetyName(name: string): boolean {
 export function excludeNonCatalogForms(names: string[]): string[] {
   return names.filter((n) => !isTwoTwoNinetyName(n) && !/1099\s+corrections/i.test(n));
 }
+
+// -------- Role-based access (client-side guidance) -----------------------
+// Hard authorization is enforced by Postgres RLS + has_role() in the DB.
+// These helpers mirror those rules so the UI can hide/disable actions and
+// be unit-tested in isolation.
+
+export type AppRole = "admin" | "agent";
+
+/** Routes restricted to admins. Anything not in this set is open to all
+ *  signed-in users. */
+const ADMIN_ONLY_ROUTES: readonly string[] = [
+  "/agents",
+  "/audit-log",
+  "/reports",
+];
+
+export function canAccessRoute(role: AppRole | null | undefined, path: string): boolean {
+  if (!role) return false;
+  if (role === "admin") return true;
+  return !ADMIN_ONLY_ROUTES.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
+/** Admin-only actions on defects/users. */
+export function canPerformAdminAction(
+  role: AppRole | null | undefined,
+  action:
+    | "change_user_role"
+    | "deactivate_user"
+    | "delete_defect"
+    | "validate_defect"
+    | "assign_task"
+    | "view_all_audit_log",
+): boolean {
+  if (role !== "admin") return false;
+  void action;
+  return true;
+}
+
+/** Whether the user may export the global org-wide dataset (vs. just their
+ *  own reported errors). Agents can export their own reports only. */
+export function canExport(
+  role: AppRole | null | undefined,
+  scope: "own" | "org",
+): boolean {
+  if (!role) return false;
+  if (scope === "own") return true;
+  return role === "admin";
+}
