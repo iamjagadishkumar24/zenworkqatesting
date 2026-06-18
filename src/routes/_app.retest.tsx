@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useRetests, RETEST_STATUSES, type RetestAssignment, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
@@ -8,6 +8,7 @@ import { SubmitRetestDialog } from "@/components/qa/SubmitRetestDialog";
 import { isRetestForDefect, stripDefectTag } from "@/lib/qa/retestLink";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -39,6 +40,47 @@ function RetestPage() {
   const [open, setOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitTarget, setSubmitTarget] = useState<RetestAssignment | null>(null);
+
+  // Admin-only cross-agent filters
+  const [q, setQ] = useState("");
+  const [agentFilter, setAgentFilter] = useState<string>("all");
+  const [byFilter, setByFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [yearFilter, setYearFilter] = useState<string>("all");
+
+  const assignees = useMemo(
+    () => Array.from(new Set(items.map((r) => r.assigned_agent_name).filter(Boolean))).sort(),
+    [items],
+  );
+  const assigners = useMemo(
+    () => Array.from(new Set(items.map((r) => r.assigned_by_name).filter(Boolean))).sort(),
+    [items],
+  );
+  const years = useMemo(
+    () => Array.from(new Set(items.map((r) => r.tax_year ?? "").filter(Boolean))).sort().reverse(),
+    [items],
+  );
+
+  const visible = useMemo(() => {
+    if (!isAdmin) return items;
+    const term = q.trim().toLowerCase();
+    return items.filter((r) => {
+      if (agentFilter !== "all" && r.assigned_agent_name !== agentFilter) return false;
+      if (byFilter !== "all" && r.assigned_by_name !== byFilter) return false;
+      if (statusFilter !== "all" && r.status !== statusFilter) return false;
+      if (priorityFilter !== "all" && r.priority !== priorityFilter) return false;
+      if (yearFilter !== "all" && (r.tax_year ?? "") !== yearFilter) return false;
+      if (!term) return true;
+      return [r.id, r.title, r.module, r.instructions, r.assigned_agent_name, r.assigned_by_name, r.testing_type]
+        .join(" ").toLowerCase().includes(term);
+    });
+  }, [items, isAdmin, q, agentFilter, byFilter, statusFilter, priorityFilter, yearFilter]);
+
+  const resetFilters = () => {
+    setQ(""); setAgentFilter("all"); setByFilter("all");
+    setStatusFilter("all"); setPriorityFilter("all"); setYearFilter("all");
+  };
 
   return (
     <div className="space-y-6">
@@ -77,22 +119,77 @@ function RetestPage() {
         </div>
       )}
 
+      {isAdmin && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Cross-agent filters</CardTitle>
+            <CardDescription>View tasks across every agent in this environment.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+              <Input placeholder="Search id, title, module…" value={q} onChange={(e) => setQ(e.target.value)} />
+              <Select value={agentFilter} onValueChange={setAgentFilter}>
+                <SelectTrigger><SelectValue placeholder="Assignee" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All assignees</SelectItem>
+                  {assignees.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={byFilter} onValueChange={setByFilter}>
+                <SelectTrigger><SelectValue placeholder="Assigned by" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All assigners</SelectItem>
+                  {assigners.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger><SelectValue placeholder="Priority" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All priorities</SelectItem>
+                  {PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={yearFilter} onValueChange={setYearFilter}>
+                <SelectTrigger><SelectValue placeholder="Tax year" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All years</SelectItem>
+                  {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+              <span>{visible.length} of {items.length} task{items.length === 1 ? "" : "s"}</span>
+              <Button size="sm" variant="ghost" onClick={resetFilters}>Reset filters</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base inline-flex items-center gap-2">
             <ClipboardCheck className="h-4 w-4" /> {isAdmin ? "All tasks" : "My tasks"}
           </CardTitle>
-          <CardDescription>{loading ? "Loading…" : `${items.length} task(s)`}</CardDescription>
+          <CardDescription>{loading ? "Loading…" : `${visible.length} task(s)`}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          {loading && items.length === 0 ? (
+          {loading && visible.length === 0 ? (
             <div className="space-y-2 p-6">
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-2/3" />
             </div>
-          ) : items.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground">No tasks in this environment yet.</p>
+          ) : visible.length === 0 ? (
+            <p className="p-6 text-sm text-muted-foreground">
+              {items.length === 0 ? "No tasks in this environment yet." : "No tasks match the current filters."}
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -110,7 +207,7 @@ function RetestPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((r) => {
+                {visible.map((r) => {
                   const canEditStatus = isAdmin || r.assigned_agent_id === currentUser?.id;
                   const isMine = r.assigned_agent_id === currentUser?.id;
                   const isRetestForError = isRetestForDefect(r.title);
