@@ -537,7 +537,7 @@ export function DefectDetailSheet({
                     <span className="text-muted-foreground">{new Date(defect.createdAt).toLocaleString()}</span>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
-                    <span>{defect.module}{defect.formFeature ? ` • ${defect.formFeature}` : ""}</span>
+                    <span>{defect.formFeature || defect.module}</span>
                     <span className="ml-auto">by {defect.createdBy}</span>
                   </div>
                 </li>
