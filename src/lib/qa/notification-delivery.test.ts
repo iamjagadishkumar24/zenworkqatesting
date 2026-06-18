@@ -52,7 +52,10 @@ describe("notification delivery", () => {
   });
 
   it("webhook sink POSTs once per non-actor recipient", async () => {
-    const fetchMock = vi.fn(async () => new Response("ok", { status: 200 }));
+    const fetchMock = vi.fn(
+      async (_url: string, _init: { method: string; body: string }) =>
+        new Response("ok", { status: 200 }),
+    );
     fanOut(ev, (rid, e) => {
       void fetchMock("https://hook.example/notify", {
         method: "POST",
@@ -60,7 +63,7 @@ describe("notification delivery", () => {
       });
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    const bodies = fetchMock.mock.calls.map((c) => JSON.parse((c[1] as any).body));
+    const bodies = fetchMock.mock.calls.map((c) => JSON.parse(c[1].body));
     expect(bodies.find((b) => b.to === "u-actor")).toBeUndefined();
     expect(bodies.find((b) => b.to === "u-alice")).toBeTruthy();
     expect(bodies.find((b) => b.to === "u-bob")).toBeTruthy();
