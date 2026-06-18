@@ -107,7 +107,7 @@ const ACTION_RULES: Record<Exclude<AuditActionKind, "any">, (action: string) => 
   update:  (a) => /\.(updated|changed|status_changed|priority_changed|severity_changed|validity_changed|reassigned)$/.test(a)
                || /^defect\.(assigned|reassigned)$/.test(a)
                || /^task\.(reassigned|status_changed)$/.test(a),
-  close:   (a) => /\.(closed|completed)$/.test(a),
+  close:   (a) => /^(defect|task)\.(closed|completed)$/.test(a),
   reopen:  (a) => /\.(reopened)$/.test(a),
   export:  (a) => a.startsWith("export."),
   assign:  (a) => /\.(assigned|reassigned)$/.test(a),
