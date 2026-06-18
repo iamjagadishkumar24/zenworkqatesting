@@ -170,7 +170,10 @@ export function useRetests() {
     if (!targets.length && !pendingEmails.length) return { ok: false, error: "Select at least one agent" };
     const created: string[] = [];
     for (const agent of targets) {
-      const id = `RT-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const ty = (input.taxYear && /^\d{4}$/.test(input.taxYear)) ? input.taxYear : String(new Date().getFullYear());
+      const { data: nextId, error: idErr } = await supabase.rpc("next_scoped_id", { _kind: "task", _tax_year: ty });
+      if (idErr || !nextId) return { ok: false, error: idErr?.message ?? "Could not allocate task id" };
+      const id = nextId as string;
       const { error } = await supabase.from("retest_assignments").insert({
         id,
         environment: env ?? "Production",
