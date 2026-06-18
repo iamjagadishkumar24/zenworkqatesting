@@ -6,7 +6,7 @@ import { extractDefectId } from "./retestLink";
 export const REPORTED_ERROR_HEADERS = [
   "Date Reported",
   "Agent Name",
-  "Section / Form / Module",
+  "Form",
   "Error Description",
   "Expected Result / Outcome",
   "Priority",
@@ -64,7 +64,7 @@ export function toReportedErrorRow(d: Defect, retest?: RetestSummary | null): Re
   return {
     reportedAt: d.createdAt || null,
     agent: d.createdBy ?? "",
-    section: [d.module, d.formFeature].filter(Boolean).join(" / "),
+    section: d.formFeature || "",
     description: d.description ?? "",
     expected: d.expectedResult ?? "",
     priority: d.priority ?? "",
