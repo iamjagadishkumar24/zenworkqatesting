@@ -26,9 +26,16 @@ import type { DefectStatus, Priority } from "@/lib/qa/types";
 import { AGENTS, MODULE_OPTIONS } from "@/lib/qa/constants";
 import { toast } from "sonner";
 import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
+import {
+  filterDefectsAdmin,
+  type AdminDefectFilters,
+  type Presence,
+  type RetestState,
+} from "@/lib/qa/adminFilters";
 
 const DEFECT_STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
 const PRIORITIES: Priority[] = ["Low","Medium","High","Critical"];
+const SEVERITIES = ["Low","Medium","High","Critical"] as const;
 const MODULES: string[] = MODULE_OPTIONS;
 
 export const Route = createFileRoute("/_app/my-reported-errors")({
@@ -73,6 +80,11 @@ function ReportedErrorsPage() {
   const [prio, setPrio] = useState<string>("all");
   const [agent, setAgent] = useState<string>("all");
   const [reporter, setReporter] = useState<string>("all");
+  const [sev, setSev] = useState<string>("all");
+  const [year, setYear] = useState<string>("all");
+  const [hasComments, setHasComments] = useState<Presence>("any");
+  const [hasAttach, setHasAttach] = useState<Presence>("any");
+  const [retest, setRetest] = useState<RetestState>("any");
   const [reassignFor, setReassignFor] = useState<{ id: string; current: string } | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const allowAgentExports = useAllowAgentExports();
@@ -89,24 +101,32 @@ function ReportedErrorsPage() {
     () => Array.from(new Set(defects.map((d) => d.createdBy).filter(Boolean))).sort(),
     [defects],
   );
+  const years = useMemo(
+    () => Array.from(new Set(defects.map((d) => d.taxYear ?? "").filter(Boolean))).sort().reverse(),
+    [defects],
+  );
 
   const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return scoped.filter((d) => {
-      if (mod !== "all" && d.module !== mod) return false;
-      if (status !== "all" && d.status !== status) return false;
-      if (prio !== "all" && d.priority !== prio) return false;
-      if (agent !== "all" && d.assignedAgent !== agent) return false;
-      if (reporter !== "all" && d.createdBy !== reporter) return false;
-      if (!term) return true;
-      return [d.id, d.title, d.formFeature, d.module, d.status, d.priority, d.assignedAgent, d.createdBy]
-        .join(" ").toLowerCase().includes(term);
-    });
-  }, [scoped, q, mod, status, prio, agent, reporter]);
+    const f: AdminDefectFilters = {
+      q,
+      module: mod,
+      status: status as AdminDefectFilters["status"],
+      priority: prio as AdminDefectFilters["priority"],
+      severity: sev as AdminDefectFilters["severity"],
+      assignedAgent: isAdmin ? agent : "all",
+      reporter: isAdmin ? reporter : "all",
+      taxYear: year,
+      hasComments: isAdmin ? hasComments : "any",
+      hasAttachments: isAdmin ? hasAttach : "any",
+      retest: isAdmin ? retest : "any",
+    };
+    return filterDefectsAdmin(scoped, f);
+  }, [scoped, q, mod, status, prio, sev, agent, reporter, year, hasComments, hasAttach, retest, isAdmin]);
 
   const resetFilters = () => {
     setQInput("");
     setMod("all"); setStatus("all"); setPrio("all"); setAgent("all"); setReporter("all");
+    setSev("all"); setYear("all"); setHasComments("any"); setHasAttach("any"); setRetest("any");
     navigate({ to: "/my-reported-errors", search: {} as never, replace: true });
   };
 
@@ -181,6 +201,22 @@ function ReportedErrorsPage() {
                   options={[{ v: "all", l: "All agents" }, ...AGENTS.map((a) => ({ v: a, l: a }))]} />
                 <FilterSelect value={reporter} onChange={setReporter} placeholder="Reported by"
                   options={[{ v: "all", l: "All reporters" }, ...reporters.map((a) => ({ v: a, l: a }))]} />
+                <FilterSelect value={sev} onChange={setSev} placeholder="Severity"
+                  options={[{ v: "all", l: "All severities" }, ...SEVERITIES.map((s) => ({ v: s, l: s }))]} />
+                <FilterSelect value={year} onChange={setYear} placeholder="Tax year"
+                  options={[{ v: "all", l: "All tax years" }, ...years.map((y) => ({ v: y, l: y }))]} />
+                <FilterSelect value={hasComments} onChange={(v) => setHasComments(v as Presence)} placeholder="Comments"
+                  options={[{ v: "any", l: "Any comments" }, { v: "yes", l: "Has comments" }, { v: "no", l: "No comments" }]} />
+                <FilterSelect value={hasAttach} onChange={(v) => setHasAttach(v as Presence)} placeholder="Attachments"
+                  options={[{ v: "any", l: "Any attachments" }, { v: "yes", l: "Has attachments" }, { v: "no", l: "No attachments" }]} />
+                <FilterSelect value={retest} onChange={(v) => setRetest(v as RetestState)} placeholder="Retest"
+                  options={[
+                    { v: "any", l: "Any retest state" },
+                    { v: "required", l: "Retest required" },
+                    { v: "passed", l: "Retest passed" },
+                    { v: "failed", l: "Retest failed" },
+                    { v: "none", l: "No retest" },
+                  ]} />
               </>
             )}
           </div>
