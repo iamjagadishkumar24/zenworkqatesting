@@ -30,9 +30,9 @@ export async function recordAuthEvent(opts: {
       _action: `auth.${opts.kind}`,
       _summary: summary,
       _record_type: "auth",
-      _record_id: opts.email ?? null,
+      _record_id: opts.email ?? undefined,
       _result: opts.success === false ? "failure" : "success",
-      _ua: ua,
+      _ua: ua ?? undefined,
       _metadata: opts.metadata ? (opts.metadata as never) : (opts.reason ? ({ reason: opts.reason } as never) : null),
     });
   } catch (e) {
