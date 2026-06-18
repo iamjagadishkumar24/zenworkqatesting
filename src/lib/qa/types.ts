@@ -34,6 +34,8 @@ export type DefectStatus =
   | "In Progress"
   | "Fixed"
   | "Retest Required"
+  | "Retest Passed"
+  | "Retest Failed"
   | "Reopened"
   | "Closed";
 
