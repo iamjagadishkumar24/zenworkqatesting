@@ -375,15 +375,18 @@ describe("activity_log: realtime fan-out delivers rows without refresh", () => {
 describe("recordAuthEvent invokes log_activity RPC with correct shape", () => {
   beforeEach(() => vi.resetModules());
 
+  type RpcCall = (fn: string, args: Record<string, unknown>) => Promise<{ data: null; error: null }>;
+  const okRpc = () => vi.fn<RpcCall>(async () => ({ data: null, error: null }));
+
   it("login event uses auth category and success result", async () => {
-    const rpc = vi.fn(async () => ({ data: null, error: null }));
+    const rpc = okRpc();
     vi.doMock("@/integrations/supabase/client", () => ({
       supabase: { rpc },
     }));
     const { recordAuthEvent } = await import("./activityLog");
     await recordAuthEvent({ kind: "login", email: "admin@qaportal.app", success: true });
     expect(rpc).toHaveBeenCalledTimes(1);
-    const [fn, args] = rpc.mock.calls[0];
+    const [fn, args] = rpc.mock.calls[0]!;
     expect(fn).toBe("log_activity");
     expect(args).toMatchObject({
       _category: "auth",
@@ -391,11 +394,11 @@ describe("recordAuthEvent invokes log_activity RPC with correct shape", () => {
       _result: "success",
       _record_id: "admin@qaportal.app",
     });
-    expect(args._summary).toContain("signed in");
+    expect(String(args._summary)).toContain("signed in");
   });
 
   it("failed login records result=failure with reason metadata", async () => {
-    const rpc = vi.fn(async () => ({ data: null, error: null }));
+    const rpc = okRpc();
     vi.doMock("@/integrations/supabase/client", () => ({
       supabase: { rpc },
     }));
@@ -403,24 +406,24 @@ describe("recordAuthEvent invokes log_activity RPC with correct shape", () => {
     await recordAuthEvent({
       kind: "login", email: "x@y.z", success: false, reason: "invalid_password",
     });
-    const args = rpc.mock.calls[0][1];
+    const args = rpc.mock.calls[0]![1];
     expect(args._result).toBe("failure");
     expect(args._metadata).toEqual({ reason: "invalid_password" });
   });
 
   it("profile_updated uses user_mgmt category", async () => {
-    const rpc = vi.fn(async () => ({ data: null, error: null }));
+    const rpc = okRpc();
     vi.doMock("@/integrations/supabase/client", () => ({
       supabase: { rpc },
     }));
     const { recordAuthEvent } = await import("./activityLog");
     await recordAuthEvent({ kind: "profile_updated", email: "a@b.c" });
-    expect(rpc.mock.calls[0][1]._category).toBe("user_mgmt");
-    expect(rpc.mock.calls[0][1]._action).toBe("auth.profile_updated");
+    expect(rpc.mock.calls[0]![1]._category).toBe("user_mgmt");
+    expect(rpc.mock.calls[0]![1]._action).toBe("auth.profile_updated");
   });
 
   it("swallows RPC errors so user flow is never blocked", async () => {
-    const rpc = vi.fn(async () => { throw new Error("network"); });
+    const rpc = vi.fn<RpcCall>(async () => { throw new Error("network"); });
     vi.doMock("@/integrations/supabase/client", () => ({
       supabase: { rpc },
     }));
