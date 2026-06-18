@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          actor_name: string | null
+          actor_role: string | null
+          category: string
+          defect_id: string | null
+          environment: string | null
+          form_name: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          new_value: Json | null
+          occurred_at: string
+          old_value: Json | null
+          record_id: string | null
+          record_type: string | null
+          result: string
+          session_id: string | null
+          summary: string | null
+          task_id: string | null
+          tax_year: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_name?: string | null
+          actor_role?: string | null
+          category: string
+          defect_id?: string | null
+          environment?: string | null
+          form_name?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_value?: Json | null
+          occurred_at?: string
+          old_value?: Json | null
+          record_id?: string | null
+          record_type?: string | null
+          result?: string
+          session_id?: string | null
+          summary?: string | null
+          task_id?: string | null
+          tax_year?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_name?: string | null
+          actor_role?: string | null
+          category?: string
+          defect_id?: string | null
+          environment?: string | null
+          form_name?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_value?: Json | null
+          occurred_at?: string
+          old_value?: Json | null
+          record_id?: string | null
+          record_type?: string | null
+          result?: string
+          session_id?: string | null
+          summary?: string | null
+          task_id?: string | null
+          tax_year?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       agent_audit_log: {
         Row: {
           action: string
@@ -784,6 +862,31 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_activity: {
+        Args: {
+          _action: string
+          _actor_email?: string
+          _actor_id?: string
+          _actor_name?: string
+          _category: string
+          _defect_id?: string
+          _environment?: string
+          _form_name?: string
+          _ip?: string
+          _metadata?: Json
+          _new_value?: Json
+          _old_value?: Json
+          _record_id?: string
+          _record_type?: string
+          _result?: string
+          _session_id?: string
+          _summary?: string
+          _task_id?: string
+          _tax_year?: string
+          _ua?: string
+        }
+        Returns: string
       }
       next_scoped_id: {
         Args: { _kind: string; _tax_year: string }
