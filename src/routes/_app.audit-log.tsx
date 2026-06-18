@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollText, RefreshCw, Download, Activity, ShieldAlert, LogIn, Bug, ClipboardList, UserCog, Users, Clock } from "lucide-react";
 import { exportXlsx } from "@/lib/qa/export";
+import { matchesAuditAction, type AuditActionKind, type AuditRecordKind } from "@/lib/qa/adminFilters";
 
 export const Route = createFileRoute("/_app/audit-log")({
   component: AuditLogPage,
@@ -81,6 +82,8 @@ function AuditLogPage() {
   const [category, setCategory] = useState<string>("all");
   const [role, setRole] = useState<string>("all");
   const [actor, setActor] = useState<string>("all");
+  const [recordKind, setRecordKind] = useState<AuditRecordKind>("any");
+  const [actionKind, setActionKind] = useState<AuditActionKind>("any");
   const [defectId, setDefectId] = useState("");
   const [taskId, setTaskId] = useState("");
   const [taxYear, setTaxYear] = useState("");
@@ -132,6 +135,11 @@ function AuditLogPage() {
       if (category !== "all" && r.category !== category) return false;
       if (role !== "all" && (r.actor_role ?? "") !== role) return false;
       if (actor !== "all" && (r.actor_name ?? "") !== actor) return false;
+      if (recordKind !== "any") {
+        const rt = (r.record_type ?? r.category ?? "").toLowerCase();
+        if (rt !== recordKind) return false;
+      }
+      if (!matchesAuditAction(r.action, actionKind)) return false;
       if (d && !(r.defect_id ?? "").toLowerCase().includes(d)) return false;
       if (t && !(r.task_id ?? "").toLowerCase().includes(t)) return false;
       if (ty && (r.tax_year ?? "") !== ty) return false;
@@ -145,7 +153,7 @@ function AuditLogPage() {
       if (toTs && ts > toTs) return false;
       return true;
     });
-  }, [rows, search, category, role, actor, defectId, taskId, taxYear, form, from, to]);
+  }, [rows, search, category, role, actor, recordKind, actionKind, defectId, taskId, taxYear, form, from, to]);
 
   const actors = useMemo(
     () => Array.from(new Set(rows.map((r) => r.actor_name ?? "").filter(Boolean))).sort(),
@@ -267,6 +275,33 @@ function AuditLogPage() {
                 {actors.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={recordKind} onValueChange={(v) => setRecordKind(v as AuditRecordKind)}>
+              <SelectTrigger><SelectValue placeholder="Record type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">All record types</SelectItem>
+                <SelectItem value="defect">Defects</SelectItem>
+                <SelectItem value="task">Tasks</SelectItem>
+                <SelectItem value="comment">Comments</SelectItem>
+                <SelectItem value="user">Users</SelectItem>
+                <SelectItem value="export">Exports</SelectItem>
+                <SelectItem value="role">Roles</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={actionKind} onValueChange={(v) => setActionKind(v as AuditActionKind)}>
+              <SelectTrigger><SelectValue placeholder="Action" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">All actions</SelectItem>
+                <SelectItem value="create">Create</SelectItem>
+                <SelectItem value="update">Update</SelectItem>
+                <SelectItem value="assign">Assign / Reassign</SelectItem>
+                <SelectItem value="close">Close / Complete</SelectItem>
+                <SelectItem value="reopen">Reopen</SelectItem>
+                <SelectItem value="export">Export</SelectItem>
+                <SelectItem value="delete">Delete</SelectItem>
+                <SelectItem value="comment">Comment</SelectItem>
+                <SelectItem value="auth">Auth</SelectItem>
+              </SelectContent>
+            </Select>
             <Input placeholder="Defect ID (e.g. ZEN-2026-01)" value={defectId} onChange={(e) => setDefectId(e.target.value)} />
             <Input placeholder="Task ID" value={taskId} onChange={(e) => setTaskId(e.target.value)} />
             <Input placeholder="Tax year (e.g. 2026)" value={taxYear} onChange={(e) => setTaxYear(e.target.value)} />
@@ -276,9 +311,9 @@ function AuditLogPage() {
               <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="To date" />
             </div>
           </div>
-          {(search || category !== "all" || role !== "all" || actor !== "all" || defectId || taskId || taxYear || form || from || to) && (
+          {(search || category !== "all" || role !== "all" || actor !== "all" || recordKind !== "any" || actionKind !== "any" || defectId || taskId || taxYear || form || from || to) && (
             <div className="mt-3">
-              <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setCategory("all"); setRole("all"); setActor("all"); setDefectId(""); setTaskId(""); setTaxYear(""); setForm(""); setFrom(""); setTo(""); }}>
+              <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setCategory("all"); setRole("all"); setActor("all"); setRecordKind("any"); setActionKind("any"); setDefectId(""); setTaskId(""); setTaxYear(""); setForm(""); setFrom(""); setTo(""); }}>
                 Clear filters
               </Button>
             </div>
