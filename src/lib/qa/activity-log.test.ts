@@ -98,7 +98,12 @@ function defectInsertTrigger(sink: Sink, n: Defect) {
 
 function defectUpdateTrigger(sink: Sink, o: Defect, n: Defect) {
   const actor = n.updated_by;
-  const emit = (action: string, oldV: object, newV: object, summary: string) =>
+  const emit = (
+    action: string,
+    oldV: Record<string, unknown>,
+    newV: Record<string, unknown>,
+    summary: string,
+  ) =>
     sink.insert({
       category: "defect",
       action,
