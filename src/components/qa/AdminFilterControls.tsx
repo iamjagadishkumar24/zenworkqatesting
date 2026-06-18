@@ -4,11 +4,52 @@
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Lock } from "lucide-react";
 import type {
   AuditActionKind, AuditRecordKind, Presence, RetestState,
 } from "@/lib/qa/adminFilters";
 
 type Opt = { v: string; l: string };
+
+/**
+ * Inline unauthorized notice shown to QA agents in place of admin-only
+ * cross-agent filter controls. Explains *why* the controls are missing
+ * without affecting the agent's own single-agent view.
+ */
+function UnauthorizedFilterNotice({
+  scope, testId,
+}: { scope: "defect" | "audit"; testId: string }) {
+  const label = scope === "defect"
+    ? "Cross-agent defect filters are admin-only"
+    : "Admin-only audit filters";
+  const detail = scope === "defect"
+    ? "Only administrators can filter defects across other agents. Your view continues to show the records assigned to or reported by you."
+    : "Only administrators can pivot the audit log by actor, record type, or action. Your view continues to show audit events scoped to your account.";
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            data-testid={testId}
+            role="note"
+            aria-label={label}
+            tabIndex={0}
+            className="inline-flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 px-3 py-2 text-xs text-muted-foreground cursor-help select-none"
+          >
+            <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{label}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-xs text-xs">
+          {detail}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 function FilterSelect({
   value, onChange, placeholder, options, ariaLabel,
@@ -45,7 +86,9 @@ export type DefectAdminFilterProps = {
 
 /** Admin-only cross-agent defect filters. Renders nothing for agents. */
 export function AdminDefectFilterControls(props: DefectAdminFilterProps) {
-  if (!props.isAdmin) return null;
+  if (!props.isAdmin) {
+    return <UnauthorizedFilterNotice scope="defect" testId="admin-defect-filters-locked" />;
+  }
   const { values: v, onChange: o, agents, reporters, years } = props;
   const SEVS = ["Low", "Medium", "High", "Critical"];
   return (
@@ -87,7 +130,9 @@ export type AuditAdminFilterProps = {
 
 /** Admin-only Audit Log filters. Renders nothing for agents. */
 export function AdminAuditFilterControls(props: AuditAdminFilterProps) {
-  if (!props.isAdmin) return null;
+  if (!props.isAdmin) {
+    return <UnauthorizedFilterNotice scope="audit" testId="admin-audit-filters-locked" />;
+  }
   const { values: v, onChange: o, actors } = props;
   return (
     <div data-testid="admin-audit-filters" className="contents">
