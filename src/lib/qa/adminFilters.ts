@@ -103,7 +103,7 @@ export type AdminAuditFilters = {
 };
 
 const ACTION_RULES: Record<Exclude<AuditActionKind, "any">, (action: string) => boolean> = {
-  create:  (a) => /\.(created|added)$/.test(a),
+  create:  (a) => /\.created$/.test(a),
   update:  (a) => /\.(updated|changed|status_changed|priority_changed|severity_changed|validity_changed|reassigned)$/.test(a)
                || /^defect\.(assigned|reassigned)$/.test(a)
                || /^task\.(reassigned|status_changed)$/.test(a),
