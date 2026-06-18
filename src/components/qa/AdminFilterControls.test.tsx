@@ -30,19 +30,26 @@ describe("AdminDefectFilterControls visibility", () => {
   });
 
   it("hides every cross-agent filter for QA agents", () => {
-    const { container } = render(<AdminDefectFilterControls isAdmin={false} {...defectProps} />);
-    expect(container).toBeEmptyDOMElement();
+    render(<AdminDefectFilterControls isAdmin={false} {...defectProps} />);
     expect(screen.queryByTestId("admin-defect-filters")).toBeNull();
     for (const label of ADMIN_DEFECT_LABELS) {
       expect(screen.queryByLabelText(label)).toBeNull();
     }
+    // Inline unauthorized notice is shown in place of the controls.
+    const notice = screen.getByTestId("admin-defect-filters-locked");
+    expect(notice).toBeInTheDocument();
+    expect(notice).toHaveAttribute("role", "note");
+    expect(notice).toHaveAccessibleName(/admin-only/i);
   });
 
   it("agent view still allows a safe single-agent (own) view — no cross-agent controls leak", () => {
-    // The agent never receives admin filter UI even when defect data is present.
+    // The agent never receives admin filter UI even when defect data is present,
+    // and the inline notice never renders an interactive filter control.
     render(<AdminDefectFilterControls isAdmin={false} {...defectProps} />);
     expect(screen.queryByLabelText("Assigned")).toBeNull();
     expect(screen.queryByLabelText("Reported by")).toBeNull();
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.getByTestId("admin-defect-filters-locked")).toBeInTheDocument();
   });
 });
 
@@ -57,17 +64,23 @@ describe("AdminAuditFilterControls visibility", () => {
   });
 
   it("hides Actor / Record type / Action filters for QA agents", () => {
-    const { container } = render(<AdminAuditFilterControls isAdmin={false} {...auditProps} />);
-    expect(container).toBeEmptyDOMElement();
+    render(<AdminAuditFilterControls isAdmin={false} {...auditProps} />);
     for (const label of ADMIN_AUDIT_LABELS) {
       expect(screen.queryByLabelText(label)).toBeNull();
     }
+    const notice = screen.getByTestId("admin-audit-filters-locked");
+    expect(notice).toBeInTheDocument();
+    expect(notice).toHaveAttribute("role", "note");
+    expect(notice).toHaveAccessibleName(/admin-only/i);
   });
 
   it("null role is treated the same as agent (no admin UI)", () => {
-    const { container } = render(
+    render(
       <AdminAuditFilterControls isAdmin={null as unknown as boolean} {...auditProps} />,
     );
-    expect(container).toBeEmptyDOMElement();
+    for (const label of ADMIN_AUDIT_LABELS) {
+      expect(screen.queryByLabelText(label)).toBeNull();
+    }
+    expect(screen.getByTestId("admin-audit-filters-locked")).toBeInTheDocument();
   });
 });
