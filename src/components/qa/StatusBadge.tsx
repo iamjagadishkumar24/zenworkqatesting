@@ -43,6 +43,8 @@ const defectMap: Record<DefectStatus, string> = {
   "In Progress": "bg-info/10 text-info border-info/20",
   Fixed: "bg-success/10 text-success border-success/20",
   "Retest Required": "bg-accent text-accent-foreground border-border",
+  "Retest Passed": "bg-success/10 text-success border-success/20",
+  "Retest Failed": "bg-destructive/10 text-destructive border-destructive/20",
   Reopened: "bg-destructive/10 text-destructive border-destructive/20",
   Closed: "bg-muted text-muted-foreground border-border",
 };
