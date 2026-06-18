@@ -24,7 +24,7 @@ import {
   Activity as ActivityIcon, Pencil, UserPlus, Plus, MessageCircle, Check, X,
 } from "lucide-react";
 
-const STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
+const STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Retest Passed","Retest Failed","Reopened","Closed"];
 const LEVELS: Priority[] = ["Low","Medium","High","Critical"];
 const MODULES = ["1099 Forms","990 Forms","Integrations","1099 Online"] as const;
 
@@ -35,15 +35,21 @@ const ADMIN_REVIEW_STATUSES = [
   "Valid Error",
   "Invalid Error",
   "Retest Required",
+  "Retest Passed",
+  "Retest Failed",
   "Fixed",
+  "Closed",
 ] as const;
 type AdminReviewStatus = typeof ADMIN_REVIEW_STATUSES[number];
 
 function currentAdminReview(d: Defect): AdminReviewStatus {
   if (d.validity === "Invalid") return "Invalid Error";
   if (d.validity === "Valid" && (d.status === "Reported" || d.status === "Pending")) return "Valid Error";
+  if (d.status === "Retest Passed") return "Retest Passed";
+  if (d.status === "Retest Failed") return "Retest Failed";
   if (d.status === "Retest Required") return "Retest Required";
-  if (d.status === "Fixed" || d.status === "Closed") return "Fixed";
+  if (d.status === "Closed") return "Closed";
+  if (d.status === "Fixed") return "Fixed";
   if (d.status === "Ongoing" || d.status === "In Progress") return "Ongoing";
   return "Pending";
 }
@@ -222,7 +228,10 @@ export function DefectDetailSheet({
     if (next === "Valid Error") patch = { validity: "Valid", status: "Pending" };
     else if (next === "Invalid Error") patch = { validity: "Invalid", status: "Closed" };
     else if (next === "Retest Required") patch = { status: "Retest Required" };
+    else if (next === "Retest Passed") patch = { status: "Retest Passed" };
+    else if (next === "Retest Failed") patch = { status: "Retest Failed" };
     else if (next === "Fixed") patch = { status: "Fixed" };
+    else if (next === "Closed") patch = { status: "Closed" };
     else if (next === "Ongoing") patch = { status: "Ongoing" };
     else if (next === "Pending") patch = { status: "Pending" };
     await quickPatch(patch, `Review status: ${next}`);

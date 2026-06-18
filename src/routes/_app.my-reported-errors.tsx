@@ -19,8 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
-import { AssignTaskDialog } from "@/components/qa/AssignTaskDialog";
-import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Plus, Download } from "lucide-react";
+import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Download } from "lucide-react";
 import { ExportPreviewDialog } from "@/components/qa/ExportPreviewDialog";
 import { useAllowAgentExports } from "@/lib/qa/useExportJob";
 import type { DefectStatus, Priority } from "@/lib/qa/types";
@@ -74,7 +73,6 @@ function ReportedErrorsPage() {
   const [prio, setPrio] = useState<string>("all");
   const [agent, setAgent] = useState<string>("all");
   const [reporter, setReporter] = useState<string>("all");
-  const [assignTaskOpen, setAssignTaskOpen] = useState(false);
   const [reassignFor, setReassignFor] = useState<{ id: string; current: string } | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const allowAgentExports = useAllowAgentExports();
@@ -149,11 +147,6 @@ function ReportedErrorsPage() {
           <p className="text-sm text-muted-foreground">{description} {filtered.length} shown.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {isAdmin && (
-            <Button onClick={() => setAssignTaskOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Assign Task
-            </Button>
-          )}
           {canExport && (
             <Button
               variant="outline"
@@ -272,8 +265,6 @@ function ReportedErrorsPage() {
 
       <DefectDetailSheet defectId={openId} open={!!openId} onOpenChange={(o) => { if (!o) setOpenId(null); }} />
       <DefectDetailSheet defectId={editId} open={!!editId} initialEdit onOpenChange={(o) => { if (!o) setEditId(null); }} />
-
-      {isAdmin && <AssignTaskDialog open={assignTaskOpen} onOpenChange={setAssignTaskOpen} />}
 
       <ExportPreviewDialog
         open={exportOpen}
