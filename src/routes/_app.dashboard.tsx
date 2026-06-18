@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
@@ -20,7 +20,6 @@ function Dashboard() {
   const { forms, defects, currentUser } = useQA();
   const { env } = useEnvironment();
   const { taxYear } = useTaxYear();
-  const navigate = useNavigate();
   const { items: retestItems } = useRetests();
 
   // Tasks assigned to current user (or all, for admins) scoped by env + tax year
@@ -116,13 +115,17 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-        {kpis.map((k) => (
-          <button
-            key={k.label}
-            onClick={() => navigate({ to: k.to })}
-            className="group text-left"
-          >
-            <Card className="overflow-hidden border-border transition-all hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5">
+        {kpis.map((k) => {
+          const enabled = k.value > 0;
+          const inner = (
+            <Card
+              className={cn(
+                "overflow-hidden border-border transition-all",
+                enabled
+                  ? "hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
+                  : "opacity-60",
+              )}
+            >
               <CardContent className="p-3">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
@@ -130,9 +133,7 @@ function Dashboard() {
                     <p className="mt-1 text-xl font-bold tracking-tight">{k.value.toLocaleString()}</p>
                   </div>
                   <div
-                    className={cn(
-                      "grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white",
-                    )}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white"
                     style={{
                       background:
                         k.tone === "success" ? "var(--gradient-success)" :
@@ -146,8 +147,31 @@ function Dashboard() {
                 </div>
               </CardContent>
             </Card>
-          </button>
-        ))}
+          );
+          if (!enabled) {
+            return (
+              <div
+                key={k.label}
+                role="button"
+                aria-disabled="true"
+                tabIndex={-1}
+                title="No records available."
+                className="text-left cursor-not-allowed select-none"
+              >
+                {inner}
+              </div>
+            );
+          }
+          return (
+            <Link
+              key={k.label}
+              to={k.to}
+              className="group block text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+            >
+              {inner}
+            </Link>
+          );
+        })}
       </div>
 
       <section>
