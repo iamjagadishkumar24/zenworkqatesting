@@ -190,7 +190,13 @@ export function DefectDetailSheet({
       toast.error("Original reporter not found — cannot assign retest.");
       return;
     }
-    const id = `RT-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const ty = (defect.taxYear && /^\d{4}$/.test(defect.taxYear)) ? defect.taxYear : String(new Date().getFullYear());
+    const { data: nextId, error: idErr } = await supabase.rpc("next_scoped_id", { _kind: "task", _tax_year: ty });
+    if (idErr || !nextId) {
+      toast.error(idErr?.message ?? "Could not allocate task id");
+      return;
+    }
+    const id = nextId as string;
     const { error } = await supabase.from("retest_assignments").insert({
       id,
       environment: defect.environment ?? "Production",
@@ -537,7 +543,7 @@ export function DefectDetailSheet({
                     <span className="text-muted-foreground">{new Date(defect.createdAt).toLocaleString()}</span>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
-                    <span>{defect.module}{defect.formFeature ? ` • ${defect.formFeature}` : ""}</span>
+                    <span>{defect.formFeature || defect.module}</span>
                     <span className="ml-auto">by {defect.createdBy}</span>
                   </div>
                 </li>

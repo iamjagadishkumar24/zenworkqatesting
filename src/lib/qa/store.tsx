@@ -358,7 +358,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
 
     addDefect: async (d) => {
       const me = requireUser();
-      const id = `DEF-${1000 + Math.floor(Date.now() % 100000)}`;
+      const ty = (d.taxYear && /^\d{4}$/.test(d.taxYear)) ? d.taxYear : String(new Date().getFullYear());
+      const { data: nextId, error: idErr } = await supabase.rpc("next_scoped_id", { _kind: "defect", _tax_year: ty });
+      if (idErr || !nextId) return { ok: false, error: idErr?.message ?? "Could not allocate defect id" };
+      const id = nextId as string;
       const { error } = await supabase.from("defects").insert({
         id, module: d.module, form_feature: d.formFeature, title: d.title,
         description: d.description, steps_to_reproduce: d.stepsToReproduce,

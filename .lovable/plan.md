@@ -1,113 +1,66 @@
-# Error Reporting & Retest Workflow Overhaul
+This is a large, multi-area change set spanning the dashboard, ID generation, reports, theming, notifications, workflow audits, DB, APIs, and tests. I want to land it in clearly-scoped phases so each piece is reviewable and safely reversible, rather than as one giant patch that risks regressions across the whole app.
 
-This is a large, cross-cutting change. Below is the plan I'll execute. I'll confirm before touching code.
+## Phase 1 — Quick, high-impact frontend fixes (no DB risk)
 
-## 1. Terminology: Defect → Error (UI only)
+1. **Dashboard cards conditional clickability** (`src/routes/_app.dashboard.tsx`)
+   - Build a shared `<KpiCard>` that renders as `<Link>` when `count > 0` and as a non-interactive `<div>` (with `aria-disabled`, `cursor-not-allowed`, reduced opacity, and a "No records available." tooltip) when `count === 0`.
+   - Apply to Total Tests, Open / Valid / Invalid / Fixed / Retest Errors and any other summary widgets.
 
-Rename across ALL user-facing strings: page titles, nav items, buttons, table headers, toasts, dashboard cards, dialogs, empty states, exports.
+2. **Default Light theme**
+   - Force light as the initial value in the theme bootstrap (no `prefers-color-scheme` fallback).
+   - Persist user override; if no override, always light. Verify across `__root.tsx` and any theme provider.
 
-- "Report Defect" → "Report Error"
-- "Open Defects" → "Open Errors"
-- "My Reported Defects" → "My Reported Errors"
-- "Defect Details" → "Error Details"
-- "Create Defect" → "Create Error"
-- Nav item "Defects" → "Errors"
+3. **Report label formatting**
+   - Replace `Module <X> / Form <Y>` strings with just `Form <Y>` everywhere they are produced: dashboard reports, defect detail, exports (PDF/CSV/Excel in `src/lib/qa/export.ts` + `exportReportedErrors.ts`), email templates (`emailTemplates.ts`), notifications.
 
-Internal code (DB tables `defects`, types `Defect`, functions `addDefect`, routes `/defects`) will stay as-is to avoid a destructive schema migration and a massive route rename. Only the visible text changes. (If you want me to also rename routes/files/DB, say so — that's a much larger change.)
+## Phase 2 — Tax-year-based ID generation (DB migration)
 
-## 2. Report-Error form simplification
+New schema:
+```sql
+CREATE TABLE public.id_sequences (
+  kind text NOT NULL,        -- 'defect' | 'task'
+  tax_year text NOT NULL,
+  last_seq int NOT NULL DEFAULT 0,
+  PRIMARY KEY (kind, tax_year)
+);
 
-In `ReportDefectDialog.tsx` (and any edit/view surfaces — `DefectDetailSheet.tsx`):
+CREATE OR REPLACE FUNCTION public.next_scoped_id(_kind text, _tax_year text)
+RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE n int; prefix text;
+BEGIN
+  INSERT INTO id_sequences(kind, tax_year, last_seq) VALUES (_kind, _tax_year, 1)
+  ON CONFLICT (kind, tax_year) DO UPDATE SET last_seq = id_sequences.last_seq + 1
+  RETURNING last_seq INTO n;
+  prefix := CASE _kind WHEN 'defect' THEN 'ZEN' WHEN 'task' THEN 'TASK' END;
+  RETURN prefix || '-' || _tax_year || '-' || lpad(n::text, 2, '0');
+END $$;
+```
+- `defects.id` and `retest_assignments.id` stay `text` (already are) so existing rows keep working.
+- Server functions that create defects/tasks call `next_scoped_id('defect'|'task', tax_year)` inside the same transaction as the insert — atomic, race-safe via row-level upsert lock.
+- Backfill is NOT performed; only new records use the new format. Existing `DEF-*` / `RT-*` ids remain valid.
 
-- Remove **Steps to Reproduce** field
-- Remove **Actual Result** field
-- Remove **Severity** field (everywhere — form, detail, filters, columns, exports)
-- Keep **Priority** with options: Low, Medium, High, Critical
+## Phase 3 — Notification self-exclusion
 
-The underlying DB columns will stay (to preserve historical data) but be hidden from UI and exports. New errors will leave them null.
+- Update DB trigger functions `notify_defect_changes`, `notify_defect_comment`, `notify_retest_changes` so every `INSERT INTO notifications` is guarded by `WHERE recipient_uid <> actor_uid`.
+- Actor is derived from `NEW.updated_by` / `NEW.created_by` / `NEW.author` via `public.user_id_for_name(...)` (already exists).
+- Mirror the rule in any app-level email/notification dispatch in `notificationRouting.ts` and `email.functions.ts`.
 
-## 3. Admin review status
+## Phase 4 — Workflow, dashboard, DB, API audits + tests (scoped follow-up)
 
-Extend admin review on an error to support these statuses:
-`Valid Error`, `Invalid Error`, `Retest Required`, `Fixed`, `Ongoing`, `Pending`.
+Read-and-verify pass, fixing only concrete defects found:
+- Walk error + task state machines end-to-end, confirm status transitions, count refresh, audit log entries.
+- Spot-check dashboard counts vs DB with `supabase--read_query`.
+- Add focused vitest coverage for: KPI card disabled behavior, `next_scoped_id` formatting, notification self-exclusion routing helper, report label formatter.
 
-These map to the existing `defects.status` + `validity` fields. Concretely:
-- `Pending` (default), `Ongoing`, `Fixed` → status
-- `Valid Error` / `Invalid Error` → validity flag
-- `Retest Required` → triggers the retest workflow below
+## Out of scope for this plan (call out, don't silently do)
 
-Admin gets a single "Review Status" dropdown in the Error Detail sheet that writes the right combination.
+- Full responsive/a11y redesign of every page.
+- Backfilling old IDs to the new ZEN-/TASK- format.
+- Rebuilding the entire API layer or migrating notifications to push.
+- 100% E2E coverage — I'll add targeted tests, not a full Playwright suite.
 
-## 4. Invalid Error behavior
+## Recommended order of execution
 
-When admin sets status to **Invalid Error**:
-- Persist validity = Invalid; status label shows "Invalid Error"
-- Insert a `notifications` row for the original reporter ("Your error X was marked invalid")
-- Record stays visible in admin reports, history, and the agent's "My Reported Errors"
-- No deletion
+I'd like to ship Phase 1 first (pure frontend, zero migration risk), then Phase 2 (one migration), then Phase 3 (one migration), then Phase 4. Each phase ends with a build + targeted test run before moving on.
 
-## 5. Retest Required workflow
-
-When admin sets status to **Retest Required**:
-- Create a `retest_assignments` row with `assigned_agent_id = original reporter`, linked to the defect id, priority copied, admin comment copied as instructions
-- Notify only that agent
-- Status on the error becomes "Retest Required"
-
-Reuses the existing `retest_assignments` table — no schema migration needed.
-
-## 6. Agent dashboard: "Retest Errors" section
-
-On `_app.dashboard.tsx`, add a new section **Retest Errors** for the signed-in agent only. Shows their open `retest_assignments`:
-- Error title/summary, Form/Module, Priority, Admin comment, Current status, **Open / Retest** action button
-
-## 7. Retest action
-
-Clicking the action opens a dialog where the agent can:
-- View the linked error
-- Add retest comments
-- Set retest result = Passed / Failed
-- Add screenshot/recording link (optional)
-- Submit → updates `retest_assignments.status` to Completed, notifies admin, writes back to the defect (status → Fixed if Passed, stays Retest Required / reopens if Failed)
-
-## 8. Retest visibility
-
-RLS on `retest_assignments` already scopes to assigned agent. Dashboard query filters by `assigned_agent_id = auth.uid()`. No other agent sees it.
-
-## 9. Admin tracking on Reported Errors page
-
-In Admin "Errors" / Reports views, add columns/fields:
-- Original reporting agent
-- Retest assigned agent
-- Retest status
-- Retest comments
-- Retest updated date
-- Admin review status
-
-## 10. Excel export updates (`exportReportedErrors.ts`)
-
-Remove columns: Steps to Reproduce, Actual Result, Severity.
-
-Keep / add columns (in order):
-Date Reported, Agent Name, Section/Form/Module, Error Description, Expected Result/Outcome, Priority, Screenshots/Recordings Link, General Link, Jira Link, Additional Comments, Admin Review Status, Retest Status, Retest Comments, Retest Updated Date.
-
-Join with `retest_assignments` to fill retest columns.
-
-## Files I expect to touch
-
-- `src/components/qa/ReportDefectDialog.tsx` (remove fields, rename labels)
-- `src/components/qa/DefectDetailSheet.tsx` (admin review dropdown, retest trigger, hide removed fields)
-- `src/components/qa/AppShell.tsx` (nav label)
-- `src/routes/_app.dashboard.tsx` (Retest Errors section + rename cards)
-- `src/routes/_app.defects.tsx` (rename to "Errors" UI, remove severity column)
-- `src/routes/_app.my-reported-errors.tsx`, `_app.my-errors.tsx`, `_app.reports.tsx`, `_app.retest.tsx` (terminology + columns)
-- `src/lib/qa/exportReportedErrors.ts` (column changes)
-- `src/lib/qa/store.tsx` / `admin.functions.ts` (Retest Required handler creates retest assignment)
-- New small dialog: `src/components/qa/RetestSubmitDialog.tsx`
-
-## Things I will NOT do unless you confirm
-
-- Rename DB tables/columns or route file paths (would break historical data + URLs)
-- Rename TypeScript types like `Defect` or function names like `addDefect`
-- Delete the `severity`, `steps_to_reproduce`, `actual_result` DB columns (kept for historical data, just hidden)
-
-Reply "go" to proceed, or tell me what to adjust.
+**Question before I start:** do you want me to proceed through all four phases in this session, or stop after Phase 1 so you can verify the UX changes first? Also, confirm: new ID format applies only to **newly created** records — existing `DEF-*` IDs stay as-is — correct?

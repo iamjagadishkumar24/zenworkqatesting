@@ -48,7 +48,7 @@ const DEFAULTS: AdminPrefs = {
   reportWeekStart: "monday",
   defaultExportFormat: "xlsx",
   includeCommentsInExport: false,
-  theme: "system",
+  theme: "light",
   accent: "blue",
   density: "comfortable",
   defaultLanding: "/dashboard",
@@ -101,24 +101,15 @@ export function usePrefs() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(userKey(uid), JSON.stringify(prefs));
-    // Apply theme
+    // Apply theme. Default is Light; we never auto-detect the OS color
+    // scheme — "system" falls back to Light so new users always start
+    // on the light theme until they explicitly switch.
     const root = document.documentElement;
-    const wantDark = prefs.theme === "dark" || (prefs.theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    const wantDark = prefs.theme === "dark";
     root.classList.toggle("dark", wantDark);
     root.dataset.accent = prefs.accent;
     root.dataset.density = prefs.density;
   }, [prefs, uid]);
-
-  // Re-apply when system color scheme changes (for "system" mode)
-  useEffect(() => {
-    if (typeof window === "undefined" || prefs.theme !== "system") return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => {
-      document.documentElement.classList.toggle("dark", mq.matches);
-    };
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, [prefs.theme]);
 
   const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) =>
     setPrefs((p) => ({ ...p, [k]: v }));
