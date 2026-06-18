@@ -480,6 +480,27 @@ export type Database = {
         }
         Relationships: []
       }
+      id_sequences: {
+        Row: {
+          kind: string
+          last_seq: number
+          tax_year: string
+          updated_at: string
+        }
+        Insert: {
+          kind: string
+          last_seq?: number
+          tax_year: string
+          updated_at?: string
+        }
+        Update: {
+          kind?: string
+          last_seq?: number
+          tax_year?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -763,6 +784,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      next_scoped_id: {
+        Args: { _kind: string; _tax_year: string }
+        Returns: string
       }
       user_id_for_name: { Args: { _name: string }; Returns: string }
     }
