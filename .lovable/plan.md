@@ -1,55 +1,111 @@
-This request mixes "add tests" with "build new product features" (real-time updates across dashboard/defects/reports). I want to scope it carefully so I don't silently rewrite half the app — and so the tests I add are meaningful (not just rubber-stamp passing).
+## Goal
 
-## What I can do well in this session
+Turn the Admin Audit Logs page into a **single, complete, real-time activity monitor** covering every significant action across the QA Portal (defects, tasks/retests, comments, attachments, auth, user management, exports, role changes).
 
-### A. Targeted unit/integration tests (vitest)
-The repo already uses vitest + jsdom. I'll add focused tests next to existing ones in `src/lib/qa/`:
+Today the portal already records pieces of this in separate tables:
+- `defect_audit_log` (defect field changes + comment edits)
+- `agent_audit_log` (agent lifecycle: invite/activate/deactivate/etc.)
+- `role_audit_log` (role grants/changes)
+- `export_audit_log` (export runs)
+- `email_log` (outbound mail)
+- `auth.audit_log_entries` (Supabase-managed login/logout/failed logins — read-only)
 
-1. **Defect workflow** (`defect-workflow.test.ts`)
-   - Pure-function tests over a defect reducer: add → edit → status transitions (Reported → Pending → Ongoing → Fixed / Retest Required → Closed), validity flips, assigned-agent changes.
-   - Asserts audit-trail fields (`updatedBy`, `updatedAt`, version bump) on each transition.
-   - Asserts dashboard counts (`total/open/valid/invalid/fixed/retest`) update correctly across each transition.
+The current `/audit-log` page only reads `agent_audit_log`. The plan is to **unify** all these streams into one queryable view, fill the gaps (defect create/delete, comment add, retest events, task create/assign, attachment events, session info), and rebuild the page.
 
-2. **Role-based access** (`rbac.test.ts`)
-   - Table-driven tests over `scopeForUser` + a small `canAccessRoute(role, path)` / `canExport(role)` helper I'll add to `src/lib/qa/scope.ts`. Routes/actions checked:
-     - Agent: dashboard, my-reported-errors, my-errors, retest, notifications, settings — yes; agents, audit-log, role admin actions, full-org exports — no.
-     - Admin: everything yes.
+---
 
-3. **Export columns & filters** (`export-columns.test.ts`)
-   - Asserts `REPORTED_ERROR_HEADERS` matches the documented column list, `toReportedErrorRow` maps each field correctly (form name only, no `Module / Form` prefix), filters by environment + tax year are honored before export, and totals/row counts match input.
+## 1. Database (single migration)
 
-4. **Notification self-exclusion** (`notification-routing.test.ts`)
-   - Unit-tests a pure helper `shouldNotify(actorId, recipientId)` extracted from `notificationRouting.ts` matching the DB-trigger rule we just shipped.
+**New table: `public.activity_log`** — append-only, immutable, the canonical audit stream.
 
-5. **Tax-year ID sequencing** — already covered by `scoped-id-format.test.ts`; I'll add one DB-shape integration test that hits the live RPC via `supabase.rpc("next_scoped_id", …)` and asserts monotonicity per (kind, tax_year).
+Columns:
+- `id uuid pk`
+- `occurred_at timestamptz default now()`
+- `actor_id uuid` (nullable for system events) + `actor_name`, `actor_email`, `actor_role`
+- `category text` — `defect | task | comment | attachment | auth | user_mgmt | role | export | system`
+- `action text` — e.g. `defect.created`, `defect.status_changed`, `task.assigned`, `auth.login`, `auth.login_failed`, `user.deactivated`, `export.run`
+- `record_type text`, `record_id text` (e.g. defect ZEN-2025-03)
+- `defect_id text`, `task_id text`, `form_name text`, `tax_year text`, `environment text`
+- `summary text` — human readable
+- `old_value jsonb`, `new_value jsonb`
+- `result text` — `success | failure`
+- `ip_address text`, `user_agent text`, `session_id text`
+- `metadata jsonb`
 
-### B. Realtime — turn it on, verify with one focused test
-Two changes:
-1. Migration: `ALTER PUBLICATION supabase_realtime ADD TABLE public.defects, public.notifications, public.retest_assignments;` + `REPLICA IDENTITY FULL` on each.
-2. Wire a single `useDefectsRealtime()` hook in `src/lib/qa/store.tsx` that subscribes once and invalidates the in-memory defects list on insert/update/delete; the dashboard, defects table, and report tiles all read from that store, so they refresh automatically.
-3. Add `realtime-channel.test.ts` that mocks `supabase.channel` and asserts the hook subscribes once on mount, handles `INSERT/UPDATE/DELETE`, and unsubscribes on unmount.
+Constraints:
+- No UPDATE/DELETE policies (immutable). Only INSERT via SECURITY DEFINER fn + SELECT for admins.
+- Index on `(occurred_at desc)`, `(category, occurred_at desc)`, `(actor_id)`, `(defect_id)`, `(task_id)`.
+- GRANT SELECT to authenticated (RLS limits to admins); GRANT ALL to service_role.
+- Add to `supabase_realtime` publication.
 
-### C. Pragmatic light-touch E2E (NOT Playwright)
-The harness has no Playwright/installed browser binary and CI cost would be high. Instead I'll add **one** smoke test using React Testing Library that mounts `<Dashboard />` against a seeded in-memory store and asserts:
-- KPI counts render
-- Disabled state appears when count = 0 with tooltip text
-- Click on an enabled KPI navigates (assertion via mocked router)
+**Helper fn `public.log_activity(...)`** — SECURITY DEFINER insert wrapper used by triggers + server fns.
 
-## What I'm explicitly NOT doing (and why)
+**Triggers to backfill the stream from existing tables:**
+- `defects`: AFTER INSERT/UPDATE/DELETE → emit `defect.created`, `defect.updated`, field-specific events (`status_changed`, `assigned`, `reassigned`, `priority_changed`, `severity_changed`, `validity_changed`, `reopened`, `closed`), `defect.deleted`.
+- `defect_comments`: AFTER INSERT → `comment.added`; UPDATE → `comment.edited`; DELETE → `comment.deleted`.
+- `retest_assignments`: INSERT → `task.created`/`task.assigned`; UPDATE → `task.reassigned`, `task.status_changed`, `task.completed`, `task.reopened`; DELETE → `task.deleted`.
+- `agent_invites` lifecycle changes → `user.*` events.
+- `user_roles` → `role.*` (via existing `change_user_role`).
+- `export_jobs` AFTER INSERT → `export.run`.
+- `auth.audit_log_entries`: NOT mirrored (Supabase-managed). Instead, the login page calls a `recordAuthEvent` server fn after successful sign-in / sign-out / failed sign-in to capture `auth.login`, `auth.logout`, `auth.login_failed` with IP/user-agent. (Supabase auth_logs remain accessible separately for forensic-level detail.)
 
-- **Full browser E2E suite (login → click through every page → assert delivery of an email).** Requires Playwright + a real Supabase test project + email harness. Multi-day effort, not feasible here.
-- **Push/email notification delivery verification.** Email is already exercised by `email.functions.ts`; verifying *delivery* requires a real SMTP inbox. Out of scope.
-- **Rebuilding RBAC.** Existing `has_role()` + RLS already enforce server-side; I'll only add the client-side helper + tests.
-- **Re-architecting exports.** Current XLSX export is solid; I'll only test it and fix any column mismatches I find.
+**Backfill:** one-time INSERT from `defect_audit_log`, `agent_audit_log`, `role_audit_log`, `export_audit_log` into `activity_log` so history is preserved.
 
-## Order of execution
+---
 
-1. Realtime migration + store hook.
-2. RBAC helper + scope tests.
-3. Defect workflow tests.
-4. Export tests.
-5. Notification routing test.
-6. Dashboard smoke test.
-7. Run full vitest suite, fix any regressions.
+## 2. Server functions (`src/lib/qa/activity.functions.ts`)
 
-**Confirm before I start:** OK to proceed with this scope (A + B + C above, no Playwright, no email-delivery verification)?
+- `recordAuthEvent({ kind, email, success, reason })` — captures login/logout/failed-login with IP + UA from request headers. Public (no auth required for failed-login capture); rate-limited by email.
+- `listActivity({ filters, page, pageSize })` — admin-only via `requireSupabaseAuth` + `has_role('admin')`. Supports filters: actor, role, category, action, defect_id, task_id, form_name, tax_year, date range, search text.
+- `activityMetrics({ range })` — counts for dashboard widgets (total, today, by category, failed logins).
+- `exportActivity({ filters, format })` — returns rows for client-side XLSX/CSV; PDF via existing export pipeline if available, else CSV+XLSX only (PDF deferred — call out in UI tooltip).
+
+---
+
+## 3. Client: `src/routes/_app.audit-log.tsx` rewrite
+
+**Layout:**
+- Header + 8 metric tiles (Total, Today, Agent, Admin, Logins, Defects, Tasks, Failed Logins) — clickable to apply filter.
+- Filter bar: User (search), Role, Category, Action, Defect ID, Task ID, Tax Year, Form, Date Range, free-text search.
+- Table with columns: Time, Actor (name+email+role), Category badge, Action, Record (defect/task link), Form/TaxYear, Summary, Old → New (expandable), IP/UA (popover).
+- Row click → side sheet with full JSON diff + metadata.
+- Export menu: CSV, XLSX (PDF marked "coming soon" if not wired).
+- Realtime: subscribe to `activity_log` INSERTs, prepend to table, bump tile counters.
+
+**RBAC:** admin-only route guard (already present). Agents redirected.
+
+---
+
+## 4. Auth capture wiring
+
+- `src/routes/login.tsx`: on successful `signInWithPassword` → call `recordAuthEvent({ kind:'login', success:true })`. On error → `{ kind:'login_failed', success:false, reason }`.
+- `AppShell` sign-out handler → `recordAuthEvent({ kind:'logout' })` before `supabase.auth.signOut()`.
+- Password reset request page → `auth.password_reset_requested`.
+- Profile/email updates in `_app.settings.tsx` → `user.profile_updated` / `user.email_changed` after successful update.
+
+---
+
+## 5. Tests
+
+- `activity-log.test.ts` — unit: filter predicate, metric aggregation, diff formatter.
+- `activity-rbac.test.ts` — only admins can list/export.
+- `activity-immutability.test.ts` — UPDATE/DELETE against `activity_log` rejected by RLS (mocked).
+- Realtime hook test mirroring existing `useDefectsRealtime` pattern.
+
+---
+
+## 6. Explicit non-goals
+
+- **PDF export**: CSV + XLSX shipped; PDF deferred (would require a server-side renderer not currently configured) — UI shows "Coming soon".
+- **Device fingerprinting beyond UA string**: only `user-agent` header + parsed browser/OS, no third-party fingerprint lib.
+- **Mirroring Supabase `auth.audit_log_entries`** verbatim: we capture our own auth events at app boundary; Supabase's table remains available for deep forensic queries.
+- **Attachment add/delete events**: only wired if the codebase has an attachments table today; otherwise stubbed for future.
+
+---
+
+## Technical notes
+
+- All triggers use SECURITY DEFINER + `search_path=public` (matches existing project convention).
+- `activity_log` writes never block the originating transaction — trigger uses `EXCEPTION WHEN OTHERS THEN NULL` so a logging failure can't break a defect update.
+- Realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE public.activity_log;` + REPLICA IDENTITY FULL.
+- Existing `defect_audit_log`, `agent_audit_log`, etc. are **kept** for backward compatibility; new code reads from `activity_log`.

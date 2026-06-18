@@ -331,6 +331,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
     login: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { ok: false, error: error.message };
+      try {
+        const { recordAuthEvent } = await import("./activityLog");
+        void recordAuthEvent({ kind: "login", email, success: true });
+      } catch { /* noop */ }
       return { ok: true };
     },
     signup: async (name, email, password) => {
@@ -354,7 +358,14 @@ export function QAProvider({ children }: { children: ReactNode }) {
       if (error) return { ok: false, error: error.message };
       return { ok: true };
     },
-    logout: async () => { await supabase.auth.signOut(); },
+    logout: async () => {
+      try {
+        const { recordAuthEvent } = await import("./activityLog");
+        const e = state.currentUser?.email;
+        await recordAuthEvent({ kind: "logout", email: e });
+      } catch { /* noop */ }
+      await supabase.auth.signOut();
+    },
 
     addDefect: async (d) => {
       const me = requireUser();

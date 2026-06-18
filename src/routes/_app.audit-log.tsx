@@ -8,75 +8,96 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ScrollText, RefreshCw, Download } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { ScrollText, RefreshCw, Download, Activity, ShieldAlert, LogIn, Bug, ClipboardList, UserCog, Users, Clock } from "lucide-react";
 import { exportXlsx } from "@/lib/qa/export";
 
 export const Route = createFileRoute("/_app/audit-log")({
   component: AuditLogPage,
 });
 
-type AgentAuditAction =
-  | "invite_created"
-  | "invite_resent"
-  | "invite_removed"
-  | "agent_deactivated"
-  | "agent_reactivated"
-  | "agent_deleted";
-
-type AgentAuditRow = {
+export type ActivityRow = {
   id: string;
-  action: AgentAuditAction;
-  target_user_id: string | null;
-  target_email: string;
-  target_name: string | null;
-  performed_by_id: string | null;
-  performed_by_name: string | null;
-  details: Record<string, unknown> | null;
-  created_at: string;
+  occurred_at: string;
+  actor_id: string | null;
+  actor_name: string | null;
+  actor_email: string | null;
+  actor_role: string | null;
+  category: string;
+  action: string;
+  record_type: string | null;
+  record_id: string | null;
+  defect_id: string | null;
+  task_id: string | null;
+  form_name: string | null;
+  tax_year: string | null;
+  environment: string | null;
+  summary: string | null;
+  old_value: unknown;
+  new_value: unknown;
+  result: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  session_id: string | null;
+  metadata: unknown;
 };
 
-const ACTIONS: { value: AgentAuditAction | "all"; label: string }[] = [
-  { value: "all", label: "All actions" },
-  { value: "invite_created", label: "Invite created" },
-  { value: "invite_resent", label: "Invite resent" },
-  { value: "invite_removed", label: "Invite removed" },
-  { value: "agent_deactivated", label: "Agent removed/deactivated" },
-  { value: "agent_reactivated", label: "Agent reactivated" },
-  { value: "agent_deleted", label: "Agent deleted" },
-];
+const CATEGORIES = [
+  { value: "all", label: "All categories" },
+  { value: "defect", label: "Defects" },
+  { value: "task", label: "Tasks" },
+  { value: "comment", label: "Comments" },
+  { value: "auth", label: "Auth" },
+  { value: "user_mgmt", label: "User management" },
+  { value: "role", label: "Roles" },
+  { value: "export", label: "Exports" },
+] as const;
 
-function actionBadge(a: AgentAuditAction) {
-  const map: Record<AgentAuditAction, { label: string; cls: string }> = {
-    invite_created: { label: "Invite created", cls: "bg-blue-500/15 text-blue-700 dark:text-blue-300" },
-    invite_resent: { label: "Invite resent", cls: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300" },
-    invite_removed: { label: "Invite removed", cls: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
-    agent_deactivated: { label: "Deactivated", cls: "bg-red-500/15 text-red-700 dark:text-red-300" },
-    agent_reactivated: { label: "Reactivated", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
-    agent_deleted: { label: "Deleted", cls: "bg-red-600/20 text-red-700 dark:text-red-300" },
-  };
-  const m = map[a];
-  return <Badge variant="outline" className={m.cls}>{m.label}</Badge>;
+const CAT_STYLES: Record<string, string> = {
+  defect: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+  task: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
+  comment: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+  auth: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  user_mgmt: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  role: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+  export: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300",
+  system: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
+};
+
+function browserOf(ua: string | null | undefined): string {
+  if (!ua) return "—";
+  if (/edg\//i.test(ua)) return "Edge";
+  if (/chrome\//i.test(ua) && !/edg\//i.test(ua)) return "Chrome";
+  if (/safari\//i.test(ua) && !/chrome\//i.test(ua)) return "Safari";
+  if (/firefox\//i.test(ua)) return "Firefox";
+  return ua.split(" ").pop() ?? "—";
 }
 
 function AuditLogPage() {
   const { currentUser } = useQA();
-  const [rows, setRows] = useState<AgentAuditRow[]>([]);
+  const [rows, setRows] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
-  const [action, setAction] = useState<AgentAuditAction | "all">("all");
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<string>("all");
+  const [role, setRole] = useState<string>("all");
+  const [defectId, setDefectId] = useState("");
+  const [taskId, setTaskId] = useState("");
+  const [taxYear, setTaxYear] = useState("");
+  const [form, setForm] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [selected, setSelected] = useState<ActivityRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("agent_audit_log")
+        .from("activity_log" as never)
         .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1000);
+        .order("occurred_at", { ascending: false })
+        .limit(2000);
       if (error) throw error;
-      setRows((data ?? []) as AgentAuditRow[]);
+      setRows((data ?? []) as unknown as ActivityRow[]);
     } catch (e) {
       console.warn("audit-log load failed", e);
       setRows([]);
@@ -89,41 +110,88 @@ function AuditLogPage() {
     if (currentUser?.role !== "admin") return;
     void load();
     const ch = supabase
-      .channel(`agent-audit-${Math.random().toString(36).slice(2, 8)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "agent_audit_log" }, () => void load())
+      .channel(`activity-log-${Math.random().toString(36).slice(2, 8)}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "activity_log" }, (payload) => {
+        const r = payload.new as unknown as ActivityRow;
+        setRows((prev) => [r, ...prev].slice(0, 2000));
+      })
       .subscribe();
     return () => { try { void supabase.removeChannel(ch); } catch { /* noop */ } };
   }, [currentUser?.role, load]);
 
   const filtered = useMemo(() => {
-    const e = email.trim().toLowerCase();
+    const s = search.trim().toLowerCase();
+    const d = defectId.trim().toLowerCase();
+    const t = taskId.trim().toLowerCase();
+    const ty = taxYear.trim();
+    const f = form.trim().toLowerCase();
     const fromTs = from ? new Date(from).getTime() : null;
     const toTs = to ? new Date(to).getTime() + 24 * 60 * 60 * 1000 - 1 : null;
     return rows.filter((r) => {
-      if (action !== "all" && r.action !== action) return false;
-      if (e && !r.target_email.toLowerCase().includes(e)) return false;
-      const t = new Date(r.created_at).getTime();
-      if (fromTs && t < fromTs) return false;
-      if (toTs && t > toTs) return false;
+      if (category !== "all" && r.category !== category) return false;
+      if (role !== "all" && (r.actor_role ?? "") !== role) return false;
+      if (d && !(r.defect_id ?? "").toLowerCase().includes(d)) return false;
+      if (t && !(r.task_id ?? "").toLowerCase().includes(t)) return false;
+      if (ty && (r.tax_year ?? "") !== ty) return false;
+      if (f && !(r.form_name ?? "").toLowerCase().includes(f)) return false;
+      if (s) {
+        const hay = [r.summary, r.actor_name, r.actor_email, r.action, r.record_id].join(" ").toLowerCase();
+        if (!hay.includes(s)) return false;
+      }
+      const ts = new Date(r.occurred_at).getTime();
+      if (fromTs && ts < fromTs) return false;
+      if (toTs && ts > toTs) return false;
       return true;
     });
-  }, [rows, email, action, from, to]);
+  }, [rows, search, category, role, defectId, taskId, taxYear, form, from, to]);
 
-  const onExport = () => {
-    exportXlsx(
-      `agent-audit-log-${new Date().toISOString().slice(0, 10)}.xlsx`,
-      [{
-        name: "Audit Log",
-        rows: filtered.map((r) => ({
-          Date: new Date(r.created_at).toLocaleString(),
-          Action: r.action,
-          "Target email": r.target_email,
-          "Target name": r.target_name ?? "",
-          "Performed by": r.performed_by_name ?? "",
-        })),
-      }],
-      { title: "Agent Audit Log" },
-    );
+  const metrics = useMemo(() => {
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const counts = { total: rows.length, today: 0, agent: 0, admin: 0, login: 0, defect: 0, task: 0, failed: 0 };
+    for (const r of rows) {
+      if (new Date(r.occurred_at) >= todayStart) counts.today++;
+      if (r.actor_role === "agent") counts.agent++;
+      if (r.actor_role === "admin") counts.admin++;
+      if (r.category === "defect") counts.defect++;
+      if (r.category === "task") counts.task++;
+      if (r.action === "auth.login") counts.login++;
+      if (r.result === "failure") counts.failed++;
+    }
+    return counts;
+  }, [rows]);
+
+  const onExport = (kind: "xlsx" | "csv") => {
+    const fileName = `audit-log-${new Date().toISOString().slice(0, 10)}.${kind}`;
+    const sheetRows = filtered.map((r) => ({
+      "Time": new Date(r.occurred_at).toLocaleString(),
+      "Actor": r.actor_name ?? "",
+      "Email": r.actor_email ?? "",
+      "Role": r.actor_role ?? "",
+      "Category": r.category,
+      "Action": r.action,
+      "Summary": r.summary ?? "",
+      "Record ID": r.record_id ?? "",
+      "Defect ID": r.defect_id ?? "",
+      "Task ID": r.task_id ?? "",
+      "Form": r.form_name ?? "",
+      "Tax Year": r.tax_year ?? "",
+      "Environment": r.environment ?? "",
+      "Previous": r.old_value ? JSON.stringify(r.old_value) : "",
+      "New": r.new_value ? JSON.stringify(r.new_value) : "",
+      "Result": r.result,
+      "IP": r.ip_address ?? "",
+      "Browser": browserOf(r.user_agent),
+    }));
+    if (kind === "xlsx") {
+      exportXlsx(fileName, [{ name: "Audit Log", rows: sheetRows }], { title: "Admin Audit Log" });
+      return;
+    }
+    const cols = sheetRows.length ? Object.keys(sheetRows[0]) : [];
+    const csv = [cols.join(","), ...sheetRows.map((r) => cols.map((c) => JSON.stringify((r as Record<string, unknown>)[c] ?? "")).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = fileName; a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (currentUser && currentUser.role !== "admin") {
@@ -132,45 +200,71 @@ function AuditLogPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <ScrollText className="h-6 w-6" /> Agent Audit Log
+            <ScrollText className="h-6 w-6" /> Admin Audit Log
           </h1>
-          <p className="text-sm text-muted-foreground">Track every invite, removal, reactivation, and resend.</p>
+          <p className="text-sm text-muted-foreground">Complete activity trail — defects, tasks, comments, auth, user management, roles & exports. Updates in real-time.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? "animate-spin" : ""}`} /> Refresh
           </Button>
-          <Button variant="outline" size="sm" onClick={onExport} disabled={filtered.length === 0}>
-            <Download className="h-4 w-4 mr-1.5" /> Export
+          <Button variant="outline" size="sm" onClick={() => onExport("csv")} disabled={!filtered.length}>
+            <Download className="h-4 w-4 mr-1.5" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onExport("xlsx")} disabled={!filtered.length}>
+            <Download className="h-4 w-4 mr-1.5" /> XLSX
           </Button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
+        <MetricTile icon={<Activity className="h-4 w-4" />} label="Total events" value={metrics.total} onClick={() => setCategory("all")} />
+        <MetricTile icon={<Clock className="h-4 w-4" />} label="Today" value={metrics.today} />
+        <MetricTile icon={<Users className="h-4 w-4" />} label="Agent actions" value={metrics.agent} onClick={() => setRole("agent")} />
+        <MetricTile icon={<UserCog className="h-4 w-4" />} label="Admin actions" value={metrics.admin} onClick={() => setRole("admin")} />
+        <MetricTile icon={<LogIn className="h-4 w-4" />} label="Logins" value={metrics.login} onClick={() => { setCategory("auth"); }} />
+        <MetricTile icon={<Bug className="h-4 w-4" />} label="Defects" value={metrics.defect} onClick={() => setCategory("defect")} />
+        <MetricTile icon={<ClipboardList className="h-4 w-4" />} label="Tasks" value={metrics.task} onClick={() => setCategory("task")} />
+        <MetricTile icon={<ShieldAlert className="h-4 w-4" />} label="Failures" value={metrics.failed} tone="destructive" />
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription>Search by email, action, or date range.</CardDescription>
+          <CardDescription>Search by user, action, defect, task, form, date range and more.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <Input placeholder="Email contains…" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <Select value={action} onValueChange={(v) => setAction(v as AgentAuditAction | "all")}>
-              <SelectTrigger><SelectValue placeholder="Action" /></SelectTrigger>
+            <Input placeholder="Search user, action, summary…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
-                {ACTIONS.map((a) => (
-                  <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
-                ))}
+                {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="From date" />
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="To date" />
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger><SelectValue placeholder="Role" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="agent">Agent</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input placeholder="Defect ID (e.g. ZEN-2026-01)" value={defectId} onChange={(e) => setDefectId(e.target.value)} />
+            <Input placeholder="Task ID" value={taskId} onChange={(e) => setTaskId(e.target.value)} />
+            <Input placeholder="Tax year (e.g. 2026)" value={taxYear} onChange={(e) => setTaxYear(e.target.value)} />
+            <Input placeholder="Form name contains…" value={form} onChange={(e) => setForm(e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="From date" />
+              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="To date" />
+            </div>
           </div>
-          {(email || action !== "all" || from || to) && (
+          {(search || category !== "all" || role !== "all" || defectId || taskId || taxYear || form || from || to) && (
             <div className="mt-3">
-              <Button variant="ghost" size="sm" onClick={() => { setEmail(""); setAction("all"); setFrom(""); setTo(""); }}>
+              <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setCategory("all"); setRole("all"); setDefectId(""); setTaskId(""); setTaxYear(""); setForm(""); setFrom(""); setTo(""); }}>
                 Clear filters
               </Button>
             </div>
@@ -181,7 +275,7 @@ function AuditLogPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            Events <span className="text-muted-foreground font-normal">({filtered.length})</span>
+            Events <span className="text-muted-foreground font-normal">({filtered.length.toLocaleString()})</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -189,29 +283,47 @@ function AuditLogPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[170px]">Date</TableHead>
+                  <TableHead className="w-[170px]">Time</TableHead>
+                  <TableHead>Actor</TableHead>
+                  <TableHead>Category</TableHead>
                   <TableHead>Action</TableHead>
-                  <TableHead>Target email</TableHead>
-                  <TableHead>Target name</TableHead>
-                  <TableHead>Performed by</TableHead>
+                  <TableHead>Record</TableHead>
+                  <TableHead>Form / Year</TableHead>
+                  <TableHead>Summary</TableHead>
+                  <TableHead>Result</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-10">
+                    <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-10">
                       {loading ? "Loading…" : "No audit events match these filters."}
                     </TableCell>
                   </TableRow>
                 ) : filtered.map((r) => (
-                  <TableRow key={r.id}>
+                  <TableRow key={r.id} className="cursor-pointer" onClick={() => setSelected(r)}>
                     <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                      {new Date(r.created_at).toLocaleString()}
+                      {new Date(r.occurred_at).toLocaleString()}
                     </TableCell>
-                    <TableCell>{actionBadge(r.action)}</TableCell>
-                    <TableCell className="font-medium">{r.target_email}</TableCell>
-                    <TableCell>{r.target_name ?? "—"}</TableCell>
-                    <TableCell>{r.performed_by_name ?? "—"}</TableCell>
+                    <TableCell>
+                      <div className="text-sm font-medium">{r.actor_name ?? "System"}</div>
+                      <div className="text-xs text-muted-foreground">{r.actor_email ?? ""}{r.actor_role ? ` · ${r.actor_role}` : ""}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={CAT_STYLES[r.category] ?? CAT_STYLES.system}>{r.category}</Badge>
+                    </TableCell>
+                    <TableCell className="text-xs font-mono">{r.action}</TableCell>
+                    <TableCell className="text-xs">{r.defect_id ?? r.task_id ?? r.record_id ?? "—"}</TableCell>
+                    <TableCell className="text-xs">
+                      {r.form_name ? <span>{r.form_name}</span> : <span className="text-muted-foreground">—</span>}
+                      {r.tax_year ? <span className="text-muted-foreground"> · {r.tax_year}</span> : null}
+                    </TableCell>
+                    <TableCell className="max-w-[28rem] truncate">{r.summary ?? ""}</TableCell>
+                    <TableCell>
+                      {r.result === "failure"
+                        ? <Badge variant="outline" className="bg-red-500/15 text-red-700 dark:text-red-300">failure</Badge>
+                        : <Badge variant="outline" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">success</Badge>}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -219,6 +331,71 @@ function AuditLogPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          {selected && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <Badge variant="outline" className={CAT_STYLES[selected.category] ?? CAT_STYLES.system}>{selected.category}</Badge>
+                  <span className="font-mono text-sm">{selected.action}</span>
+                </SheetTitle>
+                <SheetDescription>{selected.summary}</SheetDescription>
+              </SheetHeader>
+              <div className="mt-4 space-y-3 text-sm">
+                <KV k="Time" v={new Date(selected.occurred_at).toLocaleString()} />
+                <KV k="Actor" v={`${selected.actor_name ?? "System"}${selected.actor_email ? ` <${selected.actor_email}>` : ""}`} />
+                <KV k="Role" v={selected.actor_role ?? "—"} />
+                <KV k="Record" v={selected.record_id ?? selected.defect_id ?? selected.task_id ?? "—"} />
+                <KV k="Form / Year" v={`${selected.form_name ?? "—"} · ${selected.tax_year ?? "—"}`} />
+                <KV k="Environment" v={selected.environment ?? "—"} />
+                <KV k="Result" v={selected.result} />
+                <KV k="IP" v={selected.ip_address ?? "—"} />
+                <KV k="Browser" v={browserOf(selected.user_agent)} />
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground mb-1">Previous</div>
+                    <pre className="text-xs bg-muted/40 rounded p-2 overflow-auto max-h-64">{selected.old_value ? JSON.stringify(selected.old_value, null, 2) : "—"}</pre>
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground mb-1">New</div>
+                    <pre className="text-xs bg-muted/40 rounded p-2 overflow-auto max-h-64">{selected.new_value ? JSON.stringify(selected.new_value, null, 2) : "—"}</pre>
+                  </div>
+                </div>
+                {selected.metadata ? (
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground mb-1">Metadata</div>
+                    <pre className="text-xs bg-muted/40 rounded p-2 overflow-auto max-h-48">{JSON.stringify(selected.metadata, null, 2)}</pre>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
+
+function MetricTile({ icon, label, value, onClick, tone }: { icon: React.ReactNode; label: string; value: number; onClick?: () => void; tone?: "default" | "destructive" }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-left rounded-lg border p-3 transition hover:shadow-sm hover:border-foreground/20 ${tone === "destructive" ? "bg-red-500/5 border-red-500/30" : "bg-card"}`}
+    >
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}<span>{label}</span></div>
+      <div className={`mt-1 text-2xl font-semibold ${tone === "destructive" ? "text-red-600 dark:text-red-400" : ""}`}>{value.toLocaleString()}</div>
+    </button>
+  );
+}
+
+function KV({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
+      <div className="text-muted-foreground">{k}</div>
+      <div className="font-medium break-words">{v}</div>
     </div>
   );
 }
