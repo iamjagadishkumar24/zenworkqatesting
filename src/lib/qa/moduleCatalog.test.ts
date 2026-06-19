@@ -33,21 +33,21 @@ function listAssignableForms(module: string): { id: string; name: string; module
 }
 
 describe("Module → Forms/Features catalog (Create / Edit / Reassign)", () => {
-  const cases: Array<[string, string[]]> = [
-    ["Forms", FORM_LIST],
-    ["1099 Online Forms", FORM_LIST],
-    ["2290 Forms", FORMS_2290],
-    ["990 Form Testing", FORMS_990],
-    ["Integrations", INTEGRATIONS],
-    ["Chatbot Testing", FEATURES_CHATBOT],
-    ["Excel Import Testing", FEATURES_EXCEL_IMPORT],
-    ["Functionality Testing", FEATURES_FUNCTIONALITY],
-    ["Tax1099 Features", FEATURES_TAX1099],
+  const cases: Array<{ module: string; expected: string[] }> = [
+    { module: "Forms", expected: FORM_LIST },
+    { module: "1099 Online Forms", expected: FORM_LIST },
+    { module: "2290 Forms", expected: FORMS_2290 },
+    { module: "990 Form Testing", expected: FORMS_990 },
+    { module: "Integrations", expected: INTEGRATIONS },
+    { module: "Chatbot Testing", expected: FEATURES_CHATBOT },
+    { module: "Excel Import Testing", expected: FEATURES_EXCEL_IMPORT },
+    { module: "Functionality Testing", expected: FEATURES_FUNCTIONALITY },
+    { module: "Tax1099 Features", expected: FEATURES_TAX1099 },
   ];
 
   it.each(cases)(
-    "listAssignableForms('%s') returns exactly its mapped catalog",
-    (module, expected) => {
+    "listAssignableForms('$module') returns exactly its mapped catalog",
+    ({ module, expected }) => {
       const rows = listAssignableForms(module);
       expect(rows.map((r) => r.name)).toEqual(expected);
       rows.forEach((r) => expect(r.module).toBe(module));
@@ -74,7 +74,7 @@ describe("Module → Forms/Features catalog (Create / Edit / Reassign)", () => {
 
   describe("Create flow (createAssignment → validateAssignmentScopeServer)", () => {
     it("accepts every option returned by the listing fn", () => {
-      for (const [module] of cases) {
+      for (const { module } of cases) {
         const rows = listAssignableForms(module);
         const r = validateAssignmentScopeCanonical({
           module,
