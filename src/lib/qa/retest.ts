@@ -8,20 +8,6 @@ export type RetestStatus = "Pending" | "In Progress" | "Completed";
 export const RETEST_STATUSES: RetestStatus[] = ["Pending", "In Progress", "Completed"];
 export type RetestPriority = "Low" | "Medium" | "High" | "Critical";
 
-export const TESTING_TYPES = [
-  "Forms",
-  "1099 Online Forms",
-  "990 Form Testing",
-  "2290 Forms",
-  "Integrations",
-  "Chatbot Testing",
-  "Excel Import Testing",
-  "Functionality Testing",
-  "Tax1099 Features",
-  "Retest",
-] as const;
-export type TestingType = (typeof TESTING_TYPES)[number];
-
 export type RetestForm = { id: string; assignment_id: string; form_id: string; form_name: string };
 export type RetestAssignment = {
   id: string;
@@ -155,7 +141,6 @@ export function useRetests() {
     instructions: string;
     priority: RetestPriority;
     dueDate: string | null;
-    testingType?: string;
     title?: string;
     module?: string;
   }) => {
@@ -167,7 +152,6 @@ export function useRetests() {
       const check = await validateAssignmentScopeServer({
         data: {
           module: input.module ?? "",
-          testingType: input.testingType,
           allForms: !!input.allForms,
           formNames: (input.forms ?? []).map((f) => f.name),
         },
@@ -202,7 +186,6 @@ export function useRetests() {
         priority: input.priority,
         due_date: input.dueDate,
         status: "Pending",
-        testing_type: input.testingType ?? "Retest",
         title: input.title ?? "",
         module: input.module ?? "",
         all_forms: !!input.allForms,
@@ -223,7 +206,6 @@ export function useRetests() {
         instructions: input.instructions,
         priority: input.priority,
         due_date: input.dueDate,
-        testing_type: input.testingType ?? "Retest",
         title: input.title ?? "",
         module: input.module ?? "",
         all_forms: !!input.allForms,
@@ -263,7 +245,6 @@ export function useRetests() {
     id: string,
     input: {
       module: string;
-      testingType?: string;
       allForms: boolean;
       forms: { id: string; name: string }[];
     },
@@ -272,7 +253,6 @@ export function useRetests() {
       const check = await validateAssignmentScopeServer({
         data: {
           module: input.module,
-          testingType: input.testingType,
           allForms: input.allForms,
           formNames: input.forms.map((f) => f.name),
         },
@@ -285,7 +265,6 @@ export function useRetests() {
       .from("retest_assignments")
       .update({
         module: input.module,
-        testing_type: input.testingType ?? "Retest",
         all_forms: input.allForms,
       })
       .eq("id", id);
