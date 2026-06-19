@@ -33,14 +33,28 @@ export const FORMS_2290: string[] = ["EZ2290", "2290.us", "GT2290"];
 // Shared module/category dropdown options used everywhere (Reported Errors
 // filter, Task Assignment, etc.). Keep this as the single source of truth so
 // new modules show up in every dropdown automatically.
-export const MODULE_OPTIONS: string[] = [
+// The six legacy form categories ("1099 Forms", "990 Forms", "2290 Forms",
+// "W-2 Forms", "ACA Forms", "Payroll Forms") were consolidated into a
+// single "Forms" entry. Filter logic below maps the unified label back to
+// the legacy values so historical defects/tasks still match.
+export const FORMS_MODULE = "Forms" as const;
+export const LEGACY_FORM_MODULES: readonly string[] = [
   "1099 Forms",
-  "1099 Online",
   "990 Forms",
   "2290 Forms",
   "W-2 Forms",
   "ACA Forms",
   "Payroll Forms",
+];
+
+export function isFormsModule(m: string | null | undefined): boolean {
+  if (!m) return false;
+  return m === FORMS_MODULE || LEGACY_FORM_MODULES.includes(m);
+}
+
+export const MODULE_OPTIONS: string[] = [
+  FORMS_MODULE,
+  "1099 Online",
   "Integrations",
   "Chatbot Testing",
   "Excel Import Testing",
@@ -51,6 +65,7 @@ export const MODULE_OPTIONS: string[] = [
 // Route path for each module — used to deep-link assigned tasks
 // from dashboards and the Task Assignments table to the right page.
 export const MODULE_ROUTES: Record<string, string> = {
+  Forms: "/forms",
   "1099 Forms": "/forms",
   "1099 Online": "/online-1099",
   "990 Forms": "/990-forms",
