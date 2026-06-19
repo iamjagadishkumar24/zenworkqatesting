@@ -72,7 +72,7 @@ function RetestPage() {
       if (priorityFilter !== "all" && r.priority !== priorityFilter) return false;
       if (yearFilter !== "all" && (r.tax_year ?? "") !== yearFilter) return false;
       if (!term) return true;
-      return [r.id, r.title, r.module, r.instructions, r.assigned_agent_name, r.assigned_by_name, r.testing_type]
+      return [r.id, r.title, r.module, r.instructions, r.assigned_agent_name, r.assigned_by_name]
         .join(" ").toLowerCase().includes(term);
     });
   }, [items, isAdmin, q, agentFilter, byFilter, statusFilter, priorityFilter, yearFilter]);
@@ -196,7 +196,6 @@ function RetestPage() {
                 <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Task</TableHead>
-                  <TableHead>Type</TableHead>
                   <TableHead>Agent</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Tax Year</TableHead>
@@ -229,7 +228,6 @@ function RetestPage() {
                         </div>
                         {r.instructions && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{r.instructions}</p>}
                       </TableCell>
-                      <TableCell className="text-xs">{r.testing_type || "—"}</TableCell>
                       <TableCell>
                         {isAdmin ? (
                           <Select value={r.assigned_agent_name} onValueChange={async (v) => {
