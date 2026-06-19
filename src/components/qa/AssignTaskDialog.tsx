@@ -418,10 +418,20 @@ export function AssignTaskDialog({
                     size="sm"
                     variant="destructive"
                     onClick={createDefectFromScopeError}
-                    disabled={creatingDefect}
+                    disabled={creatingDefect || !!createdDefect}
                   >
-                    {creatingDefect ? "Creating defect…" : "Create defect from this failure"}
+                    {creatingDefect
+                      ? "Creating defect…"
+                      : createdDefect
+                        ? `Defect ${createdDefect.id} · ${createdDefect.status}`
+                        : "Create defect from this failure"}
                   </Button>
+                  {createdDefect && (
+                    <span className="ml-2 text-[11px] text-muted-foreground">
+                      Live status: <span className="font-medium text-foreground">{createdDefect.status}</span>
+                      {" · "}Priority {createdDefect.priority} · Severity {createdDefect.severity}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -442,16 +452,60 @@ export function AssignTaskDialog({
                 </Button>
               </div>
               {showPreview && (
-                <div className="mt-2 max-h-32 overflow-auto flex flex-wrap gap-1">
-                  {loadingForms && <span className="text-muted-foreground">Loading…</span>}
-                  {!loadingForms && scopedForms.length === 0 && (
-                    <span className="text-muted-foreground">No forms/features mapped to this module.</span>
+                <div className="mt-2 space-y-2">
+                  <Input
+                    value={previewQuery}
+                    onChange={(e) => setPreviewQuery(e.target.value)}
+                    placeholder="Search allowed forms / features…"
+                    className="h-7 text-xs"
+                  />
+                  <div className="max-h-32 overflow-auto flex flex-wrap gap-1">
+                    {loadingForms && <span className="text-muted-foreground">Loading…</span>}
+                    {!loadingForms && scopedForms.length === 0 && (
+                      <span className="text-muted-foreground">No forms/features mapped to this module.</span>
+                    )}
+                    {!loadingForms && scopedForms.length > 0 && previewFiltered.length === 0 && (
+                      <span className="text-muted-foreground">No matches for “{previewQuery}”.</span>
+                    )}
+                    {previewPageItems.map((f) => (
+                      <span key={f.id} className="rounded border bg-background px-1.5 py-0.5">
+                        {f.name}
+                      </span>
+                    ))}
+                  </div>
+                  {previewFiltered.length > PREVIEW_PAGE_SIZE && (
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>
+                        Showing {(previewSafePage - 1) * PREVIEW_PAGE_SIZE + 1}
+                        –{Math.min(previewSafePage * PREVIEW_PAGE_SIZE, previewFiltered.length)} of {previewFiltered.length}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2"
+                          onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
+                          disabled={previewSafePage <= 1}
+                        >
+                          Prev
+                        </Button>
+                        <span>
+                          Page {previewSafePage} / {previewTotalPages}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2"
+                          onClick={() => setPreviewPage((p) => Math.min(previewTotalPages, p + 1))}
+                          disabled={previewSafePage >= previewTotalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
                   )}
-                  {scopedForms.map((f) => (
-                    <span key={f.id} className="rounded border bg-background px-1.5 py-0.5">
-                      {f.name}
-                    </span>
-                  ))}
                 </div>
               )}
             </div>
