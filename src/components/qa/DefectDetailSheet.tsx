@@ -214,7 +214,6 @@ export function DefectDetailSheet({
       priority: defect.priority,
       due_date: null,
       status: "Pending",
-      testing_type: "Retest",
       title: encodeRetestTitle(defect.id, defect.title),
       module: defect.module,
       all_forms: false,
