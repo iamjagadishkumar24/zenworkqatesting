@@ -30,6 +30,35 @@ export const INTEGRATIONS: string[] = [
 
 export const FORMS_2290: string[] = ["EZ2290", "2290.us", "GT2290"];
 
+export const FORMS_990: string[] = [
+  "Form 990",
+  "Form 990-EZ",
+  "Form 990-N",
+  "Form 990-PF",
+  "Form 990-T",
+];
+
+// Curated feature catalogs for non-form modules. These are the *only*
+// values the Forms/Features picker is allowed to surface for each module,
+// and the server-side guard enforces the same list during create / edit
+// / reassignment so a tampered client cannot persist anything else.
+export const FEATURES_CHATBOT: string[] = [
+  "Chat Widget", "Intent Recognition", "Knowledge Base", "Hand-off to Agent",
+  "Conversation History", "Analytics",
+];
+export const FEATURES_EXCEL_IMPORT: string[] = [
+  "Template Download", "File Upload", "Column Mapping", "Row Validation",
+  "Error Report", "Bulk Submit",
+];
+export const FEATURES_FUNCTIONALITY: string[] = [
+  "Login", "Sign Up", "Password Reset", "Dashboard", "Notifications",
+  "Search", "Filters", "Exports", "Reports", "Settings",
+];
+export const FEATURES_TAX1099: string[] = [
+  "TIN Match", "W-9 Solicitation", "State Filing", "Recipient Portal",
+  "Bulk Upload", "Corrections", "Payments", "Audit Trail",
+];
+
 // Shared module/category dropdown options used everywhere (Reported Errors
 // filter, Task Assignment, etc.). Keep this as the single source of truth so
 // new modules show up in every dropdown automatically.
@@ -63,6 +92,27 @@ export function isOnline1099Module(m: string | null | undefined): boolean {
  *  catalog. Forms and 1099 Online Forms share the same canonical list. */
 export function usesFullFormsCatalog(m: string | null | undefined): boolean {
   return isFormsModule(m) || isOnline1099Module(m);
+}
+
+/** Canonical, server-enforced catalog of forms/features per module.
+ *  This is the single source of truth used by:
+ *    1. the Assign Task Forms/Features picker (server-backed listing), and
+ *    2. the server-side guard that runs before any DB write.
+ *  Returns `null` when the module is unknown (treated as unrestricted,
+ *  e.g. "All Modules"). */
+export function getModuleCatalog(
+  m: string | null | undefined,
+): string[] | null {
+  if (!m) return null;
+  if (usesFullFormsCatalog(m)) return [...FORM_LIST];
+  if (m === "2290 Forms") return [...FORMS_2290];
+  if (m === "990 Form Testing" || m === "990 Forms") return [...FORMS_990];
+  if (m === "Integrations") return [...INTEGRATIONS];
+  if (m === "Chatbot Testing") return [...FEATURES_CHATBOT];
+  if (m === "Excel Import Testing") return [...FEATURES_EXCEL_IMPORT];
+  if (m === "Functionality Testing") return [...FEATURES_FUNCTIONALITY];
+  if (m === "Tax1099 Features") return [...FEATURES_TAX1099];
+  return null;
 }
 
 export const MODULE_OPTIONS: string[] = [
