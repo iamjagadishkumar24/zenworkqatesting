@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -232,6 +233,19 @@ export function AssignTaskDialog({
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return matches[0] ?? null;
   }, [defects, createdDefectTitle, createdDefectAfter]);
+
+  // Offender detail drawer. Opens from the validation banner chips and from
+  // the live defect badge's "Affected" link. Pulls related-defect history
+  // straight from the realtime-backed store so updates stay live.
+  const [offenderName, setOffenderName] = useState<string | null>(null);
+  const offenderInfo = useMemo(() => {
+    if (!offenderName) return null;
+    const catalogHit = scopedForms.find((f) => f.name === offenderName) ?? null;
+    const related = defects
+      .filter((d) => d.formFeature === offenderName)
+      .sort((a, b) => new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime());
+    return { name: offenderName, inCatalog: !!catalogHit, related };
+  }, [offenderName, scopedForms, defects]);
 
   const createDefectFromScopeError = async () => {
     if (!scopeError) return;
