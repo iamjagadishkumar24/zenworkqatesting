@@ -34,7 +34,7 @@ export function AssignTaskDialog({
   defaultModule?: string;
   defaultTitle?: string;
 }) {
-  const { users, forms, addDefect } = useQA();
+  const { users, forms, addDefect, defects } = useQA();
   const { env } = useEnvironment();
   const { createAssignment } = useRetests();
   const { items: invites } = useAgentInvites();
@@ -113,9 +113,38 @@ export function AssignTaskDialog({
   // admin sees exactly which forms/features are blocking the save. Cleared
   // when the user changes module or the picked selection.
   const [scopeError, setScopeError] = useState<{ message: string; offenders: string[] } | null>(null);
-  useEffect(() => { setScopeError(null); }, [moduleSel, picked, allForms]);
   const [showPreview, setShowPreview] = useState(false);
   const [creatingDefect, setCreatingDefect] = useState(false);
+  const [previewQuery, setPreviewQuery] = useState("");
+  const [previewPage, setPreviewPage] = useState(1);
+  const PREVIEW_PAGE_SIZE = 24;
+  useEffect(() => { setPreviewPage(1); }, [previewQuery, moduleSel]);
+  const previewFiltered = useMemo(() => {
+    const q = previewQuery.trim().toLowerCase();
+    if (!q) return scopedForms;
+    return scopedForms.filter((f) => f.name.toLowerCase().includes(q));
+  }, [scopedForms, previewQuery]);
+  const previewTotalPages = Math.max(1, Math.ceil(previewFiltered.length / PREVIEW_PAGE_SIZE));
+  const previewSafePage = Math.min(previewPage, previewTotalPages);
+  const previewPageItems = useMemo(() => {
+    const start = (previewSafePage - 1) * PREVIEW_PAGE_SIZE;
+    return previewFiltered.slice(start, start + PREVIEW_PAGE_SIZE);
+  }, [previewFiltered, previewSafePage]);
+  // Track the most recent defect created from this banner so realtime
+  // updates to its status are reflected immediately in the dialog.
+  const [createdDefectTitle, setCreatedDefectTitle] = useState<string | null>(null);
+  const [createdDefectAfter, setCreatedDefectAfter] = useState<number>(0);
+  useEffect(() => {
+    setScopeError(null);
+    setCreatedDefectTitle(null);
+  }, [moduleSel, picked, allForms]);
+  const createdDefect = useMemo(() => {
+    if (!createdDefectTitle) return null;
+    const matches = defects
+      .filter((d) => d.title === createdDefectTitle && new Date(d.createdAt).getTime() >= createdDefectAfter - 1000)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return matches[0] ?? null;
+  }, [defects, createdDefectTitle, createdDefectAfter]);
 
   const createDefectFromScopeError = async () => {
     if (!scopeError) return;
@@ -124,11 +153,13 @@ export function AssignTaskDialog({
       ? scopeError.offenders.join(", ")
       : "(none reported)";
     const allowedList = scopedForms.map((f) => f.name).join(", ") || "(empty catalog)";
+    const defectTitle = `Assign Task scope validation failed: ${moduleSel} @ ${new Date().toISOString()}`;
+    const submittedAt = Date.now();
     const res = await addDefect({
       module: (moduleSel && moduleSel !== ALL_MODULES ? moduleSel : "Functionality Testing") as never,
       formFeature: scopeError.offenders[0] ?? "Assign Task scope validation",
       taxYear,
-      title: `Assign Task scope validation failed: ${moduleSel}`,
+      title: defectTitle,
       description:
         `Scope validation rejected the Assign Task submission.\n\n` +
         `Module / Category: ${moduleSel}\n` +
@@ -154,6 +185,8 @@ export function AssignTaskDialog({
       toast.error(res.error ?? "Could not create defect");
       return;
     }
+    setCreatedDefectTitle(defectTitle);
+    setCreatedDefectAfter(submittedAt);
     toast.success("Defect created from scope validation failure.");
   };
 
@@ -385,10 +418,20 @@ export function AssignTaskDialog({
                     size="sm"
                     variant="destructive"
                     onClick={createDefectFromScopeError}
-                    disabled={creatingDefect}
+                    disabled={creatingDefect || !!createdDefect}
                   >
-                    {creatingDefect ? "Creating defect…" : "Create defect from this failure"}
+                    {creatingDefect
+                      ? "Creating defect…"
+                      : createdDefect
+                        ? `Defect ${createdDefect.id} · ${createdDefect.status}`
+                        : "Create defect from this failure"}
                   </Button>
+                  {createdDefect && (
+                    <span className="ml-2 text-[11px] text-muted-foreground">
+                      Live status: <span className="font-medium text-foreground">{createdDefect.status}</span>
+                      {" · "}Priority {createdDefect.priority} · Severity {createdDefect.severity}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -409,16 +452,60 @@ export function AssignTaskDialog({
                 </Button>
               </div>
               {showPreview && (
-                <div className="mt-2 max-h-32 overflow-auto flex flex-wrap gap-1">
-                  {loadingForms && <span className="text-muted-foreground">Loading…</span>}
-                  {!loadingForms && scopedForms.length === 0 && (
-                    <span className="text-muted-foreground">No forms/features mapped to this module.</span>
+                <div className="mt-2 space-y-2">
+                  <Input
+                    value={previewQuery}
+                    onChange={(e) => setPreviewQuery(e.target.value)}
+                    placeholder="Search allowed forms / features…"
+                    className="h-7 text-xs"
+                  />
+                  <div className="max-h-32 overflow-auto flex flex-wrap gap-1">
+                    {loadingForms && <span className="text-muted-foreground">Loading…</span>}
+                    {!loadingForms && scopedForms.length === 0 && (
+                      <span className="text-muted-foreground">No forms/features mapped to this module.</span>
+                    )}
+                    {!loadingForms && scopedForms.length > 0 && previewFiltered.length === 0 && (
+                      <span className="text-muted-foreground">No matches for “{previewQuery}”.</span>
+                    )}
+                    {previewPageItems.map((f) => (
+                      <span key={f.id} className="rounded border bg-background px-1.5 py-0.5">
+                        {f.name}
+                      </span>
+                    ))}
+                  </div>
+                  {previewFiltered.length > PREVIEW_PAGE_SIZE && (
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>
+                        Showing {(previewSafePage - 1) * PREVIEW_PAGE_SIZE + 1}
+                        –{Math.min(previewSafePage * PREVIEW_PAGE_SIZE, previewFiltered.length)} of {previewFiltered.length}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2"
+                          onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
+                          disabled={previewSafePage <= 1}
+                        >
+                          Prev
+                        </Button>
+                        <span>
+                          Page {previewSafePage} / {previewTotalPages}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2"
+                          onClick={() => setPreviewPage((p) => Math.min(previewTotalPages, p + 1))}
+                          disabled={previewSafePage >= previewTotalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
                   )}
-                  {scopedForms.map((f) => (
-                    <span key={f.id} className="rounded border bg-background px-1.5 py-0.5">
-                      {f.name}
-                    </span>
-                  ))}
                 </div>
               )}
             </div>
