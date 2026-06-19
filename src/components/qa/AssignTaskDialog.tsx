@@ -332,6 +332,9 @@ export function AssignTaskDialog({
               </div>
             )}
             <div className={`mt-1 max-h-48 overflow-auto rounded-md border p-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3 ${allForms ? "opacity-50 pointer-events-none" : ""}`}>
+              {loadingForms && (
+                <p className="text-xs text-muted-foreground">Loading forms…</p>
+              )}
               {filtered.map((f) => {
                 const checked = picked.has(f.id);
                 return (
@@ -347,7 +350,13 @@ export function AssignTaskDialog({
                   </label>
                 );
               })}
-              {filtered.length === 0 && <p className="text-xs text-muted-foreground">No forms match.</p>}
+              {!loadingForms && filtered.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {moduleSel && moduleSel !== ALL_MODULES && !getModuleCatalog(moduleSel)
+                    ? "No forms/features are mapped to this module."
+                    : "No forms match."}
+                </p>
+              )}
             </div>
           </div>
           <div className="md:col-span-2">
