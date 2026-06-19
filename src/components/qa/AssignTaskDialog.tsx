@@ -17,6 +17,9 @@ import {
   FORM_LIST,
   FORMS_MODULE,
   LEGACY_FORM_MODULES,
+  ONLINE_1099_MODULE,
+  LEGACY_ONLINE_1099_MODULES,
+  usesFullFormsCatalog,
 } from "@/lib/qa/constants";
 import { useAgentInvites } from "@/lib/qa/agents";
 import { useServerFn } from "@tanstack/react-start";
@@ -68,9 +71,15 @@ export function AssignTaskDialog({
   // (preserve their stable id); missing names are surfaced with id = name.
   const scopedForms = useMemo(() => {
     if (!moduleSel || moduleSel === ALL_MODULES) return forms;
-    if (moduleSel === FORMS_MODULE) {
+    if (usesFullFormsCatalog(moduleSel)) {
+      const acceptedModules = new Set<string>([
+        FORMS_MODULE,
+        ONLINE_1099_MODULE,
+        ...LEGACY_FORM_MODULES,
+        ...LEGACY_ONLINE_1099_MODULES,
+      ]);
       const inForms = forms.filter(
-        (f) => f.module === FORMS_MODULE || LEGACY_FORM_MODULES.includes(f.module as string),
+        (f) => acceptedModules.has(f.module as string),
       );
       const seen = new Set(inForms.map((f) => f.name));
       const synthetic = FORM_LIST
@@ -78,7 +87,7 @@ export function AssignTaskDialog({
         .map((name) => ({
           id: name,
           name,
-          module: FORMS_MODULE,
+          module: moduleSel,
           status: "Pending" as const,
           passed: 0,
           failed: 0,

@@ -8,15 +8,15 @@ export const RETEST_STATUSES: RetestStatus[] = ["Pending", "In Progress", "Compl
 export type RetestPriority = "Low" | "Medium" | "High" | "Critical";
 
 export const TESTING_TYPES = [
-  "Form testing",
-  "Functionality testing",
-  "Integration testing",
-  "Excel import testing",
-  "Chatbot testing",
-  "Tax1099 feature testing",
-  "1099 Online testing",
-  "2290 Forms testing",
-  "990 Forms testing",
+  "Forms",
+  "1099 Online Forms",
+  "990 Form Testing",
+  "2290 Forms",
+  "Integrations",
+  "Chatbot Testing",
+  "Excel Import Testing",
+  "Functionality Testing",
+  "Tax1099 Features",
   "Retest",
 ] as const;
 export type TestingType = (typeof TESTING_TYPES)[number];

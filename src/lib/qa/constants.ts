@@ -5,7 +5,7 @@ export const FORM_LIST: string[] = [
   "Form 1099-R","Form 1099-S","Form 1099-PATR","Form 1099-B","Form 1099-C",
   "Form 1099-OID","Form 1099-A","Form 1099-SA","Form 1099-Q","Form 1099-G",
   "Form 1099-DA","Form 1099-HC","Form 1099-LS","Form 1097-BTC","Form 1099-QA",
-  "Form W-2G","Form 940","Form 941","Form 941-X",
+  "Form W-2G","Form 1099 Corrections","Form 940","Form 941","Form 941-X",
   "Form 943","Form 943-X","Form 944","Form 944-X","Form 945",
   "Form 3921","Form 3922","Form W-2","Form W-2C","Form W-2VI","Form W-2GU",
   "Form 592-B","Form 1095-B","Form 1095-C","Form ACA Corrections",
@@ -38,6 +38,8 @@ export const FORMS_2290: string[] = ["EZ2290", "2290.us", "GT2290"];
 // single "Forms" entry. Filter logic below maps the unified label back to
 // the legacy values so historical defects/tasks still match.
 export const FORMS_MODULE = "Forms" as const;
+export const ONLINE_1099_MODULE = "1099 Online Forms" as const;
+export const LEGACY_ONLINE_1099_MODULES: readonly string[] = ["1099 Online"];
 export const LEGACY_FORM_MODULES: readonly string[] = [
   "1099 Forms",
   "990 Forms",
@@ -52,9 +54,22 @@ export function isFormsModule(m: string | null | undefined): boolean {
   return m === FORMS_MODULE || LEGACY_FORM_MODULES.includes(m);
 }
 
+export function isOnline1099Module(m: string | null | undefined): boolean {
+  if (!m) return false;
+  return m === ONLINE_1099_MODULE || LEGACY_ONLINE_1099_MODULES.includes(m);
+}
+
+/** Modules whose Forms/Features picker should expose the full FORM_LIST
+ *  catalog. Forms and 1099 Online Forms share the same canonical list. */
+export function usesFullFormsCatalog(m: string | null | undefined): boolean {
+  return isFormsModule(m) || isOnline1099Module(m);
+}
+
 export const MODULE_OPTIONS: string[] = [
   FORMS_MODULE,
-  "1099 Online",
+  ONLINE_1099_MODULE,
+  "990 Form Testing",
+  "2290 Forms",
   "Integrations",
   "Chatbot Testing",
   "Excel Import Testing",
@@ -68,7 +83,9 @@ export const MODULE_ROUTES: Record<string, string> = {
   Forms: "/forms",
   "1099 Forms": "/forms",
   "1099 Online": "/online-1099",
+  "1099 Online Forms": "/online-1099",
   "990 Forms": "/990-forms",
+  "990 Form Testing": "/990-forms",
   "2290 Forms": "/2290-forms",
   "W-2 Forms": "/forms",
   "ACA Forms": "/forms",
