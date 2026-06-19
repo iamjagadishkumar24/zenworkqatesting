@@ -109,12 +109,18 @@ export function AssignTaskDialog({
     [scopedForms, filter],
   );
   const [submitting, setSubmitting] = useState(false);
+  // Inline server/client validation error surfaced in the dialog so the
+  // admin sees exactly which forms/features are blocking the save. Cleared
+  // when the user changes module or the picked selection.
+  const [scopeError, setScopeError] = useState<{ message: string; offenders: string[] } | null>(null);
+  useEffect(() => { setScopeError(null); }, [moduleSel, picked, allForms]);
 
   const submit = async () => {
     if (!title.trim()) return toast.error("Task title is required");
     if (!assignAll && selectedAgents.size === 0 && selectedPending.size === 0) {
       return toast.error("Select at least one agent or 'Assign to all'");
     }
+    setScopeError(null);
     const scopeCheck = validateAssignmentScope({
       module: moduleSel,
       allForms,
@@ -123,6 +129,7 @@ export function AssignTaskDialog({
       allForms_catalog: forms,
     });
     if (!scopeCheck.ok) {
+      setScopeError({ message: scopeCheck.error, offenders: scopeCheck.offenders });
       return toast.error(scopeCheck.error);
     }
     setSubmitting(true);
@@ -145,7 +152,14 @@ export function AssignTaskDialog({
       taxYear,
     });
     setSubmitting(false);
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) {
+      const offenders = Array.isArray((r as { offenders?: unknown }).offenders)
+        ? ((r as { offenders: string[] }).offenders)
+        : [];
+      const msg = r.error ?? "Could not assign task";
+      setScopeError({ message: msg, offenders });
+      return toast.error(msg);
+    }
 
     // Build recipient list (active agents who got a real assignment) + pending invites.
     const targetUsers = assignAll
@@ -304,6 +318,27 @@ export function AssignTaskDialog({
           </div>
           <div className="md:col-span-2">
             <Label>Forms / features ({picked.size} selected, optional)</Label>
+            {scopeError && (
+              <div
+                role="alert"
+                aria-live="polite"
+                className="mt-1 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
+              >
+                <div className="font-medium">{scopeError.message}</div>
+                {scopeError.offenders.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {scopeError.offenders.map((n) => (
+                      <span
+                        key={n}
+                        className="rounded bg-destructive/15 px-1.5 py-0.5"
+                      >
+                        {n}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {!allForms && filtered.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-2">
                 <Button
