@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -233,6 +234,19 @@ export function AssignTaskDialog({
     return matches[0] ?? null;
   }, [defects, createdDefectTitle, createdDefectAfter]);
 
+  // Offender detail drawer. Opens from the validation banner chips and from
+  // the live defect badge's "Affected" link. Pulls related-defect history
+  // straight from the realtime-backed store so updates stay live.
+  const [offenderName, setOffenderName] = useState<string | null>(null);
+  const offenderInfo = useMemo(() => {
+    if (!offenderName) return null;
+    const catalogHit = scopedForms.find((f) => f.name === offenderName) ?? null;
+    const related = defects
+      .filter((d) => d.formFeature === offenderName)
+      .sort((a, b) => new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime());
+    return { name: offenderName, inCatalog: !!catalogHit, related };
+  }, [offenderName, scopedForms, defects]);
+
   const createDefectFromScopeError = async () => {
     if (!scopeError) return;
     setCreatingDefect(true);
@@ -379,6 +393,7 @@ export function AssignTaskDialog({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -490,12 +505,15 @@ export function AssignTaskDialog({
                 {scopeError.offenders.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1">
                     {scopeError.offenders.map((n) => (
-                      <span
+                      <button
                         key={n}
-                        className="rounded bg-destructive/15 px-1.5 py-0.5"
+                        type="button"
+                        onClick={() => setOffenderName(n)}
+                        className="rounded bg-destructive/15 px-1.5 py-0.5 hover:bg-destructive/25 underline-offset-2 hover:underline"
+                        title="View offender details"
                       >
                         {n}
-                      </span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -515,7 +533,14 @@ export function AssignTaskDialog({
                   </Button>
                   {createdDefect && (
                     <span className="ml-2 text-[11px] text-muted-foreground">
-                      Affected: <span className="font-medium text-foreground">{createdDefect.formFeature}</span>
+                      Affected:{" "}
+                      <button
+                        type="button"
+                        onClick={() => setOffenderName(createdDefect.formFeature)}
+                        className="font-medium text-foreground hover:underline"
+                      >
+                        {createdDefect.formFeature}
+                      </button>
                       {" · "}Live status: <span className="font-medium text-foreground">{createdDefect.status}</span>
                       {" · "}Priority {createdDefect.priority} · Severity {createdDefect.severity}
                     </span>
@@ -543,12 +568,23 @@ export function AssignTaskDialog({
               </div>
               {showPreview && (
                 <div className="mt-2 space-y-2">
-                  <Input
-                    value={previewQuery}
-                    onChange={(e) => setPreviewQuery(e.target.value)}
-                    placeholder="Search allowed forms / features…"
-                    className="h-7 text-xs"
-                  />
+                  <div className="relative">
+                    <Input
+                      value={previewQuery}
+                      onChange={(e) => setPreviewQuery(e.target.value)}
+                      placeholder="Search allowed forms / features…"
+                      className="h-7 text-xs pr-20"
+                    />
+                    {previewLoading && moduleSel !== ALL_MODULES && (
+                      <span
+                        aria-live="polite"
+                        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 text-[10px] text-muted-foreground"
+                      >
+                        <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-muted-foreground/60" />
+                        Searching…
+                      </span>
+                    )}
+                  </div>
                   <div className="max-h-48 overflow-auto rounded border bg-background">
                     <table className="w-full text-left text-xs">
                       <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
@@ -573,16 +609,38 @@ export function AssignTaskDialog({
                       <tbody>
                         {moduleSel === ALL_MODULES ? (
                           <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">Select a Module / Category to preview its catalog.</td></tr>
-                        ) : previewLoading ? (
-                          <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">Loading…</td></tr>
+                        ) : previewLoading && previewItems.length === 0 ? (
+                          <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">Loading allowed forms / features…</td></tr>
                         ) : previewItems.length === 0 ? (
-                          <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">
-                            {previewQuery ? `No matches for “${previewQuery}”.` : "No forms/features mapped to this module."}
+                          <tr><td colSpan={3} className="px-2 py-3 text-center text-muted-foreground">
+                            {previewQuery ? (
+                              <>
+                                No allowed forms / features match{" "}
+                                <span className="font-medium text-foreground">“{previewQuery}”</span> in{" "}
+                                <span className="font-medium text-foreground">{moduleSel}</span>.
+                                <div className="mt-1">
+                                  <Button type="button" variant="ghost" size="sm" className="h-6 px-2"
+                                    onClick={() => setPreviewQuery("")}>
+                                    Clear search
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <>No forms / features are mapped to <span className="font-medium text-foreground">{moduleSel}</span> yet.</>
+                            )}
                           </td></tr>
                         ) : (
                           previewItems.map((f) => (
                             <tr key={f.id} className="border-t">
-                              <td className="px-2 py-1">{f.name}</td>
+                              <td className="px-2 py-1">
+                                <button
+                                  type="button"
+                                  className="hover:underline"
+                                  onClick={() => setOffenderName(f.name)}
+                                >
+                                  {f.name}
+                                </button>
+                              </td>
                               <td className="px-2 py-1 tabular-nums">{f.version ?? "—"}</td>
                               <td className="px-2 py-1 tabular-nums">
                                 {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "—"}
@@ -695,5 +753,67 @@ export function AssignTaskDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <Sheet open={!!offenderName} onOpenChange={(o) => { if (!o) setOffenderName(null); }}>
+      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="break-all">{offenderName ?? ""}</SheetTitle>
+          <SheetDescription>
+            Affected form / feature from the Assign Task scope check in{" "}
+            <span className="font-medium text-foreground">{moduleSel}</span>.
+          </SheetDescription>
+        </SheetHeader>
+        {offenderInfo && (
+          <div className="mt-4 space-y-4 text-sm">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-muted-foreground">Module</div>
+              <div className="col-span-2 font-medium">{moduleSel}</div>
+              <div className="text-muted-foreground">In catalog</div>
+              <div className="col-span-2">
+                {offenderInfo.inCatalog ? (
+                  <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-700 dark:text-emerald-400">Allowed</span>
+                ) : (
+                  <span className="rounded bg-destructive/15 px-1.5 py-0.5 text-destructive">Not in this module's catalog</span>
+                )}
+              </div>
+              <div className="text-muted-foreground">Environment</div>
+              <div className="col-span-2">{env ?? "Production"}</div>
+              <div className="text-muted-foreground">Tax year</div>
+              <div className="col-span-2">{taxYear}</div>
+            </div>
+            {scopeError && scopeError.offenders.includes(offenderInfo.name) && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                <div className="font-medium">Validation failure</div>
+                <div className="mt-1">{scopeError.message}</div>
+              </div>
+            )}
+            <div>
+              <div className="mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Related defects ({offenderInfo.related.length})
+              </div>
+              {offenderInfo.related.length === 0 ? (
+                <div className="text-xs text-muted-foreground">No defects reference this form / feature yet.</div>
+              ) : (
+                <ul className="space-y-1">
+                  {offenderInfo.related.slice(0, 20).map((d) => (
+                    <li key={d.id} className="rounded border p-2 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono">{d.id}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5">{d.status}</span>
+                      </div>
+                      <div className="mt-1 line-clamp-2">{d.title}</div>
+                      <div className="mt-1 text-[11px] text-muted-foreground">
+                        Priority {d.priority} · Severity {d.severity} · Updated {new Date(d.updatedAt ?? d.createdAt).toLocaleString()}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }
