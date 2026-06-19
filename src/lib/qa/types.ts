@@ -43,6 +43,7 @@ export type Priority = "Low" | "Medium" | "High" | "Critical";
 export type Severity = "Low" | "Medium" | "High" | "Critical";
 
 export type Module =
+  | "Forms"
   | "1099 Forms"
   | "990 Forms"
   | "Integrations"

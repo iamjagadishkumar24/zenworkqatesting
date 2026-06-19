@@ -3,6 +3,7 @@
 // isolation without React or Supabase.
 
 import type { Defect, DefectStatus, Priority, Severity } from "./types";
+import { FORMS_MODULE, LEGACY_FORM_MODULES } from "./constants";
 
 export type RetestState = "any" | "required" | "passed" | "failed" | "none";
 export type Presence = "any" | "yes" | "no";
@@ -51,7 +52,13 @@ export function filterDefectsAdmin<T extends Defect>(
   return defects.filter((d) => {
     if (!isAny(f.assignedAgent) && d.assignedAgent !== f.assignedAgent) return false;
     if (!isAny(f.reporter) && d.createdBy !== f.reporter) return false;
-    if (!isAny(f.module) && d.module !== f.module) return false;
+    if (!isAny(f.module)) {
+      const wantsForms = f.module === FORMS_MODULE;
+      const matches = wantsForms
+        ? (d.module === FORMS_MODULE || LEGACY_FORM_MODULES.includes(d.module as string))
+        : d.module === f.module;
+      if (!matches) return false;
+    }
     if (!isAny(f.taxYear) && (d.taxYear ?? "") !== f.taxYear) return false;
     if (!isAny(f.status) && d.status !== f.status) return false;
     if (!isAny(f.priority) && d.priority !== f.priority) return false;
