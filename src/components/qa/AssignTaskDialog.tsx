@@ -20,7 +20,14 @@ import { useAgentInvites } from "@/lib/qa/agents";
 import { useServerFn } from "@tanstack/react-start";
 import { sendTaskAssignmentEmail } from "@/lib/qa/email.functions";
 import { validateAssignmentScope } from "@/lib/qa/assignmentValidation";
-import { listAssignableFormsForModule } from "@/lib/qa/assignment.functions";
+import {
+  listAssignableFormsForModule,
+  previewAssignableFormsForModule,
+  type AssignablePreviewItem,
+  type AssignablePreviewResult,
+  type PreviewSortDir,
+  type PreviewSortKey,
+} from "@/lib/qa/assignment.functions";
 
 const PRIORITIES: RetestPriority[] = ["Low", "Medium", "High", "Critical"];
 const ALL_MODULES = "All Modules";
@@ -40,6 +47,7 @@ export function AssignTaskDialog({
   const { items: invites } = useAgentInvites();
   const notifyByEmail = useServerFn(sendTaskAssignmentEmail);
   const listForms = useServerFn(listAssignableFormsForModule);
+  const previewForms = useServerFn(previewAssignableFormsForModule);
   const agentNames = useMemo(
     () => users.filter((u) => u.active && u.role === "agent").map((u) => u.name),
     [users],
@@ -115,21 +123,100 @@ export function AssignTaskDialog({
   const [scopeError, setScopeError] = useState<{ message: string; offenders: string[] } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [creatingDefect, setCreatingDefect] = useState(false);
+  // Scope preview panel state — persisted per module across reopens via
+  // sessionStorage. Pagination + search + sort all run on the server so the
+  // dialog never ships the full catalog over the wire.
+  const PREVIEW_PAGE_SIZE = 24;
+  type PreviewState = { query: string; page: number; sortBy: PreviewSortKey; sortDir: PreviewSortDir };
+  const previewStateKey = (m: string) => `assignTaskScopePreview:${m}`;
+  const readPreviewState = (m: string): PreviewState => {
+    if (typeof window === "undefined") return { query: "", page: 1, sortBy: "name", sortDir: "asc" };
+    try {
+      const raw = window.sessionStorage.getItem(previewStateKey(m));
+      if (raw) {
+        const p = JSON.parse(raw) as Partial<PreviewState>;
+        return {
+          query: typeof p.query === "string" ? p.query : "",
+          page: typeof p.page === "number" && p.page > 0 ? p.page : 1,
+          sortBy: p.sortBy === "version" || p.sortBy === "createdAt" ? p.sortBy : "name",
+          sortDir: p.sortDir === "desc" ? "desc" : "asc",
+        };
+      }
+    } catch { /* ignore */ }
+    return { query: "", page: 1, sortBy: "name", sortDir: "asc" };
+  };
   const [previewQuery, setPreviewQuery] = useState("");
   const [previewPage, setPreviewPage] = useState(1);
-  const PREVIEW_PAGE_SIZE = 24;
-  useEffect(() => { setPreviewPage(1); }, [previewQuery, moduleSel]);
-  const previewFiltered = useMemo(() => {
-    const q = previewQuery.trim().toLowerCase();
-    if (!q) return scopedForms;
-    return scopedForms.filter((f) => f.name.toLowerCase().includes(q));
-  }, [scopedForms, previewQuery]);
-  const previewTotalPages = Math.max(1, Math.ceil(previewFiltered.length / PREVIEW_PAGE_SIZE));
+  const [previewSortBy, setPreviewSortBy] = useState<PreviewSortKey>("name");
+  const [previewSortDir, setPreviewSortDir] = useState<PreviewSortDir>("asc");
+  const [previewItems, setPreviewItems] = useState<AssignablePreviewItem[]>([]);
+  const [previewTotal, setPreviewTotal] = useState(0);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  // Restore persisted preview state whenever the module changes (also on open).
+  useEffect(() => {
+    if (!open) return;
+    const s = readPreviewState(moduleSel);
+    setPreviewQuery(s.query);
+    setPreviewPage(s.page);
+    setPreviewSortBy(s.sortBy);
+    setPreviewSortDir(s.sortDir);
+  }, [open, moduleSel]);
+  // Persist on every change.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(
+        previewStateKey(moduleSel),
+        JSON.stringify({ query: previewQuery, page: previewPage, sortBy: previewSortBy, sortDir: previewSortDir }),
+      );
+    } catch { /* ignore */ }
+  }, [moduleSel, previewQuery, previewPage, previewSortBy, previewSortDir]);
+  // Reset to page 1 when query/sort change.
+  useEffect(() => { setPreviewPage(1); }, [previewQuery, previewSortBy, previewSortDir]);
+  // Server-side fetch (debounced for search).
+  useEffect(() => {
+    if (!open || !showPreview) return;
+    if (!moduleSel || moduleSel === ALL_MODULES) {
+      setPreviewItems([]); setPreviewTotal(0); return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    const t = window.setTimeout(() => {
+      previewForms({
+        data: {
+          module: moduleSel,
+          query: previewQuery,
+          page: previewPage,
+          pageSize: PREVIEW_PAGE_SIZE,
+          sortBy: previewSortBy,
+          sortDir: previewSortDir,
+        },
+      })
+        .then((res: AssignablePreviewResult) => {
+          if (cancelled) return;
+          setPreviewItems(res.items ?? []);
+          setPreviewTotal(res.total ?? 0);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setPreviewItems([]); setPreviewTotal(0);
+        })
+        .finally(() => { if (!cancelled) setPreviewLoading(false); });
+    }, 200);
+    return () => { cancelled = true; window.clearTimeout(t); };
+  }, [open, showPreview, moduleSel, previewQuery, previewPage, previewSortBy, previewSortDir, previewForms]);
+  const previewTotalPages = Math.max(1, Math.ceil(previewTotal / PREVIEW_PAGE_SIZE));
   const previewSafePage = Math.min(previewPage, previewTotalPages);
-  const previewPageItems = useMemo(() => {
-    const start = (previewSafePage - 1) * PREVIEW_PAGE_SIZE;
-    return previewFiltered.slice(start, start + PREVIEW_PAGE_SIZE);
-  }, [previewFiltered, previewSafePage]);
+  const toggleSort = (key: PreviewSortKey) => {
+    if (previewSortBy === key) {
+      setPreviewSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setPreviewSortBy(key);
+      setPreviewSortDir("asc");
+    }
+  };
+  const sortIndicator = (key: PreviewSortKey) =>
+    previewSortBy === key ? (previewSortDir === "asc" ? " ▲" : " ▼") : "";
   // Track the most recent defect created from this banner so realtime
   // updates to its status are reflected immediately in the dialog.
   const [createdDefectTitle, setCreatedDefectTitle] = useState<string | null>(null);
@@ -428,7 +515,8 @@ export function AssignTaskDialog({
                   </Button>
                   {createdDefect && (
                     <span className="ml-2 text-[11px] text-muted-foreground">
-                      Live status: <span className="font-medium text-foreground">{createdDefect.status}</span>
+                      Affected: <span className="font-medium text-foreground">{createdDefect.formFeature}</span>
+                      {" · "}Live status: <span className="font-medium text-foreground">{createdDefect.status}</span>
                       {" · "}Priority {createdDefect.priority} · Severity {createdDefect.severity}
                     </span>
                   )}
@@ -439,14 +527,16 @@ export function AssignTaskDialog({
               <div className="flex items-center justify-between">
                 <div className="font-medium text-foreground">
                   Scope preview — allowed for {moduleSel === ALL_MODULES ? "All Modules" : moduleSel}
-                  <span className="ml-1 text-muted-foreground">({scopedForms.length})</span>
+                  <span className="ml-1 text-muted-foreground">
+                    ({moduleSel === ALL_MODULES ? scopedForms.length : previewTotal})
+                  </span>
                 </div>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowPreview((v) => !v)}
-                  disabled={scopedForms.length === 0}
+                  disabled={moduleSel === ALL_MODULES ? scopedForms.length === 0 : false}
                 >
                   {showPreview ? "Hide" : "Show"}
                 </Button>
@@ -459,25 +549,55 @@ export function AssignTaskDialog({
                     placeholder="Search allowed forms / features…"
                     className="h-7 text-xs"
                   />
-                  <div className="max-h-32 overflow-auto flex flex-wrap gap-1">
-                    {loadingForms && <span className="text-muted-foreground">Loading…</span>}
-                    {!loadingForms && scopedForms.length === 0 && (
-                      <span className="text-muted-foreground">No forms/features mapped to this module.</span>
-                    )}
-                    {!loadingForms && scopedForms.length > 0 && previewFiltered.length === 0 && (
-                      <span className="text-muted-foreground">No matches for “{previewQuery}”.</span>
-                    )}
-                    {previewPageItems.map((f) => (
-                      <span key={f.id} className="rounded border bg-background px-1.5 py-0.5">
-                        {f.name}
-                      </span>
-                    ))}
+                  <div className="max-h-48 overflow-auto rounded border bg-background">
+                    <table className="w-full text-left text-xs">
+                      <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
+                        <tr>
+                          <th className="px-2 py-1">
+                            <button type="button" className="hover:underline" onClick={() => toggleSort("name")}>
+                              Name{sortIndicator("name")}
+                            </button>
+                          </th>
+                          <th className="px-2 py-1 w-24">
+                            <button type="button" className="hover:underline" onClick={() => toggleSort("version")}>
+                              Version{sortIndicator("version")}
+                            </button>
+                          </th>
+                          <th className="px-2 py-1 w-36">
+                            <button type="button" className="hover:underline" onClick={() => toggleSort("createdAt")}>
+                              Created{sortIndicator("createdAt")}
+                            </button>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {moduleSel === ALL_MODULES ? (
+                          <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">Select a Module / Category to preview its catalog.</td></tr>
+                        ) : previewLoading ? (
+                          <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">Loading…</td></tr>
+                        ) : previewItems.length === 0 ? (
+                          <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">
+                            {previewQuery ? `No matches for “${previewQuery}”.` : "No forms/features mapped to this module."}
+                          </td></tr>
+                        ) : (
+                          previewItems.map((f) => (
+                            <tr key={f.id} className="border-t">
+                              <td className="px-2 py-1">{f.name}</td>
+                              <td className="px-2 py-1 tabular-nums">{f.version ?? "—"}</td>
+                              <td className="px-2 py-1 tabular-nums">
+                                {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "—"}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                  {previewFiltered.length > PREVIEW_PAGE_SIZE && (
+                  {moduleSel !== ALL_MODULES && previewTotal > PREVIEW_PAGE_SIZE && (
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                       <span>
                         Showing {(previewSafePage - 1) * PREVIEW_PAGE_SIZE + 1}
-                        –{Math.min(previewSafePage * PREVIEW_PAGE_SIZE, previewFiltered.length)} of {previewFiltered.length}
+                        –{Math.min(previewSafePage * PREVIEW_PAGE_SIZE, previewTotal)} of {previewTotal}
                       </span>
                       <div className="flex items-center gap-1">
                         <Button
