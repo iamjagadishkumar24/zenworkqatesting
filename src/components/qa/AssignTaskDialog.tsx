@@ -318,6 +318,27 @@ export function AssignTaskDialog({
           </div>
           <div className="md:col-span-2">
             <Label>Forms / features ({picked.size} selected, optional)</Label>
+            {scopeError && (
+              <div
+                role="alert"
+                aria-live="polite"
+                className="mt-1 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
+              >
+                <div className="font-medium">{scopeError.message}</div>
+                {scopeError.offenders.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {scopeError.offenders.map((n) => (
+                      <span
+                        key={n}
+                        className="rounded bg-destructive/15 px-1.5 py-0.5"
+                      >
+                        {n}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {!allForms && filtered.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-2">
                 <Button
