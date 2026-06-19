@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,17 +14,13 @@ import {
   MODULE_OPTIONS,
   TAX_YEARS,
   DEFAULT_TAX_YEAR,
-  FORM_LIST,
-  FORMS_MODULE,
-  LEGACY_FORM_MODULES,
-  ONLINE_1099_MODULE,
-  LEGACY_ONLINE_1099_MODULES,
-  usesFullFormsCatalog,
+  getModuleCatalog,
 } from "@/lib/qa/constants";
 import { useAgentInvites } from "@/lib/qa/agents";
 import { useServerFn } from "@tanstack/react-start";
 import { sendTaskAssignmentEmail } from "@/lib/qa/email.functions";
 import { validateAssignmentScope } from "@/lib/qa/assignmentValidation";
+import { listAssignableFormsForModule } from "@/lib/qa/assignment.functions";
 
 const PRIORITIES: RetestPriority[] = ["Low", "Medium", "High", "Critical"];
 const ALL_MODULES = "All Modules";
@@ -43,6 +39,7 @@ export function AssignTaskDialog({
   const { createAssignment } = useRetests();
   const { items: invites } = useAgentInvites();
   const notifyByEmail = useServerFn(sendTaskAssignmentEmail);
+  const listForms = useServerFn(listAssignableFormsForModule);
   const agentNames = useMemo(
     () => users.filter((u) => u.active && u.role === "agent").map((u) => u.name),
     [users],
@@ -64,40 +61,49 @@ export function AssignTaskDialog({
   const [instructions, setInstructions] = useState("");
   const [filter, setFilter] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  // When "Forms" is selected, expose the full canonical catalog (FORM_LIST)
-  // even if some entries are not yet present in the DB `forms` table, so the
-  // picker always shows every assignable form. Existing DB rows take priority
-  // (preserve their stable id); missing names are surfaced with id = name.
-  const scopedForms = useMemo(() => {
-    if (!moduleSel || moduleSel === ALL_MODULES) return forms;
-    if (usesFullFormsCatalog(moduleSel)) {
-      const acceptedModules = new Set<string>([
-        FORMS_MODULE,
-        ONLINE_1099_MODULE,
-        ...LEGACY_FORM_MODULES,
-        ...LEGACY_ONLINE_1099_MODULES,
-      ]);
-      const inForms = forms.filter(
-        (f) => acceptedModules.has(f.module as string),
-      );
-      const seen = new Set(inForms.map((f) => f.name));
-      const synthetic = FORM_LIST
-        .filter((name) => !seen.has(name))
-        .map((name) => ({
-          id: name,
-          name,
-          module: moduleSel,
-          status: "Pending" as const,
-          passed: 0,
-          failed: 0,
-          openDefects: 0,
-          lastTested: "",
-          assignedAgent: "",
-        }));
-      return [...inForms, ...synthetic].sort((a, b) => a.name.localeCompare(b.name));
+  // Strict server-backed listing. The Forms/Features picker shows ONLY what
+  // the server returns for the selected module/category; the same canonical
+  // catalog is enforced server-side at write time (Create / Edit / Reassign).
+  const [serverForms, setServerForms] = useState<{ id: string; name: string; module: string }[]>([]);
+  const [loadingForms, setLoadingForms] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    if (!moduleSel || moduleSel === ALL_MODULES) {
+      setServerForms([]);
+      return;
     }
-    return forms.filter((f) => f.module === moduleSel);
-  }, [forms, moduleSel]);
+    setLoadingForms(true);
+    listForms({ data: { module: moduleSel } })
+      .then((rows) => { if (!cancelled) setServerForms(rows ?? []); })
+      .catch(() => { if (!cancelled) setServerForms([]); })
+      .finally(() => { if (!cancelled) setLoadingForms(false); });
+    return () => { cancelled = true; };
+  }, [open, moduleSel, listForms]);
+  const scopedForms = useMemo(() => {
+    if (!moduleSel || moduleSel === ALL_MODULES) {
+      // "All Modules" only — no curated catalog; fall back to the local DB
+      // form mirror so admins can still pick something. The server guard
+      // never rejects in this case (unknown module = unrestricted).
+      return forms;
+    }
+    return [...serverForms].sort((a, b) => a.name.localeCompare(b.name));
+  }, [moduleSel, serverForms, forms]);
+  // Defensive: if the module's catalog shrinks (or changes), drop any
+  // picked ids that are no longer valid.
+  useEffect(() => {
+    if (!moduleSel || moduleSel === ALL_MODULES) return;
+    const allowed = new Set(scopedForms.map((f) => f.id));
+    setPicked((prev) => {
+      let changed = false;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (allowed.has(id)) next.add(id);
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [moduleSel, scopedForms]);
   const filtered = useMemo(
     () => scopedForms.filter((f) => f.name.toLowerCase().includes(filter.toLowerCase())),
     [scopedForms, filter],
