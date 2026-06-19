@@ -5,20 +5,12 @@
 // reassignment flows so scoped selections can never persist incorrectly
 // across module changes.
 
-import {
-  FORM_LIST,
-  FORMS_MODULE,
-  ONLINE_1099_MODULE,
-  isFormsModule,
-  isOnline1099Module,
-  usesFullFormsCatalog,
-} from "./constants";
+import { FORM_LIST, usesFullFormsCatalog } from "./constants";
 
 export type AssignableForm = { id: string; name: string; module?: string };
 
 export type AssignmentScopeInput = {
   module: string;                  // selected Module / Category
-  testingType?: string;            // selected Testing Type (optional)
   allForms: boolean;               // "All Forms" flag bypasses the picker
   pickedIds: Iterable<string>;     // form ids the user selected
   availableForms: AssignableForm[]; // forms allowed for the current scope
@@ -29,58 +21,9 @@ export type AssignmentValidationResult =
   | { ok: true }
   | { ok: false; error: string; offenders: string[] };
 
-/** Testing-type values that pin the assignment to a specific Module /
- *  Category. Anything not listed here (e.g. "Retest") is freeform and
- *  may be paired with any module. */
-const TESTING_TYPE_TO_MODULE: Record<string, string> = {
-  "Forms": FORMS_MODULE,
-  "1099 Online Forms": ONLINE_1099_MODULE,
-  "990 Form Testing": "990 Form Testing",
-  "2290 Forms": "2290 Forms",
-  "Integrations": "Integrations",
-  "Chatbot Testing": "Chatbot Testing",
-  "Excel Import Testing": "Excel Import Testing",
-  "Functionality Testing": "Functionality Testing",
-  "Tax1099 Features": "Tax1099 Features",
-};
-
-function sameModule(a: string, b: string): boolean {
-  if (a === b) return true;
-  if (isFormsModule(a) && isFormsModule(b)) return true;
-  if (isOnline1099Module(a) && isOnline1099Module(b)) return true;
-  return false;
-}
-
-export function validateTestingTypeMatchesModule(
-  module: string | null | undefined,
-  testingType: string | null | undefined,
-): { ok: true } | { ok: false; error: string } {
-  if (!testingType) return { ok: true };
-  const requiredModule = TESTING_TYPE_TO_MODULE[testingType];
-  if (!requiredModule) return { ok: true }; // freeform (e.g. Retest)
-  if (!module || module === "All Modules") {
-    return {
-      ok: false,
-      error: `Testing Type “${testingType}” requires Module / Category “${requiredModule}”.`,
-    };
-  }
-  if (!sameModule(module, requiredModule)) {
-    return {
-      ok: false,
-      error: `Testing Type “${testingType}” does not match Module / Category “${module}”. Expected “${requiredModule}”.`,
-    };
-  }
-  return { ok: true };
-}
-
 export function validateAssignmentScope(
   input: AssignmentScopeInput,
 ): AssignmentValidationResult {
-  // Testing Type ↔ Module / Category gate runs first so the user can
-  // correct the mismatch before fighting the per-form check.
-  const ttCheck = validateTestingTypeMatchesModule(input.module, input.testingType);
-  if (!ttCheck.ok) return { ok: false, error: ttCheck.error, offenders: [] };
-
   if (input.allForms) return { ok: true };
 
   const picked = Array.from(input.pickedIds);
@@ -114,7 +57,6 @@ export function validateAssignmentScope(
 
 export type CanonicalScopeInput = {
   module: string;
-  testingType?: string;
   allForms: boolean;
   formNames: string[];
 };
@@ -122,9 +64,6 @@ export type CanonicalScopeInput = {
 export function validateAssignmentScopeCanonical(
   input: CanonicalScopeInput,
 ): AssignmentValidationResult {
-  const ttCheck = validateTestingTypeMatchesModule(input.module, input.testingType);
-  if (!ttCheck.ok) return { ok: false, error: ttCheck.error, offenders: [] };
-
   if (input.allForms) return { ok: true };
   if (!input.formNames.length) return { ok: true };
 
