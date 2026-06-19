@@ -504,12 +504,15 @@ export function AssignTaskDialog({
                 {scopeError.offenders.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1">
                     {scopeError.offenders.map((n) => (
-                      <span
+                      <button
                         key={n}
-                        className="rounded bg-destructive/15 px-1.5 py-0.5"
+                        type="button"
+                        onClick={() => setOffenderName(n)}
+                        className="rounded bg-destructive/15 px-1.5 py-0.5 hover:bg-destructive/25 underline-offset-2 hover:underline"
+                        title="View offender details"
                       >
                         {n}
-                      </span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -529,7 +532,14 @@ export function AssignTaskDialog({
                   </Button>
                   {createdDefect && (
                     <span className="ml-2 text-[11px] text-muted-foreground">
-                      Affected: <span className="font-medium text-foreground">{createdDefect.formFeature}</span>
+                      Affected:{" "}
+                      <button
+                        type="button"
+                        onClick={() => setOffenderName(createdDefect.formFeature)}
+                        className="font-medium text-foreground hover:underline"
+                      >
+                        {createdDefect.formFeature}
+                      </button>
                       {" · "}Live status: <span className="font-medium text-foreground">{createdDefect.status}</span>
                       {" · "}Priority {createdDefect.priority} · Severity {createdDefect.severity}
                     </span>
@@ -557,12 +567,23 @@ export function AssignTaskDialog({
               </div>
               {showPreview && (
                 <div className="mt-2 space-y-2">
-                  <Input
-                    value={previewQuery}
-                    onChange={(e) => setPreviewQuery(e.target.value)}
-                    placeholder="Search allowed forms / features…"
-                    className="h-7 text-xs"
-                  />
+                  <div className="relative">
+                    <Input
+                      value={previewQuery}
+                      onChange={(e) => setPreviewQuery(e.target.value)}
+                      placeholder="Search allowed forms / features…"
+                      className="h-7 text-xs pr-20"
+                    />
+                    {previewLoading && moduleSel !== ALL_MODULES && (
+                      <span
+                        aria-live="polite"
+                        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 text-[10px] text-muted-foreground"
+                      >
+                        <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-muted-foreground/60" />
+                        Searching…
+                      </span>
+                    )}
+                  </div>
                   <div className="max-h-48 overflow-auto rounded border bg-background">
                     <table className="w-full text-left text-xs">
                       <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
@@ -587,16 +608,38 @@ export function AssignTaskDialog({
                       <tbody>
                         {moduleSel === ALL_MODULES ? (
                           <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">Select a Module / Category to preview its catalog.</td></tr>
-                        ) : previewLoading ? (
-                          <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">Loading…</td></tr>
+                        ) : previewLoading && previewItems.length === 0 ? (
+                          <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">Loading allowed forms / features…</td></tr>
                         ) : previewItems.length === 0 ? (
-                          <tr><td colSpan={3} className="px-2 py-2 text-muted-foreground">
-                            {previewQuery ? `No matches for “${previewQuery}”.` : "No forms/features mapped to this module."}
+                          <tr><td colSpan={3} className="px-2 py-3 text-center text-muted-foreground">
+                            {previewQuery ? (
+                              <>
+                                No allowed forms / features match{" "}
+                                <span className="font-medium text-foreground">“{previewQuery}”</span> in{" "}
+                                <span className="font-medium text-foreground">{moduleSel}</span>.
+                                <div className="mt-1">
+                                  <Button type="button" variant="ghost" size="sm" className="h-6 px-2"
+                                    onClick={() => setPreviewQuery("")}>
+                                    Clear search
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <>No forms / features are mapped to <span className="font-medium text-foreground">{moduleSel}</span> yet.</>
+                            )}
                           </td></tr>
                         ) : (
                           previewItems.map((f) => (
                             <tr key={f.id} className="border-t">
-                              <td className="px-2 py-1">{f.name}</td>
+                              <td className="px-2 py-1">
+                                <button
+                                  type="button"
+                                  className="hover:underline"
+                                  onClick={() => setOffenderName(f.name)}
+                                >
+                                  {f.name}
+                                </button>
+                              </td>
                               <td className="px-2 py-1 tabular-nums">{f.version ?? "—"}</td>
                               <td className="px-2 py-1 tabular-nums">
                                 {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "—"}
