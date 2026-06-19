@@ -104,9 +104,12 @@ export function getModuleCatalog(
   m: string | null | undefined,
 ): string[] | null {
   if (!m) return null;
-  if (usesFullFormsCatalog(m)) return [...FORM_LIST];
+  // Module-specific catalogs come first — "2290 Forms" and "990 Forms"
+  // appear in LEGACY_FORM_MODULES for historical filtering, but their
+  // assignment catalogs are the dedicated 2290 / 990 lists, NOT FORM_LIST.
   if (m === "2290 Forms") return [...FORMS_2290];
   if (m === "990 Form Testing" || m === "990 Forms") return [...FORMS_990];
+  if (usesFullFormsCatalog(m)) return [...FORM_LIST];
   if (m === "Integrations") return [...INTEGRATIONS];
   if (m === "Chatbot Testing") return [...FEATURES_CHATBOT];
   if (m === "Excel Import Testing") return [...FEATURES_EXCEL_IMPORT];
