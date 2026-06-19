@@ -9,7 +9,6 @@ export type TaskAssignmentEmailInput = {
   taskTitle: string;
   taskId: string;
   module?: string;
-  testingType?: string;
   priority?: string;
   dueDate?: string | null;
   instructions?: string;
@@ -53,7 +52,6 @@ export function renderTaskAssignmentEmail(input: TaskAssignmentEmailInput): {
   const rows: [string, string | undefined][] = [
     ["Task", input.taskTitle || input.taskId],
     ["Module", input.module],
-    ["Testing type", input.testingType],
     ["Priority", input.priority],
     ["Environment", input.environment],
     ["Due date", input.dueDate || undefined],
