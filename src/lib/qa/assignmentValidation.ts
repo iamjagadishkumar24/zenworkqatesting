@@ -5,7 +5,7 @@
 // reassignment flows so scoped selections can never persist incorrectly
 // across module changes.
 
-import { FORM_LIST, usesFullFormsCatalog } from "./constants";
+import { getModuleCatalog } from "./constants";
 
 export type AssignableForm = { id: string; name: string; module?: string };
 
@@ -67,20 +67,15 @@ export function validateAssignmentScopeCanonical(
   if (input.allForms) return { ok: true };
   if (!input.formNames.length) return { ok: true };
 
-  if (usesFullFormsCatalog(input.module)) {
-    const allowed = new Set(FORM_LIST);
-    const bad = input.formNames.filter((n) => !allowed.has(n));
-    if (!bad.length) return { ok: true };
-    const preview = bad.slice(0, 3).join(", ") + (bad.length > 3 ? `, +${bad.length - 3} more` : "");
-    return {
-      ok: false,
-      error: `These forms/features are not part of the “${input.module}” catalog: ${preview}.`,
-      offenders: bad,
-    };
-  }
-
-  // Non-catalog modules (Integrations, Chatbot Testing, etc.) carry
-  // free-form feature names — the catalog is open-ended. The cross-module
-  // gate above is sufficient to block obvious mismatches.
-  return { ok: true };
+  const catalog = getModuleCatalog(input.module);
+  if (!catalog) return { ok: true }; // unknown module (e.g. All Modules)
+  const allowed = new Set(catalog);
+  const bad = input.formNames.filter((n) => !allowed.has(n));
+  if (!bad.length) return { ok: true };
+  const preview = bad.slice(0, 3).join(", ") + (bad.length > 3 ? `, +${bad.length - 3} more` : "");
+  return {
+    ok: false,
+    error: `These forms/features are not part of the “${input.module}” catalog: ${preview}.`,
+    offenders: bad,
+  };
 }
