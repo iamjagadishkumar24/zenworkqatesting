@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
-import { useRetests, TESTING_TYPES, RETEST_STATUSES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
+import { useRetests, RETEST_STATUSES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
 import {
   MODULE_OPTIONS,
   TAX_YEARS,
@@ -53,7 +53,6 @@ export function AssignTaskDialog({
   );
   const [title, setTitle] = useState(defaultTitle ?? "");
   const [moduleSel, setModuleSel] = useState<string>(defaultModule ?? ALL_MODULES);
-  const [testingType, setTestingType] = useState<string>(TESTING_TYPES[0] ?? "Retest");
   const [selectedAgents, setSelectedAgents] = useState<Set<string>>(() => new Set(defaultAgent ? [defaultAgent] : []));
   const [selectedPending, setSelectedPending] = useState<Set<string>>(new Set());
   const [assignAll, setAssignAll] = useState(false);
@@ -112,7 +111,6 @@ export function AssignTaskDialog({
     }
     const scopeCheck = validateAssignmentScope({
       module: moduleSel,
-      testingType,
       allForms,
       pickedIds: picked,
       availableForms: scopedForms,
@@ -136,7 +134,6 @@ export function AssignTaskDialog({
       instructions,
       priority,
       dueDate: dueDate || null,
-      testingType,
       title: title.trim(),
       module: moduleSel,
       taxYear,
@@ -166,7 +163,6 @@ export function AssignTaskDialog({
               id: firstId,
               title: title.trim(),
               module: moduleSel,
-              testingType,
               priority,
               dueDate: dueDate || null,
               instructions,
@@ -222,13 +218,6 @@ export function AssignTaskDialog({
                 <SelectItem value={ALL_MODULES}>All Modules (every form/feature)</SelectItem>
                 {MODULE_OPTIONS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
               </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Testing type</Label>
-            <Select value={testingType} onValueChange={setTestingType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{TESTING_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="md:col-span-2">
