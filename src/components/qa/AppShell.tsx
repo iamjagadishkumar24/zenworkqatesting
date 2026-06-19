@@ -34,7 +34,7 @@ const nav: NavItem[] = [
   { to: "/excel-import-testing", label: "Excel Import Testing", icon: FileUp },
   { to: "/functionality-testing", label: "Functionality Testing", icon: Cpu },
   { to: "/tax1099-features", label: "Tax1099 Features", icon: Sparkles },
-  { to: "/my-reported-errors", label: "My Reported Errors", icon: ListChecks },
+  { to: "/my-reported-errors", label: "Reported Errors", icon: ListChecks },
   { to: "/retest", label: "Task Assignments", icon: ClipboardCheck },
   { to: "/agents", label: "Agent Management", icon: UserCog, adminOnly: true },
   { to: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },

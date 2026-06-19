@@ -154,7 +154,7 @@ function ReportedErrorsPage() {
     }
   }, [q, mod, status, prio, agent, filtered.length, scoped]);
 
-  const title = isAdmin ? "Reported Errors" : "My Reported Errors";
+  const title = "Reported Errors";
   const description = isAdmin
     ? "All errors reported across agents. Use filters to drill down."
     : "Errors you reported. Other agents' reports are not shown.";
