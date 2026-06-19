@@ -156,7 +156,9 @@ export function useRetests() {
           formNames: (input.forms ?? []).map((f) => f.name),
         },
       });
-      if (!check.ok) return { ok: false, error: check.error };
+      if (!check.ok) {
+        return { ok: false, error: check.error, offenders: check.offenders };
+      }
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "Validation failed" };
     }
@@ -257,7 +259,9 @@ export function useRetests() {
           formNames: input.forms.map((f) => f.name),
         },
       });
-      if (!check.ok) return { ok: false, error: check.error };
+      if (!check.ok) {
+        return { ok: false, error: check.error, offenders: check.offenders };
+      }
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "Validation failed" };
     }
