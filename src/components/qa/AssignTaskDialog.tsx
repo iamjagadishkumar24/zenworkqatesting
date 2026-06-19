@@ -752,5 +752,67 @@ export function AssignTaskDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <Sheet open={!!offenderName} onOpenChange={(o) => { if (!o) setOffenderName(null); }}>
+      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="break-all">{offenderName ?? ""}</SheetTitle>
+          <SheetDescription>
+            Affected form / feature from the Assign Task scope check in{" "}
+            <span className="font-medium text-foreground">{moduleSel}</span>.
+          </SheetDescription>
+        </SheetHeader>
+        {offenderInfo && (
+          <div className="mt-4 space-y-4 text-sm">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-muted-foreground">Module</div>
+              <div className="col-span-2 font-medium">{moduleSel}</div>
+              <div className="text-muted-foreground">In catalog</div>
+              <div className="col-span-2">
+                {offenderInfo.inCatalog ? (
+                  <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-700 dark:text-emerald-400">Allowed</span>
+                ) : (
+                  <span className="rounded bg-destructive/15 px-1.5 py-0.5 text-destructive">Not in this module's catalog</span>
+                )}
+              </div>
+              <div className="text-muted-foreground">Environment</div>
+              <div className="col-span-2">{env ?? "Production"}</div>
+              <div className="text-muted-foreground">Tax year</div>
+              <div className="col-span-2">{taxYear}</div>
+            </div>
+            {scopeError && scopeError.offenders.includes(offenderInfo.name) && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                <div className="font-medium">Validation failure</div>
+                <div className="mt-1">{scopeError.message}</div>
+              </div>
+            )}
+            <div>
+              <div className="mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Related defects ({offenderInfo.related.length})
+              </div>
+              {offenderInfo.related.length === 0 ? (
+                <div className="text-xs text-muted-foreground">No defects reference this form / feature yet.</div>
+              ) : (
+                <ul className="space-y-1">
+                  {offenderInfo.related.slice(0, 20).map((d) => (
+                    <li key={d.id} className="rounded border p-2 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono">{d.id}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5">{d.status}</span>
+                      </div>
+                      <div className="mt-1 line-clamp-2">{d.title}</div>
+                      <div className="mt-1 text-[11px] text-muted-foreground">
+                        Priority {d.priority} · Severity {d.severity} · Updated {new Date(d.updatedAt ?? d.createdAt).toLocaleString()}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }
