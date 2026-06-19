@@ -113,11 +113,32 @@ describe("validateAssignmentScopeCanonical (server-side guard)", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("non-catalog modules (Integrations) accept any feature name", () => {
+  it("Integrations module accepts canonical integration names", () => {
     const r = validateAssignmentScopeCanonical({
       module: "Integrations",
       allForms: false,
-      formNames: ["QuickBooks", "Xero", "Bill"],
+      formNames: ["QuickBooks Online", "Xero", "Bill"],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("Integrations module rejects names outside the canonical list", () => {
+    const r = validateAssignmentScopeCanonical({
+      module: "Integrations",
+      allForms: false,
+      formNames: ["QuickBooks", "MysteryApp"],
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.offenders).toEqual(["QuickBooks", "MysteryApp"]);
+    }
+  });
+
+  it("unknown module (All Modules) is treated as unrestricted", () => {
+    const r = validateAssignmentScopeCanonical({
+      module: "All Modules",
+      allForms: false,
+      formNames: ["anything", "goes"],
     });
     expect(r.ok).toBe(true);
   });
