@@ -10,7 +10,14 @@ import { toast } from "sonner";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useRetests, TESTING_TYPES, RETEST_STATUSES, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
-import { MODULE_OPTIONS, TAX_YEARS, DEFAULT_TAX_YEAR } from "@/lib/qa/constants";
+import {
+  MODULE_OPTIONS,
+  TAX_YEARS,
+  DEFAULT_TAX_YEAR,
+  FORM_LIST,
+  FORMS_MODULE,
+  LEGACY_FORM_MODULES,
+} from "@/lib/qa/constants";
 import { useAgentInvites } from "@/lib/qa/agents";
 import { useServerFn } from "@tanstack/react-start";
 import { sendTaskAssignmentEmail } from "@/lib/qa/email.functions";
@@ -54,10 +61,34 @@ export function AssignTaskDialog({
   const [instructions, setInstructions] = useState("");
   const [filter, setFilter] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  const scopedForms = useMemo(
-    () => (moduleSel && moduleSel !== ALL_MODULES ? forms.filter((f) => f.module === moduleSel) : forms),
-    [forms, moduleSel],
-  );
+  // When "Forms" is selected, expose the full canonical catalog (FORM_LIST)
+  // even if some entries are not yet present in the DB `forms` table, so the
+  // picker always shows every assignable form. Existing DB rows take priority
+  // (preserve their stable id); missing names are surfaced with id = name.
+  const scopedForms = useMemo(() => {
+    if (!moduleSel || moduleSel === ALL_MODULES) return forms;
+    if (moduleSel === FORMS_MODULE) {
+      const inForms = forms.filter(
+        (f) => f.module === FORMS_MODULE || LEGACY_FORM_MODULES.includes(f.module as string),
+      );
+      const seen = new Set(inForms.map((f) => f.name));
+      const synthetic = FORM_LIST
+        .filter((name) => !seen.has(name))
+        .map((name) => ({
+          id: name,
+          name,
+          module: FORMS_MODULE,
+          status: "Pending" as const,
+          passed: 0,
+          failed: 0,
+          openDefects: 0,
+          lastTested: "",
+          assignedAgent: "",
+        }));
+      return [...inForms, ...synthetic].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return forms.filter((f) => f.module === moduleSel);
+  }, [forms, moduleSel]);
   const filtered = useMemo(
     () => scopedForms.filter((f) => f.name.toLowerCase().includes(filter.toLowerCase())),
     [scopedForms, filter],
@@ -70,7 +101,11 @@ export function AssignTaskDialog({
       return toast.error("Select at least one agent or 'Assign to all'");
     }
     setSubmitting(true);
-    const selected = allForms ? [] : forms.filter((f) => picked.has(f.id));
+    const selected = allForms
+      ? []
+      : scopedForms
+          .filter((f) => picked.has(f.id))
+          .map((f) => ({ id: f.id, name: f.name }));
     const r = await createAssignment({
       agentNames: assignAll ? [] : Array.from(selectedAgents),
       assignToAll: assignAll,
@@ -253,6 +288,33 @@ export function AssignTaskDialog({
           </div>
           <div className="md:col-span-2">
             <Label>Forms / features ({picked.size} selected, optional)</Label>
+            {!allForms && filtered.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setPicked((s) => {
+                      const n = new Set(s);
+                      filtered.forEach((f) => n.add(f.id));
+                      return n;
+                    })
+                  }
+                >
+                  Select all{filter ? " (filtered)" : ""}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPicked(new Set())}
+                  disabled={picked.size === 0}
+                >
+                  Clear selection
+                </Button>
+              </div>
+            )}
             <div className={`mt-1 max-h-48 overflow-auto rounded-md border p-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3 ${allForms ? "opacity-50 pointer-events-none" : ""}`}>
               {filtered.map((f) => {
                 const checked = picked.has(f.id);
