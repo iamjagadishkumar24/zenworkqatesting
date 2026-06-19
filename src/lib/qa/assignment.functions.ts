@@ -13,7 +13,6 @@ import {
 
 export type ValidateAssignmentInput = {
   module: string;
-  testingType?: string;
   allForms: boolean;
   formNames: string[];
 };
@@ -21,7 +20,6 @@ export type ValidateAssignmentInput = {
 function parse(input: unknown): ValidateAssignmentInput {
   const d = (input ?? {}) as Record<string, unknown>;
   const module = typeof d.module === "string" ? d.module : "";
-  const testingType = typeof d.testingType === "string" ? d.testingType : undefined;
   const allForms = !!d.allForms;
   const rawNames = Array.isArray(d.formNames) ? d.formNames : [];
   const formNames = rawNames
@@ -30,8 +28,7 @@ function parse(input: unknown): ValidateAssignmentInput {
     .filter(Boolean)
     .slice(0, 500);
   if (module.length > 100) throw new Error("Module is too long");
-  if (testingType && testingType.length > 100) throw new Error("Testing type is too long");
-  return { module, testingType, allForms, formNames };
+  return { module, allForms, formNames };
 }
 
 export const validateAssignmentScopeServer = createServerFn({ method: "POST" })
