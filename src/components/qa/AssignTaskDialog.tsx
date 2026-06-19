@@ -156,8 +156,9 @@ export function AssignTaskDialog({
       const offenders = Array.isArray((r as { offenders?: unknown }).offenders)
         ? ((r as { offenders: string[] }).offenders)
         : [];
-      setScopeError({ message: r.error, offenders });
-      return toast.error(r.error);
+      const msg = r.error ?? "Could not assign task";
+      setScopeError({ message: msg, offenders });
+      return toast.error(msg);
     }
 
     // Build recipient list (active agents who got a real assignment) + pending invites.
