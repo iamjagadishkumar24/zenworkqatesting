@@ -34,7 +34,7 @@ export function AssignTaskDialog({
   defaultModule?: string;
   defaultTitle?: string;
 }) {
-  const { users, forms } = useQA();
+  const { users, forms, addDefect } = useQA();
   const { env } = useEnvironment();
   const { createAssignment } = useRetests();
   const { items: invites } = useAgentInvites();
@@ -114,6 +114,48 @@ export function AssignTaskDialog({
   // when the user changes module or the picked selection.
   const [scopeError, setScopeError] = useState<{ message: string; offenders: string[] } | null>(null);
   useEffect(() => { setScopeError(null); }, [moduleSel, picked, allForms]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [creatingDefect, setCreatingDefect] = useState(false);
+
+  const createDefectFromScopeError = async () => {
+    if (!scopeError) return;
+    setCreatingDefect(true);
+    const offendersList = scopeError.offenders.length
+      ? scopeError.offenders.join(", ")
+      : "(none reported)";
+    const allowedList = scopedForms.map((f) => f.name).join(", ") || "(empty catalog)";
+    const res = await addDefect({
+      module: (moduleSel && moduleSel !== ALL_MODULES ? moduleSel : "Functionality Testing") as never,
+      formFeature: scopeError.offenders[0] ?? "Assign Task scope validation",
+      taxYear,
+      title: `Assign Task scope validation failed: ${moduleSel}`,
+      description:
+        `Scope validation rejected the Assign Task submission.\n\n` +
+        `Module / Category: ${moduleSel}\n` +
+        `Error: ${scopeError.message}\n` +
+        `Offending forms/features: ${offendersList}\n` +
+        `Allowed for this module: ${allowedList}`,
+      stepsToReproduce:
+        `1. Open Assign Task.\n` +
+        `2. Select Module/Category "${moduleSel}".\n` +
+        `3. Pick forms/features: ${offendersList}.\n` +
+        `4. Click Assign Task.`,
+      expectedResult: "Selection is accepted, or the picker prevents invalid choices.",
+      actualResult: `Validation error: ${scopeError.message}`,
+      status: "Open" as never,
+      priority: priority as never,
+      severity: "Medium" as never,
+      validity: "Unverified",
+      environment: (env ?? "Production") as never,
+      assignedAgent: "",
+    });
+    setCreatingDefect(false);
+    if (!res.ok) {
+      toast.error(res.error ?? "Could not create defect");
+      return;
+    }
+    toast.success("Defect created from scope validation failure.");
+  };
 
   const submit = async () => {
     if (!title.trim()) return toast.error("Task title is required");
@@ -337,8 +379,49 @@ export function AssignTaskDialog({
                     ))}
                   </div>
                 )}
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={createDefectFromScopeError}
+                    disabled={creatingDefect}
+                  >
+                    {creatingDefect ? "Creating defect…" : "Create defect from this failure"}
+                  </Button>
+                </div>
               </div>
             )}
+            <div className="mt-2 rounded-md border bg-muted/30 p-2 text-xs">
+              <div className="flex items-center justify-between">
+                <div className="font-medium text-foreground">
+                  Scope preview — allowed for {moduleSel === ALL_MODULES ? "All Modules" : moduleSel}
+                  <span className="ml-1 text-muted-foreground">({scopedForms.length})</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPreview((v) => !v)}
+                  disabled={scopedForms.length === 0}
+                >
+                  {showPreview ? "Hide" : "Show"}
+                </Button>
+              </div>
+              {showPreview && (
+                <div className="mt-2 max-h-32 overflow-auto flex flex-wrap gap-1">
+                  {loadingForms && <span className="text-muted-foreground">Loading…</span>}
+                  {!loadingForms && scopedForms.length === 0 && (
+                    <span className="text-muted-foreground">No forms/features mapped to this module.</span>
+                  )}
+                  {scopedForms.map((f) => (
+                    <span key={f.id} className="rounded border bg-background px-1.5 py-0.5">
+                      {f.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             {!allForms && filtered.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-2">
                 <Button
