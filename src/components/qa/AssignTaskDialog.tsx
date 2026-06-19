@@ -112,6 +112,7 @@ export function AssignTaskDialog({
     }
     const scopeCheck = validateAssignmentScope({
       module: moduleSel,
+      testingType,
       allForms,
       pickedIds: picked,
       availableForms: scopedForms,

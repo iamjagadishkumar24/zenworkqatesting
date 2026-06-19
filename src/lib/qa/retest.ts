@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "./store";
 import { useEnvironment } from "./environment";
+import { validateAssignmentScopeServer } from "./assignment.functions";
 
 export type RetestStatus = "Pending" | "In Progress" | "Completed";
 export const RETEST_STATUSES: RetestStatus[] = ["Pending", "In Progress", "Completed"];
@@ -159,6 +160,22 @@ export function useRetests() {
     module?: string;
   }) => {
     if (!currentUser) return { ok: false, error: "Not signed in" };
+    // Server-side scope guard — runs BEFORE any DB write so a tampered
+    // client or stale dialog state can't persist forms outside the
+    // selected Module / Category + Testing Type combination.
+    try {
+      const check = await validateAssignmentScopeServer({
+        data: {
+          module: input.module ?? "",
+          testingType: input.testingType,
+          allForms: !!input.allForms,
+          formNames: (input.forms ?? []).map((f) => f.name),
+        },
+      });
+      if (!check.ok) return { ok: false, error: check.error };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Validation failed" };
+    }
     const names = new Set<string>();
     if (input.assignToAll) {
       users.filter((u) => u.active && u.role === "agent").forEach((u) => names.add(u.name));
@@ -237,5 +254,59 @@ export function useRetests() {
     return updateAssignment(id, { assigned_agent_id: agent.id, assigned_agent_name: agent.name });
   };
 
-  return { items: scoped, all: items, loading, error, realtimeOk, createAssignment, updateAssignment, reassign, reload: load };
+  /** Edit the scoped fields of an existing assignment (module, testing
+   *  type, all_forms flag, and the form/feature rows). The server-side
+   *  scope guard runs first; on success the retest_assignment_forms rows
+   *  are replaced atomically so old picks from a different module can
+   *  never leak through. */
+  const editAssignmentScope = async (
+    id: string,
+    input: {
+      module: string;
+      testingType?: string;
+      allForms: boolean;
+      forms: { id: string; name: string }[];
+    },
+  ) => {
+    try {
+      const check = await validateAssignmentScopeServer({
+        data: {
+          module: input.module,
+          testingType: input.testingType,
+          allForms: input.allForms,
+          formNames: input.forms.map((f) => f.name),
+        },
+      });
+      if (!check.ok) return { ok: false, error: check.error };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Validation failed" };
+    }
+    const { error: e1 } = await supabase
+      .from("retest_assignments")
+      .update({
+        module: input.module,
+        testing_type: input.testingType ?? "Retest",
+        all_forms: input.allForms,
+      })
+      .eq("id", id);
+    if (e1) return { ok: false, error: e1.message };
+    // Replace form rows wholesale — prevents stale picks from a prior module.
+    const { error: e2 } = await supabase
+      .from("retest_assignment_forms")
+      .delete()
+      .eq("assignment_id", id);
+    if (e2) return { ok: false, error: e2.message };
+    if (!input.allForms && input.forms.length) {
+      const rows = input.forms.map((f) => ({ assignment_id: id, form_id: f.id, form_name: f.name }));
+      const { error: e3 } = await supabase.from("retest_assignment_forms").insert(rows);
+      if (e3) return { ok: false, error: e3.message };
+    }
+    return { ok: true };
+  };
+
+  return {
+    items: scoped, all: items, loading, error, realtimeOk,
+    createAssignment, updateAssignment, reassign, editAssignmentScope,
+    reload: load,
+  };
 }
