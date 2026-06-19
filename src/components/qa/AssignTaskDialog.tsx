@@ -21,6 +21,7 @@ import {
 import { useAgentInvites } from "@/lib/qa/agents";
 import { useServerFn } from "@tanstack/react-start";
 import { sendTaskAssignmentEmail } from "@/lib/qa/email.functions";
+import { validateAssignmentScope } from "@/lib/qa/assignmentValidation";
 
 const PRIORITIES: RetestPriority[] = ["Low", "Medium", "High", "Critical"];
 const ALL_MODULES = "All Modules";
@@ -99,6 +100,16 @@ export function AssignTaskDialog({
     if (!title.trim()) return toast.error("Task title is required");
     if (!assignAll && selectedAgents.size === 0 && selectedPending.size === 0) {
       return toast.error("Select at least one agent or 'Assign to all'");
+    }
+    const scopeCheck = validateAssignmentScope({
+      module: moduleSel,
+      allForms,
+      pickedIds: picked,
+      availableForms: scopedForms,
+      allForms_catalog: forms,
+    });
+    if (!scopeCheck.ok) {
+      return toast.error(scopeCheck.error);
     }
     setSubmitting(true);
     const selected = allForms
