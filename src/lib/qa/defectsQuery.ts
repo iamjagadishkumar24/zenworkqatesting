@@ -129,7 +129,12 @@ export async function queryDefectsPage(
   const to = from + pageSize - 1;
   let q = supabase.from("defects").select("*", { count: "exact" });
   q = applySpec(q, spec);
-  q = q.order(col, { ascending: sort.dir === "asc" }).range(from, to);
+  // Always include a deterministic tie-breaker (id) so rows don't shift
+  // between pages when the primary sort column has duplicates or when
+  // other rows are mutated concurrently.
+  q = q.order(col, { ascending: sort.dir === "asc" });
+  if (col !== "id") q = q.order("id", { ascending: true });
+  q = q.range(from, to);
   const { data, count, error } = await q;
   if (error) throw error;
   return { rows: (data ?? []).map((r) => mapRow(r as Row)), total: count ?? 0 };
