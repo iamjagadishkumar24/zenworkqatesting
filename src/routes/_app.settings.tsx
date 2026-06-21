@@ -114,12 +114,10 @@ function SettingsPage() {
             <FileBarChart className="mr-1 h-3 w-3" />
             Reports
           </TabsTrigger>
-          {isAdmin && (
-            <TabsTrigger value="theme">
-              <Palette className="mr-1 h-3 w-3" />
-              Theme
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="theme">
+            <Palette className="mr-1 h-3 w-3" />
+            Theme
+          </TabsTrigger>
           <TabsTrigger value="dashboard">
             <LayoutDashboard className="mr-1 h-3 w-3" />
             Dashboard
@@ -468,35 +466,43 @@ function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* THEME — Admin only */}
-        {isAdmin && (
+        {/* THEME — Admins get full controls; agents are restricted to Light. */}
         <TabsContent value="theme">
           <Card>
             <CardHeader>
               <CardTitle>Theme</CardTitle>
-              <CardDescription>Appearance of the portal. Applied immediately.</CardDescription>
+              <CardDescription>
+                {isAdmin
+                  ? "Appearance of the portal. Applied immediately."
+                  : "Agents are restricted to the Light theme. Contact an admin for other options."}
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               <div>
                 <Label>Color mode</Label>
                 <Select
-                  value={prefs.theme}
-                  onValueChange={(v) => update("theme", v as AdminPrefs["theme"])}
+                  value={isAdmin ? prefs.theme : "light"}
+                  disabled={!isAdmin}
+                  onValueChange={(v) => {
+                    if (!isAdmin) return;
+                    update("theme", v as AdminPrefs["theme"]);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="system">System</SelectItem>
                     <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
+                    {isAdmin && <SelectItem value="system">System</SelectItem>}
+                    {isAdmin && <SelectItem value="dark">Dark</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className={isAdmin ? undefined : "opacity-60 pointer-events-none"}>
                 <Label>Accent</Label>
                 <Select
                   value={prefs.accent}
+                  disabled={!isAdmin}
                   onValueChange={(v) => update("accent", v as AdminPrefs["accent"])}
                 >
                   <SelectTrigger>
@@ -510,10 +516,11 @@ function SettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className={isAdmin ? undefined : "opacity-60 pointer-events-none"}>
                 <Label>Density</Label>
                 <Select
                   value={prefs.density}
+                  disabled={!isAdmin}
                   onValueChange={(v) => update("density", v as AdminPrefs["density"])}
                 >
                   <SelectTrigger>
@@ -528,7 +535,6 @@ function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        )}
 
         {/* DASHBOARD */}
         <TabsContent value="dashboard">
