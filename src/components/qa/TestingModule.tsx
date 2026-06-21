@@ -69,6 +69,28 @@ export function TestingModule({
         !["Fixed", "Closed"].includes(d.status),
     ).length;
 
+  // Per-card status breakdown — surfaced for the Tax1099 PDF feature card
+  // (and reusable for any other card). Buckets: Open, In Progress,
+  // Retest Required, Fixed, Invalid. Counts come from the same realtime
+  // store the dashboard uses, so they update live.
+  const statusBreakdown = (name: string) => {
+    const scoped = defects.filter(
+      (d) =>
+        d.module === module &&
+        d.formFeature.includes(name) &&
+        (!env || d.environment === env),
+    );
+    return {
+      open: scoped.filter(
+        (d) => !["Fixed", "Closed", "In Progress", "Retest Required"].includes(d.status),
+      ).length,
+      inProgress: scoped.filter((d) => d.status === "In Progress").length,
+      retest: scoped.filter((d) => d.status === "Retest Required").length,
+      fixed: scoped.filter((d) => d.status === "Fixed" || d.status === "Closed").length,
+      invalid: scoped.filter((d) => d.validity === "Invalid").length,
+    };
+  };
+
   const scopedDefects = useMemo(() => {
     if (!picked) return [];
     const me = currentUser?.name ?? "";
@@ -135,6 +157,8 @@ export function TestingModule({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visibleItems.map((name) => {
             const open = openCount(name);
+            const showBreakdown = module === "Tax1099 Features" && name === "PDF";
+            const bd = showBreakdown ? statusBreakdown(name) : null;
             return (
               <Card
                 key={name}
@@ -165,6 +189,15 @@ export function TestingModule({
                     )}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground capitalize">{itemLabel}</p>
+                  {bd && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      <Badge variant="outline" className="text-[10px]">Open: {bd.open}</Badge>
+                      <Badge variant="outline" className="text-[10px]">In Progress: {bd.inProgress}</Badge>
+                      <Badge variant="outline" className="text-[10px]">Retest: {bd.retest}</Badge>
+                      <Badge variant="outline" className="text-[10px]">Fixed: {bd.fixed}</Badge>
+                      <Badge variant="outline" className="text-[10px]">Invalid: {bd.invalid}</Badge>
+                    </div>
+                  )}
                   <Button
                     size="sm"
                     className="mt-3 w-full"
