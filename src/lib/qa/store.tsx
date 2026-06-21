@@ -384,6 +384,17 @@ export function QAProvider({ children }: { children: ReactNode }) {
     const channel = supabase
       .channel(`qa-realtime-${state.currentUser?.id ?? "anon"}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "defects" }, (payload) => {
+        const ev = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
+        const row = (payload.new ?? payload.old) as { id?: string; title?: string; status?: string } | undefined;
+        pushEvent({
+          table: "defects",
+          event: ev,
+          rowId: row?.id ?? null,
+          summary:
+            ev === "DELETE"
+              ? `Deleted ${row?.id ?? ""}`
+              : `${ev} ${row?.id ?? ""} — status: ${row?.status ?? "?"}`,
+        });
         setState((s) => {
           let next = s.defects;
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
@@ -404,6 +415,19 @@ export function QAProvider({ children }: { children: ReactNode }) {
         "postgres_changes",
         { event: "*", schema: "public", table: "defect_comments" },
         (payload) => {
+          const ev = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
+          const row = (payload.new ?? payload.old) as
+            | { id?: string; defect_id?: string; author?: string; text?: string }
+            | undefined;
+          pushEvent({
+            table: "defect_comments",
+            event: ev,
+            rowId: row?.defect_id ?? null,
+            summary:
+              ev === "DELETE"
+                ? `Deleted comment on ${row?.defect_id ?? "?"}`
+                : `${ev} comment on ${row?.defect_id ?? "?"} by ${row?.author ?? "?"}`,
+          });
           if (payload.eventType === "INSERT") {
             const c = payload.new as CommentRow;
             commentsRef.current = [...commentsRef.current, c];
