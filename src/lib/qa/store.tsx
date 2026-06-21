@@ -500,7 +500,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
               ? `Deleted ${row?.id ?? ""}`
               : `${ev} ${row?.id ?? ""} — status: ${row?.status ?? "?"}`,
         });
-        setState((s) => {
+        applyState((s) => {
           let next = s.defects;
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const row = rowToDefect(payload.new as DefectRow, commentsRef.current);
@@ -543,7 +543,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
             const oldId = (payload.old as { id: string }).id;
             commentsRef.current = commentsRef.current.filter((c) => c.id !== oldId);
           }
-          setState((s) => ({
+          applyState((s) => ({
             ...s,
             defects: s.defects.map((d) => ({
               ...d,
@@ -563,7 +563,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         },
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "forms" }, (payload) => {
-        setState((s) => {
+        applyState((s) => {
           let next = s.forms;
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const row = rowToForm(payload.new as FormRow);
@@ -607,14 +607,14 @@ export function QAProvider({ children }: { children: ReactNode }) {
         { event: "INSERT", schema: "public", table: "defect_audit_log" },
         (payload) => {
           const entry = rowToAudit(payload.new as AuditRow);
-          setState((s) => ({ ...s, audit: [entry, ...s.audit] }));
+          applyState((s) => ({ ...s, audit: [entry, ...s.audit] }));
         },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications" },
         (payload) => {
-          setState((s) => {
+          applyState((s) => {
             let next = s.notifications;
             if (payload.eventType === "INSERT") {
               const n = payload.new as NotifRow;
