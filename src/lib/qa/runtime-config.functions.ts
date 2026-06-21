@@ -137,34 +137,55 @@ export type QARuntimeConfigAuditEntry = {
   createdAt: string;
 };
 
+export type QARuntimeConfigAuditPage = {
+  entries: QARuntimeConfigAuditEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 /**
- * Admin-only: list recent runtime config audit entries (newest first).
+ * Admin-only: paginated list of runtime config audit entries (newest first).
+ * Defaults: page=1, pageSize=20. pageSize is clamped to [1, 100].
  */
 export const listQARuntimeConfigAudit = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<QARuntimeConfigAuditEntry[]> => {
+  .inputValidator((input?: { page?: number; pageSize?: number }) => {
+    const page = Math.max(1, Math.floor(Number(input?.page ?? 1)) || 1);
+    const pageSize = Math.min(100, Math.max(1, Math.floor(Number(input?.pageSize ?? 20)) || 20));
+    return { page, pageSize };
+  })
+  .handler(async ({ data, context }): Promise<QARuntimeConfigAuditPage> => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
       _role: "admin",
     });
     if (!isAdmin) throw new Response("Forbidden", { status: 403 });
-    const { data, error } = await context.supabase
+    const from = (data.page - 1) * data.pageSize;
+    const to = from + data.pageSize - 1;
+    const { data: rows, error, count } = await context.supabase
       .from("qa_runtime_config_audit")
       .select(
         "id, old_live_enabled, new_live_enabled, old_performance_mode, new_performance_mode, changed_by_id, changed_by_name, changed_by_email, created_at",
+        { count: "exact" },
       )
       .order("created_at", { ascending: false })
-      .limit(50);
+      .range(from, to);
     if (error) throw new Error(error.message);
-    return (data ?? []).map((r) => ({
-      id: r.id,
-      oldLiveEnabled: r.old_live_enabled,
-      newLiveEnabled: r.new_live_enabled,
-      oldPerformanceMode: r.old_performance_mode,
-      newPerformanceMode: r.new_performance_mode,
-      changedById: r.changed_by_id,
-      changedByName: r.changed_by_name,
-      changedByEmail: r.changed_by_email,
-      createdAt: r.created_at,
-    }));
+    return {
+      entries: (rows ?? []).map((r) => ({
+        id: r.id,
+        oldLiveEnabled: r.old_live_enabled,
+        newLiveEnabled: r.new_live_enabled,
+        oldPerformanceMode: r.old_performance_mode,
+        newPerformanceMode: r.new_performance_mode,
+        changedById: r.changed_by_id,
+        changedByName: r.changed_by_name,
+        changedByEmail: r.changed_by_email,
+        createdAt: r.created_at,
+      })),
+      total: count ?? 0,
+      page: data.page,
+      pageSize: data.pageSize,
+    };
   });
