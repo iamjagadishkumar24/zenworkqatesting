@@ -135,25 +135,6 @@ function ReportsPage() {
     if (v) navigate({ replace: true, search: () => ({ ...v.filters }) });
   };
 
-  const baseSpec = useMemo<DefectQuerySpec>(() => {
-    const [from, to] = dateBounds;
-    return {
-      environment: env ?? undefined,
-      taxYear,
-      statusGroup: status as DefectQuerySpec["statusGroup"],
-      testingType,
-      category,
-      agent,
-      from: from ? from.toISOString() : null,
-      to: to ? to.toISOString() : null,
-    };
-    // dateBounds already accounts for fromDate/toDate
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [env, taxYear, status, testingType, category, agent, dateBounds]);
-
-  const drillInto = (title: string, patch: Partial<DefectQuerySpec>) =>
-    setDrill({ title, spec: { ...baseSpec, ...patch } });
-
   const scoped = useMemo(
     () =>
       allDefects.filter(
