@@ -387,11 +387,9 @@ export function QAProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, loading: true }));
 
     // Performance mode: coalesce realtime-driven state updates inside a
-    // single rAF frame. `setState` is shadowed locally so every existing
-    // setState(...) call inside this effect automatically benefits without
-    // touching call sites. The raw setter (`rawSetState`) is preserved for
-    // the one-shot `loading: true/false` writes.
-    const rawSetState = setState;
+    // single rAF frame so a burst of events never causes UI lag. Realtime
+    // callbacks below call `applyState` instead of `setState`; in normal
+    // mode it forwards straight to setState.
     let pendingUpdaters: Array<(s: State) => State> = [];
     let rafQueued = false;
     const flushPending = () => {
@@ -399,14 +397,14 @@ export function QAProvider({ children }: { children: ReactNode }) {
       const queue = pendingUpdaters;
       pendingUpdaters = [];
       if (queue.length === 0) return;
-      rawSetState((s) => queue.reduce((acc, u) => u(acc), s));
+      setState((s) => queue.reduce((acc, u) => u(acc), s));
     };
-    const setState: typeof rawSetState = (updater) => {
-      if (!perfModeRef.current || typeof updater !== "function") {
-        rawSetState(updater);
+    const applyState = (updater: (s: State) => State) => {
+      if (!perfModeRef.current) {
+        setState(updater);
         return;
       }
-      pendingUpdaters.push(updater as (s: State) => State);
+      pendingUpdaters.push(updater);
       if (rafQueued) return;
       rafQueued = true;
       if (typeof requestAnimationFrame === "function") requestAnimationFrame(flushPending);
