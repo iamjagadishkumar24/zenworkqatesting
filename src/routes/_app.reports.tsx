@@ -351,6 +351,11 @@ function ReportsPage() {
             are added, edited, or deleted.
             {env && <Badge variant="outline">{env}</Badge>}
             <Badge variant="outline">Tax Year: {taxYear === "all" ? "All" : taxYear}</Badge>
+            {loading && (
+              <Badge variant="outline" className="gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" /> Syncing…
+              </Badge>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
