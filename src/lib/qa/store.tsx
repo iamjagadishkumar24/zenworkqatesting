@@ -40,7 +40,19 @@ type State = {
 
 type Result = { ok: boolean; error?: string };
 
+export type RealtimeDebugEvent = {
+  id: string;
+  table: "defects" | "defect_comments";
+  event: "INSERT" | "UPDATE" | "DELETE";
+  at: string;
+  role: Role | "unknown";
+  rowId: string | null;
+  summary: string;
+};
+
 type Ctx = State & {
+  realtimeEvents: RealtimeDebugEvent[];
+  clearRealtimeEvents: () => void;
   login: (email: string, password: string) => Promise<Result>;
   signup: (name: string, email: string, password: string) => Promise<Result>;
   logout: () => Promise<void>;
