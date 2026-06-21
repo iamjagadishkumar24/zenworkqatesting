@@ -601,7 +601,23 @@ function ReportsPage() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={passedVsFailed} dataKey="value" nameKey="name" outerRadius={90} label>
+                  <Pie
+                    data={passedVsFailed}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={90}
+                    label
+                    onClick={(p: { name?: string }) =>
+                      drillInto(
+                        `Errors marked ${p?.name ?? ""}`,
+                        (d) =>
+                          p?.name === "Valid"
+                            ? d.validity === "Valid"
+                            : d.validity === "Invalid",
+                      )
+                    }
+                    className="cursor-pointer"
+                  >
                     <Cell fill="oklch(0.62 0.17 150)" />
                     <Cell fill="oklch(0.6 0.22 27)" />
                   </Pie>
@@ -629,12 +645,20 @@ function ReportsPage() {
               <EmptyBreakdown message="No open errors across modules." />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={defectsByModule}>
+                <BarChart
+                  data={defectsByModule}
+                  onClick={(e: { activeLabel?: string }) =>
+                    e?.activeLabel &&
+                    drillInto(`Open errors in ${e.activeLabel}`, (d) =>
+                      d.module === e.activeLabel && !["Fixed", "Closed"].includes(d.status),
+                    )
+                  }
+                >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="module" fontSize={12} />
                   <YAxis fontSize={12} />
                   <Tooltip />
-                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]} className="cursor-pointer">
                     {defectsByModule.map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
@@ -732,12 +756,26 @@ function ReportsPage() {
               <EmptyBreakdown message="No errors assigned to any agent yet." />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={agentDefects} layout="vertical">
+                <BarChart
+                  data={agentDefects}
+                  layout="vertical"
+                  onClick={(e: { activeLabel?: string }) =>
+                    e?.activeLabel &&
+                    drillInto(`Errors handled by ${e.activeLabel}`, (d) =>
+                      d.assignedAgent === e.activeLabel,
+                    )
+                  }
+                >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis type="number" fontSize={12} />
                   <YAxis type="category" dataKey="agent" fontSize={12} width={110} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="oklch(0.55 0.18 255)" radius={[0, 6, 6, 0]} />
+                  <Bar
+                    dataKey="count"
+                    fill="oklch(0.55 0.18 255)"
+                    radius={[0, 6, 6, 0]}
+                    className="cursor-pointer"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
