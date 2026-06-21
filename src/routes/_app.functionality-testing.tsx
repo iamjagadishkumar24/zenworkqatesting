@@ -54,6 +54,7 @@ function FunctionalityTestingPage() {
         module="Functionality Testing"
         items={active.items}
         itemLabel="feature"
+        showHeaderReport={false}
       />
     </div>
   );
