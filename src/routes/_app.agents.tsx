@@ -25,6 +25,16 @@ import {
 
 const PROTECTED_ADMIN_EMAIL = "admin@qaportal.app";
 
+type PurgeCounts = {
+  name: string;
+  defects: number;
+  retest_assignments: number;
+  notifications: number;
+  forms_cleared: number;
+  pending_retests: number;
+  total: number;
+};
+
 export const Route = createFileRoute("/_app/agents")({
   component: AgentsPage,
   errorComponent: ({ error, reset }) => (
