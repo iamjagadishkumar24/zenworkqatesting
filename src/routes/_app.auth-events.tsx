@@ -71,6 +71,11 @@ function AuthEventsPage() {
   const [action, setAction] = useState<string>("all");
   const [days, setDays] = useState<string>("7");
   const [selected, setSelected] = useState<Row | null>(null);
+  const [detailSearch, setDetailSearch] = useState("");
+
+  useEffect(() => {
+    setDetailSearch("");
+  }, [selected?.id]);
 
   const load = async () => {
     setLoading(true);
@@ -158,6 +163,28 @@ function AuthEventsPage() {
     (r.metadata && typeof r.metadata.reason === "string" ? (r.metadata.reason as string) : "") ||
     r.summary ||
     "";
+
+  const highlight = (text: string, q: string) => {
+    if (!q) return text;
+    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const parts = text.split(re);
+    return parts.map((p, i) =>
+      re.test(p) ? (
+        <mark key={i} className="rounded bg-yellow-300/70 px-0.5 text-foreground dark:bg-yellow-500/40">
+          {p}
+        </mark>
+      ) : (
+        <span key={i}>{p}</span>
+      ),
+    );
+  };
+
+  const metadataJson = selected ? JSON.stringify(selected.metadata ?? {}, null, 2) : "";
+  const matchCount = detailSearch
+    ? (metadataJson.match(
+        new RegExp(detailSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+      ) ?? []).length
+    : 0;
 
   return (
     <div className="space-y-6">
