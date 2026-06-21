@@ -23,6 +23,13 @@ import {
 } from "@/components/ui/table";
 import { Download, RefreshCw, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_app/auth-events")({
   component: AuthEventsPage,
@@ -37,7 +44,7 @@ type Row = {
   summary: string | null;
   ip_address: string | null;
   user_agent: string | null;
-  metadata: { reason?: string } | null;
+  metadata: Record<string, unknown> | null;
 };
 
 const ACTION_OPTIONS = [
@@ -63,6 +70,7 @@ function AuthEventsPage() {
   const [email, setEmail] = useState("");
   const [action, setAction] = useState<string>("all");
   const [days, setDays] = useState<string>("7");
+  const [selected, setSelected] = useState<Row | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -146,6 +154,11 @@ function AuthEventsPage() {
   if (!currentUser) return null;
   if (currentUser.role !== "admin") return <Navigate to="/dashboard" />;
 
+  const reasonOf = (r: Row) =>
+    (r.metadata && typeof r.metadata.reason === "string" ? (r.metadata.reason as string) : "") ||
+    r.summary ||
+    "";
+
   return (
     <div className="space-y-6">
       <div>
@@ -219,7 +232,11 @@ function AuthEventsPage() {
                 </TableRow>
               ) : (
                 rows.map((r) => (
-                  <TableRow key={r.id}>
+                  <TableRow
+                    key={r.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setSelected(r)}
+                  >
                     <TableCell className="font-mono text-xs">
                       {new Date(r.occurred_at).toLocaleString()}
                     </TableCell>
@@ -230,8 +247,8 @@ function AuthEventsPage() {
                         {r.result}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-[420px] truncate text-xs text-muted-foreground" title={r.metadata?.reason ?? ""}>
-                      {r.metadata?.reason ?? r.summary ?? ""}
+                    <TableCell className="max-w-[420px] truncate text-xs text-muted-foreground" title={reasonOf(r)}>
+                      {reasonOf(r)}
                     </TableCell>
                   </TableRow>
                 ))
@@ -240,6 +257,57 @@ function AuthEventsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          {selected && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <ShieldAlert className="h-5 w-5 text-primary" />
+                  {selected.action.replace(/^auth\./, "")}
+                </SheetTitle>
+                <SheetDescription>
+                  Event ID <span className="font-mono">{selected.id}</span>
+                </SheetDescription>
+              </SheetHeader>
+              <dl className="mt-6 grid grid-cols-[120px_1fr] gap-x-4 gap-y-3 text-sm">
+                <dt className="text-muted-foreground">Occurred at</dt>
+                <dd className="font-mono text-xs">
+                  {new Date(selected.occurred_at).toLocaleString()}{" "}
+                  <span className="text-muted-foreground">
+                    ({new Date(selected.occurred_at).toISOString()})
+                  </span>
+                </dd>
+                <dt className="text-muted-foreground">Action</dt>
+                <dd>{selected.action}</dd>
+                <dt className="text-muted-foreground">Result</dt>
+                <dd>
+                  <Badge variant={selected.result === "success" ? "secondary" : "destructive"}>
+                    {selected.result}
+                  </Badge>
+                </dd>
+                <dt className="text-muted-foreground">Email</dt>
+                <dd>{selected.actor_email ?? "—"}</dd>
+                <dt className="text-muted-foreground">Reason</dt>
+                <dd className="whitespace-pre-wrap break-words">{reasonOf(selected) || "—"}</dd>
+                <dt className="text-muted-foreground">Summary</dt>
+                <dd className="whitespace-pre-wrap break-words">{selected.summary ?? "—"}</dd>
+                <dt className="text-muted-foreground">IP address</dt>
+                <dd className="font-mono text-xs">{selected.ip_address ?? "—"}</dd>
+                <dt className="text-muted-foreground">User agent</dt>
+                <dd className="break-words text-xs">{selected.user_agent ?? "—"}</dd>
+              </dl>
+              <div className="mt-6">
+                <div className="mb-2 text-xs font-medium text-muted-foreground">Metadata</div>
+                <pre className="max-h-80 overflow-auto rounded-md border bg-muted/40 p-3 text-xs">
+{JSON.stringify(selected.metadata ?? {}, null, 2)}
+                </pre>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
