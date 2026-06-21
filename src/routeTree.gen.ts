@@ -20,6 +20,7 @@ import { Route as AppRetestRouteImport } from './routes/_app.retest'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
+import { Route as AppNotesRouteImport } from './routes/_app.notes'
 import { Route as AppMyReportedErrorsRouteImport } from './routes/_app.my-reported-errors'
 import { Route as AppMyErrorsRouteImport } from './routes/_app.my-errors'
 import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
@@ -87,6 +88,11 @@ const AppOnline1099Route = AppOnline1099RouteImport.update({
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotesRoute = AppNotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMyReportedErrorsRoute = AppMyReportedErrorsRouteImport.update({
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/integrations': typeof AppIntegrationsRoute
   '/my-errors': typeof AppMyErrorsRoute
   '/my-reported-errors': typeof AppMyReportedErrorsRoute
+  '/notes': typeof AppNotesRoute
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/integrations': typeof AppIntegrationsRoute
   '/my-errors': typeof AppMyErrorsRoute
   '/my-reported-errors': typeof AppMyReportedErrorsRoute
+  '/notes': typeof AppNotesRoute
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/reports': typeof AppReportsRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/_app/integrations': typeof AppIntegrationsRoute
   '/_app/my-errors': typeof AppMyErrorsRoute
   '/_app/my-reported-errors': typeof AppMyReportedErrorsRoute
+  '/_app/notes': typeof AppNotesRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
   '/_app/reports': typeof AppReportsRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/my-errors'
     | '/my-reported-errors'
+    | '/notes'
     | '/notifications'
     | '/online-1099'
     | '/reports'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/my-errors'
     | '/my-reported-errors'
+    | '/notes'
     | '/notifications'
     | '/online-1099'
     | '/reports'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/_app/integrations'
     | '/_app/my-errors'
     | '/_app/my-reported-errors'
+    | '/_app/notes'
     | '/_app/notifications'
     | '/_app/online-1099'
     | '/_app/reports'
@@ -406,6 +418,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notes': {
+      id: '/_app/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof AppNotesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/my-reported-errors': {
@@ -523,6 +542,7 @@ interface AppRouteChildren {
   AppIntegrationsRoute: typeof AppIntegrationsRoute
   AppMyErrorsRoute: typeof AppMyErrorsRoute
   AppMyReportedErrorsRoute: typeof AppMyReportedErrorsRoute
+  AppNotesRoute: typeof AppNotesRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
   AppReportsRoute: typeof AppReportsRoute
@@ -547,6 +567,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIntegrationsRoute: AppIntegrationsRoute,
   AppMyErrorsRoute: AppMyErrorsRoute,
   AppMyReportedErrorsRoute: AppMyReportedErrorsRoute,
+  AppNotesRoute: AppNotesRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnline1099Route: AppOnline1099Route,
   AppReportsRoute: AppReportsRoute,
