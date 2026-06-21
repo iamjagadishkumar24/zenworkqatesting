@@ -19,6 +19,10 @@ export type RetestAssignment = {
   instructions: string;
   priority: RetestPriority;
   due_date: string | null;
+  due_time: string | null;
+  deadline_at: string | null;
+  completion_duration_seconds: number | null;
+  completed_on_time: boolean | null;
   status: RetestStatus;
   testing_type: string;
   title: string;
@@ -141,6 +145,7 @@ export function useRetests() {
     instructions: string;
     priority: RetestPriority;
     dueDate: string | null;
+    dueTime?: string | null;
     title?: string;
     module?: string;
   }) => {
@@ -187,6 +192,7 @@ export function useRetests() {
         instructions: input.instructions,
         priority: input.priority,
         due_date: input.dueDate,
+        due_time: input.dueTime ?? null,
         status: "Pending",
         title: input.title ?? "",
         module: input.module ?? "",
@@ -208,6 +214,7 @@ export function useRetests() {
         instructions: input.instructions,
         priority: input.priority,
         due_date: input.dueDate,
+        due_time: input.dueTime ?? null,
         title: input.title ?? "",
         module: input.module ?? "",
         all_forms: !!input.allForms,
@@ -226,7 +233,7 @@ export function useRetests() {
   };
 
   const updateAssignment = async (id: string, patch: Partial<Pick<RetestAssignment,
-    "status" | "instructions" | "priority" | "due_date" | "assigned_agent_id" | "assigned_agent_name">>) => {
+    "status" | "instructions" | "priority" | "due_date" | "due_time" | "assigned_agent_id" | "assigned_agent_name">>) => {
     const { error } = await supabase.from("retest_assignments").update(patch).eq("id", id);
     if (error) return { ok: false, error: error.message };
     return { ok: true };

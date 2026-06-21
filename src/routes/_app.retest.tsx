@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useRetests, RETEST_STATUSES, type RetestAssignment, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { ClipboardCheck, Plus, AlertCircle, RefreshCw, WifiOff, ExternalLink } from "lucide-react";
 import { ClipboardList } from "lucide-react";
 import { routeForModule } from "@/lib/qa/constants";
+import { deadlineInfo, TIER_CLASSES } from "@/lib/qa/deadline";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/retest")({
   component: RetestPage,
@@ -37,6 +39,11 @@ function RetestPage() {
   const { env } = useEnvironment();
   const { items, loading, error, realtimeOk, updateAssignment, reassign, reload } = useRetests();
   const isAdmin = currentUser?.role === "admin";
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
   const [open, setOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitTarget, setSubmitTarget] = useState<RetestAssignment | null>(null);
@@ -200,6 +207,7 @@ function RetestPage() {
                   <TableHead>Priority</TableHead>
                   <TableHead>Tax Year</TableHead>
                   <TableHead>Due</TableHead>
+                  <TableHead>Time Remaining</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Updated</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -253,7 +261,31 @@ function RetestPage() {
                         ) : <Badge variant="outline">{r.priority}</Badge>}
                       </TableCell>
                       <TableCell className="text-xs">{r.tax_year ?? "—"}</TableCell>
-                      <TableCell className="text-xs">{r.due_date ?? "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {r.due_date ? (
+                          <span>
+                            {r.due_date}
+                            {r.due_time && <span className="ml-1 text-muted-foreground">{r.due_time.slice(0,5)}</span>}
+                          </span>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          if (r.status === "Completed") {
+                            return <Badge variant="outline" className="text-[10px]">Completed</Badge>;
+                          }
+                          const info = deadlineInfo(r.deadline_at, now);
+                          if (info.tier === "none") return <span className="text-xs text-muted-foreground">—</span>;
+                          return (
+                            <span className={cn(
+                              "inline-block rounded border px-2 py-0.5 text-[11px] font-mono tabular-nums",
+                              TIER_CLASSES[info.tier],
+                            )}>
+                              {info.isOverdue ? `Overdue +${info.shortLabel}` : info.shortLabel}
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell>
                         <Select value={r.status} disabled={!canEditStatus} onValueChange={async (v) => {
                           const res = await updateAssignment(r.id, { status: v as RetestStatus });

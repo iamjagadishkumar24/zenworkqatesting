@@ -67,6 +67,7 @@ export function AssignTaskDialog({
   const [taxYear, setTaxYear] = useState<string>(DEFAULT_TAX_YEAR);
   const [status, setStatus] = useState<RetestStatus>("Pending");
   const [dueDate, setDueDate] = useState("");
+  const [dueTime, setDueTime] = useState("");
   const [instructions, setInstructions] = useState("");
   const [filter, setFilter] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -323,6 +324,7 @@ export function AssignTaskDialog({
       instructions,
       priority,
       dueDate: dueDate || null,
+      dueTime: dueTime || null,
       title: title.trim(),
       module: moduleSel,
       taxYear,
@@ -387,7 +389,7 @@ export function AssignTaskDialog({
         : "Task assigned successfully.";
     toast.success(baseMsg + emailNotice);
     onOpenChange(false);
-    setTitle(""); setPicked(new Set()); setInstructions(""); setDueDate("");
+    setTitle(""); setPicked(new Set()); setInstructions(""); setDueDate(""); setDueTime("");
     setAssignAll(false); setAllForms(false);
     setSelectedAgents(new Set()); setSelectedPending(new Set());
   };
@@ -466,6 +468,19 @@ export function AssignTaskDialog({
           <div>
             <Label>Due date</Label>
             <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+          <div>
+            <Label>Due time</Label>
+            <Input
+              type="time"
+              value={dueTime}
+              onChange={(e) => setDueTime(e.target.value)}
+              disabled={!dueDate}
+              placeholder="17:00"
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Defaults to 5:00 PM if blank.
+            </p>
           </div>
           <div>
             <Label>Status</Label>
