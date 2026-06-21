@@ -17,6 +17,7 @@ import {
 import { HelpCircle, Eye, EyeOff, ShieldCheck, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { BrandLogo } from "@/components/qa/BrandLogo";
 
 export function LoginErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
   return (
