@@ -584,6 +584,9 @@ export function QAProvider({ children }: { children: ReactNode }) {
     ...state,
     realtimeEvents,
     realtimeStatus,
+    realtimeChannelName,
+    realtimeReconnectAttempts,
+    realtimeLastEventAt,
     clearRealtimeEvents: () => setRealtimeEvents([]),
     login: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
