@@ -229,6 +229,22 @@ export function QAProvider({ children }: { children: ReactNode }) {
     loading: true,
   });
   const commentsRef = useRef<CommentRow[]>([]);
+  const [realtimeEvents, setRealtimeEvents] = useState<RealtimeDebugEvent[]>([]);
+  const roleRef = useRef<Role | "unknown">("unknown");
+  roleRef.current = state.currentUser?.role ?? "unknown";
+  const pushEvent = (e: Omit<RealtimeDebugEvent, "id" | "at" | "role">) => {
+    setRealtimeEvents((prev) =>
+      [
+        {
+          ...e,
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          at: new Date().toISOString(),
+          role: roleRef.current,
+        },
+        ...prev,
+      ].slice(0, 100),
+    );
+  };
 
   // Auth lifecycle
   useEffect(() => {
