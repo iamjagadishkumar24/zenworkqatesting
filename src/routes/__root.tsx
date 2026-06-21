@@ -98,9 +98,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/png", href: "/__l5e/assets-v1/b145787e-c597-4847-9e0d-56313bb305d3/zenwork-logo.png" },
-      { rel: "apple-touch-icon", href: "/__l5e/assets-v1/b145787e-c597-4847-9e0d-56313bb305d3/zenwork-logo.png" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/__l5e/assets-v1/b145787e-c597-4847-9e0d-56313bb305d3/zenwork-logo.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/__l5e/assets-v1/d7aa1513-170d-4b5e-a3eb-734ac645e5e2/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/__l5e/assets-v1/11aed044-7dae-4552-b354-f31b3bd3dd70/icon-512.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/__l5e/assets-v1/8017f09b-a0f4-4d81-ad94-5e53d52b9d5c/apple-180.png" },
       { rel: "mask-icon", href: "/__l5e/assets-v1/b145787e-c597-4847-9e0d-56313bb305d3/zenwork-logo.png", color: "#0b1020" },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
