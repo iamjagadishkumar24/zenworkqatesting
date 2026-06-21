@@ -369,6 +369,7 @@ function ReportsPage() {
                 <Loader2 className="h-3 w-3 animate-spin" /> Syncing…
               </Badge>
             )}
+            <RealtimeHealthMenu />
           </p>
         </div>
         <div className="flex gap-2">
