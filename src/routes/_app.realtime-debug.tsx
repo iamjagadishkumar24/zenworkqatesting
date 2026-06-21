@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Radio, Trash2, Activity, Clock, Wifi } from "lucide-react";
+import { Radio, Trash2, Activity, Clock, Wifi, RefreshCw, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/realtime-debug")({
   component: RealtimeDebugPage,
@@ -17,13 +17,27 @@ function RealtimeDebugPage() {
 
   const [status, setStatus] = useState<string>("connecting");
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
+  const [reconnectCount, setReconnectCount] = useState(0);
+  const [reconnectedBanner, setReconnectedBanner] = useState<string | null>(null);
+  const prevStatusRef = useRef<string>("connecting");
+  const badSinceRef = useRef<number | null>(null);
   const pingSentAtRef = useRef<number | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  useEffect(() => {
-    const channel = supabase.channel(`rt-diagnostics-${Math.random().toString(36).slice(2, 8)}`, {
-      config: { broadcast: { self: true } },
-    });
+  const isBad = (s: string) =>
+    s === "closed" || s === "channel_error" || s === "timed_out" || s === "errored";
+  const isGood = (s: string) => s === "subscribed" || s === "joined";
+
+  const subscribeChannel = (manual = false) => {
+    // Tear down any prior channel before creating a new one.
+    if (channelRef.current) {
+      void supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    const channel = supabase.channel(
+      `rt-diagnostics-${Math.random().toString(36).slice(2, 8)}`,
+      { config: { broadcast: { self: true } } },
+    );
     channelRef.current = channel;
     channel
       .on("broadcast", { event: "ping" }, () => {
@@ -33,18 +47,57 @@ function RealtimeDebugPage() {
         }
       })
       .subscribe((s) => setStatus(String(s).toLowerCase()));
+    if (manual) setReconnectCount((c) => c + 1);
+    return channel;
+  };
 
-    const sendPing = () => {
-      if (channel.state !== "joined") return;
+  // Detect status transitions for the banner + auto-recover timer.
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    if (isBad(prev) && isGood(status)) {
+      setReconnectedBanner(`Realtime reconnected at ${new Date().toLocaleTimeString()}`);
+      const t = setTimeout(() => setReconnectedBanner(null), 4000);
+      badSinceRef.current = null;
+      prevStatusRef.current = status;
+      return () => clearTimeout(t);
+    }
+    if (isBad(status)) {
+      if (badSinceRef.current == null) badSinceRef.current = Date.now();
+    } else if (isGood(status)) {
+      badSinceRef.current = null;
+    }
+    prevStatusRef.current = status;
+  }, [status]);
+
+  useEffect(() => {
+    subscribeChannel();
+    const ping = setInterval(() => {
+      const ch = channelRef.current;
+      if (!ch || ch.state !== "joined") return;
       pingSentAtRef.current = performance.now();
-      void channel.send({ type: "broadcast", event: "ping", payload: { t: Date.now() } });
-    };
-    sendPing();
-    const id = setInterval(sendPing, 5000);
+      void ch.send({ type: "broadcast", event: "ping", payload: { t: Date.now() } });
+    }, 5000);
+    // Auto-recover: if the diagnostics channel stays in a bad state for >7s,
+    // recreate it. Supabase's socket also auto-reconnects underneath, but
+    // tearing down + resubscribing the channel handles cases where the join
+    // itself is wedged (e.g. after token refresh or RLS change).
+    const recover = setInterval(() => {
+      if (badSinceRef.current && Date.now() - badSinceRef.current > 7000) {
+        badSinceRef.current = null;
+        subscribeChannel(true);
+      }
+    }, 2000);
+    // Browser back online → force an immediate resubscribe attempt.
+    const onOnline = () => subscribeChannel(true);
+    window.addEventListener("online", onOnline);
     return () => {
-      clearInterval(id);
-      void supabase.removeChannel(channel);
+      clearInterval(ping);
+      clearInterval(recover);
+      window.removeEventListener("online", onOnline);
+      if (channelRef.current) void supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const lastEventAt = realtimeEvents[0]?.at ?? null;
@@ -79,6 +132,24 @@ function RealtimeDebugPage() {
         </Button>
       </div>
 
+      {reconnectedBanner && (
+        <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+          <CheckCircle2 className="h-4 w-4" />
+          {reconnectedBanner}
+        </div>
+      )}
+      {isBad(status) && (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
+          <span className="inline-flex items-center gap-2">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            Realtime connection {status} — attempting to reconnect…
+          </span>
+          <Button size="sm" variant="outline" onClick={() => subscribeChannel(true)}>
+            Retry now
+          </Button>
+        </div>
+      )}
+
       <Card>
         <CardContent className="grid gap-3 p-4 sm:grid-cols-3">
           <Stat
@@ -103,6 +174,11 @@ function RealtimeDebugPage() {
           />
         </CardContent>
       </Card>
+      {reconnectCount > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Resubscribed {reconnectCount} time{reconnectCount === 1 ? "" : "s"} this session.
+        </p>
+      )}
 
       <Card>
         <CardContent className="p-0">
