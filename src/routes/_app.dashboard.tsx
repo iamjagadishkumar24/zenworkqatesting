@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useRetests } from "@/lib/qa/retest";
 import { routeForModule } from "@/lib/qa/constants";
 import { MyQuickNotesWidget } from "@/components/qa/MyQuickNotesWidget";
+import { DeadlineCountdown, AdminDeadlineSummary } from "@/components/qa/DeadlineCountdown";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -106,13 +107,19 @@ function Dashboard() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-xs text-muted-foreground inline-flex items-center gap-2">
-          Real-time QA testing overview across all modules.
-          {env && <Badge variant="outline">{env}</Badge>}
-          <Badge variant="outline">Tax Year: {taxYear === "all" ? "All" : taxYear}</Badge>
-        </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-xs text-muted-foreground inline-flex items-center gap-2">
+            Real-time QA testing overview across all modules.
+            {env && <Badge variant="outline">{env}</Badge>}
+            <Badge variant="outline">Tax Year: {taxYear === "all" ? "All" : taxYear}</Badge>
+          </p>
+        </div>
+        <div className="md:ml-auto">
+          <DeadlineCountdown />
+          <AdminDeadlineSummary />
+        </div>
       </div>
 
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
