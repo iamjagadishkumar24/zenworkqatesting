@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "@/lib/qa/store";
+import { getMyPreferences, saveMyPreferences } from "@/lib/qa/userPreferences.functions";
 
 export type AdminPrefs = {
   // Configurable enums
@@ -106,16 +107,29 @@ export function usePrefs() {
 
   useEffect(() => {
     let alive = true;
+    const hydrate = async (id: string | null) => {
+      // Local cache first for instant paint.
+      if (alive) setPrefs(readFor(id));
+      if (!id) return;
+      // Then merge backend truth so prefs persist across devices/clears.
+      try {
+        const remote = await getMyPreferences();
+        if (!alive || !remote) return;
+        setPrefs((p) => ({ ...p, ...(remote as Partial<AdminPrefs>) }));
+      } catch {
+        /* offline / unauthenticated — fall back to local cache */
+      }
+    };
     supabase.auth.getSession().then(({ data }) => {
       if (!alive) return;
       const id = data.session?.user.id ?? null;
       setUid(id);
-      setPrefs(readFor(id));
+      void hydrate(id);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       const id = session?.user.id ?? null;
       setUid(id);
-      setPrefs(readFor(id));
+      void hydrate(id);
     });
     return () => {
       alive = false;
@@ -146,7 +160,24 @@ export function usePrefs() {
   }, [prefs, uid, isAdmin]);
 
   const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) =>
-    setPrefs((p) => ({ ...p, [k]: v }));
+    setPrefs((p) => {
+      const next = { ...p, [k]: v };
+      // Best-effort backend sync; localStorage write happens in the apply effect.
+      if (uid) {
+        void saveMyPreferences({
+          data: {
+            theme: next.theme,
+            accent: next.accent,
+            density: next.density,
+            default_landing: next.defaultLanding,
+            show_kpi_cards: next.showKpiCards,
+            show_trend_chart: next.showTrendChart,
+            show_agent_chart: next.showAgentChart,
+          },
+        }).catch(() => {});
+      }
+      return next;
+    });
 
   const reset = () => setPrefs(DEFAULTS);
 
