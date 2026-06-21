@@ -776,6 +776,42 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_runtime_config_audit: {
+        Row: {
+          changed_by_email: string | null
+          changed_by_id: string | null
+          changed_by_name: string | null
+          created_at: string
+          id: string
+          new_live_enabled: boolean
+          new_performance_mode: boolean
+          old_live_enabled: boolean | null
+          old_performance_mode: boolean | null
+        }
+        Insert: {
+          changed_by_email?: string | null
+          changed_by_id?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          new_live_enabled: boolean
+          new_performance_mode: boolean
+          old_live_enabled?: boolean | null
+          old_performance_mode?: boolean | null
+        }
+        Update: {
+          changed_by_email?: string | null
+          changed_by_id?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          new_live_enabled?: boolean
+          new_performance_mode?: boolean
+          old_live_enabled?: boolean | null
+          old_performance_mode?: boolean | null
+        }
+        Relationships: []
+      }
       report_views: {
         Row: {
           created_at: string
