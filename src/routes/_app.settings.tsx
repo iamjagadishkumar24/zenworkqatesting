@@ -114,10 +114,12 @@ function SettingsPage() {
             <FileBarChart className="mr-1 h-3 w-3" />
             Reports
           </TabsTrigger>
-          <TabsTrigger value="theme">
-            <Palette className="mr-1 h-3 w-3" />
-            Theme
-          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="theme">
+              <Palette className="mr-1 h-3 w-3" />
+              Theme
+            </TabsTrigger>
+          )}
           <TabsTrigger value="dashboard">
             <LayoutDashboard className="mr-1 h-3 w-3" />
             Dashboard
