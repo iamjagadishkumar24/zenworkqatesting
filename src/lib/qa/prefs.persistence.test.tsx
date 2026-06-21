@@ -88,4 +88,66 @@ describe("usePrefs per-user theme persistence", () => {
     ).toBe("light");
     third.unmount();
   });
+
+  it("locks an agent to the Light theme even if 'dark' is forced into storage", async () => {
+    currentUser = { role: "agent" };
+    // Simulate tampering: an agent (or someone with devtools) writes "dark"
+    // directly into their per-user prefs entry before the app boots.
+    window.localStorage.setItem(
+      "qa.admin.prefs.v1:agent-1",
+      JSON.stringify({ theme: "dark" }),
+    );
+    document.documentElement.classList.remove("dark");
+
+    currentSession = { user: { id: "agent-1" } };
+    const { result, unmount } = renderHook(() => usePrefs());
+    await act(async () => { await flush(); });
+
+    // The stored value is read back, but the applied UI class MUST remain light.
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+
+    // Attempting to "switch" to dark must not actually darken the UI.
+    act(() => result.current.update("theme", "dark"));
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    unmount();
+  });
+
+  it("keeps each user's theme isolated when switching between two users", async () => {
+    // User 1 (admin) picks dark.
+    currentUser = { role: "admin" };
+    currentSession = { user: { id: "user-1" } };
+    const first = renderHook(() => usePrefs());
+    await act(async () => { await flush(); });
+    act(() => first.result.current.update("theme", "dark"));
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    await signOut();
+    first.unmount();
+
+    // User 2 (admin) signs in — sees light by default, picks "system" (light).
+    currentUser = { role: "admin" };
+    await signIn("user-2");
+    const second = renderHook(() => usePrefs());
+    await act(async () => { await flush(); });
+    expect(second.result.current.prefs.theme).toBe("light");
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    act(() => second.result.current.update("theme", "system"));
+    await signOut();
+    second.unmount();
+
+    // Back to user 1 — still dark, untouched by user 2.
+    await signIn("user-1");
+    const third = renderHook(() => usePrefs());
+    await act(async () => { await flush(); });
+    expect(third.result.current.prefs.theme).toBe("dark");
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    third.unmount();
+
+    // Back to user 2 — still "system", never became dark.
+    await signIn("user-2");
+    const fourth = renderHook(() => usePrefs());
+    await act(async () => { await flush(); });
+    expect(fourth.result.current.prefs.theme).toBe("system");
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    fourth.unmount();
+  });
 });
