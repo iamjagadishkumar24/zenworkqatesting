@@ -28,8 +28,7 @@ export function useRealtimeTable(opts: {
     const channel = supabase
       .channel(`rt:${table}:${filter ?? "*"}:${keyStr}`)
       .on(
-        // @ts-expect-error supabase-js postgres_changes string-literal typing
-        "postgres_changes",
+        "postgres_changes" as never,
         { event, schema: "public", table, ...(filter ? { filter } : {}) },
         () => {
           void qc.invalidateQueries({ queryKey });
