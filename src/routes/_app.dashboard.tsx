@@ -23,6 +23,7 @@ import {
   Cpu,
   Sparkles,
   FileUp,
+  CreditCard,
   ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -129,28 +130,34 @@ function Dashboard() {
   const modules = [
     { name: "Forms", to: "/forms", Icon: FileText, key: "1099 Forms" },
     { name: "1099 Online Forms", to: "/online-1099", Icon: Globe, key: "1099 Online" },
-    { name: "990 Form Testing", to: "/990-forms", Icon: FileText, key: "990 Forms" },
+    { name: "990 Forms", to: "/990-forms", Icon: FileText, key: "990 Forms" },
     { name: "2290 Forms", to: "/2290-forms", Icon: FileSpreadsheet, key: "2290 Forms" },
     { name: "Integrations", to: "/integrations", Icon: Plug, key: "Integrations" },
     {
-      name: "Chatbot Testing",
+      name: "Chatbot",
       to: "/chatbot-testing",
       Icon: MessageSquare,
       key: "Chatbot Testing",
     },
     {
-      name: "Excel Import Testing",
+      name: "Excel Import",
       to: "/excel-import-testing",
       Icon: FileUp,
       key: "Excel Import Testing",
     },
     {
-      name: "Functionality Testing",
+      name: "Functionality",
       to: "/functionality-testing",
       Icon: Cpu,
       key: "Functionality Testing",
     },
     { name: "Tax1099 Features", to: "/tax1099-features", Icon: Sparkles, key: "Tax1099 Features" },
+    {
+      name: "Zenwork Payments",
+      to: "/zenwork-payments",
+      Icon: CreditCard,
+      key: "Zenwork Payments",
+    },
   ].map((m) => ({ ...m, bugs: countByModule(m.key) }));
 
   // Only show forms that actually have reported errors in scope
