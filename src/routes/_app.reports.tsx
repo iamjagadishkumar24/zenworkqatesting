@@ -209,6 +209,23 @@ function ReportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scoped, status, testingType, category, agent, dateBounds]);
 
+  const baseSpec = useMemo<DefectQuerySpec>(() => {
+    const [from, to] = dateBounds;
+    return {
+      environment: env ?? undefined,
+      taxYear,
+      statusGroup: status as DefectQuerySpec["statusGroup"],
+      testingType,
+      category,
+      agent,
+      from: from ? from.toISOString() : null,
+      to: to ? to.toISOString() : null,
+    };
+  }, [env, taxYear, status, testingType, category, agent, dateBounds]);
+
+  const drillInto = (title: string, patch: Partial<DefectQuerySpec>) =>
+    setDrill({ title, spec: { ...baseSpec, ...patch } });
+
   // Data-integrity validation: warn when the active filtered set diverges
   // from the scoped total in ways callers wouldn't expect.
   useEffect(() => {
