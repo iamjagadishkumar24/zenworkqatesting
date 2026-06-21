@@ -327,8 +327,21 @@ function AuthEventsPage() {
               </dl>
               <div className="mt-6">
                 <div className="mb-2 text-xs font-medium text-muted-foreground">Metadata</div>
-                <pre className="max-h-80 overflow-auto rounded-md border bg-muted/40 p-3 text-xs">
-{JSON.stringify(selected.metadata ?? {}, null, 2)}
+                <div className="mb-2 flex items-center gap-2">
+                  <Input
+                    placeholder="Search metadata…"
+                    value={detailSearch}
+                    onChange={(e) => setDetailSearch(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  {detailSearch && (
+                    <span className="whitespace-nowrap text-xs text-muted-foreground">
+                      {matchCount} match{matchCount === 1 ? "" : "es"}
+                    </span>
+                  )}
+                </div>
+                <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-3 text-xs">
+                  {highlight(metadataJson, detailSearch)}
                 </pre>
               </div>
             </>
