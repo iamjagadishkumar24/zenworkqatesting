@@ -37,6 +37,7 @@ import {
 import { Download, Inbox, FileText, Save, Trash2, Loader2 } from "lucide-react";
 import { exportPdf, exportXlsx } from "@/lib/qa/export";
 import { ExportMenu } from "@/components/qa/ExportMenu";
+import { RealtimeHealthMenu } from "@/components/qa/RealtimeHealthMenu";
 
 type ReportSearch = ReportFilters;
 const DEFAULT_SEARCH: ReportSearch = {
@@ -368,6 +369,7 @@ function ReportsPage() {
                 <Loader2 className="h-3 w-3 animate-spin" /> Syncing…
               </Badge>
             )}
+            <RealtimeHealthMenu />
           </p>
         </div>
         <div className="flex gap-2">
