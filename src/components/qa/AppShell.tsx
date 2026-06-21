@@ -48,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NotificationsBell } from "./NotificationsBell";
+import { ZenworkLogo } from "./ZenworkLogo";
 import { toast } from "sonner";
 
 type NavItem = {
