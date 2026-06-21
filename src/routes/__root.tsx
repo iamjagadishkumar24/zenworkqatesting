@@ -14,6 +14,7 @@ import { QAProvider } from "@/lib/qa/store";
 import { EnvironmentProvider } from "@/lib/qa/environment";
 import { TaxYearProvider } from "@/lib/qa/taxYear";
 import { Toaster } from "@/components/ui/sonner";
+import { DevErrorOverlay } from "@/components/DevErrorOverlay";
 
 function NotFoundComponent() {
   return (
@@ -55,6 +56,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           Try again
         </button>
       </div>
+      <DevErrorOverlay error={error} />
     </div>
   );
 }
