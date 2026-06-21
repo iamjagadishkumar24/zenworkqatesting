@@ -127,6 +127,21 @@ export const FEATURES_TAX1099: string[] = [
   "Audit Trail",
 ];
 
+// Zenwork Payments — standalone payments module surfaced both in nav and
+// as a dashboard card.
+export const FEATURES_ZENWORK_PAYMENTS: string[] = [
+  "Payer Setup",
+  "Recipient Setup",
+  "ACH Transfer",
+  "Wire Transfer",
+  "Check Printing",
+  "Payment Scheduling",
+  "Payment History",
+  "Refunds",
+  "Reconciliation",
+  "Reporting",
+];
+
 // Payer & Recipient feature catalogs — surfaced as standalone testing
 // modules so defects can be tagged Module=Payer / Module=Recipient and
 // the same dashboard / filter / assignment plumbing applies.
@@ -205,6 +220,7 @@ export function getModuleCatalog(m: string | null | undefined): string[] | null 
   if (m === "Excel Import Testing") return [...FEATURES_EXCEL_IMPORT];
   if (m === "Functionality Testing") return [...FEATURES_FUNCTIONALITY];
   if (m === "Tax1099 Features") return [...FEATURES_TAX1099];
+  if (m === "Zenwork Payments") return [...FEATURES_ZENWORK_PAYMENTS];
   return null;
 }
 
@@ -218,6 +234,7 @@ export const MODULE_OPTIONS: string[] = [
   "Excel Import Testing",
   "Functionality Testing",
   "Tax1099 Features",
+  "Zenwork Payments",
 ];
 
 // Route path for each module — used to deep-link assigned tasks
@@ -238,6 +255,7 @@ export const MODULE_ROUTES: Record<string, string> = {
   "Excel Import Testing": "/excel-import-testing",
   "Functionality Testing": "/functionality-testing",
   "Tax1099 Features": "/tax1099-features",
+  "Zenwork Payments": "/zenwork-payments",
 };
 
 export function routeForModule(module: string | null | undefined): string {
