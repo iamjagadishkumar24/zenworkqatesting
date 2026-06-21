@@ -262,8 +262,9 @@ function ReportedErrorsPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground inline-flex flex-wrap items-center gap-2">
             {description} {filtered.length} shown.
+            <RealtimeHealthMenu />
           </p>
           {preset && (
             <div className="mt-2 flex items-center gap-2 text-sm">
