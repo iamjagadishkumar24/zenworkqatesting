@@ -22,6 +22,8 @@ import {
   UserCog,
   ScrollText,
   StickyNote,
+  Users,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
@@ -66,6 +68,8 @@ const nav: NavItem[] = [
   { to: "/chatbot-testing", label: "Chatbot Testing", icon: MessageSquare },
   { to: "/excel-import-testing", label: "Excel Import Testing", icon: FileUp },
   { to: "/functionality-testing", label: "Functionality Testing", icon: Cpu },
+  { to: "/payer-testing", label: "Payer", icon: UserPlus },
+  { to: "/recipient-testing", label: "Recipient", icon: Users },
   { to: "/tax1099-features", label: "Tax1099 Features", icon: Sparkles },
   { to: "/my-reported-errors", label: "Reported Errors", icon: ListChecks },
   { to: "/retest", label: "Task Assignments", icon: ClipboardCheck },
