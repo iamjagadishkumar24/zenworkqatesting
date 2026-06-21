@@ -3,10 +3,12 @@ import { createRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { routeTree } from "./routeTree.gen";
 import { reportLovableError } from "./lib/lovable-error-reporting";
+import { recoverFromPossibleStaleBundle } from "./lib/cache-busting";
 
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => {
     reportLovableError(error, { boundary: "router_default_error" });
+    recoverFromPossibleStaleBundle(error, "router_default_error");
   }, [error]);
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 px-4 text-center">

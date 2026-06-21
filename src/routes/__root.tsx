@@ -15,6 +15,10 @@ import { EnvironmentProvider } from "@/lib/qa/environment";
 import { TaxYearProvider } from "@/lib/qa/taxYear";
 import { Toaster } from "@/components/ui/sonner";
 import { DevErrorOverlay } from "@/components/DevErrorOverlay";
+import {
+  installCacheBustingVersionCheck,
+  recoverFromPossibleStaleBundle,
+} from "@/lib/cache-busting";
 
 function NotFoundComponent() {
   return (
@@ -43,6 +47,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    recoverFromPossibleStaleBundle(error, "root_error_boundary");
     // Auto-retry transient failures (network, chunk load) up to 2 times.
     const msg = (error?.message || "").toLowerCase();
     const transient =
@@ -169,6 +174,8 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => installCacheBustingVersionCheck(), []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onError = (event: ErrorEvent) => {

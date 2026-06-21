@@ -130,9 +130,11 @@ export function installCacheBustingVersionCheck() {
   const onError = (event: ErrorEvent | Event) => {
     const target = event.target as HTMLElement | null;
     const source =
-      target instanceof HTMLScriptElement || target instanceof HTMLLinkElement
-        ? target.src || target.href
-        : "";
+      target instanceof HTMLScriptElement
+        ? target.src
+        : target instanceof HTMLLinkElement
+          ? target.href
+          : "";
     const error = (event as ErrorEvent).error ?? (event as ErrorEvent).message ?? source;
     if (isLikelyChunkLoadError(error) || /\.(js|mjs)(\?|$)/i.test(source)) {
       event.preventDefault();
