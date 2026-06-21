@@ -109,8 +109,8 @@ export function TestingModule({
           <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        <div className="flex gap-2">
-          <div className="relative w-72 max-w-full">
+        <div className={`flex gap-2 ${showHeaderReport ? "" : "min-w-[16rem] flex-1 sm:max-w-md"}`}>
+          <div className={`relative max-w-full ${showHeaderReport ? "w-72" : "w-full"}`}>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={q}
