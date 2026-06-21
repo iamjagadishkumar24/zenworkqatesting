@@ -17,7 +17,6 @@ function withDeploymentCacheHeaders(request: Request, response: Response): Respo
 
   if (
     contentType.includes("text/html") ||
-    path === "/api/public/app-version" ||
     path === "/api/public/manifest" ||
     path === "/manifest.webmanifest" ||
     path === "/sw.js" ||
@@ -26,7 +25,16 @@ function withDeploymentCacheHeaders(request: Request, response: Response): Respo
     next.headers.set("Cache-Control", NO_STORE);
     next.headers.set("Pragma", "no-cache");
     next.headers.set("Expires", "0");
-    next.headers.set("Clear-Site-Data", '"cache"');
+    if (path === "/sw.js" || path === "/service-worker.js") {
+      next.headers.set("Clear-Site-Data", '"cache"');
+    }
+    return next;
+  }
+
+  if (path === "/api/public/app-version") {
+    next.headers.set("Cache-Control", NO_STORE);
+    next.headers.set("Pragma", "no-cache");
+    next.headers.set("Expires", "0");
     return next;
   }
 
