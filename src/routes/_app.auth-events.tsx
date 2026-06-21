@@ -150,6 +150,34 @@ function AuthEventsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const filteredRows = useMemo(() => {
+    const ipQ = metaIp.trim().toLowerCase();
+    const uaQ = metaUa.trim().toLowerCase();
+    const devQ = metaDevice.trim().toLowerCase();
+    const failQ = metaFailure.trim().toLowerCase();
+    if (!ipQ && !uaQ && !devQ && !failQ) return rows;
+    const metaStr = (r: Row, key: string) => {
+      const v = r.metadata && (r.metadata as Record<string, unknown>)[key];
+      return typeof v === "string" ? v.toLowerCase() : "";
+    };
+    return rows.filter((r) => {
+      if (ipQ) {
+        const ip = (r.ip_address ?? "").toLowerCase() + " " + metaStr(r, "ip");
+        if (!ip.includes(ipQ)) return false;
+      }
+      if (uaQ) {
+        const ua = (r.user_agent ?? "").toLowerCase() + " " + metaStr(r, "user_agent");
+        if (!ua.includes(uaQ)) return false;
+      }
+      if (devQ && !metaStr(r, "device").includes(devQ)) return false;
+      if (failQ) {
+        const reason = metaStr(r, "failure_reason") || metaStr(r, "reason");
+        if (!reason.includes(failQ)) return false;
+      }
+      return true;
+    });
+  }, [rows, metaIp, metaUa, metaDevice, metaFailure]);
+
   const counts = useMemo(() => {
     const c = { success: 0, failure: 0, hibp: 0 } as Record<string, number>;
     for (const r of filteredRows) {
@@ -158,8 +186,7 @@ function AuthEventsPage() {
       else c.failure++;
     }
     return c;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, metaIp, metaUa, metaDevice, metaFailure]);
+  }, [filteredRows]);
 
   if (!currentUser) return null;
   if (currentUser.role !== "admin") return <Navigate to="/dashboard" />;
