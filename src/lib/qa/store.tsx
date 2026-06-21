@@ -242,6 +242,43 @@ export function QAProvider({ children }: { children: ReactNode }) {
   const [realtimeLastEventAt, setRealtimeLastEventAt] = useState<string | null>(null);
   const roleRef = useRef<Role | "unknown">("unknown");
   roleRef.current = state.currentUser?.role ?? "unknown";
+
+  // User-visible feedback when realtime drops / recovers. Uses sonner so it
+  // sits next to the rest of the app's notifications.
+  const prevStatusRef = useRef<RealtimeStatus>("idle");
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    if (prev !== realtimeStatus) {
+      if (realtimeStatus === "reconnecting" || realtimeStatus === "error") {
+        toast.error("Realtime disconnected — reconnecting…", {
+          id: "qa-realtime-status",
+          duration: 8000,
+        });
+      } else if (realtimeStatus === "connected" && (prev === "reconnecting" || prev === "error")) {
+        toast.success("Realtime reconnected", {
+          id: "qa-realtime-status",
+          duration: 3000,
+        });
+      }
+      prevStatusRef.current = realtimeStatus;
+    }
+  }, [realtimeStatus]);
+
+  // Deterministic hook for E2E tests: expose internal setters on window so
+  // a test can simulate a CHANNEL_ERROR + recovery without racing the real
+  // WebSocket. No-op in production unless the test explicitly opts in.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    (window as unknown as { __qaRealtimeMock?: unknown }).__qaRealtimeMock = {
+      setStatus: (s: RealtimeStatus) => setRealtimeStatus(s),
+      bumpReconnect: () => setRealtimeReconnectAttempts((n) => n + 1),
+      resetReconnect: () => setRealtimeReconnectAttempts(0),
+    };
+    return () => {
+      delete (window as unknown as { __qaRealtimeMock?: unknown }).__qaRealtimeMock;
+    };
+  }, []);
+
   const pushEvent = (e: Omit<RealtimeDebugEvent, "id" | "at" | "role">) => {
     const at = new Date().toISOString();
     setRealtimeLastEventAt(at);
