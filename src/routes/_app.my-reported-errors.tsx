@@ -333,7 +333,7 @@ function ReportedErrorsPage() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
                     <Bug className="mx-auto mb-2 h-8 w-8 opacity-40" />
                     No reported errors match the current filters.
                   </TableCell>
