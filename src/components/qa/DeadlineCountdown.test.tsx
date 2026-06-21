@@ -25,17 +25,16 @@ import { DeadlineCountdown } from "./DeadlineCountdown";
 
 function makeAssignment(over: Partial<RetestAssignment> & { id: string }): RetestAssignment {
   return {
-    id: over.id,
-    title: over.title ?? `Task ${over.id}`,
-    module: over.module ?? "Forms",
-    status: over.status ?? "Pending",
-    priority: over.priority ?? "High",
-    assigned_agent_id: over.assigned_agent_id ?? "agent-1",
-    assigned_agent_name: over.assigned_agent_name ?? "Agent One",
-    environment: over.environment ?? "Stage",
-    tax_year: over.tax_year ?? null,
-    deadline_at: over.deadline_at ?? new Date(Date.now() + 3_600_000).toISOString(),
-    forms: over.forms ?? [],
+    title: `Task ${over.id}`,
+    module: "Forms",
+    status: "Pending",
+    priority: "High",
+    assigned_agent_id: "agent-1",
+    assigned_agent_name: "Agent One",
+    environment: "Stage",
+    tax_year: null,
+    deadline_at: new Date(Date.now() + 3_600_000).toISOString(),
+    forms: [],
     ...over,
   } as RetestAssignment;
 }
