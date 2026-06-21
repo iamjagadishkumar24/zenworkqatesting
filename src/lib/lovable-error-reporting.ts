@@ -82,7 +82,7 @@ async function persistErrorLog(error: unknown, context: Record<string, unknown>)
       last_request: window.__lastNetworkRequest ?? null,
       user_agent: navigator.userAgent,
       url: window.location.href,
-      metadata: context as Record<string, unknown>,
+      metadata: context as unknown as Record<string, never> as never,
     });
   } catch {
     // never throw from logging
