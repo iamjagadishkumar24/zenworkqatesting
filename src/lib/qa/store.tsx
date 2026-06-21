@@ -40,7 +40,19 @@ type State = {
 
 type Result = { ok: boolean; error?: string };
 
+export type RealtimeDebugEvent = {
+  id: string;
+  table: "defects" | "defect_comments";
+  event: "INSERT" | "UPDATE" | "DELETE";
+  at: string;
+  role: Role | "unknown";
+  rowId: string | null;
+  summary: string;
+};
+
 type Ctx = State & {
+  realtimeEvents: RealtimeDebugEvent[];
+  clearRealtimeEvents: () => void;
   login: (email: string, password: string) => Promise<Result>;
   signup: (name: string, email: string, password: string) => Promise<Result>;
   logout: () => Promise<void>;
@@ -217,6 +229,22 @@ export function QAProvider({ children }: { children: ReactNode }) {
     loading: true,
   });
   const commentsRef = useRef<CommentRow[]>([]);
+  const [realtimeEvents, setRealtimeEvents] = useState<RealtimeDebugEvent[]>([]);
+  const roleRef = useRef<Role | "unknown">("unknown");
+  roleRef.current = state.currentUser?.role ?? "unknown";
+  const pushEvent = (e: Omit<RealtimeDebugEvent, "id" | "at" | "role">) => {
+    setRealtimeEvents((prev) =>
+      [
+        {
+          ...e,
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          at: new Date().toISOString(),
+          role: roleRef.current,
+        },
+        ...prev,
+      ].slice(0, 100),
+    );
+  };
 
   // Auth lifecycle
   useEffect(() => {
@@ -356,6 +384,17 @@ export function QAProvider({ children }: { children: ReactNode }) {
     const channel = supabase
       .channel(`qa-realtime-${state.currentUser?.id ?? "anon"}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "defects" }, (payload) => {
+        const ev = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
+        const row = (payload.new ?? payload.old) as { id?: string; title?: string; status?: string } | undefined;
+        pushEvent({
+          table: "defects",
+          event: ev,
+          rowId: row?.id ?? null,
+          summary:
+            ev === "DELETE"
+              ? `Deleted ${row?.id ?? ""}`
+              : `${ev} ${row?.id ?? ""} — status: ${row?.status ?? "?"}`,
+        });
         setState((s) => {
           let next = s.defects;
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
@@ -376,6 +415,19 @@ export function QAProvider({ children }: { children: ReactNode }) {
         "postgres_changes",
         { event: "*", schema: "public", table: "defect_comments" },
         (payload) => {
+          const ev = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
+          const row = (payload.new ?? payload.old) as
+            | { id?: string; defect_id?: string; author?: string; text?: string }
+            | undefined;
+          pushEvent({
+            table: "defect_comments",
+            event: ev,
+            rowId: row?.defect_id ?? null,
+            summary:
+              ev === "DELETE"
+                ? `Deleted comment on ${row?.defect_id ?? "?"}`
+                : `${ev} comment on ${row?.defect_id ?? "?"} by ${row?.author ?? "?"}`,
+          });
           if (payload.eventType === "INSERT") {
             const c = payload.new as CommentRow;
             commentsRef.current = [...commentsRef.current, c];
@@ -507,6 +559,8 @@ export function QAProvider({ children }: { children: ReactNode }) {
 
   const ctx: Ctx = {
     ...state,
+    realtimeEvents,
+    clearRealtimeEvents: () => setRealtimeEvents([]),
     login: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
@@ -645,6 +699,16 @@ export function QAProvider({ children }: { children: ReactNode }) {
       const me = requireUser();
       const local = state.defects.find((d) => d.id === id);
       if (!local) return { ok: false, error: "Defect not found" };
+      // Optimistic UI: apply the patch to local state immediately so the table
+      // reflects the change while the server request is pending. If the server
+      // rejects (error or version conflict), we restore the previous row below.
+      const previous = local;
+      setState((s) => ({
+        ...s,
+        defects: s.defects.map((d) =>
+          d.id === id ? { ...d, ...patch, updatedBy: me.name } : d,
+        ),
+      }));
       const dbPatch: Record<string, unknown> = { updated_by: me.name };
       const map: Record<string, string> = {
         module: "module",
@@ -681,7 +745,13 @@ export function QAProvider({ children }: { children: ReactNode }) {
         .eq("version", local.version)
         .select()
         .maybeSingle();
-      if (error) return { ok: false, error: error.message };
+      if (error) {
+        setState((s) => ({
+          ...s,
+          defects: s.defects.map((d) => (d.id === id ? previous : d)),
+        }));
+        return { ok: false, error: error.message };
+      }
       if (!data) {
         // Optimistic lock conflict: fetch latest and surface
         const { data: latest } = await supabase
