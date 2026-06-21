@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
@@ -17,6 +17,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { useSavedViews, type ReportFilters } from "@/lib/qa/reportsViews";
+import {
   BarChart,
   Bar,
   XAxis,
@@ -31,11 +39,37 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
-import { Download, Inbox, FileText } from "lucide-react";
+import { Download, Inbox, FileText, Save, Trash2, Loader2 } from "lucide-react";
 import { exportPdf, exportXlsx } from "@/lib/qa/export";
 import { ExportMenu } from "@/components/qa/ExportMenu";
 
+type ReportSearch = ReportFilters;
+const DEFAULT_SEARCH: ReportSearch = {
+  status: "all",
+  testingType: "all",
+  category: "all",
+  agent: "all",
+  dateRange: "all",
+  fromDate: "",
+  toDate: "",
+};
+
+function validateReportSearch(input: Record<string, unknown>): ReportSearch {
+  const s = (k: keyof ReportSearch) =>
+    typeof input[k] === "string" ? (input[k] as string) : DEFAULT_SEARCH[k];
+  return {
+    status: s("status"),
+    testingType: s("testingType"),
+    category: s("category"),
+    agent: s("agent"),
+    dateRange: s("dateRange"),
+    fromDate: s("fromDate"),
+    toDate: s("toDate"),
+  };
+}
+
 export const Route = createFileRoute("/_app/reports")({
+  validateSearch: validateReportSearch,
   component: ReportsPage,
 });
 
@@ -61,17 +95,50 @@ function EmptyBreakdown({ message }: { message: string }) {
 }
 
 function ReportsPage() {
-  const { defects: allDefects } = useQA();
+  const { defects: allDefects, loading } = useQA();
   const { env } = useEnvironment();
   const { taxYear, setTaxYear } = useTaxYear();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { status, testingType, category, agent, dateRange, fromDate, toDate } = search;
 
-  const [status, setStatus] = useState<string>("all");
-  const [testingType, setTestingType] = useState<string>("all");
-  const [category, setCategory] = useState<string>("all");
-  const [agent, setAgent] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<string>("all");
-  const [fromDate, setFromDate] = useState<string>("");
-  const [toDate, setToDate] = useState<string>("");
+  const patchSearch = (patch: Partial<ReportSearch>) =>
+    navigate({
+      replace: true,
+      search: (prev) => ({ ...prev, ...patch }),
+    });
+  const setStatus = (v: string) => patchSearch({ status: v });
+  const setTestingType = (v: string) => patchSearch({ testingType: v });
+  const setCategory = (v: string) => patchSearch({ category: v });
+  const setAgent = (v: string) => patchSearch({ agent: v });
+  const setDateRange = (v: string) =>
+    patchSearch({ dateRange: v, ...(v === "custom" ? {} : { fromDate: "", toDate: "" }) });
+
+  // Debounced custom date inputs: keep typing local, push to URL after 400ms.
+  const [fromInput, setFromInput] = useState(fromDate);
+  const [toInput, setToInput] = useState(toDate);
+  useEffect(() => setFromInput(fromDate), [fromDate]);
+  useEffect(() => setToInput(toDate), [toDate]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (fromInput !== fromDate || toInput !== toDate)
+        patchSearch({ fromDate: fromInput, toDate: toInput });
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromInput, toInput]);
+
+  const { views, save: saveView, remove: removeView } = useSavedViews();
+  const [viewName, setViewName] = useState("");
+  const [drill, setDrill] = useState<{ title: string; rows: typeof allDefects } | null>(null);
+
+  const resetFilters = () =>
+    navigate({ replace: true, search: () => ({ ...DEFAULT_SEARCH }) });
+
+  const applyView = (name: string) => {
+    const v = views.find((x) => x.name === name);
+    if (v) navigate({ replace: true, search: () => ({ ...v.filters }) });
+  };
 
   const scoped = useMemo(
     () =>
