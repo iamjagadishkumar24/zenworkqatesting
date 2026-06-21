@@ -49,7 +49,8 @@ export type RetestSummary = {
 
 function adminReviewLabel(d: Defect): string {
   if (d.validity === "Invalid") return "Invalid Error";
-  if (d.validity === "Valid" && (d.status === "Reported" || d.status === "Pending")) return "Valid Error";
+  if (d.validity === "Valid" && (d.status === "Reported" || d.status === "Pending"))
+    return "Valid Error";
   if (d.status === "Retest Required") return "Retest Required";
   if (d.status === "Fixed" || d.status === "Closed") return "Fixed";
   if (d.status === "Ongoing" || d.status === "In Progress") return "Ongoing";
@@ -59,8 +60,7 @@ function adminReviewLabel(d: Defect): string {
 export function toReportedErrorRow(d: Defect, retest?: RetestSummary | null): ReportedErrorRow {
   const all = d.comments ?? [];
   const own = all.filter((c) => c.author === d.createdBy);
-  const fmtComments = (xs: typeof all) =>
-    xs.map((c) => `${c.author}: ${c.text}`).join("\n\n");
+  const fmtComments = (xs: typeof all) => xs.map((c) => `${c.author}: ${c.text}`).join("\n\n");
   return {
     reportedAt: d.createdAt || null,
     agent: d.createdBy ?? "",
@@ -79,7 +79,10 @@ export function toReportedErrorRow(d: Defect, retest?: RetestSummary | null): Re
   };
 }
 
-export function buildReportedErrorsFilename(env: Environment | null | undefined, when: Date = new Date()): string {
+export function buildReportedErrorsFilename(
+  env: Environment | null | undefined,
+  when: Date = new Date(),
+): string {
   const yyyy = when.getFullYear();
   const mm = String(when.getMonth() + 1).padStart(2, "0");
   const dd = String(when.getDate()).padStart(2, "0");
@@ -129,7 +132,15 @@ function toDate(iso: string): Date | null {
 }
 
 function pickScreenshot(d: Defect): string {
-  return d.screenshotUrl || d.videoUrl || d.attachmentUrl || d.attachmentUrl2 || d.evidenceUrl || d.excelUrl || "";
+  return (
+    d.screenshotUrl ||
+    d.videoUrl ||
+    d.attachmentUrl ||
+    d.attachmentUrl2 ||
+    d.evidenceUrl ||
+    d.excelUrl ||
+    ""
+  );
 }
 
 function pickLink(d: Defect): string {
@@ -218,7 +229,10 @@ export function exportReportedErrorsXlsx(
     rowToTuple(toReportedErrorRow(d, retestsByDefectId?.get(d.id) ?? null)),
   );
   const ws = buildSheet(rowsTyped);
-  XLSXStyle.writeFile({ SheetNames: ["Reported Errors"], Sheets: { "Reported Errors": ws } }, filename);
+  XLSXStyle.writeFile(
+    { SheetNames: ["Reported Errors"], Sheets: { "Reported Errors": ws } },
+    filename,
+  );
   toast.success(`Exported ${filename}`);
 }
 

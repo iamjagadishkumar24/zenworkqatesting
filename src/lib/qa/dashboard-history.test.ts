@@ -20,7 +20,9 @@ function validateSearch(s: Record<string, unknown>) {
 function parseUrl(url: string) {
   const u = new URL(url, "https://app.test");
   const raw: Record<string, string> = {};
-  u.searchParams.forEach((v, k) => { raw[k] = v; });
+  u.searchParams.forEach((v, k) => {
+    raw[k] = v;
+  });
   return { pathname: u.pathname, search: validateSearch(raw) };
 }
 

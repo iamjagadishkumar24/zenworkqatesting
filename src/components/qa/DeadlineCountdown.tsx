@@ -28,11 +28,12 @@ export function DeadlineCountdown() {
   const myActive = useMemo(() => {
     if (currentUser?.role !== "agent") return [];
     return sortByDeadline(
-      items.filter((r) =>
-        r.assigned_agent_id === currentUser.id
-        && r.status !== "Completed"
-        && r.deadline_at
-        && (!env || r.environment === env),
+      items.filter(
+        (r) =>
+          r.assigned_agent_id === currentUser.id &&
+          r.status !== "Completed" &&
+          r.deadline_at &&
+          (!env || r.environment === env),
       ),
     );
   }, [items, currentUser, env]);
@@ -43,25 +44,35 @@ export function DeadlineCountdown() {
   const primaryInfo = deadlineInfo(primary.deadline_at, now);
 
   return (
-    <Card className={cn(
-      "w-full md:w-[340px] border bg-card/70 backdrop-blur shadow-lg",
-      primaryInfo.isOverdue && "border-red-500/50",
-    )}>
+    <Card
+      className={cn(
+        "w-full md:w-[340px] border bg-card/70 backdrop-blur shadow-lg",
+        primaryInfo.isOverdue && "border-red-500/50",
+      )}
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {primaryInfo.isOverdue ? <AlertTriangle className="h-4 w-4 text-red-500" /> : <Timer className="h-4 w-4" />}
+            {primaryInfo.isOverdue ? (
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            ) : (
+              <Timer className="h-4 w-4" />
+            )}
             Assigned Tasks
           </div>
           <Badge variant="secondary">{myActive.length}</Badge>
         </div>
 
         <Link to="/tasks/$taskId" params={{ taskId: primary.id }} className="block group">
-          <p className="text-sm font-semibold truncate group-hover:underline">{primary.title || primary.id}</p>
-          <div className={cn(
-            "mt-2 rounded-md border px-3 py-2 text-center",
-            TIER_CLASSES[primaryInfo.tier],
-          )}>
+          <p className="text-sm font-semibold truncate group-hover:underline">
+            {primary.title || primary.id}
+          </p>
+          <div
+            className={cn(
+              "mt-2 rounded-md border px-3 py-2 text-center",
+              TIER_CLASSES[primaryInfo.tier],
+            )}
+          >
             <div className="text-[10px] uppercase tracking-wide opacity-80">
               {primaryInfo.isOverdue ? "Overdue by" : "Time Remaining"}
             </div>
@@ -84,10 +95,12 @@ export function DeadlineCountdown() {
                   className="flex items-center justify-between gap-2 text-xs hover:bg-muted/50 rounded px-2 py-1"
                 >
                   <span className="truncate flex-1">{r.title || r.id}</span>
-                  <span className={cn(
-                    "font-mono tabular-nums px-1.5 py-0.5 rounded border text-[11px]",
-                    TIER_CLASSES[info.tier],
-                  )}>
+                  <span
+                    className={cn(
+                      "font-mono tabular-nums px-1.5 py-0.5 rounded border text-[11px]",
+                      TIER_CLASSES[info.tier],
+                    )}
+                  >
                     {info.isOverdue ? `+${info.shortLabel}` : info.shortLabel}
                   </span>
                 </Link>
@@ -116,8 +129,8 @@ export function AdminDeadlineSummary() {
   }, []);
 
   const { nearDeadline, overdue } = useMemo(() => {
-    const active = items.filter((r) =>
-      r.status !== "Completed" && r.deadline_at && (!env || r.environment === env),
+    const active = items.filter(
+      (r) => r.status !== "Completed" && r.deadline_at && (!env || r.environment === env),
     );
     const near: typeof active = [];
     const over: typeof active = [];

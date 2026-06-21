@@ -8,10 +8,19 @@ export function useExportJob(jobId: string | null) {
   const [job, setJob] = useState<ExportJobRow | null>(null);
 
   useEffect(() => {
-    if (!jobId) { setJob(null); return; }
+    if (!jobId) {
+      setJob(null);
+      return;
+    }
     let cancelled = false;
-    supabase.from("export_jobs").select("*").eq("id", jobId).maybeSingle()
-      .then(({ data }) => { if (!cancelled && data) setJob(data as ExportJobRow); });
+    supabase
+      .from("export_jobs")
+      .select("*")
+      .eq("id", jobId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data) setJob(data as ExportJobRow);
+      });
 
     const channelName = `export-job-${jobId}-${Math.random().toString(36).slice(2, 8)}`;
     const ch = supabase
@@ -36,18 +45,33 @@ export function useAllowAgentExports() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
   useEffect(() => {
     let cancelled = false;
-    const load = () => supabase.from("app_settings").select("value").eq("key", "allow_agent_exports").maybeSingle()
-      .then(({ data }) => { if (!cancelled) setAllowed(data?.value === true); });
+    const load = () =>
+      supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "allow_agent_exports")
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!cancelled) setAllowed(data?.value === true);
+        });
     load();
     const ch = supabase
       .channel(`app-settings-allow-agent-exports-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.allow_agent_exports" },
+        {
+          event: "*",
+          schema: "public",
+          table: "app_settings",
+          filter: "key=eq.allow_agent_exports",
+        },
         () => load(),
       )
       .subscribe();
-    return () => { cancelled = true; supabase.removeChannel(ch); };
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
   }, []);
   return allowed;
 }

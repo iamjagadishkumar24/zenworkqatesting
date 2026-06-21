@@ -16,7 +16,9 @@ function validateSearch(s: Record<string, unknown>) {
 function parse(url: string) {
   const u = new URL(url, "https://app.test");
   const raw: Record<string, string> = {};
-  u.searchParams.forEach((v, k) => { raw[k] = v; });
+  u.searchParams.forEach((v, k) => {
+    raw[k] = v;
+  });
   return validateSearch(raw);
 }
 
@@ -46,8 +48,12 @@ describe("preset+q URL contract (pagination/sorting not yet persisted)", () => {
 function makeFocusStack() {
   const store = new Map<string, string>(); // url -> elementId
   return {
-    save(url: string, elementId: string) { store.set(url, elementId); },
-    restore(url: string) { return store.get(url) ?? null; },
+    save(url: string, elementId: string) {
+      store.set(url, elementId);
+    },
+    restore(url: string) {
+      return store.get(url) ?? null;
+    },
   };
 }
 
@@ -88,7 +94,9 @@ function makeDebouncedUrlWriter(initialUrl: string, delay = 250) {
   let url = initialUrl;
   let timer: ReturnType<typeof setTimeout> | null = null;
   return {
-    get url() { return url; },
+    get url() {
+      return url;
+    },
     type(nextQ: string) {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
@@ -144,7 +152,7 @@ type D = { id: string; status: string; validity?: string };
 
 const PREDICATES = {
   total: (_: D) => true,
-  open:  (d: D) => !["Fixed", "Closed"].includes(d.status),
+  open: (d: D) => !["Fixed", "Closed"].includes(d.status),
   valid: (d: D) => d.validity === "Valid",
   invalid: (d: D) => d.validity === "Invalid",
   fixed: (d: D) => d.status === "Fixed" || d.status === "Closed",
@@ -170,12 +178,9 @@ describe("KPI counts are derived from the same store as the table", () => {
     { id: "e", status: "Closed", validity: "Invalid" },
   ];
 
-  it.each(Object.keys(PREDICATES) as Bucket[])(
-    "KPI[%s] === tableFor(%s).length",
-    (bucket) => {
-      expect(kpis(defects)[bucket]).toBe(tableFor(defects, bucket).length);
-    },
-  );
+  it.each(Object.keys(PREDICATES) as Bucket[])("KPI[%s] === tableFor(%s).length", (bucket) => {
+    expect(kpis(defects)[bucket]).toBe(tableFor(defects, bucket).length);
+  });
 
   it("status change flips KPIs and table together", () => {
     const before = kpis(defects);

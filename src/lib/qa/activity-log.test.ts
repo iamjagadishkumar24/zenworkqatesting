@@ -119,28 +119,47 @@ function defectUpdateTrigger(sink: Sink, o: Defect, n: Defect) {
       n.status === "Closed"
         ? "defect.closed"
         : (o.status === "Closed" || o.status === "Fixed") &&
-          ["Reported", "Open", "In Progress"].includes(n.status)
+            ["Reported", "Open", "In Progress"].includes(n.status)
           ? "defect.reopened"
           : "defect.status_changed";
-    emit(action, { status: o.status }, { status: n.status },
-      `${actor} changed status of ${n.id} from ${o.status} to ${n.status}`);
+    emit(
+      action,
+      { status: o.status },
+      { status: n.status },
+      `${actor} changed status of ${n.id} from ${o.status} to ${n.status}`,
+    );
   }
   if (o.assigned_agent !== n.assigned_agent) {
-    emit(o.assigned_agent == null ? "defect.assigned" : "defect.reassigned",
-      { assigned_agent: o.assigned_agent }, { assigned_agent: n.assigned_agent },
-      `${actor} assigned ${n.id} to ${n.assigned_agent ?? "—"}`);
+    emit(
+      o.assigned_agent == null ? "defect.assigned" : "defect.reassigned",
+      { assigned_agent: o.assigned_agent },
+      { assigned_agent: n.assigned_agent },
+      `${actor} assigned ${n.id} to ${n.assigned_agent ?? "—"}`,
+    );
   }
   if (o.priority !== n.priority) {
-    emit("defect.priority_changed", { priority: o.priority }, { priority: n.priority },
-      `${actor} changed priority of ${n.id} to ${n.priority}`);
+    emit(
+      "defect.priority_changed",
+      { priority: o.priority },
+      { priority: n.priority },
+      `${actor} changed priority of ${n.id} to ${n.priority}`,
+    );
   }
   if (o.severity !== n.severity) {
-    emit("defect.severity_changed", { severity: o.severity }, { severity: n.severity },
-      `${actor} changed severity of ${n.id} to ${n.severity}`);
+    emit(
+      "defect.severity_changed",
+      { severity: o.severity },
+      { severity: n.severity },
+      `${actor} changed severity of ${n.id} to ${n.severity}`,
+    );
   }
   if (o.validity !== n.validity) {
-    emit("defect.validity_changed", { validity: o.validity }, { validity: n.validity },
-      `${actor} marked ${n.id} as ${n.validity}`);
+    emit(
+      "defect.validity_changed",
+      { validity: o.validity },
+      { validity: n.validity },
+      `${actor} marked ${n.id} as ${n.validity}`,
+    );
   }
 }
 
@@ -184,8 +203,11 @@ function taskUpdateTrigger(sink: Sink, o: Task, n: Task) {
   }
   if (o.status !== n.status) {
     const action =
-      n.status === "Completed" ? "task.completed" :
-      n.status === "Pending" ? "task.reopened" : "task.status_changed";
+      n.status === "Completed"
+        ? "task.completed"
+        : n.status === "Pending"
+          ? "task.reopened"
+          : "task.status_changed";
     sink.insert({
       category: "task",
       action,
@@ -217,7 +239,9 @@ describe("activity_log: defect lifecycle produces accurate before/after values",
     created_by: "Alice",
     updated_by: "Alice",
   };
-  beforeEach(() => { sink = makeSink(); });
+  beforeEach(() => {
+    sink = makeSink();
+  });
 
   it("emits defect.created with full snapshot in new_value", () => {
     defectInsertTrigger(sink, base);
@@ -259,13 +283,12 @@ describe("activity_log: defect lifecycle produces accurate before/after values",
 
   it("distinguishes defect.closed and defect.reopened from generic status_changed", () => {
     defectUpdateTrigger(sink, base, { ...base, status: "Closed", updated_by: "Alice" });
-    defectUpdateTrigger(sink,
+    defectUpdateTrigger(
+      sink,
       { ...base, status: "Closed" },
-      { ...base, status: "Open", updated_by: "Alice" });
-    expect(sink.rows.map((r) => r.action)).toEqual([
-      "defect.closed",
-      "defect.reopened",
-    ]);
+      { ...base, status: "Open", updated_by: "Alice" },
+    );
+    expect(sink.rows.map((r) => r.action)).toEqual(["defect.closed", "defect.reopened"]);
   });
 
   it("does not emit any row when no tracked field changed", () => {
@@ -286,7 +309,9 @@ describe("activity_log: task lifecycle produces accurate before/after values", (
     environment: "Production",
     tax_year: "2026",
   };
-  beforeEach(() => { sink = makeSink(); });
+  beforeEach(() => {
+    sink = makeSink();
+  });
 
   it("emits task.created and task.assigned on insert with assignee", () => {
     taskInsertTrigger(sink, base);
@@ -308,13 +333,8 @@ describe("activity_log: task lifecycle produces accurate before/after values", (
 
   it("maps Completed/Pending to task.completed and task.reopened", () => {
     taskUpdateTrigger(sink, base, { ...base, status: "Completed" });
-    taskUpdateTrigger(sink,
-      { ...base, status: "Completed" },
-      { ...base, status: "Pending" });
-    expect(sink.rows.map((r) => r.action)).toEqual([
-      "task.completed",
-      "task.reopened",
-    ]);
+    taskUpdateTrigger(sink, { ...base, status: "Completed" }, { ...base, status: "Pending" });
+    expect(sink.rows.map((r) => r.action)).toEqual(["task.completed", "task.reopened"]);
     expect(sink.rows[0].old_value).toEqual({ status: "Pending" });
     expect(sink.rows[0].new_value).toEqual({ status: "Completed" });
   });
@@ -327,16 +347,28 @@ describe("activity_log: realtime fan-out delivers rows without refresh", () => {
     const unsub = sink.subscribe((r) => received.push(r));
 
     defectInsertTrigger(sink, {
-      id: "ZEN-2026-02", title: "x", status: "Reported", priority: "Low",
-      severity: "Minor", validity: "Unverified", assigned_agent: null,
-      environment: "Production", form_name: "1040", tax_year: "2026",
-      created_by: "Alice", updated_by: "Alice",
+      id: "ZEN-2026-02",
+      title: "x",
+      status: "Reported",
+      priority: "Low",
+      severity: "Minor",
+      validity: "Unverified",
+      assigned_agent: null,
+      environment: "Production",
+      form_name: "1040",
+      tax_year: "2026",
+      created_by: "Alice",
+      updated_by: "Alice",
     });
     taskInsertTrigger(sink, {
-      id: "TASK-2026-02", status: "Pending",
-      assigned_agent_id: null, assigned_agent_name: null,
-      assigned_by_id: "u-alice", assigned_by_name: "Alice",
-      environment: "Production", tax_year: "2026",
+      id: "TASK-2026-02",
+      status: "Pending",
+      assigned_agent_id: null,
+      assigned_agent_name: null,
+      assigned_by_id: "u-alice",
+      assigned_by_name: "Alice",
+      environment: "Production",
+      tax_year: "2026",
     });
 
     expect(received).toHaveLength(2);
@@ -345,10 +377,18 @@ describe("activity_log: realtime fan-out delivers rows without refresh", () => {
 
     unsub();
     defectInsertTrigger(sink, {
-      id: "ZEN-2026-03", title: "y", status: "Reported", priority: "Low",
-      severity: "Minor", validity: "Unverified", assigned_agent: null,
-      environment: "Production", form_name: "1040", tax_year: "2026",
-      created_by: "Alice", updated_by: "Alice",
+      id: "ZEN-2026-03",
+      title: "y",
+      status: "Reported",
+      priority: "Low",
+      severity: "Minor",
+      validity: "Unverified",
+      assigned_agent: null,
+      environment: "Production",
+      form_name: "1040",
+      tax_year: "2026",
+      created_by: "Alice",
+      updated_by: "Alice",
     });
     // unsubscribed subscriber must not receive further events
     expect(received).toHaveLength(2);
@@ -361,10 +401,14 @@ describe("activity_log: realtime fan-out delivers rows without refresh", () => {
     sink.subscribe((r) => a.push(r));
     sink.subscribe((r) => b.push(r));
     taskInsertTrigger(sink, {
-      id: "TASK-2026-03", status: "Pending",
-      assigned_agent_id: "u-bob", assigned_agent_name: "Bob",
-      assigned_by_id: "u-alice", assigned_by_name: "Alice",
-      environment: "Production", tax_year: "2026",
+      id: "TASK-2026-03",
+      status: "Pending",
+      assigned_agent_id: "u-bob",
+      assigned_agent_name: "Bob",
+      assigned_by_id: "u-alice",
+      assigned_by_name: "Alice",
+      environment: "Production",
+      tax_year: "2026",
     });
     expect(a).toHaveLength(2);
     expect(b).toHaveLength(2);
@@ -375,7 +419,10 @@ describe("activity_log: realtime fan-out delivers rows without refresh", () => {
 describe("recordAuthEvent invokes log_activity RPC with correct shape", () => {
   beforeEach(() => vi.resetModules());
 
-  type RpcCall = (fn: string, args: Record<string, unknown>) => Promise<{ data: null; error: null }>;
+  type RpcCall = (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: null; error: null }>;
   const okRpc = () => vi.fn<RpcCall>(async () => ({ data: null, error: null }));
 
   it("login event uses auth category and success result", async () => {
@@ -404,7 +451,10 @@ describe("recordAuthEvent invokes log_activity RPC with correct shape", () => {
     }));
     const { recordAuthEvent } = await import("./activityLog");
     await recordAuthEvent({
-      kind: "login", email: "x@y.z", success: false, reason: "invalid_password",
+      kind: "login",
+      email: "x@y.z",
+      success: false,
+      reason: "invalid_password",
     });
     const args = rpc.mock.calls[0]![1];
     expect(args._result).toBe("failure");
@@ -423,15 +473,15 @@ describe("recordAuthEvent invokes log_activity RPC with correct shape", () => {
   });
 
   it("swallows RPC errors so user flow is never blocked", async () => {
-    const rpc = vi.fn<RpcCall>(async () => { throw new Error("network"); });
+    const rpc = vi.fn<RpcCall>(async () => {
+      throw new Error("network");
+    });
     vi.doMock("@/integrations/supabase/client", () => ({
       supabase: { rpc },
     }));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { recordAuthEvent } = await import("./activityLog");
-    await expect(
-      recordAuthEvent({ kind: "logout", email: "a@b.c" }),
-    ).resolves.toBeUndefined();
+    await expect(recordAuthEvent({ kind: "logout", email: "a@b.c" })).resolves.toBeUndefined();
     warn.mockRestore();
   });
 });

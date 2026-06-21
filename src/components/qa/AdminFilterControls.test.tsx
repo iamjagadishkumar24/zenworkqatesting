@@ -6,8 +6,24 @@ const defectProps = {
   agents: ["Alice", "Bob"],
   reporters: ["Carol"],
   years: ["2026"],
-  values: { agent: "all", reporter: "all", sev: "all", year: "all", hasComments: "any" as const, hasAttach: "any" as const, retest: "any" as const },
-  onChange: { agent: vi.fn(), reporter: vi.fn(), sev: vi.fn(), year: vi.fn(), hasComments: vi.fn(), hasAttach: vi.fn(), retest: vi.fn() },
+  values: {
+    agent: "all",
+    reporter: "all",
+    sev: "all",
+    year: "all",
+    hasComments: "any" as const,
+    hasAttach: "any" as const,
+    retest: "any" as const,
+  },
+  onChange: {
+    agent: vi.fn(),
+    reporter: vi.fn(),
+    sev: vi.fn(),
+    year: vi.fn(),
+    hasComments: vi.fn(),
+    hasAttach: vi.fn(),
+    retest: vi.fn(),
+  },
 };
 
 const auditProps = {
@@ -16,7 +32,15 @@ const auditProps = {
   onChange: { actor: vi.fn(), recordKind: vi.fn(), actionKind: vi.fn() },
 };
 
-const ADMIN_DEFECT_LABELS = ["Assigned", "Reported by", "Severity", "Tax year", "Comments", "Attachments", "Retest"];
+const ADMIN_DEFECT_LABELS = [
+  "Assigned",
+  "Reported by",
+  "Severity",
+  "Tax year",
+  "Comments",
+  "Attachments",
+  "Retest",
+];
 const ADMIN_AUDIT_LABELS = ["Actor", "Record type", "Action"];
 
 describe("AdminDefectFilterControls visibility", () => {
@@ -75,9 +99,7 @@ describe("AdminAuditFilterControls visibility", () => {
   });
 
   it("null role is treated the same as agent (no admin UI)", () => {
-    render(
-      <AdminAuditFilterControls isAdmin={null as unknown as boolean} {...auditProps} />,
-    );
+    render(<AdminAuditFilterControls isAdmin={null as unknown as boolean} {...auditProps} />);
     for (const label of ADMIN_AUDIT_LABELS) {
       expect(screen.queryByLabelText(label)).toBeNull();
     }

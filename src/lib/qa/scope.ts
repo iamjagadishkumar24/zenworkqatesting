@@ -45,11 +45,7 @@ export type AppRole = "admin" | "agent";
 
 /** Routes restricted to admins. Anything not in this set is open to all
  *  signed-in users. */
-const ADMIN_ONLY_ROUTES: readonly string[] = [
-  "/agents",
-  "/audit-log",
-  "/reports",
-];
+const ADMIN_ONLY_ROUTES: readonly string[] = ["/agents", "/audit-log", "/reports"];
 
 export function canAccessRoute(role: AppRole | null | undefined, path: string): boolean {
   if (!role) return false;
@@ -75,10 +71,7 @@ export function canPerformAdminAction(
 
 /** Whether the user may export the global org-wide dataset (vs. just their
  *  own reported errors). Agents can export their own reports only. */
-export function canExport(
-  role: AppRole | null | undefined,
-  scope: "own" | "org",
-): boolean {
+export function canExport(role: AppRole | null | undefined, scope: "own" | "org"): boolean {
   if (!role) return false;
   if (scope === "own") return true;
   return role === "admin";

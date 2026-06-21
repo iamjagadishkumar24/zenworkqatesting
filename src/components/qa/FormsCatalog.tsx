@@ -15,7 +15,11 @@ import { useRetests } from "@/lib/qa/retest";
 import { cn } from "@/lib/utils";
 
 export function FormsCatalog({
-  module, title, description, forms = FORM_LIST, featureMode = false,
+  module,
+  title,
+  description,
+  forms = FORM_LIST,
+  featureMode = false,
 }: {
   module: Module;
   title: string;
@@ -57,13 +61,10 @@ export function FormsCatalog({
   // here — 2290 lives under its dedicated module page.
   const visibleForms = useMemo(() => excludeNonCatalogForms(forms), [forms]);
 
-  const list = useMemo(
-    () => {
-      const term = q.trim().toLowerCase();
-      return visibleForms.filter((n) => (term ? n.toLowerCase().includes(term) : true));
-    },
-    [visibleForms, q],
-  );
+  const list = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return visibleForms.filter((n) => (term ? n.toLowerCase().includes(term) : true));
+  }, [visibleForms, q]);
 
   const openCountByForm = useMemo(() => {
     const map = new Map<string, number>();
@@ -86,26 +87,36 @@ export function FormsCatalog({
         </div>
         <div className="relative w-full sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search forms…" className="pl-9" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search forms…"
+            className="pl-9"
+          />
         </div>
       </div>
 
       {list.length === 0 ? (
-        <Card><CardContent className="py-16 text-center text-sm text-muted-foreground">
-          <FileText className="mx-auto mb-2 h-8 w-8 opacity-40" />
-          No forms match "{q}".
-        </CardContent></Card>
+        <Card>
+          <CardContent className="py-16 text-center text-sm text-muted-foreground">
+            <FileText className="mx-auto mb-2 h-8 w-8 opacity-40" />
+            No forms match "{q}".
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {list.map((name) => {
             const open = openCountByForm.get(name) ?? 0;
             const assigned = assignedFormsByName.get(name);
             return (
-              <Card key={name} className={cn(
-                "group border-border transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]",
-                assigned?.mine && "border-primary/60 ring-1 ring-primary/20",
-                assigned && !assigned.mine && "border-amber-500/40",
-              )}>
+              <Card
+                key={name}
+                className={cn(
+                  "group border-border transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]",
+                  assigned?.mine && "border-primary/60 ring-1 ring-primary/20",
+                  assigned && !assigned.mine && "border-amber-500/40",
+                )}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <Link
@@ -117,7 +128,10 @@ export function FormsCatalog({
                     </Link>
                     {open > 0 && (
                       <Link to="/my-reported-errors" search={{ q: name } as never}>
-                        <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10">
+                        <Badge
+                          variant="outline"
+                          className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
+                        >
                           <Bug className="h-3 w-3" /> {open}
                         </Badge>
                       </Link>
@@ -129,16 +143,17 @@ export function FormsCatalog({
                       variant="outline"
                       className={cn(
                         "mt-2 text-[10px]",
-                        assigned.mine ? "border-primary/50 text-primary" : "border-amber-500/40 text-amber-700 dark:text-amber-400",
+                        assigned.mine
+                          ? "border-primary/50 text-primary"
+                          : "border-amber-500/40 text-amber-700 dark:text-amber-400",
                       )}
                     >
                       {assigned.mine ? "Assigned to you" : `Assigned: ${assigned.agent}`}
                     </Badge>
                   )}
-                  <Button
-                    size="sm" className="mt-3 w-full"
-                    onClick={() => setPicked(name)}
-                  >Report Error</Button>
+                  <Button size="sm" className="mt-3 w-full" onClick={() => setPicked(name)}>
+                    Report Error
+                  </Button>
                 </CardContent>
               </Card>
             );
@@ -148,7 +163,9 @@ export function FormsCatalog({
 
       <ReportDefectDialog
         open={!!picked}
-        onOpenChange={(o) => { if (!o) setPicked(null); }}
+        onOpenChange={(o) => {
+          if (!o) setPicked(null);
+        }}
         defaultForm={picked ?? ""}
         defaultModule={module}
         featureMode={featureMode}

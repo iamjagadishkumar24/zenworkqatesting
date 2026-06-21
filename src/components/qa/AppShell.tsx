@@ -1,9 +1,27 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FileText, Globe, FileSpreadsheet, Plug, MessageSquare,
-  Cpu, Sparkles, Bell as BellIcon, FileUp,
-  BarChart3, Settings, ChevronLeft, ChevronRight, LogOut, Search, ListChecks, ClipboardCheck, UserCog, ScrollText, StickyNote,
+  LayoutDashboard,
+  FileText,
+  Globe,
+  FileSpreadsheet,
+  Plug,
+  MessageSquare,
+  Cpu,
+  Sparkles,
+  Bell as BellIcon,
+  FileUp,
+  BarChart3,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Search,
+  ListChecks,
+  ClipboardCheck,
+  UserCog,
+  ScrollText,
+  StickyNote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
@@ -13,16 +31,31 @@ import { TAX_YEARS } from "@/lib/qa/constants";
 import { usePrefs } from "@/lib/qa/prefs";
 import { UserAvatar } from "./UserAvatar";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { NotificationsBell } from "./NotificationsBell";
 import { toast } from "sonner";
 
-type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  adminOnly?: boolean;
+};
 const nav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/forms", label: "Forms", icon: FileText },
@@ -57,7 +90,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
     if (env) root.dataset.env = env;
     else delete root.dataset.env;
-    return () => { /* keep across pages */ };
+    return () => {
+      /* keep across pages */
+    };
   }, [env]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -154,9 +189,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   const next = env === "Production" ? "Stage" : "Production";
                   setEnv(next);
                   if (next === "Production") {
-                    toast.success("Switched to Production", { description: "Dashboard now showing live data." });
+                    toast.success("Switched to Production", {
+                      description: "Dashboard now showing live data.",
+                    });
                   } else {
-                    toast.warning("Switched to Stage", { description: "Dashboard now showing pre-release data." });
+                    toast.warning("Switched to Stage", {
+                      description: "Dashboard now showing pre-release data.",
+                    });
                   }
                 }}
                 className={cn(
@@ -168,7 +207,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 title={`Click to switch to ${env === "Production" ? "Stage" : "Production"}`}
                 aria-label={`Environment: ${env}. Click to switch to ${env === "Production" ? "Stage" : "Production"}.`}
               >
-                <span className={cn("h-1.5 w-1.5 rounded-full", env === "Production" ? "bg-emerald-500" : "bg-amber-500")} />
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    env === "Production" ? "bg-emerald-500" : "bg-amber-500",
+                  )}
+                />
                 {env}
               </button>
               <Switch
@@ -178,9 +222,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   if (next === env) return;
                   setEnv(next);
                   if (next === "Production") {
-                    toast.success("Switched to Production", { description: "Dashboard now showing live data." });
+                    toast.success("Switched to Production", {
+                      description: "Dashboard now showing live data.",
+                    });
                   } else {
-                    toast.warning("Switched to Stage", { description: "Dashboard now showing pre-release data." });
+                    toast.warning("Switched to Stage", {
+                      description: "Dashboard now showing pre-release data.",
+                    });
                   }
                 }}
                 aria-label="Toggle environment"
@@ -189,7 +237,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           )}
           <div className="ml-2 flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide hidden lg:inline">Tax Year</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide hidden lg:inline">
+              Tax Year
+            </span>
             <Select
               value={taxYear}
               onValueChange={(v) => {
@@ -203,13 +253,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Years</SelectItem>
-                {TAX_YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                {TAX_YEARS.map((y) => (
+                  <SelectItem key={y} value={y}>
+                    {y}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <form onSubmit={onSearch} className="relative ml-auto hidden md:block">
-            <label htmlFor="qa-header-search" className="sr-only">Search errors, forms, and agents</label>
-            <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <label htmlFor="qa-header-search" className="sr-only">
+              Search errors, forms, and agents
+            </label>
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            />
             <Input
               id="qa-header-search"
               type="search"
@@ -232,7 +291,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                aria-label={currentUser?.name ? `Open account menu for ${currentUser.name}` : "Open account menu"}
+                aria-label={
+                  currentUser?.name
+                    ? `Open account menu for ${currentUser.name}`
+                    : "Open account menu"
+                }
                 className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <UserAvatar
@@ -250,7 +313,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="text-xs text-muted-foreground capitalize">{currentUser?.role}</div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
+                Settings
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   logout();

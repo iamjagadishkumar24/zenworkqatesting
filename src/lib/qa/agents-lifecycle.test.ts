@@ -25,7 +25,10 @@ function chain(table: string) {
   const apply = () => rows.filter((r) => filters.every((f) => f(r)));
   const api: Record<string, unknown> = {
     select: () => api,
-    eq: (k: string, v: unknown) => { filters.push((r) => r[k] === v); return api; },
+    eq: (k: string, v: unknown) => {
+      filters.push((r) => r[k] === v);
+      return api;
+    },
     order: () => api,
     maybeSingle: async () => ({ data: apply()[0] ?? null, error: null }),
     insert: async (row: Row | Row[]) => {
@@ -53,8 +56,12 @@ function chain(table: string) {
 }
 
 const channelStub = {
-  on() { return this; },
-  subscribe() { return this; },
+  on() {
+    return this;
+  },
+  subscribe() {
+    return this;
+  },
 };
 
 vi.mock("@/integrations/supabase/client", () => ({
@@ -105,8 +112,10 @@ vi.mock("@/lib/qa/admin.functions", () => ({
     );
     tables.banned_users = [...(tables.banned_users ?? []), { id: data.userId }];
     logAudit({
-      action: "agent_deactivated", target_user_id: data.userId,
-      target_email: profile?.email, performed_by_id: callerUserId,
+      action: "agent_deactivated",
+      target_user_id: data.userId,
+      target_email: profile?.email,
+      performed_by_id: callerUserId,
     });
     return { ok: true };
   }),
@@ -121,19 +130,46 @@ vi.mock("@/lib/qa/admin.functions", () => ({
     );
     tables.banned_users = (tables.banned_users ?? []).filter((u) => u.id !== data.userId);
     logAudit({
-      action: "agent_reactivated", target_user_id: data.userId,
-      target_email: profile?.email, performed_by_id: callerUserId,
+      action: "agent_reactivated",
+      target_user_id: data.userId,
+      target_email: profile?.email,
+      performed_by_id: callerUserId,
     });
     return { ok: true };
   }),
   resendAgentInvite: vi.fn(async ({ data }: { data: { email: string } }) => {
     requireAdmin();
     const invite = (tables.agent_invites ?? []).find((i) => i.email === data.email);
-    if (!invite) return { ok: false, status: "not_invited", message: "No invite exists for this email. Use Add Agent first." };
-    if (invite.status === "inactive") return { ok: false, status: "inactive", message: "This agent was removed. Reactivate the account before resending an invite." };
-    if (invite.user_id) return { ok: false, status: "already_active", message: `${invite.name} has already registered and is active. No invite is needed.` };
-    logAudit({ action: "invite_resent", target_email: invite.email, performed_by_id: callerUserId });
-    return { ok: true, status: "pending", message: `Invite link refreshed for ${invite.name}. They can now register at /login.`, email: invite.email, name: invite.name };
+    if (!invite)
+      return {
+        ok: false,
+        status: "not_invited",
+        message: "No invite exists for this email. Use Add Agent first.",
+      };
+    if (invite.status === "inactive")
+      return {
+        ok: false,
+        status: "inactive",
+        message: "This agent was removed. Reactivate the account before resending an invite.",
+      };
+    if (invite.user_id)
+      return {
+        ok: false,
+        status: "already_active",
+        message: `${invite.name} has already registered and is active. No invite is needed.`,
+      };
+    logAudit({
+      action: "invite_resent",
+      target_email: invite.email,
+      performed_by_id: callerUserId,
+    });
+    return {
+      ok: true,
+      status: "pending",
+      message: `Invite link refreshed for ${invite.name}. They can now register at /login.`,
+      email: invite.email,
+      name: invite.name,
+    };
   }),
   checkInviteEmail: vi.fn(async ({ data }: { data: { email: string } }) => {
     const invite = (tables.agent_invites ?? []).find((i) => i.email === data.email);
@@ -155,15 +191,38 @@ function resetData() {
     { id: "agent-2", email: "agent2@example.com", name: "Agent Two", active: true },
   ];
   tables.agent_invites = [
-    { id: "inv-1", email: "agent1@example.com", name: "Agent One", status: "active", user_id: "agent-1" },
-    { id: "inv-2", email: "agent2@example.com", name: "Agent Two", status: "active", user_id: "agent-2" },
-    { id: "inv-3", email: "pending@example.com", name: "Pending Person", status: "pending", user_id: null },
+    {
+      id: "inv-1",
+      email: "agent1@example.com",
+      name: "Agent One",
+      status: "active",
+      user_id: "agent-1",
+    },
+    {
+      id: "inv-2",
+      email: "agent2@example.com",
+      name: "Agent Two",
+      status: "active",
+      user_id: "agent-2",
+    },
+    {
+      id: "inv-3",
+      email: "pending@example.com",
+      name: "Pending Person",
+      status: "pending",
+      user_id: null,
+    },
   ];
   callerIsAdmin = true;
   callerUserId = "admin-user";
 }
 
-import { deactivateAgent, reactivateAgent, resendAgentInvite, checkInviteEmail } from "@/lib/qa/admin.functions";
+import {
+  deactivateAgent,
+  reactivateAgent,
+  resendAgentInvite,
+  checkInviteEmail,
+} from "@/lib/qa/admin.functions";
 
 beforeEach(() => resetData());
 
@@ -172,15 +231,15 @@ beforeEach(() => resetData());
 // -----------------------------------------------------------------------------
 describe("Protected admin account", () => {
   it("cannot be deactivated, ever", async () => {
-    await expect(
-      deactivateAgent({ data: { userId: "admin-user" } }),
-    ).rejects.toThrow(/cannot remove your own account|main admin/i);
+    await expect(deactivateAgent({ data: { userId: "admin-user" } })).rejects.toThrow(
+      /cannot remove your own account|main admin/i,
+    );
 
     // Even when called by a different admin caller, the protected admin email is rejected
     callerUserId = "other-admin";
-    await expect(
-      deactivateAgent({ data: { userId: "admin-user" } }),
-    ).rejects.toThrow(/main admin/i);
+    await expect(deactivateAgent({ data: { userId: "admin-user" } })).rejects.toThrow(
+      /main admin/i,
+    );
 
     const admin = (tables.profiles ?? []).find((p) => p.id === "admin-user")!;
     expect(admin.active).toBe(true);
@@ -315,15 +374,13 @@ describe("Deactivated agents preserve historical reporting data", () => {
 describe("Non-admin callers cannot perform admin actions", () => {
   it("rejects deactivate from a non-admin", async () => {
     callerIsAdmin = false;
-    await expect(
-      deactivateAgent({ data: { userId: "agent-1" } }),
-    ).rejects.toThrow(/only admins/i);
+    await expect(deactivateAgent({ data: { userId: "agent-1" } })).rejects.toThrow(/only admins/i);
   });
 
   it("rejects resendInvite from a non-admin", async () => {
     callerIsAdmin = false;
-    await expect(
-      resendAgentInvite({ data: { email: "pending@example.com" } }),
-    ).rejects.toThrow(/only admins/i);
+    await expect(resendAgentInvite({ data: { email: "pending@example.com" } })).rejects.toThrow(
+      /only admins/i,
+    );
   });
 });

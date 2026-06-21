@@ -33,9 +33,7 @@ export function validateFilters(filters: FilterState, defects: Defect[]): string
     );
   }
   if (f.quick === "open" && (f.status === "Fixed" || f.status === "Closed")) {
-    warnings.push(
-      `Quick filter "Open" excludes "${f.status}" — clear one of them to see results.`,
-    );
+    warnings.push(`Quick filter "Open" excludes "${f.status}" — clear one of them to see results.`);
   }
 
   // Assigned agent not in the chosen module

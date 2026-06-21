@@ -5,7 +5,10 @@ import type { TestStatus, DefectStatus, Priority, Severity } from "@/lib/qa/type
 const testMap: Record<TestStatus, { cls: string; Icon: typeof CheckCircle2 }> = {
   Passed: { cls: "bg-success/10 text-success border-success/20", Icon: CheckCircle2 },
   Failed: { cls: "bg-destructive/10 text-destructive border-destructive/20", Icon: XCircle },
-  "Open Bug": { cls: "bg-warning/15 text-warning-foreground border-warning/30", Icon: AlertTriangle },
+  "Open Bug": {
+    cls: "bg-warning/15 text-warning-foreground border-warning/30",
+    Icon: AlertTriangle,
+  },
   "In Progress": { cls: "bg-info/10 text-info border-info/20", Icon: Hourglass },
   Pending: { cls: "bg-muted text-muted-foreground border-border", Icon: Clock },
   "Retest Required": { cls: "bg-accent text-accent-foreground border-border", Icon: RefreshCw },

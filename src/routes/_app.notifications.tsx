@@ -20,13 +20,14 @@ function NotificationsPage() {
   const [filter, setFilter] = useState<"all" | "unread" | "task" | "error">("all");
 
   const scoped = useMemo(
-    () => notifications.filter((n) => {
-      if (env && n.environment && n.environment !== env) return false;
-      if (filter === "unread" && n.read) return false;
-      if (filter === "task" && !n.type?.startsWith("retest_")) return false;
-      if (filter === "error" && n.type?.startsWith("retest_")) return false;
-      return true;
-    }),
+    () =>
+      notifications.filter((n) => {
+        if (env && n.environment && n.environment !== env) return false;
+        if (filter === "unread" && n.read) return false;
+        if (filter === "task" && !n.type?.startsWith("retest_")) return false;
+        if (filter === "error" && n.type?.startsWith("retest_")) return false;
+        return true;
+      }),
     [notifications, env, filter],
   );
   const unreadIds = useMemo(() => scoped.filter((n) => !n.read).map((n) => n.id), [scoped]);
@@ -34,7 +35,9 @@ function NotificationsPage() {
   useEffect(() => {
     // Auto-mark visible notifications read after a short delay
     if (!unreadIds.length) return;
-    const t = setTimeout(() => { void markNotificationsRead(unreadIds); }, 1500);
+    const t = setTimeout(() => {
+      void markNotificationsRead(unreadIds);
+    }, 1500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unreadIds.join("|")]);
@@ -46,7 +49,15 @@ function NotificationsPage() {
           <h2 className="text-2xl font-bold tracking-tight">Notifications</h2>
           <p className="text-sm text-muted-foreground">
             Defect assignments, status changes, comments and validation results.
-            {env && <> Filtered to <Badge variant="outline" className="ml-1">{env}</Badge></>}
+            {env && (
+              <>
+                {" "}
+                Filtered to{" "}
+                <Badge variant="outline" className="ml-1">
+                  {env}
+                </Badge>
+              </>
+            )}
           </p>
         </div>
         {unreadIds.length > 0 && (
@@ -57,19 +68,23 @@ function NotificationsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        {([
-          ["all", "All"],
-          ["unread", "Unread"],
-          ["task", "Tasks"],
-          ["error", "Error updates"],
-        ] as const).map(([k, label]) => (
+        {(
+          [
+            ["all", "All"],
+            ["unread", "Unread"],
+            ["task", "Tasks"],
+            ["error", "Error updates"],
+          ] as const
+        ).map(([k, label]) => (
           <Button
             key={k}
             size="sm"
             variant={filter === k ? "default" : "outline"}
             className={cn("h-7 px-3 text-xs")}
             onClick={() => setFilter(k)}
-          >{label}</Button>
+          >
+            {label}
+          </Button>
         ))}
       </div>
 
@@ -93,11 +108,17 @@ function NotificationsPage() {
                       navigate({ to: t.to, search: (t.search ?? {}) as never });
                     }}
                   >
-                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-primary"}`} />
+                    <span
+                      className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-primary"}`}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="truncate font-medium">{n.title}</p>
-                        {n.environment && <Badge variant="outline" className="shrink-0 text-[10px]">{n.environment}</Badge>}
+                        {n.environment && (
+                          <Badge variant="outline" className="shrink-0 text-[10px]">
+                            {n.environment}
+                          </Badge>
+                        )}
                       </div>
                       <p className="truncate text-sm text-muted-foreground">{n.body}</p>
                       <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">

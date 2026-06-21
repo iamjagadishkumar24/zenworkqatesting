@@ -33,12 +33,14 @@ describe("routeForNotification", () => {
     ).toEqual({ to: "/my-reported-errors", search: { q: "ZEN-2025-01" } });
   });
   it("role_change goes to /settings", () => {
-    expect(routeForNotification({ type: "role_change", title: "", body: "", defectId: null }).to)
-      .toBe("/settings");
+    expect(
+      routeForNotification({ type: "role_change", title: "", body: "", defectId: null }).to,
+    ).toBe("/settings");
   });
   it("fallback is /notifications", () => {
-    expect(routeForNotification({ type: "misc", title: "", body: "", defectId: null }).to)
-      .toBe("/notifications");
+    expect(routeForNotification({ type: "misc", title: "", body: "", defectId: null }).to).toBe(
+      "/notifications",
+    );
   });
   it("extractAssignmentId handles missing matches", () => {
     expect(extractAssignmentId({ title: "no id here", body: "" })).toBeNull();

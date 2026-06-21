@@ -23,26 +23,39 @@ describe("landing redirect + session persistence", () => {
     mockUser = null;
     navigateSpy.mockClear();
     render(<Index />);
-    expect(navigateSpy).toHaveBeenCalledWith(expect.objectContaining({ to: "/login", replace: true }));
+    expect(navigateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "/login", replace: true }),
+    );
   });
 
   it("redirects authenticated Admin to /dashboard (session restored)", () => {
     mockUser = { name: "Admin User", role: "admin" };
     navigateSpy.mockClear();
     render(<Index />);
-    expect(navigateSpy).toHaveBeenCalledWith(expect.objectContaining({ to: "/dashboard", replace: true }));
+    expect(navigateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "/dashboard", replace: true }),
+    );
   });
 
   it("redirects authenticated QA Agent to /dashboard (session restored)", () => {
     mockUser = { name: "Agent A", role: "agent" };
     navigateSpy.mockClear();
     render(<Index />);
-    expect(navigateSpy).toHaveBeenCalledWith(expect.objectContaining({ to: "/dashboard", replace: true }));
+    expect(navigateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "/dashboard", replace: true }),
+    );
   });
 });
 
 describe("role-based landing access", () => {
-  const agentAllowed = ["/dashboard", "/my-reported-errors", "/my-errors", "/retest", "/notifications", "/settings"];
+  const agentAllowed = [
+    "/dashboard",
+    "/my-reported-errors",
+    "/my-errors",
+    "/retest",
+    "/notifications",
+    "/settings",
+  ];
   const adminOnly = ["/agents", "/audit-log", "/reports"];
 
   it("Agent can reach their own allowed pages", () => {

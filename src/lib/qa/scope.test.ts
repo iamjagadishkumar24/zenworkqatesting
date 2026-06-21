@@ -5,9 +5,9 @@ type D = { id: string; createdBy: string; assignedAgent?: string; environment?: 
 
 const defects: D[] = [
   { id: "1", createdBy: "Alice", assignedAgent: "Alice", environment: "Production" },
-  { id: "2", createdBy: "Bob",   assignedAgent: "Alice", environment: "Stage" },
-  { id: "3", createdBy: "Alice", assignedAgent: "Bob",   environment: "Production" },
-  { id: "4", createdBy: "Carol", assignedAgent: "Bob",   environment: null },
+  { id: "2", createdBy: "Bob", assignedAgent: "Alice", environment: "Stage" },
+  { id: "3", createdBy: "Alice", assignedAgent: "Bob", environment: "Production" },
+  { id: "4", createdBy: "Carol", assignedAgent: "Bob", environment: null },
 ];
 
 describe("environment + reporter scoping", () => {

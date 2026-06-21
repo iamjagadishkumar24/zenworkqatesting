@@ -7,7 +7,24 @@ import { scopeForUser, filterByEnvironment } from "@/lib/qa/scope";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TestStatusBadge } from "@/components/qa/StatusBadge";
-import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe, Wrench, RotateCw, FileSpreadsheet, Plug, MessageSquare, Cpu, Sparkles, FileUp, ClipboardCheck } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Bug,
+  ListChecks,
+  ArrowRight,
+  FileText,
+  Globe,
+  Wrench,
+  RotateCw,
+  FileSpreadsheet,
+  Plug,
+  MessageSquare,
+  Cpu,
+  Sparkles,
+  FileUp,
+  ClipboardCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRetests } from "@/lib/qa/retest";
 import { routeForModule } from "@/lib/qa/constants";
@@ -44,17 +61,14 @@ function Dashboard() {
     return set;
   }, [myTasks]);
 
-  const scopedDefects = useMemo(
-    () => {
-      const byUser = scopeForUser(
-        defects,
-        currentUser ? { name: currentUser.name, role: currentUser.role } : null,
-      );
-      const byEnv = filterByEnvironment(byUser, env);
-      return byEnv.filter((d) => matchesTaxYear(d.taxYear, taxYear));
-    },
-    [defects, env, currentUser, taxYear],
-  );
+  const scopedDefects = useMemo(() => {
+    const byUser = scopeForUser(
+      defects,
+      currentUser ? { name: currentUser.name, role: currentUser.role } : null,
+    );
+    const byEnv = filterByEnvironment(byUser, env);
+    return byEnv.filter((d) => matchesTaxYear(d.taxYear, taxYear));
+  }, [defects, env, currentUser, taxYear]);
 
   const stats = useMemo(() => {
     const total = scopedDefects.length;
@@ -67,25 +81,75 @@ function Dashboard() {
   }, [scopedDefects]);
 
   const kpis = [
-    { label: "Total Tests", value: stats.total, Icon: ListChecks, tone: "primary", preset: "all" as const },
-    { label: "Open Errors", value: stats.open, Icon: Bug, tone: "warning", preset: "open" as const },
-    { label: "Valid Errors", value: stats.valid, Icon: CheckCircle2, tone: "success", preset: "valid" as const },
-    { label: "Invalid Errors", value: stats.invalid, Icon: XCircle, tone: "danger", preset: "invalid" as const },
-    { label: "Fixed Errors", value: stats.fixed, Icon: Wrench, tone: "success", preset: "fixed" as const },
-    { label: "Retest Errors", value: stats.retest, Icon: RotateCw, tone: "warning", preset: "retest" as const },
+    {
+      label: "Total Tests",
+      value: stats.total,
+      Icon: ListChecks,
+      tone: "primary",
+      preset: "all" as const,
+    },
+    {
+      label: "Open Errors",
+      value: stats.open,
+      Icon: Bug,
+      tone: "warning",
+      preset: "open" as const,
+    },
+    {
+      label: "Valid Errors",
+      value: stats.valid,
+      Icon: CheckCircle2,
+      tone: "success",
+      preset: "valid" as const,
+    },
+    {
+      label: "Invalid Errors",
+      value: stats.invalid,
+      Icon: XCircle,
+      tone: "danger",
+      preset: "invalid" as const,
+    },
+    {
+      label: "Fixed Errors",
+      value: stats.fixed,
+      Icon: Wrench,
+      tone: "success",
+      preset: "fixed" as const,
+    },
+    {
+      label: "Retest Errors",
+      value: stats.retest,
+      Icon: RotateCw,
+      tone: "warning",
+      preset: "retest" as const,
+    },
   ] as const;
 
-  const countByModule = (mod: string) =>
-    scopedDefects.filter((d) => d.module === mod).length;
+  const countByModule = (mod: string) => scopedDefects.filter((d) => d.module === mod).length;
   const modules = [
     { name: "Forms", to: "/forms", Icon: FileText, key: "1099 Forms" },
     { name: "1099 Online Forms", to: "/online-1099", Icon: Globe, key: "1099 Online" },
     { name: "990 Form Testing", to: "/990-forms", Icon: FileText, key: "990 Forms" },
     { name: "2290 Forms", to: "/2290-forms", Icon: FileSpreadsheet, key: "2290 Forms" },
     { name: "Integrations", to: "/integrations", Icon: Plug, key: "Integrations" },
-    { name: "Chatbot Testing", to: "/chatbot-testing", Icon: MessageSquare, key: "Chatbot Testing" },
-    { name: "Excel Import Testing", to: "/excel-import-testing", Icon: FileUp, key: "Excel Import Testing" },
-    { name: "Functionality Testing", to: "/functionality-testing", Icon: Cpu, key: "Functionality Testing" },
+    {
+      name: "Chatbot Testing",
+      to: "/chatbot-testing",
+      Icon: MessageSquare,
+      key: "Chatbot Testing",
+    },
+    {
+      name: "Excel Import Testing",
+      to: "/excel-import-testing",
+      Icon: FileUp,
+      key: "Excel Import Testing",
+    },
+    {
+      name: "Functionality Testing",
+      to: "/functionality-testing",
+      Icon: Cpu,
+      key: "Functionality Testing",
+    },
     { name: "Tax1099 Features", to: "/tax1099-features", Icon: Sparkles, key: "Tax1099 Features" },
   ].map((m) => ({ ...m, bugs: countByModule(m.key) }));
 
@@ -100,8 +164,10 @@ function Dashboard() {
   }, [scopedDefects]);
   const reportedForms = reportedFormNames.map((name) => {
     const f = forms.find((x) => x.name === name || x.id === name);
-    const openDefects = scopedDefects.filter((d) => (d.formFeature || "") === name && !["Fixed", "Closed"].includes(d.status)).length;
-    return { id: f?.id ?? name, name, status: f?.status ?? "Open Bug" as const, openDefects };
+    const openDefects = scopedDefects.filter(
+      (d) => (d.formFeature || "") === name && !["Fixed", "Closed"].includes(d.status),
+    ).length;
+    return { id: f?.id ?? name, name, status: f?.status ?? ("Open Bug" as const), openDefects };
   });
 
   return (
@@ -136,17 +202,24 @@ function Dashboard() {
               <CardContent className="p-3">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground truncate">{k.label}</p>
-                    <p className="mt-1 text-xl font-bold tracking-tight">{k.value.toLocaleString()}</p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground truncate">
+                      {k.label}
+                    </p>
+                    <p className="mt-1 text-xl font-bold tracking-tight">
+                      {k.value.toLocaleString()}
+                    </p>
                   </div>
                   <div
                     className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white"
                     style={{
                       background:
-                        k.tone === "success" ? "var(--gradient-success)" :
-                        k.tone === "danger" ? "var(--gradient-danger)" :
-                        k.tone === "warning" ? "var(--gradient-warning)" :
-                        "var(--gradient-primary)",
+                        k.tone === "success"
+                          ? "var(--gradient-success)"
+                          : k.tone === "danger"
+                            ? "var(--gradient-danger)"
+                            : k.tone === "warning"
+                              ? "var(--gradient-warning)"
+                              : "var(--gradient-primary)",
                     }}
                   >
                     <k.Icon className="h-4 w-4" />
@@ -203,7 +276,14 @@ function Dashboard() {
                   </div>
                   <div className="mt-2 flex items-center justify-between text-[11px]">
                     <span className="text-muted-foreground">Errors</span>
-                    <span className={cn("font-semibold", m.bugs > 0 ? "text-destructive" : "text-success")}>{m.bugs}</span>
+                    <span
+                      className={cn(
+                        "font-semibold",
+                        m.bugs > 0 ? "text-destructive" : "text-success",
+                      )}
+                    >
+                      {m.bugs}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -221,37 +301,51 @@ function Dashboard() {
             </CardContent>
           </Card>
         ) : (
-        <div
-          className="grid gap-2"
-          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}
-        >
-          {reportedForms.map((f) => {
-            const isAssigned = assignedFormNames.has(f.name);
-            return (
-            <Link
-              key={f.id}
-              to="/my-reported-errors"
-              search={{ q: f.name } as never}
-              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
-            >
-              <Card className={cn(
-                "cursor-pointer border-border transition-all hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5",
-                isAssigned && "border-primary/50 ring-1 ring-primary/20",
-              )}>
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between gap-1">
-                    <p className="text-xs font-semibold truncate">{f.name}</p>
-                    {isAssigned && <Badge variant="outline" className="shrink-0 text-[9px] border-primary/40 text-primary">Assigned</Badge>}
-                  </div>
-                  <div className="mt-2"><TestStatusBadge status={f.status} /></div>
-                  {f.openDefects > 0 && (
-                    <p className="mt-1 text-[10px] text-muted-foreground">{f.openDefects} open error(s)</p>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
-          );})}
-        </div>
+          <div
+            className="grid gap-2"
+            style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}
+          >
+            {reportedForms.map((f) => {
+              const isAssigned = assignedFormNames.has(f.name);
+              return (
+                <Link
+                  key={f.id}
+                  to="/my-reported-errors"
+                  search={{ q: f.name } as never}
+                  className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                >
+                  <Card
+                    className={cn(
+                      "cursor-pointer border-border transition-all hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5",
+                      isAssigned && "border-primary/50 ring-1 ring-primary/20",
+                    )}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between gap-1">
+                        <p className="text-xs font-semibold truncate">{f.name}</p>
+                        {isAssigned && (
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 text-[9px] border-primary/40 text-primary"
+                          >
+                            Assigned
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="mt-2">
+                        <TestStatusBadge status={f.status} />
+                      </div>
+                      {f.openDefects > 0 && (
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {f.openDefects} open error(s)
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
         )}
       </section>
 
@@ -261,7 +355,10 @@ function Dashboard() {
             <ClipboardCheck className="h-4 w-4" />
             {currentUser?.role === "agent" ? "My Assigned Tasks" : "Assigned Tasks"}
           </h3>
-          <Link to="/retest" className="text-xs font-medium text-primary inline-flex items-center gap-1">
+          <Link
+            to="/retest"
+            className="text-xs font-medium text-primary inline-flex items-center gap-1"
+          >
             View all <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
@@ -279,11 +376,15 @@ function Dashboard() {
             {myTasks.slice(0, 8).map((t) => {
               const firstForm = t.forms[0]?.form_name;
               const target = routeForModule(t.module);
-              const search = firstForm ? ({ q: firstForm, assignment: t.id } as never) : ({ assignment: t.id } as never);
+              const search = firstForm
+                ? ({ q: firstForm, assignment: t.id } as never)
+                : ({ assignment: t.id } as never);
               const statusTone =
-                t.status === "Completed" ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
-                : t.status === "In Progress" ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
-                : "border-primary/40 text-primary";
+                t.status === "Completed"
+                  ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                  : t.status === "In Progress"
+                    ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
+                    : "border-primary/40 text-primary";
               const mine = t.assigned_agent_id === currentUser?.id;
               return (
                 <Link
@@ -298,7 +399,9 @@ function Dashboard() {
                         <p className="text-sm font-semibold leading-tight line-clamp-2">
                           {firstForm || t.title || t.module || "Task"}
                         </p>
-                        <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusTone)}>{t.status}</Badge>
+                        <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusTone)}>
+                          {t.status}
+                        </Badge>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
                         {t.module && <span>{t.module}</span>}
@@ -310,7 +413,9 @@ function Dashboard() {
                           {mine ? "Assigned to you" : `Assigned: ${t.assigned_agent_name}`}
                         </Badge>
                         {t.forms.length > 1 && (
-                          <span className="text-[10px] text-muted-foreground">+{t.forms.length - 1} more</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            +{t.forms.length - 1} more
+                          </span>
                         )}
                       </div>
                     </CardContent>

@@ -1,7 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet, Link, createRootRouteWithContext, useRouter,
-  HeadContent, Scripts,
+  Outlet,
+  Link,
+  createRootRouteWithContext,
+  useRouter,
+  HeadContent,
+  Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
@@ -42,7 +46,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="text-xl font-semibold">This page didn't load</h1>
         <p className="mt-2 text-sm text-muted-foreground">Something went wrong.</p>
         <button
-          onClick={() => { router.invalidate(); reset(); }}
+          onClick={() => {
+            router.invalidate();
+            reset();
+          }}
           className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           Try again
@@ -58,13 +65,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Zenwork Testing" },
-      { name: "description", content: "Testing & defect management for tax forms, online filing, and integrations." },
+      {
+        name: "description",
+        content: "Testing & defect management for tax forms, online filing, and integrations.",
+      },
       { property: "og:title", content: "Zenwork Testing" },
       { name: "twitter:title", content: "Zenwork Testing" },
-      { property: "og:description", content: "Testing & defect management for tax forms, online filing, and integrations." },
-      { name: "twitter:description", content: "Testing & defect management for tax forms, online filing, and integrations." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/854205f4-a85f-45d6-81af-40d4f33e5434/id-preview-2369ccfe--87014af9-f373-4dbd-bd76-040fa2668684.lovable.app-1781192162260.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/854205f4-a85f-45d6-81af-40d4f33e5434/id-preview-2369ccfe--87014af9-f373-4dbd-bd76-040fa2668684.lovable.app-1781192162260.png" },
+      {
+        property: "og:description",
+        content: "Testing & defect management for tax forms, online filing, and integrations.",
+      },
+      {
+        name: "twitter:description",
+        content: "Testing & defect management for tax forms, online filing, and integrations.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/854205f4-a85f-45d6-81af-40d4f33e5434/id-preview-2369ccfe--87014af9-f373-4dbd-bd76-040fa2668684.lovable.app-1781192162260.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/854205f4-a85f-45d6-81af-40d4f33e5434/id-preview-2369ccfe--87014af9-f373-4dbd-bd76-040fa2668684.lovable.app-1781192162260.png",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
@@ -79,8 +103,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head><HeadContent /></head>
-      <body>{children}<Scripts /></body>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
     </html>
   );
 }

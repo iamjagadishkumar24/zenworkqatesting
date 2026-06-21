@@ -1,38 +1,70 @@
 import { useEffect, useState } from "react";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import {
-  FORM_LIST, INTEGRATIONS, AGENTS, encodeFormFeature, TAX_YEARS, DEFAULT_TAX_YEAR,
+  FORM_LIST,
+  INTEGRATIONS,
+  AGENTS,
+  encodeFormFeature,
+  TAX_YEARS,
+  DEFAULT_TAX_YEAR,
 } from "@/lib/qa/constants";
 import type { Defect, Module, Priority, QbDesktopCategory } from "@/lib/qa/types";
 import { QB_DESKTOP_CATEGORIES } from "@/lib/qa/types";
 
 const PRIORITIES: Priority[] = ["Low", "Medium", "High", "Critical"];
 
-type Draft = Omit<Defect, "id" | "createdAt" | "updatedAt" | "updatedBy" | "createdBy" | "comments"> & {
-  _form: string; _integration: string;
+type Draft = Omit<
+  Defect,
+  "id" | "createdAt" | "updatedAt" | "updatedBy" | "createdBy" | "comments"
+> & {
+  _form: string;
+  _integration: string;
 };
 
 function isValidUrl(u: string) {
   if (!u) return true;
-  try { new URL(u); return true; } catch { return false; }
+  try {
+    new URL(u);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function ReportDefectDialog({
-  open, onOpenChange, defaultForm = "", defaultModule = "1099 Forms",
-  defaultAgents, defaultIntegration = "", featureMode = false, formOptions,
-  defaultTaxYear, lockTaxYear = false, defaultQbCategory, lockQbCategory = false,
+  open,
+  onOpenChange,
+  defaultForm = "",
+  defaultModule = "1099 Forms",
+  defaultAgents,
+  defaultIntegration = "",
+  featureMode = false,
+  formOptions,
+  defaultTaxYear,
+  lockTaxYear = false,
+  defaultQbCategory,
+  lockQbCategory = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -61,23 +93,37 @@ export function ReportDefectDialog({
   const taxYearLocked = lockTaxYear && !isAdmin;
   // Agents can only assign errors to themselves. Admins see the full list (or
   // a restricted list if the caller provided one).
-  const agentOptions = isAgent && currentUser
-    ? [currentUser.name]
-    : (defaultAgents && defaultAgents.length ? defaultAgents : AGENTS);
+  const agentOptions =
+    isAgent && currentUser
+      ? [currentUser.name]
+      : defaultAgents && defaultAgents.length
+        ? defaultAgents
+        : AGENTS;
   const showIntegration = !featureMode && defaultModule === "Integrations";
   const lockIntegration = showIntegration && !!defaultIntegration;
   const showForm = !featureMode;
   const formChoices = formOptions && formOptions.length ? formOptions : FORM_LIST;
   const [draft, setDraft] = useState<Draft>(() => ({
-    module: defaultModule, formFeature: "", title: "", description: "",
-    stepsToReproduce: "", expectedResult: "", actualResult: "",
-    jiraUrl: "", attachmentUrl: "", attachmentUrl2: "", evidenceUrl: "",
-    status: "Reported", priority: "Medium", severity: "Medium",
+    module: defaultModule,
+    formFeature: "",
+    title: "",
+    description: "",
+    stepsToReproduce: "",
+    expectedResult: "",
+    actualResult: "",
+    jiraUrl: "",
+    attachmentUrl: "",
+    attachmentUrl2: "",
+    evidenceUrl: "",
+    status: "Reported",
+    priority: "Medium",
+    severity: "Medium",
     environment: env ?? "Production",
     taxYear: defaultTaxYear ?? DEFAULT_TAX_YEAR,
     qbDesktopCategory: defaultQbCategory,
     assignedAgent: (isAgent && currentUser?.name) || agentOptions[0] || "",
-    _form: defaultForm, _integration: defaultIntegration,
+    _form: defaultForm,
+    _integration: defaultIntegration,
   }));
 
   useEffect(() => {
@@ -90,12 +136,23 @@ export function ReportDefectDialog({
         environment: env ?? d.environment ?? "Production",
         taxYear: defaultTaxYear ?? d.taxYear ?? DEFAULT_TAX_YEAR,
         qbDesktopCategory: defaultQbCategory ?? d.qbDesktopCategory,
-        assignedAgent: isAgent && currentUser?.name
-          ? currentUser.name
-          : (d.assignedAgent || agentOptions[0] || ""),
+        assignedAgent:
+          isAgent && currentUser?.name
+            ? currentUser.name
+            : d.assignedAgent || agentOptions[0] || "",
       }));
     }
-  }, [open, defaultForm, defaultModule, defaultIntegration, defaultTaxYear, defaultQbCategory, env, isAgent, currentUser?.name]);
+  }, [
+    open,
+    defaultForm,
+    defaultModule,
+    defaultIntegration,
+    defaultTaxYear,
+    defaultQbCategory,
+    env,
+    isAgent,
+    currentUser?.name,
+  ]);
 
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
@@ -104,14 +161,19 @@ export function ReportDefectDialog({
     if (featureMode && !draft._form) return toast.error("Missing feature context");
     // Integration only applies when reporting from the Integrations module
     if (showIntegration && !draft._integration) return toast.error("Please select an integration");
-    if (showIntegration && draft._integration === "QuickBooks Desktop" && !draft.qbDesktopCategory) {
+    if (
+      showIntegration &&
+      draft._integration === "QuickBooks Desktop" &&
+      !draft.qbDesktopCategory
+    ) {
       return toast.error("Please select a QuickBooks Desktop category");
     }
     if (!draft.assignedAgent) return toast.error("Please select an assigned agent");
     if (!draft.title.trim()) return toast.error("Title is required");
     if (!draft.description.trim()) return toast.error("Description is required");
     if (draft.jiraUrl && !isValidUrl(draft.jiraUrl)) return toast.error("Jira URL is not valid");
-    if (draft.attachmentUrl && !isValidUrl(draft.attachmentUrl)) return toast.error("Attachment URL is not valid");
+    if (draft.attachmentUrl && !isValidUrl(draft.attachmentUrl))
+      return toast.error("Attachment URL is not valid");
     if (!draft.taxYear) return toast.error("Please select the tax year for this reported error.");
 
     const payload = {
@@ -126,12 +188,23 @@ export function ReportDefectDialog({
     toast.success("Error reported");
     onOpenChange(false);
     setDraft({
-      module: defaultModule, formFeature: "", title: "", description: "",
-      stepsToReproduce: "", expectedResult: "", actualResult: "",
-      jiraUrl: "", attachmentUrl: "", attachmentUrl2: "", evidenceUrl: "",
-      status: "Reported", priority: "Medium", severity: "Medium",
+      module: defaultModule,
+      formFeature: "",
+      title: "",
+      description: "",
+      stepsToReproduce: "",
+      expectedResult: "",
+      actualResult: "",
+      jiraUrl: "",
+      attachmentUrl: "",
+      attachmentUrl2: "",
+      evidenceUrl: "",
+      status: "Reported",
+      priority: "Medium",
+      severity: "Medium",
       assignedAgent: currentUser?.role === "agent" ? currentUser.name : AGENTS[0],
-      _form: "", _integration: "",
+      _form: "",
+      _integration: "",
     });
   };
 
@@ -162,9 +235,15 @@ export function ReportDefectDialog({
                 <Input value={draft._form} readOnly disabled aria-readonly />
               ) : (
                 <Select value={draft._form} onValueChange={(v) => upd("_form", v)}>
-                  <SelectTrigger><SelectValue placeholder="Select a form" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a form" />
+                  </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {formChoices.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    {formChoices.map((f) => (
+                      <SelectItem key={f} value={f}>
+                        {f}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               )}
@@ -176,12 +255,18 @@ export function ReportDefectDialog({
               {lockIntegration ? (
                 <Input value={draft._integration} readOnly disabled aria-readonly />
               ) : (
-              <Select value={draft._integration} onValueChange={(v) => upd("_integration", v)}>
-                <SelectTrigger><SelectValue placeholder="Select integration" /></SelectTrigger>
-                <SelectContent>
-                  {INTEGRATIONS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                </SelectContent>
-              </Select>
+                <Select value={draft._integration} onValueChange={(v) => upd("_integration", v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select integration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INTEGRATIONS.map((i) => (
+                      <SelectItem key={i} value={i}>
+                        {i}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             </div>
           )}
@@ -195,9 +280,15 @@ export function ReportDefectDialog({
                   value={draft.qbDesktopCategory ?? ""}
                   onValueChange={(v) => upd("qbDesktopCategory", v as QbDesktopCategory)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {QB_DESKTOP_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {QB_DESKTOP_CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               )}
@@ -205,7 +296,12 @@ export function ReportDefectDialog({
           )}
           <div>
             <Label>Environment</Label>
-            <Input value={draft.environment ?? env ?? "Production"} readOnly disabled aria-readonly />
+            <Input
+              value={draft.environment ?? env ?? "Production"}
+              readOnly
+              disabled
+              aria-readonly
+            />
           </div>
           <div>
             <Label>Tax Year *</Label>
@@ -213,12 +309,22 @@ export function ReportDefectDialog({
               <Input value={draft.taxYear ?? ""} readOnly disabled aria-readonly />
             ) : (
               <Select value={draft.taxYear ?? ""} onValueChange={(v) => upd("taxYear", v)}>
-                <SelectTrigger><SelectValue placeholder="Select Tax Year" /></SelectTrigger>
-                <SelectContent>{TAX_YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Tax Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TAX_YEARS.map((y) => (
+                    <SelectItem key={y} value={y}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             )}
             {lockTaxYear && isAdmin && (
-              <p className="mt-1 text-[10px] text-muted-foreground">Inherited from task — admin override enabled.</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Inherited from task — admin override enabled.
+              </p>
             )}
           </div>
           <div>
@@ -227,9 +333,15 @@ export function ReportDefectDialog({
               <Input value={draft.assignedAgent} readOnly disabled aria-readonly />
             ) : (
               <Select value={draft.assignedAgent} onValueChange={(v) => upd("assignedAgent", v)}>
-                <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select agent" />
+                </SelectTrigger>
                 <SelectContent className="max-h-72">
-                  {agentOptions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  {agentOptions.map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {a}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
@@ -237,42 +349,80 @@ export function ReportDefectDialog({
           <div>
             <Label>Priority</Label>
             <Select value={draft.priority} onValueChange={(v) => upd("priority", v as Priority)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITIES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div className="sm:col-span-2">
             <Label>Error Title *</Label>
-            <Input value={draft.title} onChange={(e) => upd("title", e.target.value)} placeholder="Short summary of the issue" />
+            <Input
+              value={draft.title}
+              onChange={(e) => upd("title", e.target.value)}
+              placeholder="Short summary of the issue"
+            />
           </div>
           <div className="sm:col-span-2">
             <Label>Description / Comments *</Label>
-            <Textarea rows={3} value={draft.description} onChange={(e) => upd("description", e.target.value)} />
+            <Textarea
+              rows={3}
+              value={draft.description}
+              onChange={(e) => upd("description", e.target.value)}
+            />
           </div>
           <div className="sm:col-span-2">
             <Label>Expected Result / Outcome</Label>
-            <Textarea rows={2} value={draft.expectedResult} onChange={(e) => upd("expectedResult", e.target.value)} />
+            <Textarea
+              rows={2}
+              value={draft.expectedResult}
+              onChange={(e) => upd("expectedResult", e.target.value)}
+            />
           </div>
           <div className="sm:col-span-2">
             <Label>Jira Ticket URL</Label>
-            <Input value={draft.jiraUrl ?? ""} onChange={(e) => upd("jiraUrl", e.target.value)} placeholder="https://your-org.atlassian.net/browse/…" />
+            <Input
+              value={draft.jiraUrl ?? ""}
+              onChange={(e) => upd("jiraUrl", e.target.value)}
+              placeholder="https://your-org.atlassian.net/browse/…"
+            />
           </div>
           <div>
             <Label>Attachment Link 1</Label>
-            <Input value={draft.attachmentUrl ?? ""} onChange={(e) => upd("attachmentUrl", e.target.value)} placeholder="https://…" />
+            <Input
+              value={draft.attachmentUrl ?? ""}
+              onChange={(e) => upd("attachmentUrl", e.target.value)}
+              placeholder="https://…"
+            />
           </div>
           <div>
             <Label>Attachment Link 2</Label>
-            <Input value={draft.attachmentUrl2 ?? ""} onChange={(e) => upd("attachmentUrl2", e.target.value)} placeholder="https://…" />
+            <Input
+              value={draft.attachmentUrl2 ?? ""}
+              onChange={(e) => upd("attachmentUrl2", e.target.value)}
+              placeholder="https://…"
+            />
           </div>
           <div className="sm:col-span-2">
             <Label>Screenshots / Recordings Link</Label>
-            <Input value={draft.evidenceUrl ?? ""} onChange={(e) => upd("evidenceUrl", e.target.value)} placeholder="https://…" />
+            <Input
+              value={draft.evidenceUrl ?? ""}
+              onChange={(e) => upd("evidenceUrl", e.target.value)}
+              placeholder="https://…"
+            />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={submit}>Create Error</Button>
         </DialogFooter>
       </DialogContent>

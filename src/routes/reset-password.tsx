@@ -64,10 +64,14 @@ function ResetPasswordPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (account.state === "inactive") {
-      return toast.error("This account is inactive. Ask an admin to reactivate it before resetting the password.");
+      return toast.error(
+        "This account is inactive. Ask an admin to reactivate it before resetting the password.",
+      );
     }
     if (account.state === "no-role") {
-      return toast.error("This account has no role. Ask an admin to assign Admin or QA Agent before resetting.");
+      return toast.error(
+        "This account has no role. Ask an admin to assign Admin or QA Agent before resetting.",
+      );
     }
     if (pwd.length < 8) return toast.error("Password must be at least 8 characters");
     if (pwd !== confirm) return toast.error("Passwords do not match");
@@ -92,13 +96,39 @@ function ResetPasswordPage() {
           <form onSubmit={submit} className="space-y-4">
             <div>
               <Label htmlFor="np">New password</Label>
-              <Input id="np" type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} required minLength={8} disabled={account.state === "inactive" || account.state === "no-role"} />
+              <Input
+                id="np"
+                type="password"
+                value={pwd}
+                onChange={(e) => setPwd(e.target.value)}
+                required
+                minLength={8}
+                disabled={account.state === "inactive" || account.state === "no-role"}
+              />
             </div>
             <div>
               <Label htmlFor="cp">Confirm password</Label>
-              <Input id="cp" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={8} disabled={account.state === "inactive" || account.state === "no-role"} />
+              <Input
+                id="cp"
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                minLength={8}
+                disabled={account.state === "inactive" || account.state === "no-role"}
+              />
             </div>
-            <Button type="submit" className="w-full" disabled={!ready || busy || account.state === "inactive" || account.state === "no-role" || account.state === "missing"}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={
+                !ready ||
+                busy ||
+                account.state === "inactive" ||
+                account.state === "no-role" ||
+                account.state === "missing"
+              }
+            >
               {busy ? "Updating…" : "Update password"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
@@ -111,13 +141,16 @@ function ResetPasswordPage() {
   );
 }
 
-function AccountBanner({ account }: { account:
-  | { state: "loading" }
-  | { state: "no-session" }
-  | { state: "ok"; email: string; role: "Admin" | "QA Agent"; name: string | null }
-  | { state: "inactive"; email: string; name: string | null }
-  | { state: "no-role"; email: string; name: string | null }
-  | { state: "missing"; email: string };
+function AccountBanner({
+  account,
+}: {
+  account:
+    | { state: "loading" }
+    | { state: "no-session" }
+    | { state: "ok"; email: string; role: "Admin" | "QA Agent"; name: string | null }
+    | { state: "inactive"; email: string; name: string | null }
+    | { state: "no-role"; email: string; name: string | null }
+    | { state: "missing"; email: string };
 }) {
   if (account.state === "loading") return null;
   if (account.state === "no-session") {
@@ -126,7 +159,10 @@ function AccountBanner({ account }: { account:
         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
         <div>
           <p className="font-medium">No active reset session</p>
-          <p>Open this page from the link in your password-reset email, or request a new link from the sign-in page.</p>
+          <p>
+            Open this page from the link in your password-reset email, or request a new link from
+            the sign-in page.
+          </p>
         </div>
       </div>
     );
@@ -137,7 +173,10 @@ function AccountBanner({ account }: { account:
         <UserX className="mt-0.5 h-4 w-4 shrink-0" />
         <div>
           <p className="font-medium">No portal account for {account.email}</p>
-          <p>Ask an admin to invite this email from Settings → Team & Roles before resetting a password.</p>
+          <p>
+            Ask an admin to invite this email from Settings → Team & Roles before resetting a
+            password.
+          </p>
         </div>
       </div>
     );
@@ -148,7 +187,10 @@ function AccountBanner({ account }: { account:
         <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
         <div>
           <p className="font-medium">Account inactive</p>
-          <p>{account.name ?? account.email} is deactivated. Resetting the password won't restore access — ask an admin to reactivate the account first.</p>
+          <p>
+            {account.name ?? account.email} is deactivated. Resetting the password won't restore
+            access — ask an admin to reactivate the account first.
+          </p>
         </div>
       </div>
     );
@@ -159,7 +201,10 @@ function AccountBanner({ account }: { account:
         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
         <div>
           <p className="font-medium">No role assigned</p>
-          <p>{account.name ?? account.email} has no Admin or QA Agent role. Ask an admin to assign one from Settings → Team & Roles.</p>
+          <p>
+            {account.name ?? account.email} has no Admin or QA Agent role. Ask an admin to assign
+            one from Settings → Team & Roles.
+          </p>
         </div>
       </div>
     );
@@ -170,9 +215,16 @@ function AccountBanner({ account }: { account:
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <p className="font-medium">Resetting password for {account.name ?? account.email}</p>
-          <Badge variant="outline" className="border-emerald-500/40 text-emerald-700 dark:text-emerald-300">{account.role}</Badge>
+          <Badge
+            variant="outline"
+            className="border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
+          >
+            {account.role}
+          </Badge>
         </div>
-        <p className="opacity-90">Choose a new password below — you'll be signed out and asked to sign back in.</p>
+        <p className="opacity-90">
+          Choose a new password below — you'll be signed out and asked to sign back in.
+        </p>
       </div>
     </div>
   );

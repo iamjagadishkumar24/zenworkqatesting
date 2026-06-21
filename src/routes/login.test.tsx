@@ -46,7 +46,9 @@ import { LoginPage, LoginErrorFallback } from "./login";
 describe("LoginErrorFallback", () => {
   it("renders fallback UI with the error message", () => {
     render(<LoginErrorFallback error={new Error("boom")} reset={() => {}} />);
-    expect(screen.getByRole("heading", { name: /sign in is temporarily unavailable/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /sign in is temporarily unavailable/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText("boom")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
   });

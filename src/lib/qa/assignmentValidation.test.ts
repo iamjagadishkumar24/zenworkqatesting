@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  validateAssignmentScope,
-  validateAssignmentScopeCanonical,
-} from "./assignmentValidation";
+import { validateAssignmentScope, validateAssignmentScopeCanonical } from "./assignmentValidation";
 
 const qb = { id: "qb", name: "QuickBooks Integration", module: "Integrations" };
 const xero = { id: "xero", name: "Xero Integration", module: "Integrations" };

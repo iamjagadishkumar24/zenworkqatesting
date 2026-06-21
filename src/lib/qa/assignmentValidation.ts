@@ -10,9 +10,9 @@ import { getModuleCatalog } from "./constants";
 export type AssignableForm = { id: string; name: string; module?: string };
 
 export type AssignmentScopeInput = {
-  module: string;                  // selected Module / Category
-  allForms: boolean;               // "All Forms" flag bypasses the picker
-  pickedIds: Iterable<string>;     // form ids the user selected
+  module: string; // selected Module / Category
+  allForms: boolean; // "All Forms" flag bypasses the picker
+  pickedIds: Iterable<string>; // form ids the user selected
   availableForms: AssignableForm[]; // forms allowed for the current scope
   allForms_catalog?: AssignableForm[]; // full catalog, used to name offenders
 };
@@ -21,9 +21,7 @@ export type AssignmentValidationResult =
   | { ok: true }
   | { ok: false; error: string; offenders: string[] };
 
-export function validateAssignmentScope(
-  input: AssignmentScopeInput,
-): AssignmentValidationResult {
+export function validateAssignmentScope(input: AssignmentScopeInput): AssignmentValidationResult {
   if (input.allForms) return { ok: true };
 
   const picked = Array.from(input.pickedIds);
@@ -38,10 +36,10 @@ export function validateAssignmentScope(
     lookup.set(f.id, f.name);
   }
   const names = bad.map((id) => lookup.get(id) ?? id);
-  const scopeLabel = input.module && input.module !== "All Modules"
-    ? `“${input.module}”`
-    : "the selected scope";
-  const preview = names.slice(0, 3).join(", ") + (names.length > 3 ? `, +${names.length - 3} more` : "");
+  const scopeLabel =
+    input.module && input.module !== "All Modules" ? `“${input.module}”` : "the selected scope";
+  const preview =
+    names.slice(0, 3).join(", ") + (names.length > 3 ? `, +${names.length - 3} more` : "");
   return {
     ok: false,
     error: `These forms/features don’t belong to ${scopeLabel}: ${preview}. Remove them or change the module.`,

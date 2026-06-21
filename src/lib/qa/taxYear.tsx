@@ -33,7 +33,8 @@ export function TaxYearProvider({ children }: { children: ReactNode }) {
     const onStorage = (e: StorageEvent) => {
       if (e.key !== KEY) return;
       if (e.newValue === "all" || e.newValue === null) setState("all");
-      else if ((TAX_YEARS as readonly string[]).includes(e.newValue)) setState(e.newValue as TaxYear);
+      else if ((TAX_YEARS as readonly string[]).includes(e.newValue))
+        setState(e.newValue as TaxYear);
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -42,7 +43,11 @@ export function TaxYearProvider({ children }: { children: ReactNode }) {
   const setTaxYear = useCallback((v: TaxYearFilter) => {
     setState(v);
     if (typeof window === "undefined") return;
-    try { window.localStorage.setItem(KEY, v); } catch { /* ignore */ }
+    try {
+      window.localStorage.setItem(KEY, v);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   return <TaxYearCtx.Provider value={{ taxYear, setTaxYear }}>{children}</TaxYearCtx.Provider>;

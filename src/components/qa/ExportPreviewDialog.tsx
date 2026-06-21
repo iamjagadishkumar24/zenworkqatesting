@@ -1,12 +1,31 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Download, Loader2, AlertTriangle, RotateCw } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { createExportJob, getExportDownloadUrl, retryExportJob, type ExportFilters } from "@/lib/qa/exportJobs.functions";
+import {
+  createExportJob,
+  getExportDownloadUrl,
+  retryExportJob,
+  type ExportFilters,
+} from "@/lib/qa/exportJobs.functions";
 import { toReportedErrorRow, REPORTED_ERROR_HEADERS } from "@/lib/qa/exportReportedErrors";
 import { useExportJob } from "@/lib/qa/useExportJob";
 import type { Defect, Environment } from "@/lib/qa/types";
@@ -21,7 +40,14 @@ type Props = {
   isAdmin: boolean;
 };
 
-export function ExportPreviewDialog({ open, onOpenChange, rows, filters, environment, isAdmin }: Props) {
+export function ExportPreviewDialog({
+  open,
+  onOpenChange,
+  rows,
+  filters,
+  environment,
+  isAdmin,
+}: Props) {
   const create = useServerFn(createExportJob);
   const sign = useServerFn(getExportDownloadUrl);
   const retry = useServerFn(retryExportJob);
@@ -32,7 +58,11 @@ export function ExportPreviewDialog({ open, onOpenChange, rows, filters, environ
   const job = useExportJob(jobId);
 
   useEffect(() => {
-    if (!open) { setJobId(null); setStarting(false); setDownloaded(false); }
+    if (!open) {
+      setJobId(null);
+      setStarting(false);
+      setDownloaded(false);
+    }
   }, [open]);
 
   const preview = rows.slice(0, 10).map((d) => toReportedErrorRow(d));
@@ -91,7 +121,8 @@ export function ExportPreviewDialog({ open, onOpenChange, rows, filters, environ
         <DialogHeader>
           <DialogTitle>Export Reported Errors</DialogTitle>
           <DialogDescription>
-            Review what will be exported, then run it as a background job. You'll be able to download the file once it completes.
+            Review what will be exported, then run it as a background job. You'll be able to
+            download the file once it completes.
           </DialogDescription>
         </DialogHeader>
 
@@ -99,9 +130,13 @@ export function ExportPreviewDialog({ open, onOpenChange, rows, filters, environ
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 text-xs">
               {chips.map((c) => (
-                <Badge key={c.k} variant="secondary">{c.k}: {c.v}</Badge>
+                <Badge key={c.k} variant="secondary">
+                  {c.k}: {c.v}
+                </Badge>
               ))}
-              <Badge>{rows.length} row{rows.length === 1 ? "" : "s"}</Badge>
+              <Badge>
+                {rows.length} row{rows.length === 1 ? "" : "s"}
+              </Badge>
             </div>
             <div className="rounded-md border">
               <div className="border-b bg-muted/40 px-3 py-2 text-xs font-medium">
@@ -122,20 +157,31 @@ export function ExportPreviewDialog({ open, onOpenChange, rows, filters, environ
                       <TableRow key={i}>
                         <TableCell className="text-xs">{r.agent}</TableCell>
                         <TableCell className="text-xs">{r.section}</TableCell>
-                        <TableCell className="max-w-[280px] truncate text-xs">{r.description}</TableCell>
+                        <TableCell className="max-w-[280px] truncate text-xs">
+                          {r.description}
+                        </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {r.reportedAt ? new Date(r.reportedAt).toLocaleString() : "—"}
                         </TableCell>
                       </TableRow>
                     ))}
                     {preview.length === 0 && (
-                      <TableRow><TableCell colSpan={4} className="py-6 text-center text-xs text-muted-foreground">No rows match the current filters.</TableCell></TableRow>
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className="py-6 text-center text-xs text-muted-foreground"
+                        >
+                          No rows match the current filters.
+                        </TableCell>
+                      </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </div>
               {rows.length > preview.length && (
-                <div className="border-t px-3 py-2 text-xs text-muted-foreground">Showing first {preview.length} of {rows.length} rows.</div>
+                <div className="border-t px-3 py-2 text-xs text-muted-foreground">
+                  Showing first {preview.length} of {rows.length} rows.
+                </div>
               )}
             </div>
           </div>
@@ -145,10 +191,16 @@ export function ExportPreviewDialog({ open, onOpenChange, rows, filters, environ
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <div className="font-medium">Job status: <span className="capitalize">{job?.status ?? "pending"}</span></div>
-                <div className="text-xs text-muted-foreground">{job?.row_count ?? 0} rows • job {jobId.slice(0, 8)}</div>
+                <div className="font-medium">
+                  Job status: <span className="capitalize">{job?.status ?? "pending"}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {job?.row_count ?? 0} rows • job {jobId.slice(0, 8)}
+                </div>
               </div>
-              {job?.status === "processing" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              {job?.status === "processing" && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
             </div>
             <Progress value={job?.progress ?? 0} />
             {job?.status === "failed" && (
@@ -163,18 +215,29 @@ export function ExportPreviewDialog({ open, onOpenChange, rows, filters, environ
         <DialogFooter>
           {!jobId && (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
               <Button onClick={startJob} disabled={starting || rows.length === 0}>
-                {starting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                {starting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
                 Run as background job
               </Button>
             </>
           )}
           {jobId && (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Close
+              </Button>
               {job?.status === "failed" && isAdmin && (
-                <Button variant="secondary" onClick={onRetry}><RotateCw className="mr-2 h-4 w-4" />Retry</Button>
+                <Button variant="secondary" onClick={onRetry}>
+                  <RotateCw className="mr-2 h-4 w-4" />
+                  Retry
+                </Button>
               )}
               <Button onClick={download} disabled={job?.status !== "completed"}>
                 <Download className="mr-2 h-4 w-4" />

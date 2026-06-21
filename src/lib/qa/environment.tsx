@@ -33,7 +33,7 @@ export function EnvironmentProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return;
     // Re-sync after hydration in case SSR rendered with null.
     const stored = readStoredEnv();
-    setEnvState((prev) => (prev ?? stored));
+    setEnvState((prev) => prev ?? stored);
     setReady(true);
 
     const onStorage = (e: StorageEvent) => {

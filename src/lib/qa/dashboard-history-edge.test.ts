@@ -35,15 +35,25 @@ class FakeHistory {
   saveScroll(y: number) {
     if (this.idx >= 0) this.stack[this.idx].scrollY = y;
   }
-  back() { if (this.idx > 0) this.idx -= 1; return this.current(); }
-  forward() { if (this.idx < this.stack.length - 1) this.idx += 1; return this.current(); }
-  current() { return this.stack[this.idx]; }
+  back() {
+    if (this.idx > 0) this.idx -= 1;
+    return this.current();
+  }
+  forward() {
+    if (this.idx < this.stack.length - 1) this.idx += 1;
+    return this.current();
+  }
+  current() {
+    return this.stack[this.idx];
+  }
 }
 
 function parse(entry: Entry) {
   const u = new URL(entry.url, "https://app.test");
   const raw: Record<string, string> = {};
-  u.searchParams.forEach((v, k) => { raw[k] = v; });
+  u.searchParams.forEach((v, k) => {
+    raw[k] = v;
+  });
   return { pathname: u.pathname, search: validateSearch(raw), scrollY: entry.scrollY };
 }
 
@@ -71,9 +81,12 @@ describe("rapid card clicks resolve to the last preset", () => {
 describe("scroll restoration across back/forward", () => {
   it("restores per-entry scroll positions on back and forward", () => {
     const h = new FakeHistory();
-    h.push("/dashboard"); h.saveScroll(220);
-    h.push("/my-reported-errors?preset=open"); h.saveScroll(640);
-    h.push("/my-reported-errors?preset=open&detail=ZEN-1"); h.saveScroll(0);
+    h.push("/dashboard");
+    h.saveScroll(220);
+    h.push("/my-reported-errors?preset=open");
+    h.saveScroll(640);
+    h.push("/my-reported-errors?preset=open&detail=ZEN-1");
+    h.saveScroll(0);
 
     expect(parse(h.current()).scrollY).toBe(0);
     expect(parse(h.back()).scrollY).toBe(640);
@@ -83,7 +96,8 @@ describe("scroll restoration across back/forward", () => {
 
   it("new navigation resets scroll for the new entry", () => {
     const h = new FakeHistory();
-    h.push("/dashboard"); h.saveScroll(500);
+    h.push("/dashboard");
+    h.saveScroll(500);
     h.push("/my-reported-errors?preset=valid");
     expect(parse(h.current()).scrollY).toBe(0);
     expect(parse(h.back()).scrollY).toBe(500);
@@ -131,9 +145,9 @@ describe("chained filters via URL persist across back/forward", () => {
   it("walking back through a chain of refinements restores each step", () => {
     const h = new FakeHistory();
     h.push("/dashboard");
-    h.push("/my-reported-errors?preset=open");                  // card click
-    h.push("/my-reported-errors?preset=open&q=1099");           // typed query (push, not replace, for this assertion)
-    h.push("/my-reported-errors?preset=valid&q=1099");          // switched card without clearing q
+    h.push("/my-reported-errors?preset=open"); // card click
+    h.push("/my-reported-errors?preset=open&q=1099"); // typed query (push, not replace, for this assertion)
+    h.push("/my-reported-errors?preset=valid&q=1099"); // switched card without clearing q
 
     expect(parse(h.current()).search).toEqual({ preset: "valid", q: "1099" });
     expect(parse(h.back()).search).toEqual({ preset: "open", q: "1099" });

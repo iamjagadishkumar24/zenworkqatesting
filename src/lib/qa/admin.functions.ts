@@ -10,8 +10,12 @@ function validateEmail(email: string) {
 }
 
 type AgentAuditAction =
-  | "invite_created" | "invite_resent" | "invite_removed"
-  | "agent_deactivated" | "agent_reactivated" | "agent_deleted";
+  | "invite_created"
+  | "invite_resent"
+  | "invite_removed"
+  | "agent_deactivated"
+  | "agent_reactivated"
+  | "agent_deleted";
 
 // Loose typing on the admin client: importing the typed client at module
 // scope would pull `client.server` into the client bundle. We accept `any`
@@ -47,11 +51,20 @@ async function logAgentAudit(
   }
 }
 
-async function getActorName(supabaseAdmin: SupabaseAdminLike, userId: string): Promise<string | null> {
+async function getActorName(
+  supabaseAdmin: SupabaseAdminLike,
+  userId: string,
+): Promise<string | null> {
   try {
-    const { data } = await supabaseAdmin.from("profiles").select("name").eq("id", userId).maybeSingle();
+    const { data } = await supabaseAdmin
+      .from("profiles")
+      .select("name")
+      .eq("id", userId)
+      .maybeSingle();
     return data?.name ?? null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function generateStrongPassword(): string {
@@ -84,7 +97,9 @@ export const inviteAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: InviteInput) => {
     if (!input || typeof input !== "object") throw new Error("Invalid input");
-    const email = String(input.email || "").trim().toLowerCase();
+    const email = String(input.email || "")
+      .trim()
+      .toLowerCase();
     const name = String(input.name || "").trim();
     const password = String(input.password || "");
     if (!validateEmail(email)) throw new Error("Enter a valid email address");
@@ -120,83 +135,85 @@ export const inviteAgent = createServerFn({ method: "POST" })
     const performedByName = await getActorName(supabaseAdmin, context.userId);
     await logAgentAudit(supabaseAdmin, {
       action: "invite_created",
-      targetUserId: userId, targetEmail: data.email, targetName: data.name,
-      performedById: context.userId, performedByName,
+      targetUserId: userId,
+      targetEmail: data.email,
+      targetName: data.name,
+      performedById: context.userId,
+      performedByName,
     });
 
     return { ok: true as const, userId, email: data.email };
   });
 
-export const resetSampleAdmin = createServerFn({ method: "POST" })
-  .handler(async () => {
-    // Bootstrap-friendly: allowed when (a) no admin exists yet, or
-    // (b) the caller is already an authenticated admin. This lets a brand-new
-    // workspace mint the sample admin without first needing to log in.
-    const SAMPLE_EMAIL = "admin@qaportal.app";
-    // Generate a fresh random password each call so source-code access alone
-    // does not yield working credentials. The plaintext is returned exactly
-    // once to the caller (the authenticated Settings UI) and is never stored
-    // alongside the account in plaintext.
-    const SAMPLE_PASSWORD = generateStrongPassword();
-    const SAMPLE_NAME = "Portal Admin";
+export const resetSampleAdmin = createServerFn({ method: "POST" }).handler(async () => {
+  // Bootstrap-friendly: allowed when (a) no admin exists yet, or
+  // (b) the caller is already an authenticated admin. This lets a brand-new
+  // workspace mint the sample admin without first needing to log in.
+  const SAMPLE_EMAIL = "admin@qaportal.app";
+  // Generate a fresh random password each call so source-code access alone
+  // does not yield working credentials. The plaintext is returned exactly
+  // once to the caller (the authenticated Settings UI) and is never stored
+  // alongside the account in plaintext.
+  const SAMPLE_PASSWORD = generateStrongPassword();
+  const SAMPLE_NAME = "Portal Admin";
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Authorization gate: require admin caller UNLESS no admin exists yet.
-    const { count: adminCount } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id", { count: "exact", head: true })
-      .eq("role", "admin");
-    if ((adminCount ?? 0) > 0) {
-      // Need a valid admin bearer token.
-      const { getRequest } = await import("@tanstack/react-start/server");
-      const req = getRequest();
-      const authHeader = req?.headers.get("authorization") ?? "";
-      const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-      if (!token) throw new Error("Only admins can reset the sample admin account");
-      const { data: claims } = await supabaseAdmin.auth.getClaims(token);
-      const callerId = claims?.claims?.sub;
-      if (!callerId) throw new Error("Only admins can reset the sample admin account");
-      const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
-        _user_id: callerId,
-        _role: "admin",
-      });
-      if (!isAdmin) throw new Error("Only admins can reset the sample admin account");
-    }
+  // Authorization gate: require admin caller UNLESS no admin exists yet.
+  const { count: adminCount } = await supabaseAdmin
+    .from("user_roles")
+    .select("user_id", { count: "exact", head: true })
+    .eq("role", "admin");
+  if ((adminCount ?? 0) > 0) {
+    // Need a valid admin bearer token.
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const req = getRequest();
+    const authHeader = req?.headers.get("authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (!token) throw new Error("Only admins can reset the sample admin account");
+    const { data: claims } = await supabaseAdmin.auth.getClaims(token);
+    const callerId = claims?.claims?.sub;
+    if (!callerId) throw new Error("Only admins can reset the sample admin account");
+    const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
+      _user_id: callerId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Only admins can reset the sample admin account");
+  }
 
-    // Look for existing user via profiles
-    const { data: existing } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("email", SAMPLE_EMAIL)
-      .maybeSingle();
+  // Look for existing user via profiles
+  const { data: existing } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("email", SAMPLE_EMAIL)
+    .maybeSingle();
 
-    let userId = existing?.id as string | undefined;
-    if (userId) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-        password: SAMPLE_PASSWORD,
-        email_confirm: true,
-        user_metadata: { name: SAMPLE_NAME },
-      });
-      if (error) throw new Error(error.message);
-    } else {
-      const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-        email: SAMPLE_EMAIL,
-        password: SAMPLE_PASSWORD,
-        email_confirm: true,
-        user_metadata: { name: SAMPLE_NAME },
-      });
-      if (error) throw new Error(error.message);
-      userId = created.user?.id;
-      if (!userId) throw new Error("Failed to create sample admin");
-    }
+  let userId = existing?.id as string | undefined;
+  if (userId) {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: SAMPLE_PASSWORD,
+      email_confirm: true,
+      user_metadata: { name: SAMPLE_NAME },
+    });
+    if (error) throw new Error(error.message);
+  } else {
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: SAMPLE_EMAIL,
+      password: SAMPLE_PASSWORD,
+      email_confirm: true,
+      user_metadata: { name: SAMPLE_NAME },
+    });
+    if (error) throw new Error(error.message);
+    userId = created.user?.id;
+    if (!userId) throw new Error("Failed to create sample admin");
+  }
 
-    await supabaseAdmin.from("profiles").update({ name: SAMPLE_NAME, active: true }).eq("id", userId);
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
-    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "admin" });
+  await supabaseAdmin.from("profiles").update({ name: SAMPLE_NAME, active: true }).eq("id", userId);
+  await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+  await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "admin" });
 
-    return { ok: true as const, email: SAMPLE_EMAIL, password: SAMPLE_PASSWORD, name: SAMPLE_NAME };
-  });
+  return { ok: true as const, email: SAMPLE_EMAIL, password: SAMPLE_PASSWORD, name: SAMPLE_NAME };
+});
 
 export const sampleAdminStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -226,7 +243,9 @@ export const sampleAdminStatus = createServerFn({ method: "GET" })
 export const accountStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { email: string }) => {
-    const email = String(input?.email || "").trim().toLowerCase();
+    const email = String(input?.email || "")
+      .trim()
+      .toLowerCase();
     if (!validateEmail(email)) throw new Error("Enter a valid email address");
     return { email };
   })
@@ -235,7 +254,9 @@ export const accountStatus = createServerFn({ method: "POST" })
     // endpoint as an email/role enumeration oracle.
     const callerEmail = String(
       (context.claims as { email?: string } | null | undefined)?.email ?? "",
-    ).trim().toLowerCase();
+    )
+      .trim()
+      .toLowerCase();
     if (!callerEmail || callerEmail !== data.email) {
       throw new Error("Forbidden");
     }
@@ -277,29 +298,39 @@ export const deactivateAgent = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId, _role: "admin",
+      _user_id: context.userId,
+      _role: "admin",
     });
     if (!isAdmin) throw new Error("Only admins can remove agents");
     if (data.userId === context.userId) throw new Error("You cannot remove your own account");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
-      .from("profiles").select("email").eq("id", data.userId).maybeSingle();
+      .from("profiles")
+      .select("email")
+      .eq("id", data.userId)
+      .maybeSingle();
     if (profile?.email?.toLowerCase() === PROTECTED_ADMIN_EMAIL) {
       throw new Error("The main admin account cannot be removed");
     }
     // Mark profile inactive (blocks dashboard access via hydrate signOut)
     await supabaseAdmin.from("profiles").update({ active: false }).eq("id", data.userId);
     // Mark invite row inactive (if any)
-    await supabaseAdmin.from("agent_invites").update({ status: "inactive" }).eq("user_id", data.userId);
+    await supabaseAdmin
+      .from("agent_invites")
+      .update({ status: "inactive" })
+      .eq("user_id", data.userId);
     // Revoke the password so the user cannot sign in again
-    await supabaseAdmin.auth.admin.updateUserById(data.userId, { ban_duration: "876000h" }).catch(() => {});
+    await supabaseAdmin.auth.admin
+      .updateUserById(data.userId, { ban_duration: "876000h" })
+      .catch(() => {});
     const performedByName = await getActorName(supabaseAdmin, context.userId);
     await logAgentAudit(supabaseAdmin, {
       action: "agent_deactivated",
       targetUserId: data.userId,
       targetEmail: profile?.email ?? "",
-      performedById: context.userId, performedByName,
+      performedById: context.userId,
+      performedByName,
     });
     return { ok: true as const };
   });
@@ -313,22 +344,32 @@ export const reactivateAgent = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId, _role: "admin",
+      _user_id: context.userId,
+      _role: "admin",
     });
     if (!isAdmin) throw new Error("Only admins can reactivate agents");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
-      .from("profiles").select("email, name").eq("id", data.userId).maybeSingle();
+      .from("profiles")
+      .select("email, name")
+      .eq("id", data.userId)
+      .maybeSingle();
     await supabaseAdmin.from("profiles").update({ active: true }).eq("id", data.userId);
-    await supabaseAdmin.from("agent_invites").update({ status: "active" }).eq("user_id", data.userId);
-    await supabaseAdmin.auth.admin.updateUserById(data.userId, { ban_duration: "none" }).catch(() => {});
+    await supabaseAdmin
+      .from("agent_invites")
+      .update({ status: "active" })
+      .eq("user_id", data.userId);
+    await supabaseAdmin.auth.admin
+      .updateUserById(data.userId, { ban_duration: "none" })
+      .catch(() => {});
     const performedByName = await getActorName(supabaseAdmin, context.userId);
     await logAgentAudit(supabaseAdmin, {
       action: "agent_reactivated",
       targetUserId: data.userId,
       targetEmail: profile?.email ?? "",
       targetName: profile?.name ?? null,
-      performedById: context.userId, performedByName,
+      performedById: context.userId,
+      performedByName,
     });
     return { ok: true as const };
   });
@@ -340,7 +381,9 @@ export const reactivateAgent = createServerFn({ method: "POST" })
  */
 export const checkInviteEmail = createServerFn({ method: "POST" })
   .inputValidator((input: { email: string }) => {
-    const email = String(input?.email || "").trim().toLowerCase();
+    const email = String(input?.email || "")
+      .trim()
+      .toLowerCase();
     if (!validateEmail(email)) throw new Error("Enter a valid email address");
     return { email };
   })
@@ -352,7 +395,8 @@ export const checkInviteEmail = createServerFn({ method: "POST" })
       .eq("email", data.email)
       .maybeSingle();
     if (!invite) return { allowed: false as const, reason: "not_invited" as const };
-    if (invite.status === "inactive") return { allowed: false as const, reason: "inactive" as const };
+    if (invite.status === "inactive")
+      return { allowed: false as const, reason: "inactive" as const };
     return { allowed: true as const, alreadyRegistered: !!invite.user_id };
   });
 
@@ -364,13 +408,16 @@ export const checkInviteEmail = createServerFn({ method: "POST" })
 export const resendAgentInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { email: string }) => {
-    const email = String(input?.email || "").trim().toLowerCase();
+    const email = String(input?.email || "")
+      .trim()
+      .toLowerCase();
     if (!validateEmail(email)) throw new Error("Enter a valid email address");
     return { email };
   })
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId, _role: "admin",
+      _user_id: context.userId,
+      _role: "admin",
     });
     if (!isAdmin) throw new Error("Only admins can resend invites");
 
@@ -382,39 +429,48 @@ export const resendAgentInvite = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!invite) {
       return {
-        ok: false as const, status: "not_invited" as const,
+        ok: false as const,
+        status: "not_invited" as const,
         message: "No invite exists for this email. Use Add Agent first.",
       };
     }
     if (invite.status === "inactive") {
       return {
-        ok: false as const, status: "inactive" as const,
+        ok: false as const,
+        status: "inactive" as const,
         message: "This agent was removed. Reactivate the account before resending an invite.",
       };
     }
     if (invite.user_id) {
       return {
-        ok: false as const, status: "already_active" as const,
+        ok: false as const,
+        status: "already_active" as const,
         message: `${invite.name} has already registered and is active. No invite is needed.`,
       };
     }
 
     // Touch updated_at so admins can see when the invite was last resent.
-    await supabaseAdmin.from("agent_invites")
+    await supabaseAdmin
+      .from("agent_invites")
       .update({ status: "pending", updated_at: new Date().toISOString() })
       .eq("id", invite.id);
 
     const performedByName = await getActorName(supabaseAdmin, context.userId);
     await logAgentAudit(supabaseAdmin, {
       action: "invite_resent",
-      targetUserId: null, targetEmail: invite.email, targetName: invite.name,
-      performedById: context.userId, performedByName,
+      targetUserId: null,
+      targetEmail: invite.email,
+      targetName: invite.name,
+      performedById: context.userId,
+      performedByName,
     });
 
     return {
-      ok: true as const, status: "pending" as const,
+      ok: true as const,
+      status: "pending" as const,
       message: `Invite link refreshed for ${invite.name}. They can now register at /login.`,
-      email: invite.email, name: invite.name,
+      email: invite.email,
+      name: invite.name,
     };
   });
 
@@ -433,12 +489,16 @@ export const resetAgentPassword = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId, _role: "admin",
+      _user_id: context.userId,
+      _role: "admin",
     });
     if (!isAdmin) throw new Error("Only admins can reset agent passwords");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
-      .from("profiles").select("email, name").eq("id", data.userId).maybeSingle();
+      .from("profiles")
+      .select("email, name")
+      .eq("id", data.userId)
+      .maybeSingle();
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.password,
     });
@@ -449,7 +509,8 @@ export const resetAgentPassword = createServerFn({ method: "POST" })
       targetUserId: data.userId,
       targetEmail: profile?.email ?? "",
       targetName: profile?.name ?? null,
-      performedById: context.userId, performedByName,
+      performedById: context.userId,
+      performedByName,
       details: { kind: "password_reset" },
     });
     return { ok: true as const };
@@ -461,47 +522,65 @@ export const resetAgentPassword = createServerFn({ method: "POST" })
  */
 export const updateAgentProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: {
-    userId: string; name?: string; email?: string; role?: "admin" | "agent"; active?: boolean;
-  }) => {
-    const userId = String(input?.userId || "").trim();
-    if (!userId) throw new Error("userId required");
-    const name = input.name == null ? undefined : String(input.name).trim();
-    const email = input.email == null ? undefined : String(input.email).trim().toLowerCase();
-    if (email !== undefined && !validateEmail(email)) throw new Error("Enter a valid email address");
-    if (name !== undefined && name.length < 2) throw new Error("Name is required");
-    const role = input.role;
-    if (role !== undefined && role !== "admin" && role !== "agent") throw new Error("Invalid role");
-    return { userId, name, email, role, active: input.active };
-  })
+  .inputValidator(
+    (input: {
+      userId: string;
+      name?: string;
+      email?: string;
+      role?: "admin" | "agent";
+      active?: boolean;
+    }) => {
+      const userId = String(input?.userId || "").trim();
+      if (!userId) throw new Error("userId required");
+      const name = input.name == null ? undefined : String(input.name).trim();
+      const email = input.email == null ? undefined : String(input.email).trim().toLowerCase();
+      if (email !== undefined && !validateEmail(email))
+        throw new Error("Enter a valid email address");
+      if (name !== undefined && name.length < 2) throw new Error("Name is required");
+      const role = input.role;
+      if (role !== undefined && role !== "admin" && role !== "agent")
+        throw new Error("Invalid role");
+      return { userId, name, email, role, active: input.active };
+    },
+  )
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId, _role: "admin",
+      _user_id: context.userId,
+      _role: "admin",
     });
     if (!isAdmin) throw new Error("Only admins can edit agents");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing } = await supabaseAdmin
-      .from("profiles").select("email, name").eq("id", data.userId).maybeSingle();
+      .from("profiles")
+      .select("email, name")
+      .eq("id", data.userId)
+      .maybeSingle();
 
     const profileUpdate: { name?: string; email?: string; active?: boolean } = {};
     if (data.name !== undefined) profileUpdate.name = data.name;
     if (data.email !== undefined) profileUpdate.email = data.email;
     if (data.active !== undefined) profileUpdate.active = data.active;
     if (Object.keys(profileUpdate).length > 0) {
-      const { error } = await supabaseAdmin.from("profiles").update(profileUpdate).eq("id", data.userId);
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update(profileUpdate)
+        .eq("id", data.userId);
       if (error) throw new Error(error.message);
     }
 
     if (data.email !== undefined && data.email !== existing?.email) {
       const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
-        email: data.email, email_confirm: true,
+        email: data.email,
+        email_confirm: true,
       });
       if (error) throw new Error(error.message);
     }
     if (data.name !== undefined) {
-      await supabaseAdmin.auth.admin.updateUserById(data.userId, {
-        user_metadata: { name: data.name },
-      }).catch(() => {});
+      await supabaseAdmin.auth.admin
+        .updateUserById(data.userId, {
+          user_metadata: { name: data.name },
+        })
+        .catch(() => {});
     }
 
     if (data.role !== undefined) {

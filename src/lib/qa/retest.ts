@@ -86,8 +86,16 @@ export function useRetests() {
       try {
         ch = supabase
           .channel(channelName)
-          .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignments" }, () => void load())
-          .on("postgres_changes", { event: "*", schema: "public", table: "retest_assignment_forms" }, () => void load())
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "retest_assignments" },
+            () => void load(),
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "retest_assignment_forms" },
+            () => void load(),
+          )
           .subscribe((status) => {
             if (cancelled) return;
             if (status === "SUBSCRIBED") {
@@ -101,7 +109,13 @@ export function useRetests() {
               // Tear down this channel and schedule a backoff retry.
               const dead = ch;
               ch = null;
-              if (dead) { try { void supabase.removeChannel(dead); } catch { /* noop */ } }
+              if (dead) {
+                try {
+                  void supabase.removeChannel(dead);
+                } catch {
+                  /* noop */
+                }
+              }
               attempts += 1;
               // Only surface the warning after a few sustained failures.
               if (attempts >= 3) setRealtimeOk(false);
@@ -120,7 +134,13 @@ export function useRetests() {
     return () => {
       cancelled = true;
       if (retryTimer) clearTimeout(retryTimer);
-      if (ch) { try { void supabase.removeChannel(ch); } catch { /* noop */ } }
+      if (ch) {
+        try {
+          void supabase.removeChannel(ch);
+        } catch {
+          /* noop */
+        }
+      }
     };
   }, [currentUser, env, load]);
 
@@ -174,13 +194,23 @@ export function useRetests() {
     (input.agentNames ?? []).forEach((n) => names.add(n));
     if (input.agentName) names.add(input.agentName);
     const targets = users.filter((u) => names.has(u.name));
-    const pendingEmails = (input.pendingEmails ?? []).map((e) => e.trim().toLowerCase()).filter(Boolean);
-    if (!targets.length && !pendingEmails.length) return { ok: false, error: "Select at least one agent" };
+    const pendingEmails = (input.pendingEmails ?? [])
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    if (!targets.length && !pendingEmails.length)
+      return { ok: false, error: "Select at least one agent" };
     const created: string[] = [];
     for (const agent of targets) {
-      const ty = (input.taxYear && /^\d{4}$/.test(input.taxYear)) ? input.taxYear : String(new Date().getFullYear());
-      const { data: nextId, error: idErr } = await supabase.rpc("next_scoped_id", { _kind: "task", _tax_year: ty });
-      if (idErr || !nextId) return { ok: false, error: idErr?.message ?? "Could not allocate task id" };
+      const ty =
+        input.taxYear && /^\d{4}$/.test(input.taxYear)
+          ? input.taxYear
+          : String(new Date().getFullYear());
+      const { data: nextId, error: idErr } = await supabase.rpc("next_scoped_id", {
+        _kind: "task",
+        _tax_year: ty,
+      });
+      if (idErr || !nextId)
+        return { ok: false, error: idErr?.message ?? "Could not allocate task id" };
       const id = nextId as string;
       const { error } = await supabase.from("retest_assignments").insert({
         id,
@@ -201,7 +231,11 @@ export function useRetests() {
       });
       if (error) return { ok: false, error: error.message };
       if (!input.allForms && input.forms.length) {
-        const rows = input.forms.map((f) => ({ assignment_id: id, form_id: f.id, form_name: f.name }));
+        const rows = input.forms.map((f) => ({
+          assignment_id: id,
+          form_id: f.id,
+          form_name: f.name,
+        }));
         const { error: e2 } = await supabase.from("retest_assignment_forms").insert(rows);
         if (e2) return { ok: false, error: e2.message };
       }
@@ -232,8 +266,21 @@ export function useRetests() {
     return { ok: true, ids: created };
   };
 
-  const updateAssignment = async (id: string, patch: Partial<Pick<RetestAssignment,
-    "status" | "instructions" | "priority" | "due_date" | "due_time" | "assigned_agent_id" | "assigned_agent_name">>) => {
+  const updateAssignment = async (
+    id: string,
+    patch: Partial<
+      Pick<
+        RetestAssignment,
+        | "status"
+        | "instructions"
+        | "priority"
+        | "due_date"
+        | "due_time"
+        | "assigned_agent_id"
+        | "assigned_agent_name"
+      >
+    >,
+  ) => {
     const { error } = await supabase.from("retest_assignments").update(patch).eq("id", id);
     if (error) return { ok: false, error: error.message };
     return { ok: true };
@@ -287,7 +334,11 @@ export function useRetests() {
       .eq("assignment_id", id);
     if (e2) return { ok: false, error: e2.message };
     if (!input.allForms && input.forms.length) {
-      const rows = input.forms.map((f) => ({ assignment_id: id, form_id: f.id, form_name: f.name }));
+      const rows = input.forms.map((f) => ({
+        assignment_id: id,
+        form_id: f.id,
+        form_name: f.name,
+      }));
       const { error: e3 } = await supabase.from("retest_assignment_forms").insert(rows);
       if (e3) return { ok: false, error: e3.message };
     }
@@ -295,8 +346,15 @@ export function useRetests() {
   };
 
   return {
-    items: scoped, all: items, loading, error, realtimeOk,
-    createAssignment, updateAssignment, reassign, editAssignmentScope,
+    items: scoped,
+    all: items,
+    loading,
+    error,
+    realtimeOk,
+    createAssignment,
+    updateAssignment,
+    reassign,
+    editAssignmentScope,
     reload: load,
   };
 }

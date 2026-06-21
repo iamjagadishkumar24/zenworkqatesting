@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  canAccessRoute,
-  canExport,
-  canPerformAdminAction,
-  scopeForUser,
-} from "./scope";
+import { canAccessRoute, canExport, canPerformAdminAction, scopeForUser } from "./scope";
 
 describe("RBAC: canAccessRoute", () => {
   const adminOnly = ["/agents", "/audit-log", "/reports"];
