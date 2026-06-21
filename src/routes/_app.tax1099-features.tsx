@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_app/tax1099-features")({
       module="Tax1099 Features"
       items={ITEMS}
       itemLabel="feature"
+      showHeaderReport={false}
     />
   ),
 });
