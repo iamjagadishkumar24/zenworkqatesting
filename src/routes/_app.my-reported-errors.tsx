@@ -201,6 +201,15 @@ function ReportedErrorsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
           <p className="text-sm text-muted-foreground">{description} {filtered.length} shown.</p>
+          {preset && (
+            <div className="mt-2 flex items-center gap-2 text-sm">
+              <Badge variant="secondary">Showing: {PRESET_LABEL[preset]}</Badge>
+              <span className="text-muted-foreground">Records Found: {filtered.length}</span>
+              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={clearPreset}>
+                <X className="mr-1 h-3 w-3" /> Clear filter
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canExport && (
