@@ -54,6 +54,10 @@ function patchFetch() {
   };
 }
 
+if (typeof window !== "undefined" && import.meta.env.DEV) {
+  patchFetch();
+}
+
 export function DevErrorOverlay({ error }: { error: Error }) {
   if (!import.meta.env.DEV) return null;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
