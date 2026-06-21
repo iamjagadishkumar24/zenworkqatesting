@@ -55,9 +55,9 @@ describe("Functionality Testing page", () => {
   }> = [
     {
       tab: "Forms",
-      card: "Authentication & Login",
-      expectedForm: "Authentication & Login",
-      expectedFeature: "Authentication & Login",
+      card: "Unsubmitted Forms",
+      expectedForm: "Unsubmitted Forms",
+      expectedFeature: "Unsubmitted Forms",
     },
     {
       tab: "Integrations",
