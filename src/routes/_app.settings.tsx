@@ -4,6 +4,17 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "@/lib/qa/store";
 import { usePrefs, type AdminPrefs } from "@/lib/qa/prefs";
+
+const AGENT_THEMES: { value: AdminPrefs["accent"]; label: string; swatch: string }[] = [
+  { value: "light", label: "Light", swatch: "linear-gradient(135deg, oklch(0.96 0.01 255), oklch(0.88 0.02 255))" },
+  { value: "blue", label: "Blue", swatch: "linear-gradient(135deg, oklch(0.55 0.2 255), oklch(0.7 0.18 255))" },
+  { value: "green", label: "Green", swatch: "linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160))" },
+  { value: "purple", label: "Purple", swatch: "linear-gradient(135deg, oklch(0.55 0.22 295), oklch(0.68 0.2 295))" },
+  { value: "orange", label: "Orange", swatch: "linear-gradient(135deg, oklch(0.66 0.18 55), oklch(0.78 0.16 60))" },
+  { value: "pink", label: "Pink", swatch: "linear-gradient(135deg, oklch(0.68 0.2 350), oklch(0.78 0.18 350))" },
+  { value: "grey", label: "Grey", swatch: "linear-gradient(135deg, oklch(0.5 0.02 255), oklch(0.62 0.02 255))" },
+  { value: "teal", label: "Teal", swatch: "linear-gradient(135deg, oklch(0.62 0.13 195), oklch(0.74 0.12 195))" },
+];
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
