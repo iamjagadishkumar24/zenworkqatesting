@@ -738,8 +738,12 @@ export type Database = {
           assigned_by_id: string | null
           assigned_by_name: string
           completed_at: string | null
+          completed_on_time: boolean | null
+          completion_duration_seconds: number | null
           created_at: string
+          deadline_at: string | null
           due_date: string | null
+          due_time: string | null
           environment: string
           id: string
           instructions: string
@@ -758,8 +762,12 @@ export type Database = {
           assigned_by_id?: string | null
           assigned_by_name?: string
           completed_at?: string | null
+          completed_on_time?: boolean | null
+          completion_duration_seconds?: number | null
           created_at?: string
+          deadline_at?: string | null
           due_date?: string | null
+          due_time?: string | null
           environment?: string
           id: string
           instructions?: string
@@ -778,8 +786,12 @@ export type Database = {
           assigned_by_id?: string | null
           assigned_by_name?: string
           completed_at?: string | null
+          completed_on_time?: boolean | null
+          completion_duration_seconds?: number | null
           created_at?: string
+          deadline_at?: string | null
           due_date?: string | null
+          due_time?: string | null
           environment?: string
           id?: string
           instructions?: string
