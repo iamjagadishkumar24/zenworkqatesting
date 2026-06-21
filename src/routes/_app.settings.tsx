@@ -468,7 +468,8 @@ function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* THEME */}
+        {/* THEME — Admin only */}
+        {isAdmin && (
         <TabsContent value="theme">
           <Card>
             <CardHeader>
