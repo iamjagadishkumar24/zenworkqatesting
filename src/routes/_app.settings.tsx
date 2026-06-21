@@ -67,6 +67,7 @@ import {
   Upload,
   Trash2,
 } from "lucide-react";
+import { Cpu } from "lucide-react";
 import { UserAvatar } from "@/components/qa/UserAvatar";
 
 export const Route = createFileRoute("/_app/settings")({
