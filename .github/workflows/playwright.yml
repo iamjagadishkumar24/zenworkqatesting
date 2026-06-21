@@ -41,6 +41,19 @@ jobs:
       - name: Run Playwright tests
         run: bunx playwright test
 
+      - name: Dashboard hook-order regression (React #310 gate)
+        id: dashboard_hook_order
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          bunx playwright test e2e/dashboard-hook-order.spec.ts \
+            --reporter=list 2>&1 | tee test-results/dashboard-hook-order.log
+          if grep -E "Minified React error #310|hooks than during the previous render|rendered more hooks" \
+               test-results/dashboard-hook-order.log; then
+            echo "::error::React #310 / hook-order mismatch detected on /dashboard"
+            exit 1
+          fi
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
