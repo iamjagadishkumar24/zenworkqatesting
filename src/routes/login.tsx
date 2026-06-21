@@ -17,7 +17,6 @@ import {
 import { HelpCircle, Eye, EyeOff, ShieldCheck, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ZenworkLogo } from "@/components/qa/ZenworkLogo";
 
 export function LoginErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -240,7 +239,9 @@ export function LoginPage() {
         {/* Brand / hero panel */}
         <div className="hidden flex-col justify-between lg:flex animate-fade-in">
           <div className="flex items-center gap-3">
-            <ZenworkLogo className="h-11 w-auto rounded-2xl bg-white/10 p-1.5 ring-1 ring-white/20 backdrop-blur" />
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 text-lg font-black backdrop-blur ring-1 ring-white/20">
+              Z
+            </div>
             <span className="text-xl font-semibold tracking-tight">Zenwork Testing</span>
           </div>
           <div className="space-y-6">
@@ -276,7 +277,9 @@ export function LoginPage() {
           <Card className="w-full max-w-md border-white/15 bg-white/10 text-white shadow-2xl shadow-indigo-900/40 backdrop-blur-xl">
             <CardHeader>
               <div className="mb-2 flex items-center gap-2 lg:hidden">
-                <ZenworkLogo className="h-9 w-auto rounded-xl bg-white/15 p-1 ring-1 ring-white/20" />
+                <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/15 text-sm font-black ring-1 ring-white/20">
+                  Z
+                </div>
                 <span className="text-base font-semibold">Zenwork Testing</span>
               </div>
               <CardTitle className="text-2xl text-white">Welcome back</CardTitle>
