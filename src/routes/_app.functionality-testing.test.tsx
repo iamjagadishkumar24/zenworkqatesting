@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 
 // Capture ReportDefectDialog invocations to verify open state + linkage props.
 const dialogCalls: Array<Record<string, unknown>> = [];
@@ -22,6 +22,7 @@ import { Route } from "./_app.functionality-testing";
 const Page = (Route as unknown as { component: () => ReactElement }).component;
 
 function renderAt(width: number) {
+  cleanup();
   Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
   window.dispatchEvent(new Event("resize"));
   dialogCalls.length = 0;
