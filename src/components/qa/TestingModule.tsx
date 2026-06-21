@@ -157,6 +157,8 @@ export function TestingModule({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visibleItems.map((name) => {
             const open = openCount(name);
+            const showBreakdown = module === "Tax1099 Features" && name === "PDF";
+            const bd = showBreakdown ? statusBreakdown(name) : null;
             return (
               <Card
                 key={name}
@@ -187,6 +189,15 @@ export function TestingModule({
                     )}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground capitalize">{itemLabel}</p>
+                  {bd && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      <Badge variant="outline" className="text-[10px]">Open: {bd.open}</Badge>
+                      <Badge variant="outline" className="text-[10px]">In Progress: {bd.inProgress}</Badge>
+                      <Badge variant="outline" className="text-[10px]">Retest: {bd.retest}</Badge>
+                      <Badge variant="outline" className="text-[10px]">Fixed: {bd.fixed}</Badge>
+                      <Badge variant="outline" className="text-[10px]">Invalid: {bd.invalid}</Badge>
+                    </div>
+                  )}
                   <Button
                     size="sm"
                     className="mt-3 w-full"
