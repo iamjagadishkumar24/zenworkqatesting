@@ -881,11 +881,6 @@ function RuntimeConfigCard() {
             aria-label="Toggle performance mode"
           />
         </div>
-        {updatedAt && (
-          <p className="text-xs text-muted-foreground">
-            Last updated {new Date(updatedAt).toLocaleString()}
-          </p>
-        )}
       </CardContent>
     </Card>
   );
