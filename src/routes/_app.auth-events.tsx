@@ -236,7 +236,8 @@ function AuthEventsPage() {
             {counts.success} success · {counts.failure} failure · {counts.hibp} leaked-password blocked
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px_140px_auto_auto]">
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px_160px_auto_auto]">
           <Input
             placeholder="Filter by email contains…"
             value={email}
@@ -251,22 +252,70 @@ function AuthEventsPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={days} onValueChange={setDays}>
+          <Select value={minutes} onValueChange={setMinutes}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Last 24 hours</SelectItem>
-              <SelectItem value="7">Last 7 days</SelectItem>
-              <SelectItem value="30">Last 30 days</SelectItem>
-              <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="15">Last 15 minutes</SelectItem>
+              <SelectItem value="60">Last 1 hour</SelectItem>
+              <SelectItem value="1440">Last 24 hours</SelectItem>
+              <SelectItem value="10080">Last 7 days</SelectItem>
+              <SelectItem value="43200">Last 30 days</SelectItem>
+              <SelectItem value="129600">Last 90 days</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={load} disabled={loading} variant="outline">
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Apply
           </Button>
-          <Button onClick={exportCsv} disabled={rows.length === 0}>
+          <Button onClick={exportCsv} disabled={filteredRows.length === 0}>
             <Download className="mr-2 h-4 w-4" /> Export CSV
           </Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Quick range:</span>
+            {[
+              { v: "15", label: "15m" },
+              { v: "60", label: "1h" },
+              { v: "1440", label: "24h" },
+              { v: "10080", label: "7d" },
+            ].map((p) => (
+              <Button
+                key={p.v}
+                size="sm"
+                variant={minutes === p.v ? "default" : "outline"}
+                className="h-7 px-2 text-xs"
+                onClick={() => setMinutes(p.v)}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+            <Input
+              placeholder="metadata.ip contains…"
+              value={metaIp}
+              onChange={(e) => setMetaIp(e.target.value)}
+              className="h-9 text-xs"
+            />
+            <Input
+              placeholder="metadata.user_agent contains…"
+              value={metaUa}
+              onChange={(e) => setMetaUa(e.target.value)}
+              className="h-9 text-xs"
+            />
+            <Input
+              placeholder="metadata.device contains…"
+              value={metaDevice}
+              onChange={(e) => setMetaDevice(e.target.value)}
+              className="h-9 text-xs"
+            />
+            <Input
+              placeholder="metadata.failure_reason contains…"
+              value={metaFailure}
+              onChange={(e) => setMetaFailure(e.target.value)}
+              className="h-9 text-xs"
+            />
+          </div>
         </CardContent>
       </Card>
 
