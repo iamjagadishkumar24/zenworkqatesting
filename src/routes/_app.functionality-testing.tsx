@@ -12,7 +12,14 @@ import { cn } from "@/lib/utils";
 const CATEGORIES: { key: string; items: string[] }[] = [
   {
     key: "Forms",
-    items: ["Authentication & Login", "Reports & Export", "User Management", "Search"],
+    items: [
+      "Unsubmitted Forms",
+      "Submitted Forms",
+      "Create Reconciliation Forms",
+      "Federal/State Rejected Forms",
+      "Reconciliation Forms",
+      "State Payroll Forms",
+    ],
   },
   { key: "Integrations", items: ["File Upload", "Payments", "Notifications"] },
   { key: "Dashboard", items: ["Dashboard"] },
