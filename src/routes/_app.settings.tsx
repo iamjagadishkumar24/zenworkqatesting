@@ -901,28 +901,45 @@ function RuntimeConfigCard() {
 
 function RuntimeConfigAuditCard() {
   const fetchAudit = useServerFn(listQARuntimeConfigAudit);
+  const PAGE_SIZE = 20;
   const [entries, setEntries] = useState<QARuntimeConfigAuditEntry[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const load = () => {
+  const load = (nextPage = page) => {
     setLoading(true);
-    fetchAudit()
-      .then((rows) => setEntries(rows))
+    fetchAudit({ data: { page: nextPage, pageSize: PAGE_SIZE } })
+      .then((res) => {
+        setEntries(res.entries);
+        setTotal(res.total);
+      })
       .catch(() => toast.error("Failed to load runtime config audit"))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    load();
-    const onUpdate = () => load();
+    load(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  useEffect(() => {
+    const onUpdate = () => {
+      if (page === 1) load(1);
+      else setPage(1);
+    };
     window.addEventListener("qa-runtime-config-updated", onUpdate);
     return () => window.removeEventListener("qa-runtime-config-updated", onUpdate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
 
   const fmt = (b: boolean | null) => (b === null ? "—" : b ? "On" : "Off");
   const changed = (oldV: boolean | null, newV: boolean) =>
     oldV === null ? newV !== false : oldV !== newV;
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(total, page * PAGE_SIZE);
 
   return (
     <Card>
@@ -931,7 +948,7 @@ function RuntimeConfigAuditCard() {
           <History className="h-4 w-4" /> Runtime Config Audit Log
         </CardTitle>
         <CardDescription>
-          Last 50 changes to live execution and performance mode. Admin-only.
+          Every change to live execution and performance mode. Admin-only.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
@@ -993,6 +1010,32 @@ function RuntimeConfigAuditCard() {
               ))}
           </TableBody>
         </Table>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border p-3 text-xs text-muted-foreground">
+          <span>
+            {total === 0 ? "0 entries" : `Showing ${rangeStart}–${rangeEnd} of ${total}`}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading || page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Previous
+            </Button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading || page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
