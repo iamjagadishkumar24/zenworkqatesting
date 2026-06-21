@@ -1,5 +1,35 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Lightweight fetch patch so every error report can include the last
+// network request, regardless of dev/prod. Idempotent.
+if (typeof window !== "undefined" && !(window as { __lastReqPatched?: boolean }).__lastReqPatched) {
+  (window as { __lastReqPatched?: boolean }).__lastReqPatched = true;
+  const orig = window.fetch.bind(window);
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url;
+    const method = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+    const at = new Date().toISOString();
+    try {
+      const res = await orig(input as RequestInfo, init);
+      window.__lastNetworkRequest = { url, method, status: res.status, ok: res.ok, at };
+      return res;
+    } catch (err) {
+      window.__lastNetworkRequest = {
+        url,
+        method,
+        at,
+        error: err instanceof Error ? err.message : String(err),
+      };
+      throw err;
+    }
+  };
+}
+
 type LovableErrorOptions = {
   mechanism?: "manual" | "onerror" | "unhandledrejection" | "react_error_boundary";
   handled?: boolean;
