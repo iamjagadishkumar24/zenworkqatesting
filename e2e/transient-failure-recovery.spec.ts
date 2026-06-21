@@ -104,4 +104,61 @@ test.describe("transient failure recovery", () => {
     const remainingCaches = await page.evaluate(() => caches.keys());
     expect(remainingCaches).not.toContain("workbox-precache-v2-test");
   });
+
+  test("clicking Dashboard with stale JS chunks → recovers via reload, no hard error", async ({ page }) => {
+    // Simulate a fresh deployment: version endpoint reports a new version.
+    await page.route(`**${VERSION_ENDPOINT}**`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ version: "e2e-dashboard-new-deploy" }),
+      });
+    });
+
+    // Simulate stale chunks: the dashboard's hashed chunk 404s on first request,
+    // succeeds afterwards (post-reload, browser re-resolves via fresh index.html).
+    let chunkFailed = false;
+    await page.route(/assets\/.+-[A-Za-z0-9]{6,}\.(?:js|mjs)(?:\?.*)?$/, async (route) => {
+      if (!chunkFailed) {
+        chunkFailed = true;
+        await route.fulfill({ status: 404, body: "" });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto("/");
+    await page.evaluate(() => sessionStorage.removeItem("zenwork:last-cache-bust-reload"));
+
+    // Seed a stale precache the recovery flow should evict.
+    await page.evaluate(async () => {
+      const c = await caches.open("workbox-precache-v2-stale-dashboard");
+      await c.put("/old-dashboard.js", new Response("old"));
+    });
+
+    // Try to click Dashboard if visible; otherwise drive the same recovery path
+    // the click handler uses (works regardless of auth state in the preview).
+    const dashboardLink = page.getByRole("link", { name: /dashboard/i }).first();
+    if (await dashboardLink.count()) {
+      await dashboardLink.click({ trial: false }).catch(() => undefined);
+    } else {
+      await page.evaluate(() => {
+        window.dispatchEvent(
+          new CustomEvent("vite:preloadError", {
+            detail: new Error("Failed to fetch dynamically imported module: /assets/dashboard-abcdef.js"),
+          }),
+        );
+      });
+    }
+
+    // The app must reload onto the new version (cache-busting URL param),
+    // and must NEVER expose the forbidden hard-error copy.
+    await page.waitForURL(/__app_version=e2e-dashboard-new-deploy/, { timeout: 20_000 });
+    await expect(page.locator("body")).not.toContainText(FORBIDDEN_TEXT);
+
+    // Stale precache should have been evicted by the recovery flow.
+    const remainingCaches = await page.evaluate(() => caches.keys());
+    expect(remainingCaches).not.toContain("workbox-precache-v2-stale-dashboard");
+  });
 });
