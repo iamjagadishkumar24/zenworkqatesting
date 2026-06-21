@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useTaxYear, matchesTaxYear } from "@/lib/qa/taxYear";
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   BarChart,
   Bar,
@@ -29,8 +31,8 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
-import { Download, Inbox } from "lucide-react";
-import { exportXlsx } from "@/lib/qa/export";
+import { Download, Inbox, FileText } from "lucide-react";
+import { exportPdf, exportXlsx } from "@/lib/qa/export";
 import { ExportMenu } from "@/components/qa/ExportMenu";
 
 export const Route = createFileRoute("/_app/reports")({
@@ -63,13 +65,112 @@ function ReportsPage() {
   const { env } = useEnvironment();
   const { taxYear, setTaxYear } = useTaxYear();
 
-  const defects = useMemo(
+  const [status, setStatus] = useState<string>("all");
+  const [testingType, setTestingType] = useState<string>("all");
+  const [category, setCategory] = useState<string>("all");
+  const [agent, setAgent] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<string>("all");
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
+
+  const scoped = useMemo(
     () =>
       allDefects.filter(
         (d) =>
           (!env || (d.environment ?? "Production") === env) && matchesTaxYear(d.taxYear, taxYear),
       ),
     [allDefects, env, taxYear],
+  );
+
+  const categories = useMemo(
+    () => Array.from(new Set(scoped.map((d) => d.module))).sort(),
+    [scoped],
+  );
+  const agents = useMemo(
+    () =>
+      Array.from(
+        new Set(scoped.flatMap((d) => [d.assignedAgent, d.createdBy].filter(Boolean))),
+      ).sort() as string[],
+    [scoped],
+  );
+
+  const matchesStatus = (d: (typeof scoped)[number]) => {
+    if (status === "all") return true;
+    if (status === "Open") return !["Fixed", "Closed"].includes(d.status);
+    if (status === "Fixed") return ["Fixed", "Closed"].includes(d.status);
+    if (status === "Retest Required") return d.status === "Retest Required";
+    if (status === "Valid") return d.validity === "Valid";
+    if (status === "Invalid") return d.validity === "Invalid";
+    if (status === "Pending Review") return !d.validity || d.validity === "Unverified";
+    return true;
+  };
+
+  const dateBounds = useMemo((): [Date | null, Date | null] => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    if (dateRange === "today") return [start, null];
+    if (dateRange === "yesterday") {
+      const s = new Date(start);
+      s.setDate(s.getDate() - 1);
+      return [s, start];
+    }
+    if (dateRange === "7d") {
+      const s = new Date(start);
+      s.setDate(s.getDate() - 6);
+      return [s, null];
+    }
+    if (dateRange === "30d") {
+      const s = new Date(start);
+      s.setDate(s.getDate() - 29);
+      return [s, null];
+    }
+    if (dateRange === "custom") {
+      return [fromDate ? new Date(fromDate) : null, toDate ? new Date(toDate + "T23:59:59") : null];
+    }
+    return [null, null];
+  }, [dateRange, fromDate, toDate]);
+
+  const defects = useMemo(() => {
+    const [from, to] = dateBounds;
+    return scoped.filter((d) => {
+      if (!matchesStatus(d)) return false;
+      if (testingType !== "all" && !d.module.toLowerCase().includes(testingType.toLowerCase()))
+        return false;
+      if (category !== "all" && d.module !== category) return false;
+      if (agent !== "all" && d.assignedAgent !== agent && d.createdBy !== agent) return false;
+      const created = new Date(d.createdAt);
+      if (from && created < from) return false;
+      if (to && created >= to) return false;
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scoped, status, testingType, category, agent, dateBounds]);
+
+  // Data-integrity validation: warn when the active filtered set diverges
+  // from the scoped total in ways callers wouldn't expect.
+  useEffect(() => {
+    if (status === "all" && testingType === "all" && category === "all" && agent === "all" && dateRange === "all") {
+      if (defects.length !== scoped.length) {
+        console.warn(
+          "[Reports integrity] filtered count mismatch with scoped store",
+          { reports: defects.length, store: scoped.length },
+        );
+      }
+    }
+  }, [defects.length, scoped.length, status, testingType, category, agent, dateRange]);
+
+  const summary = useMemo(
+    () => ({
+      total: defects.length,
+      open: defects.filter((d) => !["Fixed", "Closed"].includes(d.status)).length,
+      fixed: defects.filter((d) => ["Fixed", "Closed"].includes(d.status)).length,
+      retest: defects.filter((d) => d.status === "Retest Required").length,
+      valid: defects.filter((d) => d.validity === "Valid").length,
+      invalid: defects.filter((d) => d.validity === "Invalid").length,
+      pending: defects.filter((d) => !d.validity || d.validity === "Unverified").length,
+    }),
+    [defects],
   );
 
   const passedVsFailed = useMemo(() => {
@@ -151,6 +252,28 @@ function ReportsPage() {
       .slice(0, 10);
   }, [defects]);
 
+  const activeFilters = {
+    environment: env ?? "All",
+    taxYear: taxYear === "all" ? "All" : taxYear,
+    status,
+    testingType,
+    category,
+    agent,
+    dateRange,
+    from: fromDate || "—",
+    to: toDate || "—",
+  };
+
+  const summaryRows = [
+    { metric: "Total Reported", count: summary.total },
+    { metric: "Open", count: summary.open },
+    { metric: "Fixed/Closed", count: summary.fixed },
+    { metric: "Retest Required", count: summary.retest },
+    { metric: "Valid", count: summary.valid },
+    { metric: "Invalid", count: summary.invalid },
+    { metric: "Pending Review", count: summary.pending },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -178,13 +301,6 @@ function ReportsPage() {
             </SelectContent>
           </Select>
           <ExportMenu
-            label="Forms"
-            filename="forms"
-            title="Forms export"
-            rows={formCoverage as unknown as Record<string, unknown>[]}
-            columns={["form", "passed", "failed"]}
-          />
-          <ExportMenu
             label="Errors"
             filename="errors"
             title="Errors export"
@@ -197,6 +313,7 @@ function ReportsPage() {
               "environment",
               "title",
               "status",
+              "validity",
               "priority",
               "severity",
               "assignedAgent",
@@ -206,7 +323,7 @@ function ReportsPage() {
               "updatedBy",
               "commentsCount",
             ]}
-            filters={{ environment: env ?? "All", taxYear: taxYear === "all" ? "All" : taxYear }}
+            filters={activeFilters}
           />
           <Button
             variant="outline"
@@ -214,6 +331,7 @@ function ReportsPage() {
               exportXlsx(
                 "qa-report",
                 [
+                  { name: "Summary", rows: summaryRows },
                   { name: "Passed vs Failed", rows: passedVsFailed },
                   { name: "Errors by Module", rows: defectsByModule },
                   { name: "Status by Module", rows: statusByModule },
@@ -221,20 +339,135 @@ function ReportsPage() {
                   { name: "Agent Load", rows: agentDefects },
                   { name: "Form Coverage", rows: formCoverage },
                 ],
-                {
-                  title: "QA Analytics Report",
-                  filters: {
-                    environment: env ?? "All",
-                    taxYear: taxYear === "all" ? "All" : taxYear,
-                  },
-                },
+                { title: "QA Analytics Report", filters: activeFilters },
               )
             }
           >
             <Download className="mr-2 h-4 w-4" />
-            Full Report (xlsx)
+            Full (xlsx)
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              exportPdf(
+                "qa-report",
+                "QA Analytics Report",
+                [
+                  { name: "Summary", rows: summaryRows },
+                  { name: "Errors by Module", rows: defectsByModule },
+                  { name: "Status by Module", rows: statusByModule },
+                  { name: "Agent Load", rows: agentDefects },
+                ],
+                { filters: activeFilters },
+              )
+            }
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            PDF
           </Button>
         </div>
+      </div>
+
+      <Card>
+        <CardContent className="grid gap-3 p-4 md:grid-cols-3 lg:grid-cols-6">
+          <div>
+            <Label>Status</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["all", "Open", "Fixed", "Retest Required", "Valid", "Invalid", "Pending Review"].map((s) => (
+                  <SelectItem key={s} value={s}>{s === "all" ? "All statuses" : s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Testing Type</Label>
+            <Select value={testingType} onValueChange={setTestingType}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["all", "Functionality", "Integration", "Regression", "UI", "API"].map((s) => (
+                  <SelectItem key={s} value={s}>{s === "all" ? "All types" : s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Category</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {categories.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Agent</Label>
+            <Select value={agent} onValueChange={setAgent}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All agents</SelectItem>
+                {agents.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Date</Label>
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="yesterday">Yesterday</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {dateRange === "custom" && (
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Label>From</Label>
+                <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9" />
+              </div>
+              <div className="flex-1">
+                <Label>To</Label>
+                <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9" />
+              </div>
+            </div>
+          )}
+          <div className="md:col-span-3 lg:col-span-6 flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
+            <span>
+              Showing <strong className="text-foreground">{defects.length}</strong> of {scoped.length} errors in scope
+              {scoped.length !== allDefects.length && (
+                <> (store total {allDefects.length})</>
+              )}
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setStatus("all"); setTestingType("all"); setCategory("all");
+                setAgent("all"); setDateRange("all"); setFromDate(""); setToDate("");
+              }}
+            >
+              Reset filters
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
+        {summaryRows.map((s) => (
+          <Card key={s.metric}>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">{s.metric}</p>
+              <p className="text-2xl font-bold tabular-nums">{s.count}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
