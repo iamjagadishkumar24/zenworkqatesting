@@ -55,6 +55,10 @@ export function DeadlineCountdown() {
   const primary = myActive[0];
   const primaryInfo = deadlineInfo(primary.deadline_at, now);
   const multiple = myActive.length > 1;
+  const rows = useMemo(
+    () => myActive.slice(0, 8).map((r) => ({ r, info: deadlineInfo(r.deadline_at, now) })),
+    [myActive, now],
+  );
 
   return (
     <Popover>
@@ -93,10 +97,8 @@ export function DeadlineCountdown() {
           <Badge variant="secondary">{myActive.length}</Badge>
         </div>
         <div className="max-h-80 overflow-y-auto p-2">
-          {myActive.slice(0, 8).map((r) => {
-            const info = deadlineInfo(r.deadline_at, now);
-            return (
-              <Link
+          {rows.map(({ r, info }) => (
+            <Link
                 key={r.id}
                 to="/tasks/$taskId"
                 params={{ taskId: r.id }}
@@ -111,9 +113,8 @@ export function DeadlineCountdown() {
                 >
                   {info.isOverdue ? `+${info.shortLabel}` : info.shortLabel}
                 </span>
-              </Link>
-            );
-          })}
+            </Link>
+          ))}
         </div>
       </PopoverContent>
     </Popover>

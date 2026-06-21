@@ -70,6 +70,7 @@ export const TIER_CLASSES: Record<DeadlineTier, string> = {
   safe: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 dark:text-emerald-400",
   soon: "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400",
   urgent: "bg-red-500/10 text-red-600 border-red-500/30 dark:text-red-400",
-  critical: "bg-red-500/15 text-red-600 border-red-500/40 dark:text-red-400 animate-pulse",
-  overdue: "bg-red-600 text-white border-red-700 animate-pulse",
+  critical:
+    "bg-red-500/15 text-red-600 border-red-500/40 dark:text-red-400 motion-safe:animate-pulse",
+  overdue: "bg-red-600 text-white border-red-700 motion-safe:animate-pulse",
 };
