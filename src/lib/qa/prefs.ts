@@ -133,7 +133,15 @@ export function usePrefs() {
     const root = document.documentElement;
     const wantDark = isAdmin && prefs.theme === "dark";
     root.classList.toggle("dark", wantDark);
-    root.dataset.accent = prefs.accent;
+    // Admins are pinned to the default "blue" accent — agent color themes
+    // must never apply to admin sessions even if forced via localStorage
+    // or query string.
+    const AGENT_ONLY: AdminPrefs["accent"][] = [
+      "light", "green", "purple", "orange", "pink", "grey", "teal",
+    ];
+    const accent =
+      isAdmin && AGENT_ONLY.includes(prefs.accent) ? "blue" : prefs.accent;
+    root.dataset.accent = accent;
     root.dataset.density = prefs.density;
   }, [prefs, uid, isAdmin]);
 
