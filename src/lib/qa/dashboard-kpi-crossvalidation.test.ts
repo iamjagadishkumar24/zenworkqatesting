@@ -115,3 +115,69 @@ describe("dashboard KPIs cross-validate against DB-style counts", () => {
     }
   });
 });
+
+describe("dashboard KPIs — edge cases", () => {
+  it("empty dataset returns zeros for every KPI under every filter", () => {
+    for (const f of PERMUTATIONS) {
+      expect(computeKpis([], f)).toEqual({ open: 0, valid: 0, invalid: 0, fixed: 0, retest: 0 });
+      expect(computeKpis([], f)).toEqual(dbCounts([], f));
+    }
+  });
+
+  it("filter that excludes every row collapses to zero KPIs", () => {
+    const f = { env: "DoesNotExist" };
+    expect(computeKpis(FIXTURE, f)).toEqual({ open: 0, valid: 0, invalid: 0, fixed: 0, retest: 0 });
+    expect(computeKpis(FIXTURE, f)).toEqual(dbCounts(FIXTURE, f));
+  });
+
+  it("late retests stay in 'open' AND 'retest' across time-window filters", () => {
+    const late: D[] = [
+      { status: "Retest Required", validity: "Valid", environment: "Production", taxYear: "2025", assignedAgent: "carol", createdAt: "2025-06-01" },
+      { status: "Retest Required", validity: "Invalid", environment: "Production", taxYear: "2025", assignedAgent: "dan",   createdAt: "2025-06-15" },
+    ];
+    const all = [...FIXTURE, ...late];
+    const windowFilter = { since: "2025-05-01", until: "2025-07-01" };
+    const k = computeKpis(all, windowFilter);
+    expect(k).toEqual(dbCounts(all, windowFilter));
+    expect(k.retest).toBe(2);
+    expect(k.open).toBeGreaterThanOrEqual(k.retest); // retest are subset of open
+  });
+
+  it("multiple agents — per-agent counts sum to the unscoped total", () => {
+    const multi: D[] = [
+      { status: "Reported",        validity: "Valid",   environment: "Production", taxYear: "2026", assignedAgent: "alice", createdAt: "2026-01-01" },
+      { status: "In Progress",     validity: "Valid",   environment: "Production", taxYear: "2026", assignedAgent: "bob",   createdAt: "2026-01-02" },
+      { status: "Retest Required", validity: "Valid",   environment: "Production", taxYear: "2026", assignedAgent: "carol", createdAt: "2026-01-03" },
+      { status: "Fixed",           validity: "Invalid", environment: "Production", taxYear: "2026", assignedAgent: "dan",   createdAt: "2026-01-04" },
+      { status: "Closed",          validity: "Invalid", environment: "Production", taxYear: "2026", assignedAgent: "eve",   createdAt: "2026-01-05" },
+    ];
+    const total = computeKpis(multi, { taxYear: "2026" });
+    const per = ["alice", "bob", "carol", "dan", "eve"].map((a) =>
+      computeKpis(multi, { taxYear: "2026", agent: a }),
+    );
+    const sum = per.reduce(
+      (acc, p) => ({
+        open: acc.open + p.open,
+        valid: acc.valid + p.valid,
+        invalid: acc.invalid + p.invalid,
+        fixed: acc.fixed + p.fixed,
+        retest: acc.retest + p.retest,
+      }),
+      { open: 0, valid: 0, invalid: 0, fixed: 0, retest: 0 },
+    );
+    expect(sum).toEqual(total);
+    expect(total).toEqual(dbCounts(multi, { taxYear: "2026" }));
+  });
+
+  it("unassigned defects are excluded by per-agent filter but counted globally", () => {
+    const data: D[] = [
+      { status: "Reported", validity: "Valid", environment: "Production", taxYear: "2027", assignedAgent: null, createdAt: "2027-01-01" },
+      { status: "Reported", validity: "Valid", environment: "Production", taxYear: "2027", assignedAgent: "alice", createdAt: "2027-01-02" },
+    ];
+    expect(computeKpis(data, { taxYear: "2027" }).open).toBe(2);
+    expect(computeKpis(data, { taxYear: "2027", agent: "alice" }).open).toBe(1);
+    expect(computeKpis(data, { taxYear: "2027", agent: "alice" })).toEqual(
+      dbCounts(data, { taxYear: "2027", agent: "alice" }),
+    );
+  });
+});
