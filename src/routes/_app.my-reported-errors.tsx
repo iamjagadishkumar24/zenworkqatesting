@@ -203,7 +203,7 @@ function ReportedErrorsPage() {
           <p className="text-sm text-muted-foreground">{description} {filtered.length} shown.</p>
           {preset && (
             <div className="mt-2 flex items-center gap-2 text-sm">
-              <Badge variant="secondary">Showing: {PRESET_LABEL[preset]}</Badge>
+              <Badge variant="secondary">Showing: {PRESET_LABEL[preset as Preset]}</Badge>
               <span className="text-muted-foreground">Records Found: {filtered.length}</span>
               <Button size="sm" variant="ghost" className="h-7 px-2" onClick={clearPreset}>
                 <X className="mr-1 h-3 w-3" /> Clear filter
