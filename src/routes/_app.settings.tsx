@@ -528,6 +528,7 @@ function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* DASHBOARD */}
         <TabsContent value="dashboard">
