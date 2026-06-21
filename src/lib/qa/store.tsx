@@ -55,6 +55,9 @@ export type RealtimeStatus = "idle" | "connecting" | "connected" | "reconnecting
 type Ctx = State & {
   realtimeEvents: RealtimeDebugEvent[];
   realtimeStatus: RealtimeStatus;
+  realtimeChannelName: string | null;
+  realtimeReconnectAttempts: number;
+  realtimeLastEventAt: string | null;
   clearRealtimeEvents: () => void;
   login: (email: string, password: string) => Promise<Result>;
   signup: (name: string, email: string, password: string) => Promise<Result>;
