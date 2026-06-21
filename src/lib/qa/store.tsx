@@ -393,8 +393,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
     };
     void loadAll();
 
+    const channelName = `qa-realtime-${state.currentUser?.id ?? "anon"}`;
+    setRealtimeChannelName(channelName);
     const channel = supabase
-      .channel(`qa-realtime-${state.currentUser?.id ?? "anon"}`)
+      .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "defects" }, (payload) => {
         const ev = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
         const row = (payload.new ?? payload.old) as { id?: string; title?: string; status?: string } | undefined;
@@ -557,8 +559,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") setRealtimeStatus("connected");
-        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           setRealtimeStatus("reconnecting");
+          setRealtimeReconnectAttempts((n) => n + 1);
+        }
         else if (status === "CLOSED") setRealtimeStatus("idle");
         else setRealtimeStatus("connecting");
       });
