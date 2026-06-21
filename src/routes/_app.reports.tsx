@@ -105,7 +105,7 @@ function ReportsPage() {
   const patchSearch = (patch: Partial<ReportSearch>) =>
     navigate({
       replace: true,
-      search: (prev) => ({ ...prev, ...patch }),
+      search: (prev: ReportSearch) => ({ ...prev, ...patch }),
     });
   const setStatus = (v: string) => patchSearch({ status: v });
   const setTestingType = (v: string) => patchSearch({ testingType: v });
