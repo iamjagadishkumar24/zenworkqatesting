@@ -376,6 +376,14 @@ function AgentsPage() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
+                          {r.status === "inactive" && (
+                            <Button size="sm" variant="ghost" title="Permanently delete agent & all data"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setPurgeTarget({ name: r.name })}>
+                              <Trash2 className="h-4 w-4" />
+                              <span className="ml-1 text-xs">Purge</span>
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
