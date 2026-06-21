@@ -21,7 +21,6 @@ const CATEGORIES: { key: string; items: string[] }[] = [
       "State Payroll Forms",
     ],
   },
-  { key: "Integrations", items: ["File Upload", "Payments", "Notifications"] },
   { key: "Dashboard", items: ["Dashboard"] },
   { key: "Payer", items: FEATURES_PAYER.map((f) => `Payer · ${f}`) },
   { key: "Recipient", items: FEATURES_RECIPIENT.map((f) => `Recipient · ${f}`) },
