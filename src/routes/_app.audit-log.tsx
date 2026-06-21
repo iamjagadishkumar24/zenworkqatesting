@@ -125,6 +125,7 @@ function AuditLogPage() {
   const [form, setForm] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
   const [selected, setSelected] = useState<ActivityRow | null>(null);
 
   const load = useCallback(async () => {
@@ -176,7 +177,7 @@ function AuditLogPage() {
     const f = form.trim().toLowerCase();
     const fromTs = from ? new Date(from).getTime() : null;
     const toTs = to ? new Date(to).getTime() + 24 * 60 * 60 * 1000 - 1 : null;
-    return rows.filter((r) => {
+    const out = rows.filter((r) => {
       if (category !== "all" && r.category !== category) return false;
       if (role !== "all" && (r.actor_role ?? "") !== role) return false;
       if (actor !== "all" && (r.actor_name ?? "") !== actor) return false;
@@ -200,6 +201,12 @@ function AuditLogPage() {
       if (toTs && ts > toTs) return false;
       return true;
     });
+    out.sort((a, b) => {
+      const av = new Date(a.occurred_at).getTime();
+      const bv = new Date(b.occurred_at).getTime();
+      return sortDir === "desc" ? bv - av : av - bv;
+    });
+    return out;
   }, [
     rows,
     search,
@@ -214,6 +221,7 @@ function AuditLogPage() {
     form,
     from,
     to,
+    sortDir,
   ]);
 
   const actors = useMemo(
@@ -542,7 +550,14 @@ function AuditLogPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[170px]">Time</TableHead>
+                  <TableHead
+                    className="w-[170px] cursor-pointer select-none"
+                    onClick={() => setSortDir((d) => (d === "desc" ? "asc" : "desc"))}
+                    aria-sort={sortDir === "desc" ? "descending" : "ascending"}
+                    title="Toggle sort by Created / Updated Date"
+                  >
+                    Created / Updated {sortDir === "desc" ? "↓" : "↑"}
+                  </TableHead>
                   <TableHead>Actor</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Action</TableHead>
