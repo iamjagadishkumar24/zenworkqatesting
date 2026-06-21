@@ -812,6 +812,50 @@ function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+      <Dialog open={!!drill} onOpenChange={(o) => !o && setDrill(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{drill?.title}</DialogTitle>
+            <DialogDescription>
+              {drill?.rows.length ?? 0} matching error{(drill?.rows.length ?? 0) === 1 ? "" : "s"}.
+              Click a row's ID to open it in Error Management.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-left text-xs uppercase">
+                <tr>
+                  <th className="px-3 py-2">ID</th>
+                  <th className="px-3 py-2">Module</th>
+                  <th className="px-3 py-2">Title</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Validity</th>
+                  <th className="px-3 py-2">Assignee</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(drill?.rows ?? []).map((d) => (
+                  <tr key={d.id} className="border-t">
+                    <td className="px-3 py-2 font-mono text-xs">{d.id}</td>
+                    <td className="px-3 py-2">{d.module}</td>
+                    <td className="px-3 py-2">{d.title}</td>
+                    <td className="px-3 py-2">{d.status}</td>
+                    <td className="px-3 py-2">{d.validity ?? "Unverified"}</td>
+                    <td className="px-3 py-2">{d.assignedAgent}</td>
+                  </tr>
+                ))}
+                {(drill?.rows.length ?? 0) === 0 && (
+                  <tr>
+                    <td className="px-3 py-6 text-center text-muted-foreground" colSpan={6}>
+                      No matching errors.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
