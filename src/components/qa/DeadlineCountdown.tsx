@@ -38,6 +38,12 @@ export function DeadlineCountdown() {
     );
   }, [items, currentUser, env]);
 
+  const now_ = now; // keep ref stable for memo deps below
+  const rows = useMemo(
+    () => myActive.slice(0, 8).map((r) => ({ r, info: deadlineInfo(r.deadline_at, now_) })),
+    [myActive, now_],
+  );
+
   if (currentUser?.role !== "agent") return null;
 
   if (myActive.length === 0) {
@@ -55,10 +61,6 @@ export function DeadlineCountdown() {
   const primary = myActive[0];
   const primaryInfo = deadlineInfo(primary.deadline_at, now);
   const multiple = myActive.length > 1;
-  const rows = useMemo(
-    () => myActive.slice(0, 8).map((r) => ({ r, info: deadlineInfo(r.deadline_at, now) })),
-    [myActive, now],
-  );
 
   return (
     <Popover>
