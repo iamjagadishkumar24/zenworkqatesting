@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { exportCsv, exportXlsx } from "@/lib/qa/export";
 import { useServerFn } from "@tanstack/react-start";
@@ -901,15 +902,16 @@ function RuntimeConfigCard() {
 
 function RuntimeConfigAuditCard() {
   const fetchAudit = useServerFn(listQARuntimeConfigAudit);
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
   const [entries, setEntries] = useState<QARuntimeConfigAuditEntry[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [pageSize, setPageSize] = useState<number>(25);
 
   const load = (nextPage = page) => {
     setLoading(true);
-    fetchAudit({ data: { page: nextPage, pageSize: PAGE_SIZE } })
+    fetchAudit({ data: { page: nextPage, pageSize } })
       .then((res) => {
         setEntries(res.entries);
         setTotal(res.total);
@@ -921,7 +923,7 @@ function RuntimeConfigAuditCard() {
   useEffect(() => {
     load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, pageSize]);
 
   useEffect(() => {
     const onUpdate = () => {
@@ -937,9 +939,9 @@ function RuntimeConfigAuditCard() {
   const changed = (oldV: boolean | null, newV: boolean) =>
     oldV === null ? newV !== false : oldV !== newV;
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const rangeEnd = Math.min(total, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(total, page * pageSize);
 
   return (
     <Card>
@@ -962,17 +964,34 @@ function RuntimeConfigAuditCard() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                  Loading…
-                </TableCell>
-              </TableRow>
-            )}
+            {loading &&
+              Array.from({ length: Math.min(pageSize, 5) }).map((_, i) => (
+                <TableRow key={`sk-${i}`}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-32" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="mb-1 h-4 w-28" />
+                    <Skeleton className="h-3 w-40" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                </TableRow>
+              ))}
             {!loading && entries.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                  No changes recorded yet.
+                <TableCell colSpan={4} className="py-10 text-center">
+                  <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
+                    <History className="h-6 w-6 opacity-40" />
+                    <div className="font-medium text-foreground">No audit entries yet</div>
+                    <div>
+                      Changes to live execution or performance mode will appear here.
+                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -1011,9 +1030,29 @@ function RuntimeConfigAuditCard() {
           </TableBody>
         </Table>
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border p-3 text-xs text-muted-foreground">
-          <span>
-            {total === 0 ? "0 entries" : `Showing ${rangeStart}–${rangeEnd} of ${total}`}
-          </span>
+          <div className="flex items-center gap-2">
+            <span>
+              {total === 0 ? "0 entries" : `Showing ${rangeStart}–${rangeEnd} of ${total}`}
+            </span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                setPage(1);
+                setPageSize(Number(v));
+              }}
+            >
+              <SelectTrigger className="h-7 w-[88px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n} / page
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
