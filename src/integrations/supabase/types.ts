@@ -752,6 +752,30 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_runtime_config: {
+        Row: {
+          id: string
+          live_enabled: boolean
+          performance_mode: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          live_enabled?: boolean
+          performance_mode?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          live_enabled?: boolean
+          performance_mode?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       report_views: {
         Row: {
           created_at: string
