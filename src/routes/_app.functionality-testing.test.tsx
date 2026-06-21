@@ -16,9 +16,10 @@ vi.mock("@/lib/qa/store", () => ({
 vi.mock("@/lib/qa/environment", () => ({ useEnvironment: () => ({ env: null }) }));
 vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (cfg: unknown) => cfg }));
 
+import type { ReactElement } from "react";
 import { Route } from "./_app.functionality-testing";
 
-const Page = (Route as unknown as { component: () => JSX.Element }).component;
+const Page = (Route as unknown as { component: () => ReactElement }).component;
 
 function renderAt(width: number) {
   Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
