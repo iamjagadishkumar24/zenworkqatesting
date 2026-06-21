@@ -237,15 +237,20 @@ export function QAProvider({ children }: { children: ReactNode }) {
   const commentsRef = useRef<CommentRow[]>([]);
   const [realtimeEvents, setRealtimeEvents] = useState<RealtimeDebugEvent[]>([]);
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>("idle");
+  const [realtimeChannelName, setRealtimeChannelName] = useState<string | null>(null);
+  const [realtimeReconnectAttempts, setRealtimeReconnectAttempts] = useState(0);
+  const [realtimeLastEventAt, setRealtimeLastEventAt] = useState<string | null>(null);
   const roleRef = useRef<Role | "unknown">("unknown");
   roleRef.current = state.currentUser?.role ?? "unknown";
   const pushEvent = (e: Omit<RealtimeDebugEvent, "id" | "at" | "role">) => {
+    const at = new Date().toISOString();
+    setRealtimeLastEventAt(at);
     setRealtimeEvents((prev) =>
       [
         {
           ...e,
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          at: new Date().toISOString(),
+          at,
           role: roleRef.current,
         },
         ...prev,
