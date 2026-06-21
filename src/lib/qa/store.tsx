@@ -672,7 +672,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       void supabase.removeChannel(channel);
     };
-  }, [state.currentUser?.id]);
+  }, [state.currentUser?.id, runtimeConfig.liveEnabled]);
 
   const requireUser = () => {
     const u = state.currentUser;
