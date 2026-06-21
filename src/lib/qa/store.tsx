@@ -380,8 +380,38 @@ export function QAProvider({ children }: { children: ReactNode }) {
       setState((s) => ({ ...s, loading: false }));
       return;
     }
+    // Backend kill-switch: skip opening the Realtime channel entirely.
+    // The initial loadAll() below still runs so the UI is populated.
+    const liveEnabled = runtimeConfig.liveEnabled;
     let cancelled = false;
     setState((s) => ({ ...s, loading: true }));
+
+    // Performance mode: coalesce realtime-driven state updates inside a
+    // single rAF frame. `setState` is shadowed locally so every existing
+    // setState(...) call inside this effect automatically benefits without
+    // touching call sites. The raw setter (`rawSetState`) is preserved for
+    // the one-shot `loading: true/false` writes.
+    const rawSetState = setState;
+    let pendingUpdaters: Array<(s: State) => State> = [];
+    let rafQueued = false;
+    const flushPending = () => {
+      rafQueued = false;
+      const queue = pendingUpdaters;
+      pendingUpdaters = [];
+      if (queue.length === 0) return;
+      rawSetState((s) => queue.reduce((acc, u) => u(acc), s));
+    };
+    const setState: typeof rawSetState = (updater) => {
+      if (!perfModeRef.current || typeof updater !== "function") {
+        rawSetState(updater);
+        return;
+      }
+      pendingUpdaters.push(updater as (s: State) => State);
+      if (rafQueued) return;
+      rafQueued = true;
+      if (typeof requestAnimationFrame === "function") requestAnimationFrame(flushPending);
+      else setTimeout(flushPending, 16);
+    };
 
     const loadAll = async () => {
       const [profilesR, rolesR, formsR, defectsR, commentsR, auditR, notifR] = await Promise.all([
