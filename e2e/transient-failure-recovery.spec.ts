@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 
 /**
- * E2E: verify the app NEVER shows the "This page didn't load" hard error
+ * E2E: verify the app NEVER shows the legacy hard-error copy
  * for transient failures, and instead recovers (auto-retry / inline retry).
  *
  * Two scenarios:
@@ -15,6 +15,7 @@ import { test, expect, type Page } from "@playwright/test";
  */
 
 const FORBIDDEN_TEXT = "This page didn't load";
+const VERSION_ENDPOINT = "/api/public/app-version";
 
 async function gotoAndAssertNoHardError(page: Page, path: string) {
   await page.goto(path, { waitUntil: "domcontentloaded" });
@@ -76,5 +77,30 @@ test.describe("transient failure recovery", () => {
     // Sanity: app shell rendered something non-empty.
     const text = (await page.locator("body").innerText()).trim();
     expect(text.length).toBeGreaterThan(0);
+  });
+
+  test("stale bundle version skew → clears app-shell caches and reloads once", async ({ page }) => {
+    let versionChecks = 0;
+    await page.route(`**${VERSION_ENDPOINT}**`, async (route) => {
+      versionChecks += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ version: "e2e-new-deployment" }),
+      });
+    });
+
+    await page.goto("/");
+    await page.evaluate(async () => {
+      await caches.open("workbox-precache-v2-test").then((cache) => cache.put("/old.js", new Response("old")));
+      window.dispatchEvent(new CustomEvent("vite:preloadError", { detail: new Error("Failed to fetch dynamically imported module") }));
+    });
+
+    await page.waitForURL(/__app_version=e2e-new-deployment/, { timeout: 15_000 });
+    await expect(page.locator("body")).not.toContainText(FORBIDDEN_TEXT);
+    expect(versionChecks).toBeGreaterThan(0);
+    const remainingCaches = await page.evaluate(() => caches.keys());
+    expect(remainingCaches).not.toContain("workbox-precache-v2-test");
   });
 });

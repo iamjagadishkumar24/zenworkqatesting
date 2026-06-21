@@ -73,12 +73,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold">
-          {retrying ? "Reconnecting…" : "This page didn't load"}
+          {retrying ? "Reconnecting…" : "We’re refreshing your workspace"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {retrying
             ? "Restoring your session and retrying automatically."
-            : error?.message || "Something went wrong."}
+            : error?.message || "A temporary loading issue occurred."}
         </p>
         {!retrying && (
           <div className="mt-6 flex justify-center gap-2">
