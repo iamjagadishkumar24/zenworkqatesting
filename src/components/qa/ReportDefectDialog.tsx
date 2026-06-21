@@ -15,7 +15,8 @@ import { useEnvironment } from "@/lib/qa/environment";
 import {
   FORM_LIST, INTEGRATIONS, AGENTS, encodeFormFeature, TAX_YEARS, DEFAULT_TAX_YEAR,
 } from "@/lib/qa/constants";
-import type { Defect, Module, Priority } from "@/lib/qa/types";
+import type { Defect, Module, Priority, QbDesktopCategory } from "@/lib/qa/types";
+import { QB_DESKTOP_CATEGORIES } from "@/lib/qa/types";
 
 const PRIORITIES: Priority[] = ["Low", "Medium", "High", "Critical"];
 
@@ -31,7 +32,7 @@ function isValidUrl(u: string) {
 export function ReportDefectDialog({
   open, onOpenChange, defaultForm = "", defaultModule = "1099 Forms",
   defaultAgents, defaultIntegration = "", featureMode = false, formOptions,
-  defaultTaxYear, lockTaxYear = false,
+  defaultTaxYear, lockTaxYear = false, defaultQbCategory, lockQbCategory = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -47,6 +48,10 @@ export function ReportDefectDialog({
   defaultTaxYear?: string;
   /** Lock tax year selection when reporting from an assigned task. */
   lockTaxYear?: boolean;
+  /** Pre-select a QuickBooks Desktop category (required for QB Desktop). */
+  defaultQbCategory?: QbDesktopCategory;
+  /** Lock the QB Desktop category to the pre-selected value. */
+  lockQbCategory?: boolean;
 }) {
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
@@ -70,6 +75,7 @@ export function ReportDefectDialog({
     status: "Reported", priority: "Medium", severity: "Medium",
     environment: env ?? "Production",
     taxYear: defaultTaxYear ?? DEFAULT_TAX_YEAR,
+    qbDesktopCategory: defaultQbCategory,
     assignedAgent: (isAgent && currentUser?.name) || agentOptions[0] || "",
     _form: defaultForm, _integration: defaultIntegration,
   }));
@@ -83,12 +89,13 @@ export function ReportDefectDialog({
         module: defaultModule,
         environment: env ?? d.environment ?? "Production",
         taxYear: defaultTaxYear ?? d.taxYear ?? DEFAULT_TAX_YEAR,
+        qbDesktopCategory: defaultQbCategory ?? d.qbDesktopCategory,
         assignedAgent: isAgent && currentUser?.name
           ? currentUser.name
           : (d.assignedAgent || agentOptions[0] || ""),
       }));
     }
-  }, [open, defaultForm, defaultModule, defaultIntegration, defaultTaxYear, env, isAgent, currentUser?.name]);
+  }, [open, defaultForm, defaultModule, defaultIntegration, defaultTaxYear, defaultQbCategory, env, isAgent, currentUser?.name]);
 
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
@@ -97,6 +104,9 @@ export function ReportDefectDialog({
     if (featureMode && !draft._form) return toast.error("Missing feature context");
     // Integration only applies when reporting from the Integrations module
     if (showIntegration && !draft._integration) return toast.error("Please select an integration");
+    if (showIntegration && draft._integration === "QuickBooks Desktop" && !draft.qbDesktopCategory) {
+      return toast.error("Please select a QuickBooks Desktop category");
+    }
     if (!draft.assignedAgent) return toast.error("Please select an assigned agent");
     if (!draft.title.trim()) return toast.error("Title is required");
     if (!draft.description.trim()) return toast.error("Description is required");
