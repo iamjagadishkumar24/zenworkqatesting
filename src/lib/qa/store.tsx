@@ -50,8 +50,11 @@ export type RealtimeDebugEvent = {
   summary: string;
 };
 
+export type RealtimeStatus = "idle" | "connecting" | "connected" | "reconnecting" | "error";
+
 type Ctx = State & {
   realtimeEvents: RealtimeDebugEvent[];
+  realtimeStatus: RealtimeStatus;
   clearRealtimeEvents: () => void;
   login: (email: string, password: string) => Promise<Result>;
   signup: (name: string, email: string, password: string) => Promise<Result>;
