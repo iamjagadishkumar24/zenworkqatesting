@@ -140,7 +140,13 @@ export function TestingModule({
                     )}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground capitalize">{itemLabel}</p>
-                  <Button size="sm" className="mt-3 w-full" onClick={() => setReportFor(name)}>
+                  <Button size="sm" className="mt-3 w-full" onClick={() => {
+                    if (module === "Integrations" && name === "QuickBooks Desktop") {
+                      setPicked(name);
+                    } else {
+                      setReportFor(name);
+                    }
+                  }}>
                     Report Error
                   </Button>
                 </CardContent>
