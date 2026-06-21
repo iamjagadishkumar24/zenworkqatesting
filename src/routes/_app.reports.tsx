@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSavedViews, type ReportFilters } from "@/lib/qa/reportsViews";
-import { DrillDownDialog } from "@/components/qa/DrillDownDialog";
+import { DrillDownDialog, type DrillState } from "@/components/qa/DrillDownDialog";
+import type { DefectQuerySpec } from "@/lib/qa/defectsQuery";
 import {
   BarChart,
   Bar,
@@ -124,7 +125,7 @@ function ReportsPage() {
 
   const { views, save: saveView, remove: removeView } = useSavedViews();
   const [viewName, setViewName] = useState("");
-  const [drill, setDrill] = useState<{ title: string; rows: typeof allDefects } | null>(null);
+  const [drill, setDrill] = useState<DrillState>(null);
 
   const resetFilters = () =>
     navigate({ replace: true, search: () => ({ ...DEFAULT_SEARCH }) });
@@ -133,11 +134,6 @@ function ReportsPage() {
     const v = views.find((x) => x.name === name);
     if (v) navigate({ replace: true, search: () => ({ ...v.filters }) });
   };
-
-  const drillInto = (
-    title: string,
-    pred: (d: (typeof allDefects)[number]) => boolean,
-  ) => setDrill({ title, rows: defects.filter(pred) });
 
   const scoped = useMemo(
     () =>
