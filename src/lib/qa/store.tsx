@@ -57,6 +57,7 @@ type DefectRow = {
   status: string; priority: string; severity: string;
   environment: string;
   tax_year: string | null;
+  quickbooks_desktop_category?: string | null;
   assigned_agent: string; created_by: string; updated_by: string;
   version: number; created_at: string; updated_at: string;
 };
@@ -90,6 +91,7 @@ function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersi
     environment: (r.environment as Environment) ?? "Production",
     status: r.status as DefectStatus, priority: r.priority as Priority, severity: r.severity as Severity,
     assignedAgent: r.assigned_agent, createdBy: r.created_by, updatedBy: r.updated_by,
+    qbDesktopCategory: (r.quickbooks_desktop_category as Defect["qbDesktopCategory"]) ?? undefined,
     createdAt: r.created_at, updatedAt: r.updated_at, version: r.version,
     comments: comments
       .filter((c) => c.defect_id === r.id)
