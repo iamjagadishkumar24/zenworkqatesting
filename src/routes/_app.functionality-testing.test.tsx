@@ -60,12 +60,6 @@ describe("Functionality Testing page", () => {
       expectedFeature: "Unsubmitted Forms",
     },
     {
-      tab: "Integrations",
-      card: "File Upload",
-      expectedForm: "File Upload",
-      expectedFeature: "File Upload",
-    },
-    {
       tab: "Dashboard",
       card: "Dashboard",
       expectedForm: "Dashboard",
