@@ -140,6 +140,11 @@ function ReportsPage() {
     if (v) navigate({ replace: true, search: () => ({ ...v.filters }) });
   };
 
+  const drillInto = (
+    title: string,
+    pred: (d: (typeof allDefects)[number]) => boolean,
+  ) => setDrill({ title, rows: defects.filter(pred) });
+
   const scoped = useMemo(
     () =>
       allDefects.filter(
