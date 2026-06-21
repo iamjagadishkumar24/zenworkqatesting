@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
-import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Download } from "lucide-react";
+import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Download, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { ExportPreviewDialog } from "@/components/qa/ExportPreviewDialog";
 import { useAllowAgentExports } from "@/lib/qa/useExportJob";
 import type { DefectStatus, Priority } from "@/lib/qa/types";
@@ -38,9 +39,24 @@ const PRIORITIES: Priority[] = ["Low","Medium","High","Critical"];
 const SEVERITIES = ["Low","Medium","High","Critical"] as const;
 const MODULES: string[] = MODULE_OPTIONS;
 
+const PRESETS = ["open", "valid", "invalid", "fixed", "retest", "all"] as const;
+type Preset = (typeof PRESETS)[number];
+const PRESET_LABEL: Record<Preset, string> = {
+  open: "Open Errors",
+  valid: "Valid Errors",
+  invalid: "Invalid Errors",
+  fixed: "Fixed Errors",
+  retest: "Retest Errors",
+  all: "All Errors",
+};
+
 export const Route = createFileRoute("/_app/my-reported-errors")({
   validateSearch: (s: Record<string, unknown>) => ({
     q: typeof s.q === "string" ? s.q : undefined,
+    preset:
+      typeof s.preset === "string" && (PRESETS as readonly string[]).includes(s.preset)
+        ? (s.preset as Preset)
+        : undefined,
   }),
   component: ReportedErrorsPage,
 });
@@ -55,6 +71,7 @@ function ReportedErrorsPage() {
 
   // URL `?q=` is the single source of truth. Input mirrors it with debounce.
   const q = search.q ?? "";
+  const preset = search.preset;
   const [qInput, setQInput] = useState(q);
   // Keep local input in sync when URL changes externally (header search, reset, nav).
   useEffect(() => { setQInput(q); }, [q]);
@@ -120,14 +137,33 @@ function ReportedErrorsPage() {
       hasAttachments: isAdmin ? hasAttach : "any",
       retest: isAdmin ? retest : "any",
     };
-    return filterDefectsAdmin(scoped, f);
-  }, [scoped, q, mod, status, prio, sev, agent, reporter, year, hasComments, hasAttach, retest, isAdmin]);
+    const base = filterDefectsAdmin(scoped, f);
+    if (!preset || preset === "all") return base;
+    return base.filter((d) => {
+      switch (preset) {
+        case "open": return !["Fixed", "Closed"].includes(d.status);
+        case "valid": return d.validity === "Valid";
+        case "invalid": return d.validity === "Invalid";
+        case "fixed": return d.status === "Fixed" || d.status === "Closed";
+        case "retest": return d.status === "Retest Required";
+        default: return true;
+      }
+    });
+  }, [scoped, q, mod, status, prio, sev, agent, reporter, year, hasComments, hasAttach, retest, isAdmin, preset]);
 
   const resetFilters = () => {
     setQInput("");
     setMod("all"); setStatus("all"); setPrio("all"); setAgent("all"); setReporter("all");
     setSev("all"); setYear("all"); setHasComments("any"); setHasAttach("any"); setRetest("any");
     navigate({ to: "/my-reported-errors", search: {} as never, replace: true });
+  };
+
+  const clearPreset = () => {
+    navigate({
+      to: "/my-reported-errors",
+      search: (q ? { q } : {}) as never,
+      replace: true,
+    });
   };
 
   const lastToastRef = useRef<string>("");
@@ -165,6 +201,15 @@ function ReportedErrorsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
           <p className="text-sm text-muted-foreground">{description} {filtered.length} shown.</p>
+          {preset && (
+            <div className="mt-2 flex items-center gap-2 text-sm">
+              <Badge variant="secondary">Showing: {PRESET_LABEL[preset as Preset]}</Badge>
+              <span className="text-muted-foreground">Records Found: {filtered.length}</span>
+              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={clearPreset}>
+                <X className="mr-1 h-3 w-3" /> Clear filter
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canExport && (
