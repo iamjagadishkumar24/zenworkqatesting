@@ -145,7 +145,13 @@ export const FEATURES_ZENWORK_PAYMENTS: string[] = [
 // Payer & Recipient feature catalogs — surfaced as standalone testing
 // modules so defects can be tagged Module=Payer / Module=Recipient and
 // the same dashboard / filter / assignment plumbing applies.
-export const FEATURES_PAYER: string[] = ["Add Payer", "Bulk Upload"];
+export const FEATURES_PAYER: string[] = [
+  "Add Payer",
+  "Bulk Upload",
+  "Export to Excel",
+  "Bulk Delete",
+  "Bulk Active or Inactive",
+];
 
 export const FEATURES_RECIPIENT: string[] = [
   "Add Recipient",
