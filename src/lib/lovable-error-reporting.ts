@@ -70,6 +70,10 @@ async function persistErrorLog(error: unknown, context: Record<string, unknown>)
       // ignore — error logging must never throw
     }
 
+    const safeMetadata = JSON.parse(JSON.stringify(context ?? {}));
+    const safeLastRequest = window.__lastNetworkRequest
+      ? JSON.parse(JSON.stringify(window.__lastNetworkRequest))
+      : null;
     await supabase.from("error_logs").insert({
       actor_id,
       actor_email,
@@ -79,10 +83,10 @@ async function persistErrorLog(error: unknown, context: Record<string, unknown>)
       message: err.message,
       stack: err.stack ?? null,
       source: (context.source as string | undefined) ?? null,
-      last_request: window.__lastNetworkRequest ?? null,
+      last_request: safeLastRequest,
       user_agent: navigator.userAgent,
       url: window.location.href,
-      metadata: context as unknown as Record<string, never> as never,
+      metadata: safeMetadata,
     });
   } catch {
     // never throw from logging
