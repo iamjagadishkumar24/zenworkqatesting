@@ -812,6 +812,9 @@ function RuntimeConfigCard() {
       toast.success("Runtime config updated", {
         description: "New settings take effect on next page load for connected clients.",
       });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("qa-runtime-config-updated"));
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to update runtime config");
     } finally {
@@ -891,6 +894,105 @@ function RuntimeConfigCard() {
             aria-label="Toggle performance mode"
           />
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RuntimeConfigAuditCard() {
+  const fetchAudit = useServerFn(listQARuntimeConfigAudit);
+  const [entries, setEntries] = useState<QARuntimeConfigAuditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    setLoading(true);
+    fetchAudit()
+      .then((rows) => setEntries(rows))
+      .catch(() => toast.error("Failed to load runtime config audit"))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
+    const onUpdate = () => load();
+    window.addEventListener("qa-runtime-config-updated", onUpdate);
+    return () => window.removeEventListener("qa-runtime-config-updated", onUpdate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fmt = (b: boolean | null) => (b === null ? "—" : b ? "On" : "Off");
+  const changed = (oldV: boolean | null, newV: boolean) =>
+    oldV === null ? newV !== false : oldV !== newV;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <History className="h-4 w-4" /> Runtime Config Audit Log
+        </CardTitle>
+        <CardDescription>
+          Last 50 changes to live execution and performance mode. Admin-only.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>When</TableHead>
+              <TableHead>Changed by</TableHead>
+              <TableHead>Live execution</TableHead>
+              <TableHead>Performance mode</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                  Loading…
+                </TableCell>
+              </TableRow>
+            )}
+            {!loading && entries.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                  No changes recorded yet.
+                </TableCell>
+              </TableRow>
+            )}
+            {!loading &&
+              entries.map((e) => (
+                <TableRow key={e.id}>
+                  <TableCell className="whitespace-nowrap text-xs">
+                    {new Date(e.createdAt).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    <div className="font-medium">{e.changedByName ?? "—"}</div>
+                    {e.changedByEmail && (
+                      <div className="text-xs text-muted-foreground">{e.changedByEmail}</div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {changed(e.oldLiveEnabled, e.newLiveEnabled) ? (
+                      <span>
+                        {fmt(e.oldLiveEnabled)} → <strong>{fmt(e.newLiveEnabled)}</strong>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">{fmt(e.newLiveEnabled)}</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {changed(e.oldPerformanceMode, e.newPerformanceMode) ? (
+                      <span>
+                        {fmt(e.oldPerformanceMode)} → <strong>{fmt(e.newPerformanceMode)}</strong>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">{fmt(e.newPerformanceMode)}</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
