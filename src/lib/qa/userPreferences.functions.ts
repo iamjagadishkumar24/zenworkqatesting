@@ -15,6 +15,13 @@ const PrefsInput = z.object({
   show_agent_chart: z.boolean(),
 });
 
+const RuntimeAuditPageSize = z.union([
+  z.literal(10),
+  z.literal(25),
+  z.literal(50),
+  z.literal(100),
+]);
+
 export type RemotePrefs = z.infer<typeof PrefsInput>;
 
 export const getMyPreferences = createServerFn({ method: "GET" })
@@ -40,6 +47,36 @@ export const saveMyPreferences = createServerFn({ method: "POST" })
     const { error } = await supabase
       .from("user_preferences")
       .upsert({ user_id: userId, ...data }, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const getMyRuntimeAuditPageSize = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("user_preferences")
+      .select("runtime_audit_page_size")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return (data?.runtime_audit_page_size ?? 25) as 10 | 25 | 50 | 100;
+  });
+
+export const setMyRuntimeAuditPageSize = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ pageSize: RuntimeAuditPageSize }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("user_preferences")
+      .upsert(
+        { user_id: userId, runtime_audit_page_size: data.pageSize },
+        { onConflict: "user_id" },
+      );
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });

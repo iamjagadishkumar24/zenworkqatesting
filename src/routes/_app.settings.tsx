@@ -49,6 +49,10 @@ import {
   updateQARuntimeConfig,
   type QARuntimeConfigAuditEntry,
 } from "@/lib/qa/runtime-config.functions";
+import {
+  getMyRuntimeAuditPageSize,
+  setMyRuntimeAuditPageSize,
+} from "@/lib/qa/userPreferences.functions";
 import { ExportJobsPanel } from "@/components/qa/ExportJobsPanel";
 import {
   Users,
@@ -902,24 +906,31 @@ function RuntimeConfigCard() {
 
 function RuntimeConfigAuditCard() {
   const fetchAudit = useServerFn(listQARuntimeConfigAudit);
+  const fetchPageSize = useServerFn(getMyRuntimeAuditPageSize);
+  const savePageSize = useServerFn(setMyRuntimeAuditPageSize);
   const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
   const [entries, setEntries] = useState<QARuntimeConfigAuditEntry[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const PAGE_SIZE_STORAGE_KEY = "qa.runtimeAudit.pageSize";
-  const [pageSize, setPageSize] = useState<number>(() => {
-    if (typeof window === "undefined") return 25;
-    const raw = window.localStorage.getItem(PAGE_SIZE_STORAGE_KEY);
-    const n = raw ? Number(raw) : NaN;
-    return PAGE_SIZE_OPTIONS.includes(n as (typeof PAGE_SIZE_OPTIONS)[number]) ? n : 25;
-  });
+  const [pageSize, setPageSizeState] = useState<number>(25);
+  const [pageSizeReady, setPageSizeReady] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(pageSize));
-    }
-  }, [pageSize]);
+    fetchPageSize()
+      .then((n) => setPageSizeState(n))
+      .catch(() => {
+        /* fall back to default */
+      })
+      .finally(() => setPageSizeReady(true));
+  }, [fetchPageSize]);
+
+  const setPageSize = (n: number) => {
+    setPageSizeState(n);
+    savePageSize({ data: { pageSize: n as 10 | 25 | 50 | 100 } }).catch(() =>
+      toast.error("Failed to save page size preference"),
+    );
+  };
 
   const load = (nextPage = page) => {
     setLoading(true);
@@ -933,9 +944,10 @@ function RuntimeConfigAuditCard() {
   };
 
   useEffect(() => {
+    if (!pageSizeReady) return;
     load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize]);
+  }, [page, pageSize, pageSizeReady]);
 
   useEffect(() => {
     const onUpdate = () => {
