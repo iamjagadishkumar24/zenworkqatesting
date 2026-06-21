@@ -1,0 +1,48 @@
+import { createFileRoute } from "@tanstack/react-router";
+
+const manifest = {
+  name: "Zenwork QA Portal",
+  short_name: "Zenwork QA",
+  description: "Testing & defect management for tax forms, online filing, and integrations.",
+  start_url: "/",
+  scope: "/",
+  display: "standalone",
+  background_color: "#0b1020",
+  theme_color: "#0b1020",
+  icons: [
+    {
+      src: "/__l5e/assets-v1/d7aa1513-170d-4b5e-a3eb-734ac645e5e2/icon-192.png",
+      sizes: "192x192",
+      type: "image/png",
+      purpose: "any",
+    },
+    {
+      src: "/__l5e/assets-v1/11aed044-7dae-4552-b354-f31b3bd3dd70/icon-512.png",
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "any",
+    },
+    {
+      src: "/__l5e/assets-v1/0bbbc26a-b4a1-4e70-a4a3-0b14322fff0f/maskable-512.png",
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "maskable",
+    },
+  ],
+};
+
+export const Route = createFileRoute("/api/public/manifest")({
+  server: {
+    handlers: {
+      GET: async () =>
+        Response.json(manifest, {
+          headers: {
+            "Content-Type": "application/manifest+json; charset=utf-8",
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }),
+    },
+  },
+});
