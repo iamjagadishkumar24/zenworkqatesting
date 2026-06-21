@@ -182,17 +182,6 @@ function Dashboard() {
       </div>
 
       <section>
-        <Card className="border-border bg-card/70 backdrop-blur">
-          <CardContent className="p-4">
-            <h3 className="mb-2 text-sm font-semibold">At a glance</h3>
-            <p className="text-xs text-muted-foreground">
-              {env ? `Environment: ${env}.` : "All environments."} Tax Year: {taxYear === "all" ? "All" : taxYear}.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section>
         <h3 className="mb-2 text-sm font-semibold">Modules</h3>
         <div
           className="grid gap-2"
