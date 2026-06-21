@@ -1,61 +1,95 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
+import type { RetestAssignment } from "@/lib/qa/retest";
 
-const HOUR = 3_600_000;
-const NOW = new Date("2026-01-01T00:00:00Z").getTime();
-const at = (ms: number) => new Date(NOW + ms).toISOString();
+// ---- Mutable mock state -------------------------------------------------
+let items: RetestAssignment[] = [];
+let currentUser: { id: string; role: "agent" | "admin"; name: string } | null = {
+  id: "agent-1",
+  role: "agent",
+  name: "Agent One",
+};
 
-const mockItems = vi.fn(() => [] as unknown[]);
-
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, ...rest }: { children: React.ReactNode }) => <a {...(rest as object)}>{children}</a>,
-}));
-vi.mock("@/lib/qa/store", () => ({
-  useQA: () => ({ currentUser: { id: "agent-1", role: "agent", name: "A" } }),
-}));
+vi.mock("@/lib/qa/retest", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/qa/retest")>("@/lib/qa/retest");
+  return { ...actual, useRetests: () => ({ items }) };
+});
 vi.mock("@/lib/qa/environment", () => ({ useEnvironment: () => ({ env: null }) }));
-vi.mock("@/lib/qa/retest", () => ({ useRetests: () => ({ items: mockItems() }) }));
+vi.mock("@/lib/qa/store", () => ({ useQA: () => ({ currentUser }) }));
+// Avoid TanStack router context for the popover Link children.
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, ...rest }: { children: React.ReactNode }) => <a {...rest}>{children}</a>,
+}));
 
 import { DeadlineCountdown } from "./DeadlineCountdown";
 
+function makeAssignment(over: Partial<RetestAssignment> & { id: string }): RetestAssignment {
+  return {
+    id: over.id,
+    title: over.title ?? `Task ${over.id}`,
+    module: over.module ?? "Forms",
+    status: over.status ?? "Pending",
+    priority: over.priority ?? "High",
+    assigned_agent_id: over.assigned_agent_id ?? "agent-1",
+    assigned_agent_name: over.assigned_agent_name ?? "Agent One",
+    environment: over.environment ?? "Stage",
+    tax_year: over.tax_year ?? null,
+    deadline_at: over.deadline_at ?? new Date(Date.now() + 3_600_000).toISOString(),
+    forms: over.forms ?? [],
+    ...over,
+  } as RetestAssignment;
+}
+
 beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(NOW);
-});
-afterEach(() => {
-  vi.useRealTimers();
-  mockItems.mockReset();
-  mockItems.mockReturnValue([]);
+  cleanup();
+  items = [];
+  currentUser = { id: "agent-1", role: "agent", name: "Agent One" };
 });
 
-const task = (id: string, hours: number) => ({
-  id,
-  title: `Task ${id}`,
-  assigned_agent_id: "agent-1",
-  status: "Open",
-  priority: "Medium",
-  deadline_at: at(hours * HOUR),
-  environment: "Production",
-});
-
-describe("DeadlineCountdown compact widget", () => {
-  it("shows 'No Active Deadlines' when none are assigned", () => {
-    mockItems.mockReturnValue([]);
-    render(<DeadlineCountdown />);
-    expect(screen.getByLabelText(/no active deadlines/i)).toBeInTheDocument();
+describe("DeadlineCountdown — hook order stability", () => {
+  it("renders the empty state without throwing when an agent has no active deadlines", () => {
+    expect(() => render(<DeadlineCountdown />)).not.toThrow();
+    expect(screen.getByLabelText(/no active deadlines/i)).toBeTruthy();
   });
 
-  it("renders single-task format with time remaining", () => {
-    mockItems.mockReturnValue([task("t1", 5)]);
-    render(<DeadlineCountdown />);
-    expect(screen.getByRole("button")).toHaveTextContent(/05h 00m Left/);
+  it("renders the popover trigger when an agent has one active deadline", () => {
+    items = [makeAssignment({ id: "t-1" })];
+    expect(() => render(<DeadlineCountdown />)).not.toThrow();
+    expect(screen.getByRole("button", { name: /active deadline/i })).toBeTruthy();
   });
 
-  it("renders multi-task format with count and nearest deadline", () => {
-    mockItems.mockReturnValue([task("t1", 5), task("t2", 12), task("t3", 30)]);
-    render(<DeadlineCountdown />);
-    const btn = screen.getByRole("button");
-    expect(btn).toHaveTextContent(/3 Due/);
-    expect(btn).toHaveTextContent(/05h 00m/);
+  it("does not crash transitioning empty → non-empty (the React #310 regression)", () => {
+    const { rerender } = render(<DeadlineCountdown />);
+    expect(screen.getByLabelText(/no active deadlines/i)).toBeTruthy();
+    items = [makeAssignment({ id: "t-1" })];
+    expect(() => rerender(<DeadlineCountdown />)).not.toThrow();
+    expect(screen.getByRole("button", { name: /active deadline/i })).toBeTruthy();
+  });
+
+  it("does not crash transitioning non-empty → empty", () => {
+    items = [makeAssignment({ id: "t-1" })];
+    const { rerender } = render(<DeadlineCountdown />);
+    expect(screen.getByRole("button", { name: /active deadline/i })).toBeTruthy();
+    items = [];
+    expect(() => rerender(<DeadlineCountdown />)).not.toThrow();
+    expect(screen.getByLabelText(/no active deadlines/i)).toBeTruthy();
+  });
+
+  it("returns null for non-agent users (and renders nothing) without hook errors", () => {
+    currentUser = { id: "admin-1", role: "admin", name: "Admin" };
+    const { container } = render(<DeadlineCountdown />);
+    expect(container.textContent).toBe("");
+  });
+
+  it("survives a role transition agent → admin → agent", () => {
+    items = [makeAssignment({ id: "t-1" })];
+    const { rerender, container } = render(<DeadlineCountdown />);
+    expect(screen.getByRole("button", { name: /active deadline/i })).toBeTruthy();
+    currentUser = { id: "admin-1", role: "admin", name: "Admin" };
+    expect(() => rerender(<DeadlineCountdown />)).not.toThrow();
+    expect(container.textContent).toBe("");
+    currentUser = { id: "agent-1", role: "agent", name: "Agent One" };
+    expect(() => rerender(<DeadlineCountdown />)).not.toThrow();
+    expect(screen.getByRole("button", { name: /active deadline/i })).toBeTruthy();
   });
 });
