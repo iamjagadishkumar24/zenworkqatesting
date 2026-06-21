@@ -476,6 +476,43 @@ function AgentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!purgeTarget} onOpenChange={(o) => !o && setPurgeTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently delete {purgeTarget?.name}?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  This removes every record tied to <strong>{purgeTarget?.name}</strong> across the system.
+                  It cannot be undone.
+                </p>
+                {purgeLoading && <p className="text-sm text-muted-foreground">Counting related records…</p>}
+                {purgePreview && (
+                  <ul className="rounded-md border bg-muted/40 p-3 text-sm">
+                    <li>Defects deleted: <strong>{purgePreview.defects}</strong></li>
+                    <li>Retest assignments deleted: <strong>{purgePreview.retest_assignments}</strong></li>
+                    <li>Notifications deleted: <strong>{purgePreview.notifications}</strong></li>
+                    <li>Forms cleared (assignee blanked): <strong>{purgePreview.forms_cleared}</strong></li>
+                    <li>Pending retest invites removed: <strong>{purgePreview.pending_retests}</strong></li>
+                    <li className="mt-1 border-t pt-1">Total rows affected: <strong>{purgePreview.total}</strong></li>
+                  </ul>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={purgeRunning}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmPermanentDelete}
+              disabled={purgeRunning || purgeLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {purgeRunning ? "Purging…" : "Permanently delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
