@@ -16,13 +16,25 @@ const EMAIL = process.env.PLAYWRIGHT_USER_EMAIL ?? process.env.PLAYWRIGHT_AGENT_
 const PASSWORD =
   process.env.PLAYWRIGHT_USER_PASSWORD ?? process.env.PLAYWRIGHT_AGENT_PASSWORD;
 
+// Optional second account for the multi-session test. Falls back to admin
+// creds, then to a second agent. The two sessions only need to be distinct
+// logins — the role doesn't matter, the menu is identical.
+const EMAIL_B =
+  process.env.PLAYWRIGHT_USER_B_EMAIL ??
+  process.env.PLAYWRIGHT_ADMIN_EMAIL ??
+  process.env.PLAYWRIGHT_AGENT_B_EMAIL;
+const PASSWORD_B =
+  process.env.PLAYWRIGHT_USER_B_PASSWORD ??
+  process.env.PLAYWRIGHT_ADMIN_PASSWORD ??
+  process.env.PLAYWRIGHT_AGENT_B_PASSWORD;
+
 test.describe("RealtimeHealthMenu on Defects + Reports", () => {
   test.skip(!EMAIL || !PASSWORD, "Set PLAYWRIGHT_USER_EMAIL/PASSWORD to run.");
 
-  async function login(page: Page) {
+  async function login(page: Page, email = EMAIL!, password = PASSWORD!) {
     await page.goto("/auth");
-    await page.getByLabel(/email/i).fill(EMAIL!);
-    await page.getByLabel(/password/i).fill(PASSWORD!);
+    await page.getByLabel(/email/i).fill(email);
+    await page.getByLabel(/password/i).fill(password);
     await page.getByRole("button", { name: /sign in|log in/i }).click();
     await page.waitForURL(/\/(dashboard|my-reported-errors)/);
   }
@@ -98,4 +110,70 @@ test.describe("RealtimeHealthMenu on Defects + Reports", () => {
       expect(await getReconnectCount(page)).toBe(settled);
     });
   }
+
+  test("two sessions track reconnect counters and status independently", async ({
+    browser,
+  }) => {
+    test.skip(
+      !EMAIL_B || !PASSWORD_B,
+      "Set PLAYWRIGHT_USER_B_* (or PLAYWRIGHT_ADMIN_*) to run the multi-session test.",
+    );
+
+    const ctxA = await browser.newContext();
+    const ctxB = await browser.newContext();
+    const pageA = await ctxA.newPage();
+    const pageB = await ctxB.newPage();
+
+    try {
+      await Promise.all([login(pageA), login(pageB, EMAIL_B!, PASSWORD_B!)]);
+
+      // Land each session on a different route to also confirm per-page
+      // independence: Defects (session A) vs Reports (session B).
+      await pageA.goto("/my-reported-errors");
+      await pageB.goto("/reports");
+
+      await Promise.all([waitForMockHook(pageA), waitForMockHook(pageB)]);
+      await Promise.all([openMenu(pageA), openMenu(pageB)]);
+
+      const beforeA = await getReconnectCount(pageA);
+      const beforeB = await getReconnectCount(pageB);
+
+      // Drop ONLY session A. Session B must remain connected and its
+      // reconnect counter must not move.
+      await setStatus(pageA, "reconnecting");
+      await bumpReconnect(pageA);
+
+      await expect.poll(() => getStatusText(pageA)).toBe("reconnecting");
+      await expect.poll(() => getReconnectCount(pageA)).toBe(beforeA + 1);
+      expect(await getStatusText(pageB)).not.toBe("reconnecting");
+      expect(await getReconnectCount(pageB)).toBe(beforeB);
+
+      // Now bump session B twice while session A is still down. Counters
+      // must move independently in each window.
+      await setStatus(pageB, "reconnecting");
+      await bumpReconnect(pageB);
+      await bumpReconnect(pageB);
+      await expect.poll(() => getReconnectCount(pageB)).toBe(beforeB + 2);
+      // Session A unaffected by B's bumps.
+      expect(await getReconnectCount(pageA)).toBe(beforeA + 1);
+
+      // Restore A only. B stays in reconnecting state.
+      await setStatus(pageA, "connected");
+      await expect.poll(() => getStatusText(pageA)).toBe("connected");
+      expect(await getStatusText(pageB)).toBe("reconnecting");
+
+      // Restore B. Both counters should now be stable.
+      await setStatus(pageB, "connected");
+      await expect.poll(() => getStatusText(pageB)).toBe("connected");
+
+      const settledA = await getReconnectCount(pageA);
+      const settledB = await getReconnectCount(pageB);
+      await pageA.waitForTimeout(2_000);
+      expect(await getReconnectCount(pageA)).toBe(settledA);
+      expect(await getReconnectCount(pageB)).toBe(settledB);
+    } finally {
+      await ctxA.close();
+      await ctxB.close();
+    }
+  });
 });
