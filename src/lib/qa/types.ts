@@ -64,7 +64,8 @@ export type Module =
   | "Chatbot Testing"
   | "Excel Import Testing"
   | "Functionality Testing"
-  | "Tax1099 Features";
+  | "Tax1099 Features"
+  | "Zenwork Payments";
 
 export type QbDesktopCategory =
   | "Web Connector"
@@ -87,7 +88,8 @@ export type TestingModule =
   | "2290 Forms"
   | "Chatbot Testing"
   | "Functionality Testing"
-  | "Tax1099 Features";
+  | "Tax1099 Features"
+  | "Zenwork Payments";
 
 export type FormItem = {
   id: string;

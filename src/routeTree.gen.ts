@@ -13,6 +13,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppZenworkPaymentsRouteImport } from './routes/_app.zenwork-payments'
 import { Route as AppTax1099FeaturesRouteImport } from './routes/_app.tax1099-features'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSelectEnvironmentRouteImport } from './routes/_app.select-environment'
@@ -54,6 +55,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppZenworkPaymentsRoute = AppZenworkPaymentsRouteImport.update({
+  id: '/zenwork-payments',
+  path: '/zenwork-payments',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppTax1099FeaturesRoute = AppTax1099FeaturesRouteImport.update({
   id: '/tax1099-features',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
+  '/zenwork-payments': typeof AppZenworkPaymentsRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
 }
 export interface FileRoutesByTo {
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
+  '/zenwork-payments': typeof AppZenworkPaymentsRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
 }
 export interface FileRoutesById {
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/_app/select-environment': typeof AppSelectEnvironmentRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tax1099-features': typeof AppTax1099FeaturesRoute
+  '/_app/zenwork-payments': typeof AppZenworkPaymentsRoute
   '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
 }
 export interface FileRouteTypes {
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/select-environment'
     | '/settings'
     | '/tax1099-features'
+    | '/zenwork-payments'
     | '/tasks/$taskId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/select-environment'
     | '/settings'
     | '/tax1099-features'
+    | '/zenwork-payments'
     | '/tasks/$taskId'
   id:
     | '__root__'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/_app/select-environment'
     | '/_app/settings'
     | '/_app/tax1099-features'
+    | '/_app/zenwork-payments'
     | '/_app/tasks/$taskId'
   fileRoutesById: FileRoutesById
 }
@@ -370,6 +382,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/zenwork-payments': {
+      id: '/_app/zenwork-payments'
+      path: '/zenwork-payments'
+      fullPath: '/zenwork-payments'
+      preLoaderRoute: typeof AppZenworkPaymentsRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/tax1099-features': {
       id: '/_app/tax1099-features'
@@ -550,6 +569,7 @@ interface AppRouteChildren {
   AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTax1099FeaturesRoute: typeof AppTax1099FeaturesRoute
+  AppZenworkPaymentsRoute: typeof AppZenworkPaymentsRoute
   AppTasksTaskIdRoute: typeof AppTasksTaskIdRoute
 }
 
@@ -575,6 +595,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTax1099FeaturesRoute: AppTax1099FeaturesRoute,
+  AppZenworkPaymentsRoute: AppZenworkPaymentsRoute,
   AppTasksTaskIdRoute: AppTasksTaskIdRoute,
 }
 
