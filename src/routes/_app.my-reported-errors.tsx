@@ -42,6 +42,7 @@ import type { DefectStatus, Priority } from "@/lib/qa/types";
 import { AGENTS, MODULE_OPTIONS } from "@/lib/qa/constants";
 import { toast } from "sonner";
 import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
+import { RealtimeHealthMenu } from "@/components/qa/RealtimeHealthMenu";
 import {
   filterDefectsAdmin,
   type AdminDefectFilters,
