@@ -67,6 +67,35 @@ function AgentsPage() {
     { userId: string; name: string; email: string; role: "admin" | "agent"; active: boolean } | null
   >(null);
   const [editSaving, setEditSaving] = useState(false);
+  const [purgeTarget, setPurgeTarget] = useState<{ name: string } | null>(null);
+  const [purgePreview, setPurgePreview] = useState<PurgeCounts | null>(null);
+  const [purgeLoading, setPurgeLoading] = useState(false);
+  const [purgeRunning, setPurgeRunning] = useState(false);
+
+  useEffect(() => {
+    if (!purgeTarget) { setPurgePreview(null); return; }
+    let cancelled = false;
+    setPurgeLoading(true);
+    void (async () => {
+      const { data, error } = await supabase.rpc("preview_agent_purge", { _name: purgeTarget.name });
+      if (cancelled) return;
+      setPurgeLoading(false);
+      if (error) { toast.error(error.message); setPurgeTarget(null); return; }
+      setPurgePreview(data as unknown as PurgeCounts);
+    })();
+    return () => { cancelled = true; };
+  }, [purgeTarget]);
+
+  const confirmPermanentDelete = async () => {
+    if (!purgeTarget) return;
+    setPurgeRunning(true);
+    const { data, error } = await supabase.rpc("purge_agent_data", { _name: purgeTarget.name });
+    setPurgeRunning(false);
+    if (error) { toast.error(error.message); return; }
+    const c = (data ?? {}) as { total_rows?: number };
+    toast.success(`${purgeTarget.name} permanently deleted (${c.total_rows ?? 0} records purged).`);
+    setPurgeTarget(null);
+  };
 
   useEffect(() => {
     if (!currentUser || currentUser.role !== "admin") return;
