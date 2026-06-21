@@ -332,14 +332,14 @@ function AuthEventsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.length === 0 ? (
+              {filteredRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
                     {loading ? "Loading…" : "No auth events for the selected filters."}
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((r) => (
+                filteredRows.map((r) => (
                   <TableRow
                     key={r.id}
                     className="cursor-pointer hover:bg-muted/50"
