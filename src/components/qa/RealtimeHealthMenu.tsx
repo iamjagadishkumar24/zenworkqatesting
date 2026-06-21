@@ -1,24 +1,11 @@
-import { useEffect, useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { RealtimeStatus } from "./RealtimeStatus";
-import { useQA } from "@/lib/qa/store";
-
 /**
- * Realtime health dropdown. Click the status pill to inspect the active
- * channel name, the most recent realtime event timestamp (relative + ISO),
- * and the explicit reconnect retry counter — the three signals needed to
- * diagnose a stale dashboard without opening DevTools.
+ * Realtime health dropdown — removed from the UI per product requirement.
+ * Kept as a no-op so existing route imports keep compiling. Realtime itself
+ * still runs in the QA store, gated by the backend `liveEnabled` toggle.
  */
-function relative(iso: string | null, now: number): string {
-  if (!iso) return "never";
-  const diff = Math.max(0, now - new Date(iso).getTime());
-  if (diff < 1000) return "just now";
-  if (diff < 60_000) return `${Math.floor(diff / 1000)}s ago`;
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-  return `${Math.floor(diff / 3_600_000)}h ago`;
+export function RealtimeHealthMenu(_props: { className?: string }) {
+  return null;
 }
-
-export function RealtimeHealthMenu({ className }: { className?: string }) {
   const {
     realtimeStatus,
     realtimeChannelName,
