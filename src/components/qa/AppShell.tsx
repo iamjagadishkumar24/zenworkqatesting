@@ -135,22 +135,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           collapsed ? "w-16" : "w-64",
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <BrandLogo className="h-8 w-8" />
-              <span className="font-semibold text-sidebar-foreground">Zenwork Testing</span>
-            </div>
+        <div
+          className={cn(
+            "flex h-16 items-center border-b border-sidebar-border",
+            collapsed ? "flex-col justify-center gap-1 px-2 py-2" : "justify-between px-4",
           )}
-          {collapsed && (
+        >
+          {!collapsed ? (
+            <div className="flex min-w-0 items-center gap-2">
+              <BrandLogo className="h-8 w-8" />
+              <span className="truncate font-semibold text-sidebar-foreground">
+                Zenwork Testing
+              </span>
+            </div>
+          ) : (
             <BrandLogo className="h-7 w-7" />
           )}
           <button
             onClick={() => setCollapsed((c) => !c)}
-            className="grid h-8 w-8 place-items-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent"
+            className={cn(
+              "grid place-items-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent",
+              collapsed ? "h-5 w-5" : "h-8 w-8",
+            )}
             aria-label="Toggle sidebar"
           >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         </div>
         <nav className="flex flex-col gap-1 p-3">
