@@ -39,6 +39,7 @@ function patchFetch() {
         at,
       });
       LAST_REQUESTS.length = Math.min(LAST_REQUESTS.length, 20);
+      (window as Window).__lastNetworkRequest = LAST_REQUESTS[0];
       return res;
     } catch (err) {
       LAST_REQUESTS.unshift({
@@ -49,6 +50,7 @@ function patchFetch() {
         error: err instanceof Error ? err.message : String(err),
       });
       LAST_REQUESTS.length = Math.min(LAST_REQUESTS.length, 20);
+      (window as Window).__lastNetworkRequest = LAST_REQUESTS[0];
       throw err;
     }
   };

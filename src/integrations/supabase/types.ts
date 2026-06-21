@@ -414,6 +414,57 @@ export type Database = {
         }
         Relationships: []
       }
+      error_logs: {
+        Row: {
+          actor_email: string | null
+          actor_id: string | null
+          actor_role: string | null
+          component: string | null
+          created_at: string
+          id: string
+          last_request: Json | null
+          message: string | null
+          metadata: Json | null
+          route: string | null
+          source: string | null
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          component?: string | null
+          created_at?: string
+          id?: string
+          last_request?: Json | null
+          message?: string | null
+          metadata?: Json | null
+          route?: string | null
+          source?: string | null
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          component?: string | null
+          created_at?: string
+          id?: string
+          last_request?: Json | null
+          message?: string | null
+          metadata?: Json | null
+          route?: string | null
+          source?: string | null
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       export_audit_log: {
         Row: {
           created_at: string
