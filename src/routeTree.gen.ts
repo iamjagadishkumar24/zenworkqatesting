@@ -37,6 +37,8 @@ import { Route as AppAuditLogRouteImport } from './routes/_app.audit-log'
 import { Route as AppAgentsRouteImport } from './routes/_app.agents'
 import { Route as App990FormsRouteImport } from './routes/_app.990-forms'
 import { Route as App2290FormsRouteImport } from './routes/_app.2290-forms'
+import { Route as ApiPublicManifestRouteImport } from './routes/api/public/manifest'
+import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as AppTasksTaskIdRouteImport } from './routes/_app.tasks.$taskId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -178,6 +180,16 @@ const App2290FormsRoute = App2290FormsRouteImport.update({
   path: '/2290-forms',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicManifestRoute = ApiPublicManifestRouteImport.update({
+  id: '/api/public/manifest',
+  path: '/api/public/manifest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAppVersionRoute = ApiPublicAppVersionRouteImport.update({
+  id: '/api/public/app-version',
+  path: '/api/public/app-version',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppTasksTaskIdRoute = AppTasksTaskIdRouteImport.update({
   id: '/tasks/$taskId',
   path: '/tasks/$taskId',
@@ -213,6 +225,8 @@ export interface FileRoutesByFullPath {
   '/tax1099-features': typeof AppTax1099FeaturesRoute
   '/zenwork-payments': typeof AppZenworkPaymentsRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
+  '/api/public/app-version': typeof ApiPublicAppVersionRoute
+  '/api/public/manifest': typeof ApiPublicManifestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -243,6 +257,8 @@ export interface FileRoutesByTo {
   '/tax1099-features': typeof AppTax1099FeaturesRoute
   '/zenwork-payments': typeof AppZenworkPaymentsRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
+  '/api/public/app-version': typeof ApiPublicAppVersionRoute
+  '/api/public/manifest': typeof ApiPublicManifestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -275,6 +291,8 @@ export interface FileRoutesById {
   '/_app/tax1099-features': typeof AppTax1099FeaturesRoute
   '/_app/zenwork-payments': typeof AppZenworkPaymentsRoute
   '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
+  '/api/public/app-version': typeof ApiPublicAppVersionRoute
+  '/api/public/manifest': typeof ApiPublicManifestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -307,6 +325,8 @@ export interface FileRouteTypes {
     | '/tax1099-features'
     | '/zenwork-payments'
     | '/tasks/$taskId'
+    | '/api/public/app-version'
+    | '/api/public/manifest'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -337,6 +357,8 @@ export interface FileRouteTypes {
     | '/tax1099-features'
     | '/zenwork-payments'
     | '/tasks/$taskId'
+    | '/api/public/app-version'
+    | '/api/public/manifest'
   id:
     | '__root__'
     | '/'
@@ -368,6 +390,8 @@ export interface FileRouteTypes {
     | '/_app/tax1099-features'
     | '/_app/zenwork-payments'
     | '/_app/tasks/$taskId'
+    | '/api/public/app-version'
+    | '/api/public/manifest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -375,6 +399,8 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
+  ApiPublicManifestRoute: typeof ApiPublicManifestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -575,6 +601,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof App2290FormsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/manifest': {
+      id: '/api/public/manifest'
+      path: '/api/public/manifest'
+      fullPath: '/api/public/manifest'
+      preLoaderRoute: typeof ApiPublicManifestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/app-version': {
+      id: '/api/public/app-version'
+      path: '/api/public/app-version'
+      fullPath: '/api/public/app-version'
+      preLoaderRoute: typeof ApiPublicAppVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/tasks/$taskId': {
       id: '/_app/tasks/$taskId'
       path: '/tasks/$taskId'
@@ -648,6 +688,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
+  ApiPublicManifestRoute: ApiPublicManifestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

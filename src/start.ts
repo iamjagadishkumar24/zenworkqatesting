@@ -23,8 +23,23 @@ const SECURITY_HEADERS: Record<string, string> = {
   ].join("; "),
 };
 
+function applyCacheHeaders(request: Request, response: Response) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+  const contentType = response.headers.get("content-type") ?? "";
+  if (path === "/api/public/app-version" || path === "/api/public/manifest" || path === "/manifest.webmanifest" || contentType.includes("text/html")) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+    return;
+  }
+  if (/\.(?:js|mjs|css|woff2?|png|jpe?g|webp|svg|ico)$/i.test(path)) {
+    response.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  }
+}
+
 // Apply hardened security headers to every SSR/HTTP response.
-const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+const securityHeadersMiddleware = createMiddleware().server(async ({ next, request }) => {
   const result = await next();
   const raw = result as unknown;
   const target: Response | undefined =
@@ -37,6 +52,7 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => 
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
       if (!target.headers.has(k)) target.headers.set(k, v);
     }
+    applyCacheHeaders(request, target);
   }
   return result;
 });
