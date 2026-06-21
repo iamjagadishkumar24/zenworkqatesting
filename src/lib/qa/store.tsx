@@ -392,7 +392,8 @@ export function QAProvider({ children }: { children: ReactNode }) {
         tax_year: d.taxYear || null,
         status: d.status, priority: d.priority, severity: d.severity,
         assigned_agent: d.assignedAgent, created_by: me.name, updated_by: me.name,
-      });
+        quickbooks_desktop_category: d.qbDesktopCategory ?? null,
+      } as never);
       if (error) return { ok: false, error: error.message };
       return { ok: true };
     },
@@ -414,6 +415,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         taxYear: "tax_year",
         status: "status", priority: "priority", severity: "severity",
         assignedAgent: "assigned_agent",
+        qbDesktopCategory: "quickbooks_desktop_category",
       };
       for (const [k, dbk] of Object.entries(map)) {
         if (k in patch) dbPatch[dbk] = (patch as Record<string, unknown>)[k];
