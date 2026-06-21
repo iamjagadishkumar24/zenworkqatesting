@@ -69,6 +69,28 @@ export function TestingModule({
         !["Fixed", "Closed"].includes(d.status),
     ).length;
 
+  // Per-card status breakdown — surfaced for the Tax1099 PDF feature card
+  // (and reusable for any other card). Buckets: Open, In Progress,
+  // Retest Required, Fixed, Invalid. Counts come from the same realtime
+  // store the dashboard uses, so they update live.
+  const statusBreakdown = (name: string) => {
+    const scoped = defects.filter(
+      (d) =>
+        d.module === module &&
+        d.formFeature.includes(name) &&
+        (!env || d.environment === env),
+    );
+    return {
+      open: scoped.filter(
+        (d) => !["Fixed", "Closed", "In Progress", "Retest Required"].includes(d.status),
+      ).length,
+      inProgress: scoped.filter((d) => d.status === "In Progress").length,
+      retest: scoped.filter((d) => d.status === "Retest Required").length,
+      fixed: scoped.filter((d) => d.status === "Fixed" || d.status === "Closed").length,
+      invalid: scoped.filter((d) => d.validity === "Invalid").length,
+    };
+  };
+
   const scopedDefects = useMemo(() => {
     if (!picked) return [];
     const me = currentUser?.name ?? "";
