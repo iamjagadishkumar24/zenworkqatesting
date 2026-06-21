@@ -30,14 +30,37 @@ function SelectEnvironment() {
       </div>
       <div className="grid w-full gap-4 sm:grid-cols-2">
         {[
-          { id: "Production" as const, Icon: Rocket, tagline: "Live customer environment", tone: "from-emerald-500/15 to-emerald-500/5", ring: "ring-emerald-500/30", dot: "bg-emerald-500" },
-          { id: "Stage" as const, Icon: FlaskConical, tagline: "Pre-release / QA environment", tone: "from-amber-500/15 to-amber-500/5", ring: "ring-amber-500/30", dot: "bg-amber-500" },
+          {
+            id: "Production" as const,
+            Icon: Rocket,
+            tagline: "Live customer environment",
+            tone: "from-emerald-500/15 to-emerald-500/5",
+            ring: "ring-emerald-500/30",
+            dot: "bg-emerald-500",
+          },
+          {
+            id: "Stage" as const,
+            Icon: FlaskConical,
+            tagline: "Pre-release / QA environment",
+            tone: "from-amber-500/15 to-amber-500/5",
+            ring: "ring-amber-500/30",
+            dot: "bg-amber-500",
+          },
         ].map((opt) => (
           <button key={opt.id} onClick={() => pick(opt.id)} className="text-left">
-            <Card className={cn("border-border ring-1 ring-inset bg-gradient-to-br transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)]", opt.tone, opt.ring)}>
+            <Card
+              className={cn(
+                "border-border ring-1 ring-inset bg-gradient-to-br transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)]",
+                opt.tone,
+                opt.ring,
+              )}
+            >
               <CardContent className="p-6">
                 <div className="flex items-center gap-3">
-                  <div className="grid h-12 w-12 place-items-center rounded-xl text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
+                  <div
+                    className="grid h-12 w-12 place-items-center rounded-xl text-primary-foreground"
+                    style={{ background: "var(--gradient-primary)" }}
+                  >
                     <opt.Icon className="h-6 w-6" />
                   </div>
                   <div className="flex-1">

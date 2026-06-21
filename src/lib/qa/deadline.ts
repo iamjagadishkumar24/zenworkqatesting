@@ -4,9 +4,9 @@ export type DeadlineTier = "none" | "safe" | "soon" | "urgent" | "critical" | "o
 
 export type DeadlineInfo = {
   tier: DeadlineTier;
-  msRemaining: number;        // negative when overdue
-  label: string;              // "1d 04h 23m 15s" or "02h 15m"
-  shortLabel: string;         // compact: "1d 04h 23m"
+  msRemaining: number; // negative when overdue
+  label: string; // "1d 04h 23m 15s" or "02h 15m"
+  shortLabel: string; // compact: "1d 04h 23m"
   isOverdue: boolean;
 };
 
@@ -14,7 +14,9 @@ const DAY = 86_400_000;
 const HOUR = 3_600_000;
 const MIN = 60_000;
 
-function pad(n: number) { return n.toString().padStart(2, "0"); }
+function pad(n: number) {
+  return n.toString().padStart(2, "0");
+}
 
 export function deadlineInfo(
   deadlineAt: string | null | undefined,
@@ -41,9 +43,8 @@ export function deadlineInfo(
   const h = Math.floor((ms % DAY) / HOUR);
   const m = Math.floor((ms % HOUR) / MIN);
   const s = Math.floor((ms % MIN) / 1000);
-  const label = d > 0
-    ? `${d}d ${pad(h)}h ${pad(m)}m ${pad(s)}s`
-    : `${pad(h)}h ${pad(m)}m ${pad(s)}s`;
+  const label =
+    d > 0 ? `${d}d ${pad(h)}h ${pad(m)}m ${pad(s)}s` : `${pad(h)}h ${pad(m)}m ${pad(s)}s`;
   const shortLabel = d > 0 ? `${d}d ${pad(h)}h ${pad(m)}m` : `${pad(h)}h ${pad(m)}m`;
   let tier: DeadlineTier;
   if (ms < HOUR) tier = "critical";

@@ -5,7 +5,11 @@ import type { Defect, DefectStatus, Priority } from "@/lib/qa/types";
 import { supabase } from "@/integrations/supabase/client";
 import { encodeRetestTitle } from "@/lib/qa/retestLink";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -13,20 +17,45 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { DefectStatusBadge, PriorityBadge } from "./StatusBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import {
-  MessageSquare, History as HistoryIcon,
-  Link as LinkIcon, ExternalLink, ShieldCheck, ShieldX,
-  Activity as ActivityIcon, Pencil, UserPlus, Plus, MessageCircle, Check, X,
+  MessageSquare,
+  History as HistoryIcon,
+  Link as LinkIcon,
+  ExternalLink,
+  ShieldCheck,
+  ShieldX,
+  Activity as ActivityIcon,
+  Pencil,
+  UserPlus,
+  Plus,
+  MessageCircle,
+  Check,
+  X,
 } from "lucide-react";
 
-const STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Retest Passed","Retest Failed","Reopened","Closed"];
-const LEVELS: Priority[] = ["Low","Medium","High","Critical"];
-const MODULES = ["1099 Forms","990 Forms","Integrations","1099 Online"] as const;
+const STATUSES: DefectStatus[] = [
+  "Reported",
+  "Pending",
+  "Ongoing",
+  "In Progress",
+  "Fixed",
+  "Retest Required",
+  "Retest Passed",
+  "Retest Failed",
+  "Reopened",
+  "Closed",
+];
+const LEVELS: Priority[] = ["Low", "Medium", "High", "Critical"];
+const MODULES = ["1099 Forms", "990 Forms", "Integrations", "1099 Online"] as const;
 
 // Single review-status dropdown shown to admins. Maps to defect status/validity.
 const ADMIN_REVIEW_STATUSES = [
@@ -40,11 +69,12 @@ const ADMIN_REVIEW_STATUSES = [
   "Fixed",
   "Closed",
 ] as const;
-type AdminReviewStatus = typeof ADMIN_REVIEW_STATUSES[number];
+type AdminReviewStatus = (typeof ADMIN_REVIEW_STATUSES)[number];
 
 function currentAdminReview(d: Defect): AdminReviewStatus {
   if (d.validity === "Invalid") return "Invalid Error";
-  if (d.validity === "Valid" && (d.status === "Reported" || d.status === "Pending")) return "Valid Error";
+  if (d.validity === "Valid" && (d.status === "Reported" || d.status === "Pending"))
+    return "Valid Error";
   if (d.status === "Retest Passed") return "Retest Passed";
   if (d.status === "Retest Failed") return "Retest Failed";
   if (d.status === "Retest Required") return "Retest Required";
@@ -56,12 +86,18 @@ function currentAdminReview(d: Defect): AdminReviewStatus {
 
 function moduleRoute(module: string): string {
   switch (module) {
-    case "Integrations": return "/integrations";
-    case "Chatbot": return "/chatbot-testing";
-    case "Functionality": return "/functionality-testing";
-    case "Tax1099": return "/tax1099-features";
-    case "2290 Forms": return "/2290-forms";
-    default: return "/forms";
+    case "Integrations":
+      return "/integrations";
+    case "Chatbot":
+      return "/chatbot-testing";
+    case "Functionality":
+      return "/functionality-testing";
+    case "Tax1099":
+      return "/tax1099-features";
+    case "2290 Forms":
+      return "/2290-forms";
+    default:
+      return "/forms";
   }
 }
 
@@ -94,14 +130,26 @@ const LINK_FIELDS: { key: keyof Defect; label: string }[] = [
 ];
 
 export function DefectDetailSheet({
-  defectId, open, onOpenChange, initialEdit = false,
+  defectId,
+  open,
+  onOpenChange,
+  initialEdit = false,
 }: {
   defectId: string | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   initialEdit?: boolean;
 }) {
-  const { defects, audit, users, currentUser, updateDefect, addComment, updateComment, deleteComment } = useQA();
+  const {
+    defects,
+    audit,
+    users,
+    currentUser,
+    updateDefect,
+    addComment,
+    updateComment,
+    deleteComment,
+  } = useQA();
   const defect = defects.find((d) => d.id === defectId) ?? null;
   const [comment, setComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -120,7 +168,15 @@ export function DefectDetailSheet({
   type TimelineItem = {
     id: string;
     at: string;
-    kind: "created" | "comment" | "status" | "assigned_agent" | "priority" | "validity" | "title" | "edit";
+    kind:
+      | "created"
+      | "comment"
+      | "status"
+      | "assigned_agent"
+      | "priority"
+      | "validity"
+      | "title"
+      | "edit";
     actor: string;
     summary: string;
     detail?: string;
@@ -138,16 +194,26 @@ export function DefectDetailSheet({
     });
     defect.comments.forEach((c) => {
       items.push({
-        id: `c-${c.id}`, at: c.createdAt, kind: "comment", actor: c.author,
-        summary: "Added a comment", detail: c.text,
+        id: `c-${c.id}`,
+        at: c.createdAt,
+        kind: "comment",
+        actor: c.author,
+        summary: "Added a comment",
+        detail: c.text,
       });
     });
     history.forEach((h) => {
-      const kind = (["status","assigned_agent","priority","validity","title"] as const)
-        .includes(h.field as never) ? (h.field as TimelineItem["kind"]) : "edit";
+      const kind = (
+        ["status", "assigned_agent", "priority", "validity", "title"] as const
+      ).includes(h.field as never)
+        ? (h.field as TimelineItem["kind"])
+        : "edit";
       const label = h.field.replace(/_/g, " ");
       items.push({
-        id: `h-${h.id}`, at: h.changedAt, kind, actor: h.changedBy,
+        id: `h-${h.id}`,
+        at: h.changedAt,
+        kind,
+        actor: h.changedBy,
         summary: `Changed ${label}`,
         detail: `${h.oldValue ?? "—"} → ${h.newValue ?? "—"}`,
       });
@@ -172,12 +238,20 @@ export function DefectDetailSheet({
     );
   }
 
-  const startEdit = () => { setDraft(defect); setEditMode(true); };
-  const cancelEdit = () => { setEditMode(false); setDraft({}); };
+  const startEdit = () => {
+    setDraft(defect);
+    setEditMode(true);
+  };
+  const cancelEdit = () => {
+    setEditMode(false);
+    setDraft({});
+  };
   const save = async () => {
     const res = await updateDefect(defect.id, draft);
-    if (res.ok) { toast.success("Error updated"); setEditMode(false); }
-    else if (!res.conflict) toast.error(res.error ?? "Update failed");
+    if (res.ok) {
+      toast.success("Error updated");
+      setEditMode(false);
+    } else if (!res.conflict) toast.error(res.error ?? "Update failed");
   };
 
   const quickPatch = async (patch: Partial<Defect>, msg: string) => {
@@ -196,8 +270,14 @@ export function DefectDetailSheet({
       toast.error("Original reporter not found — cannot assign retest.");
       return;
     }
-    const ty = (defect.taxYear && /^\d{4}$/.test(defect.taxYear)) ? defect.taxYear : String(new Date().getFullYear());
-    const { data: nextId, error: idErr } = await supabase.rpc("next_scoped_id", { _kind: "task", _tax_year: ty });
+    const ty =
+      defect.taxYear && /^\d{4}$/.test(defect.taxYear)
+        ? defect.taxYear
+        : String(new Date().getFullYear());
+    const { data: nextId, error: idErr } = await supabase.rpc("next_scoped_id", {
+      _kind: "task",
+      _tax_year: ty,
+    });
     if (idErr || !nextId) {
       toast.error(idErr?.message ?? "Could not allocate task id");
       return;
@@ -240,11 +320,18 @@ export function DefectDetailSheet({
     }
   };
 
-  const v = (k: keyof Defect) => (editMode ? (draft[k] as string | undefined) ?? "" : (defect[k] as string | undefined) ?? "");
+  const v = (k: keyof Defect) =>
+    editMode ? ((draft[k] as string | undefined) ?? "") : ((defect[k] as string | undefined) ?? "");
   const set = (k: keyof Defect, val: string) => setDraft((d) => ({ ...d, [k]: val }));
 
   return (
-    <Sheet open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) cancelEdit(); }}>
+    <Sheet
+      open={open}
+      onOpenChange={(o) => {
+        onOpenChange(o);
+        if (!o) cancelEdit();
+      }}
+    >
       <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
@@ -260,8 +347,8 @@ export function DefectDetailSheet({
               {defect.validity === "Valid"
                 ? "Valid Error"
                 : defect.validity === "Invalid"
-                ? "Invalid Error"
-                : "Pending Review"}
+                  ? "Invalid Error"
+                  : "Pending Review"}
             </span>
           </SheetDescription>
         </SheetHeader>
@@ -269,11 +356,15 @@ export function DefectDetailSheet({
         {/* Quick actions */}
         <div className="mt-4 flex flex-wrap gap-2">
           {canEdit && !editMode && (
-            <Button size="sm" onClick={startEdit}>Edit</Button>
+            <Button size="sm" onClick={startEdit}>
+              Edit
+            </Button>
           )}
           {isAdmin && (
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Admin review</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Admin review
+              </span>
               <Select
                 value={currentAdminReview(defect)}
                 onValueChange={(v) => void applyAdminReview(v as AdminReviewStatus)}
@@ -283,11 +374,17 @@ export function DefectDetailSheet({
                 </SelectTrigger>
                 <SelectContent>
                   {ADMIN_REVIEW_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" variant="ghost" onClick={() => quickPatch({ status: "Reopened" }, "Reopened")}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => quickPatch({ status: "Reopened" }, "Reopened")}
+              >
                 Reopen
               </Button>
             </div>
@@ -297,65 +394,159 @@ export function DefectDetailSheet({
         <Tabs defaultValue="details" className="mt-4">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="links"><LinkIcon className="mr-1 h-3 w-3" />Links</TabsTrigger>
-            <TabsTrigger value="comments"><MessageSquare className="mr-1 h-3 w-3" />Comments ({defect.comments.length})</TabsTrigger>
-            <TabsTrigger value="history"><HistoryIcon className="mr-1 h-3 w-3" />History ({history.length})</TabsTrigger>
-            <TabsTrigger value="activity"><ActivityIcon className="mr-1 h-3 w-3" />Activity ({timeline.length})</TabsTrigger>
+            <TabsTrigger value="links">
+              <LinkIcon className="mr-1 h-3 w-3" />
+              Links
+            </TabsTrigger>
+            <TabsTrigger value="comments">
+              <MessageSquare className="mr-1 h-3 w-3" />
+              Comments ({defect.comments.length})
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              <HistoryIcon className="mr-1 h-3 w-3" />
+              History ({history.length})
+            </TabsTrigger>
+            <TabsTrigger value="activity">
+              <ActivityIcon className="mr-1 h-3 w-3" />
+              Activity ({timeline.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="mt-4 space-y-4">
             {editMode ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 {isAdmin && (
-                <>
-                <Field label="Title" className="sm:col-span-2">
-                  <Input value={v("title")} onChange={(e) => set("title", e.target.value)} />
-                </Field>
-                <Field label="Module">
-                  <Select value={v("module")} onValueChange={(x) => set("module", x)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{MODULES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Form / Feature"><Input value={v("formFeature")} onChange={(e) => set("formFeature", e.target.value)} /></Field>
-                </>
+                  <>
+                    <Field label="Title" className="sm:col-span-2">
+                      <Input value={v("title")} onChange={(e) => set("title", e.target.value)} />
+                    </Field>
+                    <Field label="Module">
+                      <Select value={v("module")} onValueChange={(x) => set("module", x)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MODULES.map((m) => (
+                            <SelectItem key={m} value={m}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field label="Form / Feature">
+                      <Input
+                        value={v("formFeature")}
+                        onChange={(e) => set("formFeature", e.target.value)}
+                      />
+                    </Field>
+                  </>
                 )}
                 <Field label="Status">
                   <Select value={v("status")} onValueChange={(x) => set("status", x)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      {(isAdmin ? STATUSES : (["Reported","Pending","In Progress","Retest Required","Reopened"] as DefectStatus[])).map((s) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      {(isAdmin
+                        ? STATUSES
+                        : ([
+                            "Reported",
+                            "Pending",
+                            "In Progress",
+                            "Retest Required",
+                            "Reopened",
+                          ] as DefectStatus[])
+                      ).map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </Field>
                 {isAdmin && (
-                <>
-                <Field label="Assigned Agent">
-                  <Select value={v("assignedAgent")} onValueChange={(x) => set("assignedAgent", x)} disabled={!isAdmin}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{users.map((u) => <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Priority">
-                  <Select value={v("priority")} onValueChange={(x) => set("priority", x)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{LEVELS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
-                </>
+                  <>
+                    <Field label="Assigned Agent">
+                      <Select
+                        value={v("assignedAgent")}
+                        onValueChange={(x) => set("assignedAgent", x)}
+                        disabled={!isAdmin}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {users.map((u) => (
+                            <SelectItem key={u.id} value={u.name}>
+                              {u.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field label="Priority">
+                      <Select value={v("priority")} onValueChange={(x) => set("priority", x)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LEVELS.map((p) => (
+                            <SelectItem key={p} value={p}>
+                              {p}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </>
                 )}
-                <Field label="Description" className="sm:col-span-2"><Textarea rows={3} value={v("description")} onChange={(e) => set("description", e.target.value)} /></Field>
-                <Field label="Jira Ticket URL" className="sm:col-span-2">
-                  <Input value={v("jiraUrl")} onChange={(e) => set("jiraUrl", e.target.value)} placeholder="https://your-org.atlassian.net/browse/…" />
+                <Field label="Description" className="sm:col-span-2">
+                  <Textarea
+                    rows={3}
+                    value={v("description")}
+                    onChange={(e) => set("description", e.target.value)}
+                  />
                 </Field>
-                <Field label="Attachment Link 1"><Input value={v("attachmentUrl")} onChange={(e) => set("attachmentUrl", e.target.value)} placeholder="https://…" /></Field>
-                <Field label="Attachment Link 2"><Input value={v("attachmentUrl2")} onChange={(e) => set("attachmentUrl2", e.target.value)} placeholder="https://…" /></Field>
-                <Field label="Evidence Link" className="sm:col-span-2"><Input value={v("evidenceUrl")} onChange={(e) => set("evidenceUrl", e.target.value)} placeholder="https://…" /></Field>
-                <Field label="Expected Result / Outcome" className="sm:col-span-2"><Textarea rows={2} value={v("expectedResult")} onChange={(e) => set("expectedResult", e.target.value)} /></Field>
+                <Field label="Jira Ticket URL" className="sm:col-span-2">
+                  <Input
+                    value={v("jiraUrl")}
+                    onChange={(e) => set("jiraUrl", e.target.value)}
+                    placeholder="https://your-org.atlassian.net/browse/…"
+                  />
+                </Field>
+                <Field label="Attachment Link 1">
+                  <Input
+                    value={v("attachmentUrl")}
+                    onChange={(e) => set("attachmentUrl", e.target.value)}
+                    placeholder="https://…"
+                  />
+                </Field>
+                <Field label="Attachment Link 2">
+                  <Input
+                    value={v("attachmentUrl2")}
+                    onChange={(e) => set("attachmentUrl2", e.target.value)}
+                    placeholder="https://…"
+                  />
+                </Field>
+                <Field label="Evidence Link" className="sm:col-span-2">
+                  <Input
+                    value={v("evidenceUrl")}
+                    onChange={(e) => set("evidenceUrl", e.target.value)}
+                    placeholder="https://…"
+                  />
+                </Field>
+                <Field label="Expected Result / Outcome" className="sm:col-span-2">
+                  <Textarea
+                    rows={2}
+                    value={v("expectedResult")}
+                    onChange={(e) => set("expectedResult", e.target.value)}
+                  />
+                </Field>
                 <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={cancelEdit}>Cancel</Button>
+                  <Button variant="outline" onClick={cancelEdit}>
+                    Cancel
+                  </Button>
                   <Button onClick={save}>{isAdmin ? "Save changes" : "Resubmit for review"}</Button>
                 </div>
               </div>
@@ -369,15 +560,21 @@ export function DefectDetailSheet({
                   >
                     {defect.module}
                   </Link>
-                  {defect.formFeature && <span className="text-muted-foreground"> • {defect.formFeature}</span>}
+                  {defect.formFeature && (
+                    <span className="text-muted-foreground"> • {defect.formFeature}</span>
+                  )}
                 </Field>
-                <Field label="Description">{defect.description || <span className="text-muted-foreground">—</span>}</Field>
+                <Field label="Description">
+                  {defect.description || <span className="text-muted-foreground">—</span>}
+                </Field>
                 <Field label="Expected Result / Outcome">{defect.expectedResult || "—"}</Field>
                 <div className="grid gap-3 sm:grid-cols-2 text-xs">
                   <Field label="Assigned Agent">{defect.assignedAgent}</Field>
                   <Field label="Reported By">{defect.createdBy}</Field>
                   <Field label="Reported">{new Date(defect.createdAt).toLocaleString()}</Field>
-                  <Field label="Last Updated">{new Date(defect.updatedAt).toLocaleString()} • {defect.updatedBy}</Field>
+                  <Field label="Last Updated">
+                    {new Date(defect.updatedAt).toLocaleString()} • {defect.updatedBy}
+                  </Field>
                 </div>
               </div>
             )}
@@ -397,7 +594,10 @@ export function DefectDetailSheet({
                         onBlur={async (e) => {
                           const next = e.target.value.trim();
                           if (next === value) return;
-                          await quickPatch({ [f.key]: next || undefined } as Partial<Defect>, `${f.label} updated`);
+                          await quickPatch(
+                            { [f.key]: next || undefined } as Partial<Defect>,
+                            `${f.label} updated`,
+                          );
                         }}
                       />
                       {value && (
@@ -414,8 +614,17 @@ export function DefectDetailSheet({
                       )}
                     </div>
                   ) : value ? (
-                    <a className="text-sm text-primary underline" href={value} target="_blank" rel="noreferrer">{value}</a>
-                  ) : <span className="text-xs text-muted-foreground">—</span>}
+                    <a
+                      className="text-sm text-primary underline"
+                      href={value}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {value}
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </div>
               );
             })}
@@ -424,7 +633,9 @@ export function DefectDetailSheet({
           <TabsContent value="comments" className="mt-4">
             <ScrollArea className="h-72 rounded-md border p-3">
               <div className="space-y-2">
-                {defect.comments.length === 0 && <p className="text-xs text-muted-foreground">No comments yet.</p>}
+                {defect.comments.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No comments yet.</p>
+                )}
                 {defect.comments.map((c) => {
                   const author = users.find((u) => u.name === c.author);
                   const role = author?.role;
@@ -436,14 +647,25 @@ export function DefectDetailSheet({
                         <span className="flex items-center gap-2">
                           <span className="font-medium text-foreground">{c.author}</span>
                           {role && (
-                            <span className={role === "admin"
-                              ? "rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
-                              : "rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"}>
+                            <span
+                              className={
+                                role === "admin"
+                                  ? "rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                                  : "rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                              }
+                            >
                               {role}
                             </span>
                           )}
                           {c.edited && (
-                            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400" title={c.updatedAt ? `Edited ${new Date(c.updatedAt).toLocaleString()}` : "Edited"}>
+                            <span
+                              className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
+                              title={
+                                c.updatedAt
+                                  ? `Edited ${new Date(c.updatedAt).toLocaleString()}`
+                                  : "Edited"
+                              }
+                            >
                               edited
                             </span>
                           )}
@@ -455,7 +677,10 @@ export function DefectDetailSheet({
                               <button
                                 className="rounded p-1 hover:bg-muted"
                                 aria-label="Edit comment"
-                                onClick={() => { setEditingCommentId(c.id); setEditingText(c.text); }}
+                                onClick={() => {
+                                  setEditingCommentId(c.id);
+                                  setEditingText(c.text);
+                                }}
                               >
                                 <Pencil className="h-3 w-3" />
                               </button>
@@ -482,7 +707,14 @@ export function DefectDetailSheet({
                             onChange={(e) => setEditingText(e.target.value)}
                           />
                           <div className="flex justify-end gap-2">
-                            <Button size="sm" variant="outline" onClick={() => { setEditingCommentId(null); setEditingText(""); }}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingCommentId(null);
+                                setEditingText("");
+                              }}
+                            >
                               Cancel
                             </Button>
                             <Button
@@ -515,16 +747,24 @@ export function DefectDetailSheet({
               </div>
             </ScrollArea>
             <div className="mt-3 flex gap-2">
-              <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Add a comment, paste a link…" />
+              <Input
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Add a comment, paste a link…"
+              />
               <Button
                 size="sm"
                 onClick={async () => {
                   if (!comment.trim()) return;
                   const r = await addComment(defect.id, comment.trim());
-                  if (r.ok) { setComment(""); toast.success("Comment added"); }
-                  else toast.error(r.error ?? "Failed");
+                  if (r.ok) {
+                    setComment("");
+                    toast.success("Comment added");
+                  } else toast.error(r.error ?? "Failed");
                 }}
-              >Post</Button>
+              >
+                Post
+              </Button>
             </div>
           </TabsContent>
 
@@ -534,11 +774,33 @@ export function DefectDetailSheet({
                 type HItem =
                   | { kind: "created"; at: string; actor: string }
                   | { kind: "comment"; id: string; at: string; actor: string; text: string }
-                  | { kind: "change"; id: string; at: string; actor: string; field: string; oldVal: string | null; newVal: string | null };
+                  | {
+                      kind: "change";
+                      id: string;
+                      at: string;
+                      actor: string;
+                      field: string;
+                      oldVal: string | null;
+                      newVal: string | null;
+                    };
                 const items: HItem[] = [
                   { kind: "created" as const, at: defect.createdAt, actor: defect.createdBy },
-                  ...defect.comments.map((c) => ({ kind: "comment" as const, id: c.id, at: c.createdAt, actor: c.author, text: c.text })),
-                  ...history.map((h) => ({ kind: "change" as const, id: h.id, at: h.changedAt, actor: h.changedBy, field: h.field, oldVal: h.oldValue, newVal: h.newValue })),
+                  ...defect.comments.map((c) => ({
+                    kind: "comment" as const,
+                    id: c.id,
+                    at: c.createdAt,
+                    actor: c.author,
+                    text: c.text,
+                  })),
+                  ...history.map((h) => ({
+                    kind: "change" as const,
+                    id: h.id,
+                    at: h.changedAt,
+                    actor: h.changedBy,
+                    field: h.field,
+                    oldVal: h.oldValue,
+                    newVal: h.newValue,
+                  })),
                 ].sort((a, b) => +new Date(a.at) - +new Date(b.at));
                 return (
                   <ol className="relative space-y-3">
@@ -546,23 +808,30 @@ export function DefectDetailSheet({
                       if (it.kind === "created") {
                         return (
                           <li key="created" className="rounded-md border bg-card p-2 text-xs">
-                   <div className="flex items-center justify-between">
-                     <span className="font-medium">Reported error</span>
-                    <span className="text-muted-foreground">{new Date(defect.createdAt).toLocaleString()}</span>
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
-                    <span>{defect.formFeature || defect.module}</span>
-                    <span className="ml-auto">by {defect.createdBy}</span>
-                  </div>
-                </li>
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">Reported error</span>
+                              <span className="text-muted-foreground">
+                                {new Date(defect.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
+                              <span>{defect.formFeature || defect.module}</span>
+                              <span className="ml-auto">by {defect.createdBy}</span>
+                            </div>
+                          </li>
                         );
                       }
                       if (it.kind === "comment") {
                         return (
-                          <li key={`c-${it.id}`} className="rounded-md border bg-muted/40 p-2 text-xs">
+                          <li
+                            key={`c-${it.id}`}
+                            className="rounded-md border bg-muted/40 p-2 text-xs"
+                          >
                             <div className="flex items-center justify-between">
                               <span className="font-medium">Added a comment</span>
-                              <span className="text-muted-foreground">{new Date(it.at).toLocaleString()}</span>
+                              <span className="text-muted-foreground">
+                                {new Date(it.at).toLocaleString()}
+                              </span>
                             </div>
                             <p className="mt-1 whitespace-pre-wrap text-foreground">{it.text}</p>
                             <p className="mt-1 text-muted-foreground">by {it.actor}</p>
@@ -572,17 +841,25 @@ export function DefectDetailSheet({
                       const h = it;
                       return (
                         <li key={`h-${h.id}`} className="rounded-md border bg-card p-2 text-xs">
-                    <div className="flex items-center justify-between">
-                            <span className="font-medium">{historyLabel(h.field, h.oldVal, h.newVal)}</span>
-                            <span className="text-muted-foreground">{new Date(h.at).toLocaleString()}</span>
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                            <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground line-through">{h.oldVal ?? "—"}</span>
-                      <span>→</span>
-                            <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">{h.newVal ?? "—"}</span>
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">
+                              {historyLabel(h.field, h.oldVal, h.newVal)}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {new Date(h.at).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground line-through">
+                              {h.oldVal ?? "—"}
+                            </span>
+                            <span>→</span>
+                            <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">
+                              {h.newVal ?? "—"}
+                            </span>
                             <span className="ml-auto text-muted-foreground">by {h.actor}</span>
-                    </div>
-                  </li>
+                          </div>
+                        </li>
                       );
                     })}
                   </ol>
@@ -593,15 +870,21 @@ export function DefectDetailSheet({
 
           <TabsContent value="activity" className="mt-4">
             <ScrollArea className="h-96 rounded-md border p-3">
-              {timeline.length === 0 && <p className="text-xs text-muted-foreground">No activity yet.</p>}
+              {timeline.length === 0 && (
+                <p className="text-xs text-muted-foreground">No activity yet.</p>
+              )}
               <ol className="relative space-y-3 border-l pl-4">
                 {timeline.map((t) => {
                   const Icon =
-                    t.kind === "created" ? Plus
-                    : t.kind === "comment" ? MessageCircle
-                    : t.kind === "assigned_agent" ? UserPlus
-                    : t.kind === "status" ? ActivityIcon
-                    : Pencil;
+                    t.kind === "created"
+                      ? Plus
+                      : t.kind === "comment"
+                        ? MessageCircle
+                        : t.kind === "assigned_agent"
+                          ? UserPlus
+                          : t.kind === "status"
+                            ? ActivityIcon
+                            : Pencil;
                   return (
                     <li key={t.id} className="relative">
                       <span className="absolute -left-[22px] top-1 inline-flex h-4 w-4 items-center justify-center rounded-full border bg-background">
@@ -610,12 +893,18 @@ export function DefectDetailSheet({
                       <div className="rounded-md border bg-card p-2 text-xs">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{t.summary}</span>
-                          <span className="text-muted-foreground">{new Date(t.at).toLocaleString()}</span>
+                          <span className="text-muted-foreground">
+                            {new Date(t.at).toLocaleString()}
+                          </span>
                         </div>
                         {t.detail && (
-                          <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{t.detail}</p>
+                          <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+                            {t.detail}
+                          </p>
                         )}
-                        <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">by {t.actor}</p>
+                        <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          by {t.actor}
+                        </p>
                       </div>
                     </li>
                   );
@@ -629,7 +918,15 @@ export function DefectDetailSheet({
   );
 }
 
-function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+function Field({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div className={className}>
       <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>

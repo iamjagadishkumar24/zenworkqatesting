@@ -10,9 +10,20 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -22,10 +33,27 @@ import { inviteAgent, resetSampleAdmin } from "@/lib/qa/admin.functions";
 import { setAllowAgentExports } from "@/lib/qa/exportJobs.functions";
 import { ExportJobsPanel } from "@/components/qa/ExportJobsPanel";
 import {
-  Users, Layers, FileText, Tag, BellRing, FileBarChart, Palette,
-  LayoutDashboard, Database, History, ShieldCheck, Plus, X, Save, RotateCcw, Download,
-  Mail, KeyRound, Copy,
-  Upload, Trash2,
+  Users,
+  Layers,
+  FileText,
+  Tag,
+  BellRing,
+  FileBarChart,
+  Palette,
+  LayoutDashboard,
+  Database,
+  History,
+  ShieldCheck,
+  Plus,
+  X,
+  Save,
+  RotateCcw,
+  Download,
+  Mail,
+  KeyRound,
+  Copy,
+  Upload,
+  Trash2,
 } from "lucide-react";
 import { UserAvatar } from "@/components/qa/UserAvatar";
 
@@ -44,7 +72,9 @@ function SettingsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
           <p className="text-sm text-muted-foreground">
-            {isAdmin ? "Manage the QA portal — team, modules, taxonomy, notifications and more." : "Your profile and preferences."}
+            {isAdmin
+              ? "Manage the QA portal — team, modules, taxonomy, notifications and more."
+              : "Your profile and preferences."}
           </p>
         </div>
         {isAdmin && (
@@ -56,17 +86,50 @@ function SettingsPage() {
 
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/60 p-1">
-          <TabsTrigger value="profile"><Users className="mr-1 h-3 w-3" />Profile</TabsTrigger>
-          <TabsTrigger value="team" disabled={!isAdmin}><Users className="mr-1 h-3 w-3" />Team & Roles</TabsTrigger>
-          <TabsTrigger value="modules" disabled={!isAdmin}><Layers className="mr-1 h-3 w-3" />Modules</TabsTrigger>
-          <TabsTrigger value="forms" disabled={!isAdmin}><FileText className="mr-1 h-3 w-3" />Forms</TabsTrigger>
-          <TabsTrigger value="taxonomy" disabled={!isAdmin}><Tag className="mr-1 h-3 w-3" />Statuses & Priorities</TabsTrigger>
-          <TabsTrigger value="notifications"><BellRing className="mr-1 h-3 w-3" />Notifications</TabsTrigger>
-          <TabsTrigger value="reports" disabled={!isAdmin}><FileBarChart className="mr-1 h-3 w-3" />Reports</TabsTrigger>
-          <TabsTrigger value="theme"><Palette className="mr-1 h-3 w-3" />Theme</TabsTrigger>
-          <TabsTrigger value="dashboard"><LayoutDashboard className="mr-1 h-3 w-3" />Dashboard</TabsTrigger>
-          <TabsTrigger value="data" disabled={!isAdmin}><Database className="mr-1 h-3 w-3" />Import / Export</TabsTrigger>
-          <TabsTrigger value="audit" disabled={!isAdmin}><History className="mr-1 h-3 w-3" />Audit Log</TabsTrigger>
+          <TabsTrigger value="profile">
+            <Users className="mr-1 h-3 w-3" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="team" disabled={!isAdmin}>
+            <Users className="mr-1 h-3 w-3" />
+            Team & Roles
+          </TabsTrigger>
+          <TabsTrigger value="modules" disabled={!isAdmin}>
+            <Layers className="mr-1 h-3 w-3" />
+            Modules
+          </TabsTrigger>
+          <TabsTrigger value="forms" disabled={!isAdmin}>
+            <FileText className="mr-1 h-3 w-3" />
+            Forms
+          </TabsTrigger>
+          <TabsTrigger value="taxonomy" disabled={!isAdmin}>
+            <Tag className="mr-1 h-3 w-3" />
+            Statuses & Priorities
+          </TabsTrigger>
+          <TabsTrigger value="notifications">
+            <BellRing className="mr-1 h-3 w-3" />
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger value="reports" disabled={!isAdmin}>
+            <FileBarChart className="mr-1 h-3 w-3" />
+            Reports
+          </TabsTrigger>
+          <TabsTrigger value="theme">
+            <Palette className="mr-1 h-3 w-3" />
+            Theme
+          </TabsTrigger>
+          <TabsTrigger value="dashboard">
+            <LayoutDashboard className="mr-1 h-3 w-3" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="data" disabled={!isAdmin}>
+            <Database className="mr-1 h-3 w-3" />
+            Import / Export
+          </TabsTrigger>
+          <TabsTrigger value="audit" disabled={!isAdmin}>
+            <History className="mr-1 h-3 w-3" />
+            Audit Log
+          </TabsTrigger>
         </TabsList>
 
         {/* PROFILE */}
@@ -93,13 +156,17 @@ function SettingsPage() {
                 </TableHeader>
                 <TableBody>
                   {users.map((u) => {
-                    const load = defects.filter((d) => d.assignedAgent === u.name && !["Fixed","Closed"].includes(d.status)).length;
+                    const load = defects.filter(
+                      (d) => d.assignedAgent === u.name && !["Fixed", "Closed"].includes(d.status),
+                    ).length;
                     const isSelf = u.id === currentUser?.id;
                     return (
                       <TableRow key={u.id} className={u.active ? "" : "opacity-60"}>
                         <TableCell className="font-medium">
                           {u.name}
-                          {isSelf && <span className="ml-2 text-xs text-muted-foreground">(you)</span>}
+                          {isSelf && (
+                            <span className="ml-2 text-xs text-muted-foreground">(you)</span>
+                          )}
                         </TableCell>
                         <TableCell>{u.email}</TableCell>
                         <TableCell>
@@ -108,10 +175,13 @@ function SettingsPage() {
                             disabled={!u.active || isSelf}
                             onValueChange={async (v) => {
                               const r = await updateUser(u.id, { role: v as "admin" | "agent" });
-                              if (!r.ok) toast.error(r.error); else toast.success("Role updated");
+                              if (!r.ok) toast.error(r.error);
+                              else toast.success("Role updated");
                             }}
                           >
-                            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="agent">QA Agent</SelectItem>
                               <SelectItem value="admin">Admin</SelectItem>
@@ -120,7 +190,10 @@ function SettingsPage() {
                         </TableCell>
                         <TableCell>
                           {u.active ? (
-                            <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                            <Badge
+                              variant="secondary"
+                              className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                            >
                               <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
                               Active
                             </Badge>
@@ -137,7 +210,10 @@ function SettingsPage() {
                             disabled={isSelf}
                             onCheckedChange={async (c) => {
                               const r = await updateUser(u.id, { active: c });
-                              if (!r.ok) { toast.error(r.error); return; }
+                              if (!r.ok) {
+                                toast.error(r.error);
+                                return;
+                              }
                               if (!c) {
                                 await updateUser(u.id, { role: "agent" });
                                 toast.success(`${u.name} deactivated — access revoked`);
@@ -172,13 +248,20 @@ function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Forms & Features</CardTitle>
-              <CardDescription>Tracked forms across all modules. Edit status, assign agents, or add a new form.</CardDescription>
+              <CardDescription>
+                Tracked forms across all modules. Edit status, assign agents, or add a new form.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <AddFormRow modules={prefs.modules} agents={users.map((u) => u.name)} onAdd={async (f) => {
-                const r = await addForm(f as never);
-                if (r.ok) toast.success("Form added"); else toast.error(r.error);
-              }} />
+              <AddFormRow
+                modules={prefs.modules}
+                agents={users.map((u) => u.name)}
+                onAdd={async (f) => {
+                  const r = await addForm(f as never);
+                  if (r.ok) toast.success("Form added");
+                  else toast.error(r.error);
+                }}
+              />
             </CardContent>
           </Card>
           <Card>
@@ -199,26 +282,49 @@ function SettingsPage() {
                       <TableCell className="font-medium">{f.name}</TableCell>
                       <TableCell>{f.module}</TableCell>
                       <TableCell>
-                        <Select value={f.status} onValueChange={async (v) => {
-                          const r = await updateForm(f.id, { status: v as never });
-                          if (!r.ok) toast.error(r.error);
-                        }}>
-                          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                        <Select
+                          value={f.status}
+                          onValueChange={async (v) => {
+                            const r = await updateForm(f.id, { status: v as never });
+                            if (!r.ok) toast.error(r.error);
+                          }}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
-                            {["Passed","Failed","Open Bug","In Progress","Pending","Retest Required"].map((s) => (
-                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            {[
+                              "Passed",
+                              "Failed",
+                              "Open Bug",
+                              "In Progress",
+                              "Pending",
+                              "Retest Required",
+                            ].map((s) => (
+                              <SelectItem key={s} value={s}>
+                                {s}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Select value={f.assignedAgent} onValueChange={async (v) => {
-                          const r = await updateForm(f.id, { assignedAgent: v });
-                          if (!r.ok) toast.error(r.error);
-                        }}>
-                          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                        <Select
+                          value={f.assignedAgent}
+                          onValueChange={async (v) => {
+                            const r = await updateForm(f.id, { assignedAgent: v });
+                            if (!r.ok) toast.error(r.error);
+                          }}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
-                            {users.map((u) => <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>)}
+                            {users.map((u) => (
+                              <SelectItem key={u.id} value={u.name}>
+                                {u.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -234,10 +340,28 @@ function SettingsPage() {
         {/* TAXONOMY */}
         <TabsContent value="taxonomy" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <ChipListCard title="Defect Statuses" description="Lifecycle states applied to every defect." items={prefs.defectStatuses} onChange={(x) => update("defectStatuses", x)} />
-            <ChipListCard title="Error Statuses" description="Validation states for reported errors." items={prefs.errorStatuses} onChange={(x) => update("errorStatuses", x)} />
-            <ChipListCard title="Priorities" items={prefs.priorities} onChange={(x) => update("priorities", x)} />
-            <ChipListCard title="Severities" items={prefs.severities} onChange={(x) => update("severities", x)} />
+            <ChipListCard
+              title="Defect Statuses"
+              description="Lifecycle states applied to every defect."
+              items={prefs.defectStatuses}
+              onChange={(x) => update("defectStatuses", x)}
+            />
+            <ChipListCard
+              title="Error Statuses"
+              description="Validation states for reported errors."
+              items={prefs.errorStatuses}
+              onChange={(x) => update("errorStatuses", x)}
+            />
+            <ChipListCard
+              title="Priorities"
+              items={prefs.priorities}
+              onChange={(x) => update("priorities", x)}
+            />
+            <ChipListCard
+              title="Severities"
+              items={prefs.severities}
+              onChange={(x) => update("severities", x)}
+            />
           </div>
         </TabsContent>
 
@@ -246,14 +370,37 @@ function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Notifications</CardTitle>
-              <CardDescription>Choose how the team is alerted. Saved per browser for the demo; production wiring goes through your email/Slack connector.</CardDescription>
+              <CardDescription>
+                Choose how the team is alerted. Saved per browser for the demo; production wiring
+                goes through your email/Slack connector.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ToggleRow label="Email me when a defect is assigned" v={prefs.notifyOnAssignEmail} on={(c) => update("notifyOnAssignEmail", c)} />
-              <ToggleRow label="Slack alert for Critical defects" v={prefs.notifyCriticalSlack} on={(c) => update("notifyCriticalSlack", c)} />
-              <ToggleRow label="Notify when a defect is reopened" v={prefs.notifyOnReopen} on={(c) => update("notifyOnReopen", c)} />
-              <ToggleRow label="Notify on new comments" v={prefs.notifyOnComment} on={(c) => update("notifyOnComment", c)} />
-              <ToggleRow label="Weekly QA digest" v={prefs.notifyWeeklyDigest} on={(c) => update("notifyWeeklyDigest", c)} />
+              <ToggleRow
+                label="Email me when a defect is assigned"
+                v={prefs.notifyOnAssignEmail}
+                on={(c) => update("notifyOnAssignEmail", c)}
+              />
+              <ToggleRow
+                label="Slack alert for Critical defects"
+                v={prefs.notifyCriticalSlack}
+                on={(c) => update("notifyCriticalSlack", c)}
+              />
+              <ToggleRow
+                label="Notify when a defect is reopened"
+                v={prefs.notifyOnReopen}
+                on={(c) => update("notifyOnReopen", c)}
+              />
+              <ToggleRow
+                label="Notify on new comments"
+                v={prefs.notifyOnComment}
+                on={(c) => update("notifyOnComment", c)}
+              />
+              <ToggleRow
+                label="Weekly QA digest"
+                v={prefs.notifyWeeklyDigest}
+                on={(c) => update("notifyWeeklyDigest", c)}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -263,17 +410,29 @@ function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Report Settings</CardTitle>
-              <CardDescription>Defaults applied when generating reports and exports.</CardDescription>
+              <CardDescription>
+                Defaults applied when generating reports and exports.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label>Time zone</Label>
-                <Input value={prefs.reportTimezone} onChange={(e) => update("reportTimezone", e.target.value)} />
+                <Input
+                  value={prefs.reportTimezone}
+                  onChange={(e) => update("reportTimezone", e.target.value)}
+                />
               </div>
               <div>
                 <Label>Week starts on</Label>
-                <Select value={prefs.reportWeekStart} onValueChange={(v) => update("reportWeekStart", v as AdminPrefs["reportWeekStart"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={prefs.reportWeekStart}
+                  onValueChange={(v) =>
+                    update("reportWeekStart", v as AdminPrefs["reportWeekStart"])
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="monday">Monday</SelectItem>
                     <SelectItem value="sunday">Sunday</SelectItem>
@@ -282,15 +441,27 @@ function SettingsPage() {
               </div>
               <div>
                 <Label>Default export format</Label>
-                <Select value={prefs.defaultExportFormat} onValueChange={(v) => update("defaultExportFormat", v as AdminPrefs["defaultExportFormat"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={prefs.defaultExportFormat}
+                  onValueChange={(v) =>
+                    update("defaultExportFormat", v as AdminPrefs["defaultExportFormat"])
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
                     <SelectItem value="csv">CSV</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <ToggleRow className="md:col-span-2" label="Include comments in exports" v={prefs.includeCommentsInExport} on={(c) => update("includeCommentsInExport", c)} />
+              <ToggleRow
+                className="md:col-span-2"
+                label="Include comments in exports"
+                v={prefs.includeCommentsInExport}
+                on={(c) => update("includeCommentsInExport", c)}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -305,8 +476,13 @@ function SettingsPage() {
             <CardContent className="grid gap-4 md:grid-cols-3">
               <div>
                 <Label>Color mode</Label>
-                <Select value={prefs.theme} onValueChange={(v) => update("theme", v as AdminPrefs["theme"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={prefs.theme}
+                  onValueChange={(v) => update("theme", v as AdminPrefs["theme"])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="system">System</SelectItem>
                     <SelectItem value="light">Light</SelectItem>
@@ -316,8 +492,13 @@ function SettingsPage() {
               </div>
               <div>
                 <Label>Accent</Label>
-                <Select value={prefs.accent} onValueChange={(v) => update("accent", v as AdminPrefs["accent"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={prefs.accent}
+                  onValueChange={(v) => update("accent", v as AdminPrefs["accent"])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="blue">Blue (default)</SelectItem>
                     <SelectItem value="violet">Violet</SelectItem>
@@ -328,8 +509,13 @@ function SettingsPage() {
               </div>
               <div>
                 <Label>Density</Label>
-                <Select value={prefs.density} onValueChange={(v) => update("density", v as AdminPrefs["density"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={prefs.density}
+                  onValueChange={(v) => update("density", v as AdminPrefs["density"])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="comfortable">Comfortable</SelectItem>
                     <SelectItem value="compact">Compact</SelectItem>
@@ -350,8 +536,13 @@ function SettingsPage() {
             <CardContent className="space-y-4">
               <div>
                 <Label>Default landing page after sign-in</Label>
-                <Select value={prefs.defaultLanding} onValueChange={(v) => update("defaultLanding", v as AdminPrefs["defaultLanding"])}>
-                  <SelectTrigger className="w-72"><SelectValue /></SelectTrigger>
+                <Select
+                  value={prefs.defaultLanding}
+                  onValueChange={(v) => update("defaultLanding", v as AdminPrefs["defaultLanding"])}
+                >
+                  <SelectTrigger className="w-72">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="/dashboard">Dashboard</SelectItem>
                     <SelectItem value="/my-reported-errors">Reported Errors</SelectItem>
@@ -359,9 +550,21 @@ function SettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <ToggleRow label="Show KPI cards" v={prefs.showKpiCards} on={(c) => update("showKpiCards", c)} />
-              <ToggleRow label="Show defect trend chart" v={prefs.showTrendChart} on={(c) => update("showTrendChart", c)} />
-              <ToggleRow label="Show agent load chart" v={prefs.showAgentChart} on={(c) => update("showAgentChart", c)} />
+              <ToggleRow
+                label="Show KPI cards"
+                v={prefs.showKpiCards}
+                on={(c) => update("showKpiCards", c)}
+              />
+              <ToggleRow
+                label="Show defect trend chart"
+                v={prefs.showTrendChart}
+                on={(c) => update("showTrendChart", c)}
+              />
+              <ToggleRow
+                label="Show agent load chart"
+                v={prefs.showAgentChart}
+                on={(c) => update("showAgentChart", c)}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -371,13 +574,20 @@ function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Import / Export</CardTitle>
-              <CardDescription>Bulk download every record or take a snapshot of your settings.</CardDescription>
+              <CardDescription>
+                Bulk download every record or take a snapshot of your settings.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label>CSV delimiter</Label>
-                <Select value={prefs.csvDelimiter} onValueChange={(v) => update("csvDelimiter", v as AdminPrefs["csvDelimiter"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={prefs.csvDelimiter}
+                  onValueChange={(v) => update("csvDelimiter", v as AdminPrefs["csvDelimiter"])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value=",">Comma (,)</SelectItem>
                     <SelectItem value=";">Semicolon (;)</SelectItem>
@@ -387,8 +597,15 @@ function SettingsPage() {
               </div>
               <div>
                 <Label>Import merge strategy</Label>
-                <Select value={prefs.importMergeStrategy} onValueChange={(v) => update("importMergeStrategy", v as AdminPrefs["importMergeStrategy"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={prefs.importMergeStrategy}
+                  onValueChange={(v) =>
+                    update("importMergeStrategy", v as AdminPrefs["importMergeStrategy"])
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="skip-existing">Skip existing rows</SelectItem>
                     <SelectItem value="overwrite">Overwrite existing rows</SelectItem>
@@ -396,19 +613,38 @@ function SettingsPage() {
                 </Select>
               </div>
               <div className="md:col-span-2 flex flex-wrap gap-2">
-                <Button variant="outline" onClick={() => exportCsv("defects-all", defects.map(({ comments, ...d }) => ({ ...d, comments: comments.length })))}>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    exportCsv(
+                      "defects-all",
+                      defects.map(({ comments, ...d }) => ({ ...d, comments: comments.length })),
+                    )
+                  }
+                >
                   <Download className="mr-2 h-4 w-4" /> Export defects (CSV)
                 </Button>
-                <Button variant="outline" onClick={() => exportXlsx(
-                  "qa-snapshot",
-                  [
-                    { name: "Defects", rows: defects.map(({ comments, ...d }) => ({ ...d, comments: comments.length })) },
-                    { name: "Forms", rows: forms as unknown as Record<string, unknown>[] },
-                    { name: "Users", rows: users.map(({ id: _id, ...u }) => u) },
-                    { name: "Audit", rows: audit as unknown as Record<string, unknown>[] },
-                  ],
-                  { title: "QA portal snapshot" },
-                )}>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    exportXlsx(
+                      "qa-snapshot",
+                      [
+                        {
+                          name: "Defects",
+                          rows: defects.map(({ comments, ...d }) => ({
+                            ...d,
+                            comments: comments.length,
+                          })),
+                        },
+                        { name: "Forms", rows: forms as unknown as Record<string, unknown>[] },
+                        { name: "Users", rows: users.map(({ id: _id, ...u }) => u) },
+                        { name: "Audit", rows: audit as unknown as Record<string, unknown>[] },
+                      ],
+                      { title: "QA portal snapshot" },
+                    )
+                  }
+                >
                   <Download className="mr-2 h-4 w-4" /> Full snapshot (Excel)
                 </Button>
                 <Button variant="outline" onClick={() => exportCsv("settings", [prefs])}>
@@ -433,7 +669,13 @@ function SettingsPage() {
 
       {isAdmin && (
         <div className="flex justify-end gap-2 border-t pt-4">
-          <Button variant="outline" onClick={() => { reset(); toast.success("Preferences reset"); }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              reset();
+              toast.success("Preferences reset");
+            }}
+          >
             <RotateCcw className="mr-2 h-4 w-4" /> Reset preferences
           </Button>
           <Button onClick={() => toast.success("Preferences saved")}>
@@ -450,7 +692,11 @@ function AgentExportToggle() {
   const [allowed, setAllowedState] = useState<boolean>(false);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    supabase.from("app_settings").select("value").eq("key", "allow_agent_exports").maybeSingle()
+    supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "allow_agent_exports")
+      .maybeSingle()
       .then(({ data }) => setAllowedState(data?.value === true));
   }, []);
   const toggle = async (v: boolean) => {
@@ -461,13 +707,17 @@ function AgentExportToggle() {
       toast.success(`Agent exports ${v ? "enabled" : "disabled"}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to update setting");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <div className="md:col-span-2 flex items-center justify-between rounded-md border border-border p-3">
       <div>
         <p className="text-sm font-medium">Allow agents to export their own reported errors</p>
-        <p className="text-xs text-muted-foreground">When disabled, only admins can export. Enforced in both UI and API.</p>
+        <p className="text-xs text-muted-foreground">
+          When disabled, only admins can export. Enforced in both UI and API.
+        </p>
       </div>
       <Switch checked={allowed} onCheckedChange={toggle} disabled={busy} />
     </div>
@@ -489,40 +739,81 @@ function InviteAgentCard() {
   };
 
   const submit = async () => {
-    if (!email || !name || !password) { toast.error("Email, name and password are required"); return; }
+    if (!email || !name || !password) {
+      toast.error("Email, name and password are required");
+      return;
+    }
     setBusy(true);
     try {
       const res = await invite({ data: { email, name, password } });
       toast.success(`Invited ${res.email} as QA Agent`);
-      setEmail(""); setName(""); setPassword("");
+      setEmail("");
+      setName("");
+      setPassword("");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Invite failed");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Mail className="h-4 w-4" />Invite a QA Agent</CardTitle>
-        <CardDescription>Create an active agent account by email. They can sign in immediately with the password you set; role is assigned automatically.</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <Mail className="h-4 w-4" />
+          Invite a QA Agent
+        </CardTitle>
+        <CardDescription>
+          Create an active agent account by email. They can sign in immediately with the password
+          you set; role is assigned automatically.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
         <div className="grid gap-1">
           <Label htmlFor="invite-name">Full name</Label>
-          <Input id="invite-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Alex Tester" />
+          <Input
+            id="invite-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Alex Tester"
+          />
         </div>
         <div className="grid gap-1">
           <Label htmlFor="invite-email">Email</Label>
-          <Input id="invite-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="agent@company.com" />
+          <Input
+            id="invite-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="agent@company.com"
+          />
         </div>
         <div className="grid gap-1">
           <Label htmlFor="invite-pwd">Temporary password</Label>
           <div className="flex gap-1">
-            <Input id="invite-pwd" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 chars" />
-            <Button type="button" variant="outline" size="icon" title="Generate" aria-label="Generate temporary password" onClick={genPassword}><KeyRound aria-hidden="true" className="h-4 w-4" /></Button>
+            <Input
+              id="invite-pwd"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Min 8 chars"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              title="Generate"
+              aria-label="Generate temporary password"
+              onClick={genPassword}
+            >
+              <KeyRound aria-hidden="true" className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-        <Button onClick={submit} disabled={busy}><Plus className="mr-1 h-4 w-4" />{busy ? "Inviting…" : "Invite agent"}</Button>
+        <Button onClick={submit} disabled={busy}>
+          <Plus className="mr-1 h-4 w-4" />
+          {busy ? "Inviting…" : "Invite agent"}
+        </Button>
       </CardContent>
     </Card>
   );
@@ -530,7 +821,9 @@ function InviteAgentCard() {
 
 function SampleAdminCard() {
   const reset = useServerFn(resetSampleAdmin);
-  const [creds, setCreds] = useState<{ email: string; password: string; name: string } | null>(null);
+  const [creds, setCreds] = useState<{ email: string; password: string; name: string } | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
 
   const run = async () => {
@@ -541,7 +834,9 @@ function SampleAdminCard() {
       toast.success("Sample admin account ready");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Reset failed");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const copy = (text: string) => {
@@ -552,12 +847,19 @@ function SampleAdminCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" />Sample admin account</CardTitle>
-        <CardDescription>Generate or reset a known-good admin login for demos and onboarding. The credentials below are recreated each time you click reset.</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4" />
+          Sample admin account
+        </CardTitle>
+        <CardDescription>
+          Generate or reset a known-good admin login for demos and onboarding. The credentials below
+          are recreated each time you click reset.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <Button variant="outline" onClick={run} disabled={busy}>
-          <RotateCcw className="mr-1 h-4 w-4" />{busy ? "Resetting…" : "Reset sample admin"}
+          <RotateCcw className="mr-1 h-4 w-4" />
+          {busy ? "Resetting…" : "Reset sample admin"}
         </Button>
         {creds && (
           <div className="grid gap-2 rounded-md border bg-muted/40 p-3 text-sm sm:grid-cols-3">
@@ -567,14 +869,32 @@ function SampleAdminCard() {
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Email</div>
-              <div className="flex items-center gap-1 font-mono">{creds.email}
-                <Button size="icon" variant="ghost" className="h-6 w-6" aria-label="Copy email to clipboard" onClick={() => copy(creds.email)}><Copy aria-hidden="true" className="h-3 w-3" /></Button>
+              <div className="flex items-center gap-1 font-mono">
+                {creds.email}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  aria-label="Copy email to clipboard"
+                  onClick={() => copy(creds.email)}
+                >
+                  <Copy aria-hidden="true" className="h-3 w-3" />
+                </Button>
               </div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Password</div>
-              <div className="flex items-center gap-1 font-mono">{creds.password}
-                <Button size="icon" variant="ghost" className="h-6 w-6" aria-label="Copy password to clipboard" onClick={() => copy(creds.password)}><Copy aria-hidden="true" className="h-3 w-3" /></Button>
+              <div className="flex items-center gap-1 font-mono">
+                {creds.password}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  aria-label="Copy password to clipboard"
+                  onClick={() => copy(creds.password)}
+                >
+                  <Copy aria-hidden="true" className="h-3 w-3" />
+                </Button>
               </div>
             </div>
           </div>
@@ -584,9 +904,21 @@ function SampleAdminCard() {
   );
 }
 
-function ToggleRow({ label, v, on, className }: { label: string; v: boolean; on: (c: boolean) => void; className?: string }) {
+function ToggleRow({
+  label,
+  v,
+  on,
+  className,
+}: {
+  label: string;
+  v: boolean;
+  on: (c: boolean) => void;
+  className?: string;
+}) {
   return (
-    <div className={`flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 ${className ?? ""}`}>
+    <div
+      className={`flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 ${className ?? ""}`}
+    >
       <Label className="cursor-pointer">{label}</Label>
       <Switch checked={v} onCheckedChange={on} />
     </div>
@@ -594,7 +926,10 @@ function ToggleRow({ label, v, on, className }: { label: string; v: boolean; on:
 }
 
 function ChipListCard({
-  title, description, items, onChange,
+  title,
+  description,
+  items,
+  onChange,
 }: {
   title: string;
   description?: string;
@@ -618,18 +953,40 @@ function ChipListCard({
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">
           {items.map((i) => (
-            <span key={i} className="inline-flex items-center gap-1 rounded-full border bg-muted/60 px-2.5 py-1 text-xs">
+            <span
+              key={i}
+              className="inline-flex items-center gap-1 rounded-full border bg-muted/60 px-2.5 py-1 text-xs"
+            >
               {i}
-              <button onClick={() => remove(i)} aria-label={`Remove ${i}`} className="rounded-full hover:bg-destructive/10 hover:text-destructive">
+              <button
+                onClick={() => remove(i)}
+                aria-label={`Remove ${i}`}
+                className="rounded-full hover:bg-destructive/10 hover:text-destructive"
+              >
                 <X className="h-3 w-3" />
               </button>
             </span>
           ))}
-          {items.length === 0 && <span className="text-xs text-muted-foreground">No items yet.</span>}
+          {items.length === 0 && (
+            <span className="text-xs text-muted-foreground">No items yet.</span>
+          )}
         </div>
         <div className="flex gap-2">
-          <Input value={val} onChange={(e) => setVal(e.target.value)} placeholder="Add new…" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} />
-          <Button onClick={add}><Plus className="mr-1 h-4 w-4" />Add</Button>
+          <Input
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            placeholder="Add new…"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add();
+              }
+            }}
+          />
+          <Button onClick={add}>
+            <Plus className="mr-1 h-4 w-4" />
+            Add
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -637,13 +994,21 @@ function ChipListCard({
 }
 
 function AddFormRow({
-  modules, agents, onAdd,
+  modules,
+  agents,
+  onAdd,
 }: {
   modules: string[];
   agents: string[];
   onAdd: (f: {
-    name: string; module: string; status: string; passed: number; failed: number;
-    openDefects: number; lastTested: string; assignedAgent: string;
+    name: string;
+    module: string;
+    status: string;
+    passed: number;
+    failed: number;
+    openDefects: number;
+    lastTested: string;
+    assignedAgent: string;
   }) => void;
 }) {
   const [name, setName] = useState("");
@@ -651,24 +1016,54 @@ function AddFormRow({
   const [agent, setAgent] = useState(agents[0] ?? "");
   return (
     <div className="grid gap-2 md:grid-cols-[2fr_1fr_1fr_auto]">
-      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Form name (e.g. 1099-NEC)" />
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Form name (e.g. 1099-NEC)"
+      />
       <Select value={mod} onValueChange={setMod}>
-        <SelectTrigger><SelectValue /></SelectTrigger>
-        <SelectContent>{modules.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {modules.map((m) => (
+            <SelectItem key={m} value={m}>
+              {m}
+            </SelectItem>
+          ))}
+        </SelectContent>
       </Select>
       <Select value={agent} onValueChange={setAgent}>
-        <SelectTrigger><SelectValue placeholder="Assign agent" /></SelectTrigger>
-        <SelectContent>{agents.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
+        <SelectTrigger>
+          <SelectValue placeholder="Assign agent" />
+        </SelectTrigger>
+        <SelectContent>
+          {agents.map((a) => (
+            <SelectItem key={a} value={a}>
+              {a}
+            </SelectItem>
+          ))}
+        </SelectContent>
       </Select>
-      <Button onClick={() => {
-        if (!name.trim()) { toast.error("Form name required"); return; }
-        onAdd({
-          name: name.trim(), module: mod, status: "Pending",
-          passed: 0, failed: 0, openDefects: 0,
-          lastTested: new Date().toISOString(), assignedAgent: agent,
-        });
-        setName("");
-      }}>
+      <Button
+        onClick={() => {
+          if (!name.trim()) {
+            toast.error("Form name required");
+            return;
+          }
+          onAdd({
+            name: name.trim(),
+            module: mod,
+            status: "Pending",
+            passed: 0,
+            failed: 0,
+            openDefects: 0,
+            lastTested: new Date().toISOString(),
+            assignedAgent: agent,
+          });
+          setName("");
+        }}
+      >
         <Plus className="mr-1 h-4 w-4" /> Add form
       </Button>
     </div>
@@ -677,18 +1072,27 @@ function AddFormRow({
 
 function AuditTable() {
   const { audit, currentUser } = useQA();
-  
+
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return audit.slice(0, 200);
-    return audit.filter((a) =>
-      [a.defectId, a.field, a.oldValue ?? "", a.newValue ?? "", a.changedBy].join(" ").toLowerCase().includes(term),
-    ).slice(0, 200);
+    return audit
+      .filter((a) =>
+        [a.defectId, a.field, a.oldValue ?? "", a.newValue ?? "", a.changedBy]
+          .join(" ")
+          .toLowerCase()
+          .includes(term),
+      )
+      .slice(0, 200);
   }, [audit, q]);
 
   if (currentUser?.role !== "admin") {
-    return <Card><CardContent className="p-6 text-sm text-muted-foreground">Admin only.</CardContent></Card>;
+    return (
+      <Card>
+        <CardContent className="p-6 text-sm text-muted-foreground">Admin only.</CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -696,11 +1100,22 @@ function AuditTable() {
       <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
         <div>
           <CardTitle>Audit Log</CardTitle>
-          <CardDescription>Every defect status, priority, severity, assignment and validity change. {audit.length} entries.</CardDescription>
+          <CardDescription>
+            Every defect status, priority, severity, assignment and validity change. {audit.length}{" "}
+            entries.
+          </CardDescription>
         </div>
         <div className="flex gap-2">
-          <Input className="w-60" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} />
-          <Button variant="outline" onClick={() => exportCsv("audit-log", audit)}><Download className="mr-1 h-4 w-4" />Export</Button>
+          <Input
+            className="w-60"
+            placeholder="Search…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <Button variant="outline" onClick={() => exportCsv("audit-log", audit)}>
+            <Download className="mr-1 h-4 w-4" />
+            Export
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -718,16 +1133,30 @@ function AuditTable() {
           <TableBody>
             {filtered.map((a) => (
               <TableRow key={a.id}>
-                <TableCell className="text-xs text-muted-foreground">{new Date(a.changedAt).toLocaleString()}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {new Date(a.changedAt).toLocaleString()}
+                </TableCell>
                 <TableCell className="font-mono text-xs">{a.defectId}</TableCell>
                 <TableCell className="capitalize">{a.field.replace(/_/g, " ")}</TableCell>
-                <TableCell><span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground line-through">{a.oldValue ?? "—"}</span></TableCell>
-                <TableCell><span className="rounded bg-success/10 px-1.5 py-0.5 text-xs text-success">{a.newValue ?? "—"}</span></TableCell>
+                <TableCell>
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground line-through">
+                    {a.oldValue ?? "—"}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="rounded bg-success/10 px-1.5 py-0.5 text-xs text-success">
+                    {a.newValue ?? "—"}
+                  </span>
+                </TableCell>
                 <TableCell className="text-sm">{a.changedBy}</TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">No audit entries match.</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                  No audit entries match.
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
@@ -764,9 +1193,16 @@ function RoleAuditTable() {
     void load();
     const ch = supabase
       .channel("role-audit")
-      .on("postgres_changes", { event: "*", schema: "public", table: "role_audit_log" }, () => void load())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "role_audit_log" },
+        () => void load(),
+      )
       .subscribe();
-    return () => { alive = false; void supabase.removeChannel(ch); };
+    return () => {
+      alive = false;
+      void supabase.removeChannel(ch);
+    };
   }, [currentUser]);
 
   if (currentUser?.role !== "admin") return null;
@@ -774,7 +1210,9 @@ function RoleAuditTable() {
     <Card>
       <CardHeader>
         <CardTitle>Role Changes</CardTitle>
-        <CardDescription>History of admin/agent role updates. {rows.length} entries.</CardDescription>
+        <CardDescription>
+          History of admin/agent role updates. {rows.length} entries.
+        </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
@@ -790,15 +1228,31 @@ function RoleAuditTable() {
           <TableBody>
             {rows.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="text-xs text-muted-foreground">{new Date(r.changed_at).toLocaleString()}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {new Date(r.changed_at).toLocaleString()}
+                </TableCell>
                 <TableCell>{r.target_name || r.target_user_id.slice(0, 8)}</TableCell>
-                <TableCell><span className="rounded bg-muted px-1.5 py-0.5 text-xs">{r.old_role ?? "—"}</span></TableCell>
-                <TableCell><span className="rounded bg-success/10 px-1.5 py-0.5 text-xs text-success">{r.new_role}</span></TableCell>
-                <TableCell className="text-sm">{r.changed_by_name || r.changed_by_id.slice(0, 8)}</TableCell>
+                <TableCell>
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                    {r.old_role ?? "—"}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="rounded bg-success/10 px-1.5 py-0.5 text-xs text-success">
+                    {r.new_role}
+                  </span>
+                </TableCell>
+                <TableCell className="text-sm">
+                  {r.changed_by_name || r.changed_by_id.slice(0, 8)}
+                </TableCell>
               </TableRow>
             ))}
             {rows.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No role changes yet.</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
+                  No role changes yet.
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
@@ -842,9 +1296,16 @@ function ExportAuditTable() {
     void load();
     const ch = supabase
       .channel(`export-audit-${Math.random().toString(36).slice(2, 8)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "export_audit_log" }, () => void load())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "export_audit_log" },
+        () => void load(),
+      )
       .subscribe();
-    return () => { alive = false; void supabase.removeChannel(ch); };
+    return () => {
+      alive = false;
+      void supabase.removeChannel(ch);
+    };
   }, [currentUser]);
 
   const filtered = useMemo(() => {
@@ -852,8 +1313,18 @@ function ExportAuditTable() {
     return rows.filter((r) => {
       if (statusFilter !== "all" && r.status !== statusFilter) return false;
       if (!term) return true;
-      return [r.user_name, r.role, r.scope, r.environment ?? "", r.status, r.error ?? "", JSON.stringify(r.filters ?? {})]
-        .join(" ").toLowerCase().includes(term);
+      return [
+        r.user_name,
+        r.role,
+        r.scope,
+        r.environment ?? "",
+        r.status,
+        r.error ?? "",
+        JSON.stringify(r.filters ?? {}),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(term);
     });
   }, [rows, q, statusFilter]);
 
@@ -864,20 +1335,35 @@ function ExportAuditTable() {
       <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
         <div>
           <CardTitle>Export Audit Log</CardTitle>
-          <CardDescription>Who exported what, when, and with which filters. {rows.length} entries.</CardDescription>
+          <CardDescription>
+            Who exported what, when, and with which filters. {rows.length} entries.
+          </CardDescription>
         </div>
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="success">Success</SelectItem>
               <SelectItem value="failed">Failed</SelectItem>
             </SelectContent>
           </Select>
-          <Input className="w-60" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} />
-          <Button variant="outline" onClick={() => exportCsv("export-audit", filtered as unknown as Record<string, unknown>[])}>
-            <Download className="mr-1 h-4 w-4" />Export
+          <Input
+            className="w-60"
+            placeholder="Search…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <Button
+            variant="outline"
+            onClick={() =>
+              exportCsv("export-audit", filtered as unknown as Record<string, unknown>[])
+            }
+          >
+            <Download className="mr-1 h-4 w-4" />
+            Export
           </Button>
         </div>
       </CardHeader>
@@ -898,23 +1384,37 @@ function ExportAuditTable() {
           <TableBody>
             {filtered.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {new Date(r.created_at).toLocaleString()}
+                </TableCell>
                 <TableCell className="text-sm">{r.user_name}</TableCell>
                 <TableCell className="text-xs capitalize">{r.role}</TableCell>
                 <TableCell className="text-xs">{r.scope}</TableCell>
                 <TableCell className="text-xs">{r.environment ?? "All"}</TableCell>
-                <TableCell className="max-w-[260px] truncate font-mono text-xs text-muted-foreground" title={JSON.stringify(r.filters ?? {})}>
+                <TableCell
+                  className="max-w-[260px] truncate font-mono text-xs text-muted-foreground"
+                  title={JSON.stringify(r.filters ?? {})}
+                >
                   {JSON.stringify(r.filters ?? {})}
                 </TableCell>
                 <TableCell className="text-right text-sm">{r.row_count}</TableCell>
                 <TableCell>
-                  <Badge variant={r.status === "success" ? "default" : "destructive"} className="capitalize">{r.status}</Badge>
+                  <Badge
+                    variant={r.status === "success" ? "default" : "destructive"}
+                    className="capitalize"
+                  >
+                    {r.status}
+                  </Badge>
                   {r.error && <div className="mt-1 text-xs text-destructive">{r.error}</div>}
                 </TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">No export audit entries.</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
+                  No export audit entries.
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
@@ -966,7 +1466,10 @@ function ProfilePictureCard() {
     setUploading(true);
     try {
       if (currentUser.avatarUrl) {
-        await supabase.storage.from("avatars").remove([currentUser.avatarUrl]).catch(() => {});
+        await supabase.storage
+          .from("avatars")
+          .remove([currentUser.avatarUrl])
+          .catch(() => {});
       }
       const r = await updateUser(currentUser.id, { avatarUrl: null });
       if (!r.ok) throw new Error(r.error);
@@ -983,7 +1486,9 @@ function ProfilePictureCard() {
     <Card>
       <CardHeader>
         <CardTitle>Your Profile</CardTitle>
-        <CardDescription>Profile picture and account details for the signed-in user.</CardDescription>
+        <CardDescription>
+          Profile picture and account details for the signed-in user.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex flex-wrap items-center gap-6">
@@ -1000,7 +1505,9 @@ function ProfilePictureCard() {
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   className="hidden"
-                  ref={(el) => { inputRef[1](el); }}
+                  ref={(el) => {
+                    inputRef[1](el);
+                  }}
                   disabled={uploading}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
@@ -1011,7 +1518,11 @@ function ProfilePictureCard() {
                 <Button asChild disabled={uploading} variant="default">
                   <span className="cursor-pointer">
                     <Upload className="mr-1 h-4 w-4" />
-                    {uploading ? "Uploading…" : currentUser.avatarUrl ? "Change picture" : "Upload picture"}
+                    {uploading
+                      ? "Uploading…"
+                      : currentUser.avatarUrl
+                        ? "Change picture"
+                        : "Upload picture"}
                   </span>
                 </Button>
               </label>
@@ -1022,14 +1533,24 @@ function ProfilePictureCard() {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              PNG, JPG, JPEG or WEBP — up to 5 MB. A default avatar is generated when no picture is uploaded.
+              PNG, JPG, JPEG or WEBP — up to 5 MB. A default avatar is generated when no picture is
+              uploaded.
             </p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
-          <div><Label>Name</Label><Input value={currentUser.name ?? ""} disabled /></div>
-          <div><Label>Email</Label><Input value={currentUser.email ?? ""} disabled /></div>
-          <div><Label>Role</Label><Input value={currentUser.role ?? ""} disabled className="capitalize" /></div>
+          <div>
+            <Label>Name</Label>
+            <Input value={currentUser.name ?? ""} disabled />
+          </div>
+          <div>
+            <Label>Email</Label>
+            <Input value={currentUser.email ?? ""} disabled />
+          </div>
+          <div>
+            <Label>Role</Label>
+            <Input value={currentUser.role ?? ""} disabled className="capitalize" />
+          </div>
         </div>
       </CardContent>
     </Card>

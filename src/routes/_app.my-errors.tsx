@@ -5,10 +5,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
@@ -18,10 +27,19 @@ import type { DefectStatus, Module, Priority, Severity } from "@/lib/qa/types";
 import { toast } from "sonner";
 import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
 
-const DEFECT_STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
-const PRIORITIES: Priority[] = ["Low","Medium","High","Critical"];
-const SEVERITIES: Severity[] = ["Low","Medium","High","Critical"];
-const MODULES: Module[] = ["1099 Forms","990 Forms","Integrations","1099 Online"];
+const DEFECT_STATUSES: DefectStatus[] = [
+  "Reported",
+  "Pending",
+  "Ongoing",
+  "In Progress",
+  "Fixed",
+  "Retest Required",
+  "Reopened",
+  "Closed",
+];
+const PRIORITIES: Priority[] = ["Low", "Medium", "High", "Critical"];
+const SEVERITIES: Severity[] = ["Low", "Medium", "High", "Critical"];
+const MODULES: Module[] = ["1099 Forms", "990 Forms", "Integrations", "1099 Online"];
 
 export const Route = createFileRoute("/_app/my-errors")({
   component: MyErrorsPage,
@@ -61,18 +79,43 @@ function MyErrorsPage() {
       if (sev !== "all" && d.severity !== sev) return false;
       if (agent !== "all" && d.assignedAgent !== agent) return false;
       if (!term) return true;
-      return [d.id, d.title, d.formFeature, d.module, d.status, d.priority, d.severity, d.assignedAgent]
-        .join(" ").toLowerCase().includes(term);
+      return [
+        d.id,
+        d.title,
+        d.formFeature,
+        d.module,
+        d.status,
+        d.priority,
+        d.severity,
+        d.assignedAgent,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(term);
     });
   }, [defects, currentUser, q, scope, mod, status, prio, sev, agent]);
 
   const resetFilters = () => {
-    setQ(""); setScope("all"); setMod("all"); setStatus("all"); setPrio("all"); setSev("all"); setAgent("all");
+    setQ("");
+    setScope("all");
+    setMod("all");
+    setStatus("all");
+    setPrio("all");
+    setSev("all");
+    setAgent("all");
   };
 
   const lastToastRef = useRef<string>("");
   useEffect(() => {
-    const filters = { q, module: mod, status, priority: prio, severity: sev, assignedAgent: agent, scope };
+    const filters = {
+      q,
+      module: mod,
+      status,
+      priority: prio,
+      severity: sev,
+      assignedAgent: agent,
+      scope,
+    };
     const warnings = validateFilters(filters, defects);
     if (warnings.length) {
       const key = "warn:" + warnings.join("|");
@@ -103,7 +146,8 @@ function MyErrorsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">My Error Sheet</h2>
           <p className="text-sm text-muted-foreground">
-            Errors you reported and defects assigned to you. {reported.length} reported · {assigned.length} assigned.
+            Errors you reported and defects assigned to you. {reported.length} reported ·{" "}
+            {assigned.length} assigned.
           </p>
         </div>
         <ExportMenu
@@ -111,8 +155,29 @@ function MyErrorsPage() {
           title="My errors export"
           filters={{ Agent: currentUser?.name ?? "—", Count: mine.length }}
           rows={mine.map(({ comments, ...d }) => ({ ...d, commentsCount: comments.length }))}
-          columns={["id","module","formFeature","title","status","priority","severity","validity","assignedAgent","createdBy","updatedAt"]}
-          defaultSelected={["id","module","formFeature","title","status","priority","validity","updatedAt"]}
+          columns={[
+            "id",
+            "module",
+            "formFeature",
+            "title",
+            "status",
+            "priority",
+            "severity",
+            "validity",
+            "assignedAgent",
+            "createdBy",
+            "updatedAt",
+          ]}
+          defaultSelected={[
+            "id",
+            "module",
+            "formFeature",
+            "title",
+            "status",
+            "priority",
+            "validity",
+            "updatedAt",
+          ]}
         />
       </div>
 
@@ -121,20 +186,70 @@ function MyErrorsPage() {
           <div className="grid gap-3 md:grid-cols-7">
             <div className="relative md:col-span-2">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search my errors…" className="pl-9" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search my errors…"
+                className="pl-9"
+              />
             </div>
-            <FilterSelect value={scope} onChange={(v) => setScope(v as typeof scope)} placeholder="Scope"
-              options={[{ v: "all", l: "All mine" }, { v: "reported", l: "Reported by me" }, { v: "assigned", l: "Assigned to me" }]} />
-            <FilterSelect value={mod} onChange={setMod} placeholder="Module" options={[{ v: "all", l: "All modules" }, ...MODULES.map((m) => ({ v: m, l: m }))]} />
-            <FilterSelect value={status} onChange={setStatus} placeholder="Status" options={[{ v: "all", l: "All statuses" }, ...DEFECT_STATUSES.map((s) => ({ v: s, l: s }))]} />
-            <FilterSelect value={prio} onChange={setPrio} placeholder="Priority" options={[{ v: "all", l: "All priorities" }, ...PRIORITIES.map((p) => ({ v: p, l: p }))]} />
-            <FilterSelect value={sev} onChange={setSev} placeholder="Severity" options={[{ v: "all", l: "All severities" }, ...SEVERITIES.map((p) => ({ v: p, l: p }))]} />
-            <FilterSelect value={agent} onChange={setAgent} placeholder="Assigned"
-              options={[{ v: "all", l: "All agents" }, ...myAgents.map((a) => ({ v: a, l: a }))]} />
+            <FilterSelect
+              value={scope}
+              onChange={(v) => setScope(v as typeof scope)}
+              placeholder="Scope"
+              options={[
+                { v: "all", l: "All mine" },
+                { v: "reported", l: "Reported by me" },
+                { v: "assigned", l: "Assigned to me" },
+              ]}
+            />
+            <FilterSelect
+              value={mod}
+              onChange={setMod}
+              placeholder="Module"
+              options={[{ v: "all", l: "All modules" }, ...MODULES.map((m) => ({ v: m, l: m }))]}
+            />
+            <FilterSelect
+              value={status}
+              onChange={setStatus}
+              placeholder="Status"
+              options={[
+                { v: "all", l: "All statuses" },
+                ...DEFECT_STATUSES.map((s) => ({ v: s, l: s })),
+              ]}
+            />
+            <FilterSelect
+              value={prio}
+              onChange={setPrio}
+              placeholder="Priority"
+              options={[
+                { v: "all", l: "All priorities" },
+                ...PRIORITIES.map((p) => ({ v: p, l: p })),
+              ]}
+            />
+            <FilterSelect
+              value={sev}
+              onChange={setSev}
+              placeholder="Severity"
+              options={[
+                { v: "all", l: "All severities" },
+                ...SEVERITIES.map((p) => ({ v: p, l: p })),
+              ]}
+            />
+            <FilterSelect
+              value={agent}
+              onChange={setAgent}
+              placeholder="Assigned"
+              options={[{ v: "all", l: "All agents" }, ...myAgents.map((a) => ({ v: a, l: a }))]}
+            />
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>{mine.length} result{mine.length === 1 ? "" : "s"}</span>
-            <Button size="sm" variant="ghost" onClick={resetFilters}>Reset filters</Button>
+            <span>
+              {mine.length} result{mine.length === 1 ? "" : "s"}
+            </span>
+            <Button size="sm" variant="ghost" onClick={resetFilters}>
+              Reset filters
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -162,8 +277,12 @@ function MyErrorsPage() {
                   <TableCell className="text-sm">{d.module}</TableCell>
                   <TableCell className="text-sm">{d.formFeature}</TableCell>
                   <TableCell className="max-w-[280px] truncate font-medium">{d.title}</TableCell>
-                  <TableCell><DefectStatusBadge status={d.status} /></TableCell>
-                  <TableCell><PriorityBadge value={d.priority} /></TableCell>
+                  <TableCell>
+                    <DefectStatusBadge status={d.status} />
+                  </TableCell>
+                  <TableCell>
+                    <PriorityBadge value={d.priority} />
+                  </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
                       {d.validity === "Valid" && <ShieldCheck className="h-3 w-3 text-success" />}
@@ -171,16 +290,31 @@ function MyErrorsPage() {
                       {d.validity ?? "Unverified"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{new Date(d.updatedAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {new Date(d.updatedAt).toLocaleDateString()}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setOpenId(d.id); }} aria-label="View">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenId(d.id);
+                        }}
+                        aria-label="View"
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                       {d.createdBy === currentUser?.name && (
                         <Button
-                          size="icon" variant="ghost" aria-label="Edit"
-                          onClick={(e) => { e.stopPropagation(); setEditId(d.id); }}
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditId(d.id);
+                          }}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -191,7 +325,10 @@ function MyErrorsPage() {
               ))}
               {mine.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-12 text-center text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={9}
+                    className="py-12 text-center text-sm text-muted-foreground"
+                  >
                     No errors found for you yet.
                   </TableCell>
                 </TableRow>
@@ -204,20 +341,27 @@ function MyErrorsPage() {
       <DefectDetailSheet
         defectId={openId}
         open={!!openId}
-        onOpenChange={(o) => { if (!o) setOpenId(null); }}
+        onOpenChange={(o) => {
+          if (!o) setOpenId(null);
+        }}
       />
       <DefectDetailSheet
         defectId={editId}
         open={!!editId}
         initialEdit
-        onOpenChange={(o) => { if (!o) setEditId(null); }}
+        onOpenChange={(o) => {
+          if (!o) setEditId(null);
+        }}
       />
     </div>
   );
 }
 
 function FilterSelect({
-  value, onChange, placeholder, options,
+  value,
+  onChange,
+  placeholder,
+  options,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -226,8 +370,16 @@ function FilterSelect({
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger><SelectValue placeholder={placeholder} /></SelectTrigger>
-      <SelectContent>{options.map((o) => <SelectItem key={o.v} value={o.v}>{o.l}</SelectItem>)}</SelectContent>
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((o) => (
+          <SelectItem key={o.v} value={o.v}>
+            {o.l}
+          </SelectItem>
+        ))}
+      </SelectContent>
     </Select>
   );
 }

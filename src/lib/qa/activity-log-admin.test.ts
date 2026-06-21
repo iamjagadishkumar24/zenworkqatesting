@@ -55,12 +55,20 @@ function makeSink() {
 type Sink = ReturnType<typeof makeSink>;
 
 // Mirrors activity_export_trg in the database.
-function exportTrigger(sink: Sink, job: {
-  id: string; scope: string; environment: string; status: string;
-  row_count: number; file_name: string;
-  requested_by_id: string; requested_by_name: string;
-  filters: Record<string, unknown>;
-}) {
+function exportTrigger(
+  sink: Sink,
+  job: {
+    id: string;
+    scope: string;
+    environment: string;
+    status: string;
+    row_count: number;
+    file_name: string;
+    requested_by_id: string;
+    requested_by_name: string;
+    filters: Record<string, unknown>;
+  },
+) {
   sink.insert({
     occurred_at: new Date().toISOString(),
     category: "export",
@@ -71,8 +79,10 @@ function exportTrigger(sink: Sink, job: {
     actor_role: "admin",
     old_value: null,
     new_value: {
-      scope: job.scope, status: job.status,
-      rows: job.row_count, file: job.file_name,
+      scope: job.scope,
+      status: job.status,
+      rows: job.row_count,
+      file: job.file_name,
     },
     result: job.status === "failed" ? "failure" : "success",
     summary: `${job.requested_by_name} exported ${job.scope} (${job.environment})`,
@@ -81,11 +91,17 @@ function exportTrigger(sink: Sink, job: {
 }
 
 // Mirrors activity_role_trg.
-function roleTrigger(sink: Sink, ev: {
-  target_user_id: string; target_name: string;
-  old_role: string | null; new_role: string;
-  changed_by_id: string; changed_by_name: string;
-}) {
+function roleTrigger(
+  sink: Sink,
+  ev: {
+    target_user_id: string;
+    target_name: string;
+    old_role: string | null;
+    new_role: string;
+    changed_by_id: string;
+    changed_by_name: string;
+  },
+) {
   sink.insert({
     occurred_at: new Date().toISOString(),
     category: "role",
@@ -103,11 +119,16 @@ function roleTrigger(sink: Sink, ev: {
 }
 
 // Mirrors activity_agent_trg (agent invites / permission changes).
-function agentTrigger(sink: Sink, ev: {
-  target_email: string; action: string;
-  performed_by_id: string; performed_by_name: string;
-  details: Record<string, unknown>;
-}) {
+function agentTrigger(
+  sink: Sink,
+  ev: {
+    target_email: string;
+    action: string;
+    performed_by_id: string;
+    performed_by_name: string;
+    details: Record<string, unknown>;
+  },
+) {
   sink.insert({
     occurred_at: new Date().toISOString(),
     category: "user_mgmt",
@@ -130,9 +151,14 @@ describe("activity_log: admin exports record scope, filters, and row counts", ()
   it("export.completed carries scope, row count, and applied filters", () => {
     const sink = makeSink();
     exportTrigger(sink, {
-      id: "exp-1", scope: "defects", environment: "Production",
-      status: "completed", row_count: 124, file_name: "defects-2026.xlsx",
-      requested_by_id: "u-admin", requested_by_name: "Portal Admin",
+      id: "exp-1",
+      scope: "defects",
+      environment: "Production",
+      status: "completed",
+      row_count: 124,
+      file_name: "defects-2026.xlsx",
+      requested_by_id: "u-admin",
+      requested_by_name: "Portal Admin",
       filters: { tax_year: "2026", status: ["Open", "Reported"] },
     });
     const r = sink.rows[0]!;
@@ -147,9 +173,14 @@ describe("activity_log: admin exports record scope, filters, and row counts", ()
   it("export.failed maps to result=failure so it surfaces in the failures tile", () => {
     const sink = makeSink();
     exportTrigger(sink, {
-      id: "exp-2", scope: "reports", environment: "Production",
-      status: "failed", row_count: 0, file_name: "",
-      requested_by_id: "u-admin", requested_by_name: "Portal Admin",
+      id: "exp-2",
+      scope: "reports",
+      environment: "Production",
+      status: "failed",
+      row_count: 0,
+      file_name: "",
+      requested_by_id: "u-admin",
+      requested_by_name: "Portal Admin",
       filters: { tax_year: "2026" },
     });
     expect(sink.rows[0]!.result).toBe("failure");
@@ -161,9 +192,12 @@ describe("activity_log: role assignment diffs", () => {
   it("captures previous and new role in old_value/new_value", () => {
     const sink = makeSink();
     roleTrigger(sink, {
-      target_user_id: "u-bob", target_name: "Bob",
-      old_role: "agent", new_role: "admin",
-      changed_by_id: "u-admin", changed_by_name: "Portal Admin",
+      target_user_id: "u-bob",
+      target_name: "Bob",
+      old_role: "agent",
+      new_role: "admin",
+      changed_by_id: "u-admin",
+      changed_by_name: "Portal Admin",
     });
     const r = sink.rows[0]!;
     expect(r.action).toBe("role.changed");
@@ -177,9 +211,12 @@ describe("activity_log: role assignment diffs", () => {
   it("first-time role grant has old_value.role = null", () => {
     const sink = makeSink();
     roleTrigger(sink, {
-      target_user_id: "u-new", target_name: "Newcomer",
-      old_role: null, new_role: "agent",
-      changed_by_id: "u-admin", changed_by_name: "Portal Admin",
+      target_user_id: "u-new",
+      target_name: "Newcomer",
+      old_role: null,
+      new_role: "agent",
+      changed_by_id: "u-admin",
+      changed_by_name: "Portal Admin",
     });
     expect(sink.rows[0]!.old_value).toEqual({ role: null });
     expect(sink.rows[0]!.new_value).toEqual({ role: "agent" });
@@ -190,18 +227,20 @@ describe("activity_log: agent permission changes", () => {
   it("invite/activate/deactivate flow records each user.* action with details", () => {
     const sink = makeSink();
     agentTrigger(sink, {
-      target_email: "agent@qaportal.app", action: "invite_created",
-      performed_by_id: "u-admin", performed_by_name: "Portal Admin",
+      target_email: "agent@qaportal.app",
+      action: "invite_created",
+      performed_by_id: "u-admin",
+      performed_by_name: "Portal Admin",
       details: { name: "QA Agent", role: "agent" },
     });
     agentTrigger(sink, {
-      target_email: "agent@qaportal.app", action: "deactivated",
-      performed_by_id: "u-admin", performed_by_name: "Portal Admin",
+      target_email: "agent@qaportal.app",
+      action: "deactivated",
+      performed_by_id: "u-admin",
+      performed_by_name: "Portal Admin",
       details: { reason: "left team" },
     });
-    expect(sink.rows.map((r) => r.action)).toEqual([
-      "user.invite_created", "user.deactivated",
-    ]);
+    expect(sink.rows.map((r) => r.action)).toEqual(["user.invite_created", "user.deactivated"]);
     expect(sink.rows[0]!.metadata).toEqual({ name: "QA Agent", role: "agent" });
     expect(sink.rows[1]!.metadata).toEqual({ reason: "left team" });
     for (const r of sink.rows) expect(r.category).toBe("user_mgmt");
@@ -223,8 +262,10 @@ describe("recordAuthEvent: failed logins and lockout events", () => {
     vi.doMock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
     const { recordAuthEvent } = await import("./activityLog");
     await recordAuthEvent({
-      kind: "login", email: "admin@qaportal.app",
-      success: false, reason: "invalid_credentials",
+      kind: "login",
+      email: "admin@qaportal.app",
+      success: false,
+      reason: "invalid_credentials",
     });
     const args = rpc.mock.calls[0]![1];
     expect(args._category).toBe("auth");
@@ -239,7 +280,9 @@ describe("recordAuthEvent: failed logins and lockout events", () => {
     const { recordAuthEvent } = await import("./activityLog");
     const until = new Date(Date.now() + 15 * 60_000).toISOString();
     await recordAuthEvent({
-      kind: "login", email: "agent@qaportal.app", success: false,
+      kind: "login",
+      email: "agent@qaportal.app",
+      success: false,
       metadata: { reason: "account_locked", failed_attempts: 5, locked_until: until },
     });
     const args = rpc.mock.calls[0]![1];
@@ -259,17 +302,29 @@ describe("failed-login events reach realtime subscribers without refresh", () =>
     sink.subscribe((r) => received.push(r));
     sink.insert({
       occurred_at: new Date().toISOString(),
-      category: "auth", action: "auth.login",
-      record_id: "x@y.z", actor_id: null, actor_name: "x@y.z", actor_role: null,
-      old_value: null, new_value: null, result: "failure",
+      category: "auth",
+      action: "auth.login",
+      record_id: "x@y.z",
+      actor_id: null,
+      actor_name: "x@y.z",
+      actor_role: null,
+      old_value: null,
+      new_value: null,
+      result: "failure",
       summary: "x@y.z failed sign-in",
       metadata: { reason: "invalid_credentials" },
     });
     sink.insert({
       occurred_at: new Date().toISOString(),
-      category: "auth", action: "auth.login",
-      record_id: "x@y.z", actor_id: null, actor_name: "x@y.z", actor_role: null,
-      old_value: null, new_value: null, result: "failure",
+      category: "auth",
+      action: "auth.login",
+      record_id: "x@y.z",
+      actor_id: null,
+      actor_name: "x@y.z",
+      actor_role: null,
+      old_value: null,
+      new_value: null,
+      result: "failure",
       summary: "x@y.z locked out",
       metadata: { reason: "account_locked", failed_attempts: 5 },
     });
@@ -323,10 +378,10 @@ describe("audit log: Today vs custom range filter (timezone aware)", () => {
     const end = localDayBounds(new Date(2026, 5, 17)).end; // exclusive
     const rows = [
       new Date(2026, 5, 14, 23, 59).toISOString(), // before
-      new Date(2026, 5, 15, 0, 0).toISOString(),   // first day start
-      new Date(2026, 5, 16, 12, 0).toISOString(),  // middle
+      new Date(2026, 5, 15, 0, 0).toISOString(), // first day start
+      new Date(2026, 5, 16, 12, 0).toISOString(), // middle
       new Date(2026, 5, 17, 23, 59).toISOString(), // last day end
-      new Date(2026, 5, 18, 0, 0).toISOString(),   // after
+      new Date(2026, 5, 18, 0, 0).toISOString(), // after
     ];
     const kept = rows.filter((iso) => inRange(iso, start, end));
     expect(kept).toHaveLength(3);

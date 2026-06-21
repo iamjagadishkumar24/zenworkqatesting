@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "./store";
 import {
-  deactivateAgent, reactivateAgent, resendAgentInvite,
-  resetAgentPassword, updateAgentProfile,
+  deactivateAgent,
+  reactivateAgent,
+  resendAgentInvite,
+  resetAgentPassword,
+  updateAgentProfile,
 } from "./admin.functions";
 
 export type AgentInviteStatus = "pending" | "active" | "inactive";
@@ -47,26 +50,45 @@ export function useAgentInvites() {
     try {
       ch = supabase
         .channel(`agent-invites-${Math.random().toString(36).slice(2, 8)}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "agent_invites" }, () => void load())
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "agent_invites" },
+          () => void load(),
+        )
         .subscribe();
     } catch (e) {
       console.warn("useAgentInvites: subscribe failed", e);
     }
-    return () => { if (ch) { try { void supabase.removeChannel(ch); } catch { /* noop */ } } };
+    return () => {
+      if (ch) {
+        try {
+          void supabase.removeChannel(ch);
+        } catch {
+          /* noop */
+        }
+      }
+    };
   }, [currentUser, load]);
 
   const create = async (input: { email: string; name: string; notes?: string }) => {
     const email = input.email.trim().toLowerCase();
     const name = input.name.trim();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "Enter a valid email" };
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return { ok: false, error: "Enter a valid email" };
     if (name.length < 2) return { ok: false, error: "Name is required" };
     const { error } = await supabase.from("agent_invites").insert({
-      email, name, notes: input.notes ?? "", created_by: currentUser?.id ?? null,
+      email,
+      name,
+      notes: input.notes ?? "",
+      created_by: currentUser?.id ?? null,
     });
     if (error) return { ok: false, error: error.message };
     await supabase.from("agent_audit_log").insert({
-      action: "invite_created", target_email: email, target_name: name,
-      performed_by_id: currentUser?.id ?? null, performed_by_name: currentUser?.name ?? null,
+      action: "invite_created",
+      target_email: email,
+      target_name: name,
+      performed_by_id: currentUser?.id ?? null,
+      performed_by_name: currentUser?.name ?? null,
     });
     return { ok: true };
   };
@@ -83,8 +105,11 @@ export function useAgentInvites() {
     if (error) return { ok: false, error: error.message };
     if (target) {
       await supabase.from("agent_audit_log").insert({
-        action: "invite_removed", target_email: target.email, target_name: target.name,
-        performed_by_id: currentUser?.id ?? null, performed_by_name: currentUser?.name ?? null,
+        action: "invite_removed",
+        target_email: target.email,
+        target_name: target.name,
+        performed_by_id: currentUser?.id ?? null,
+        performed_by_name: currentUser?.name ?? null,
       });
     }
     return { ok: true };
@@ -95,7 +120,10 @@ export function useAgentInvites() {
       await deactivateAgent({ data: { userId } });
       return { ok: true as const };
     } catch (e) {
-      return { ok: false as const, error: e instanceof Error ? e.message : "Failed to remove agent" };
+      return {
+        ok: false as const,
+        error: e instanceof Error ? e.message : "Failed to remove agent",
+      };
     }
   };
 
@@ -104,7 +132,10 @@ export function useAgentInvites() {
       await reactivateAgent({ data: { userId } });
       return { ok: true as const };
     } catch (e) {
-      return { ok: false as const, error: e instanceof Error ? e.message : "Failed to reactivate agent" };
+      return {
+        ok: false as const,
+        error: e instanceof Error ? e.message : "Failed to reactivate agent",
+      };
     }
   };
 
@@ -114,7 +145,8 @@ export function useAgentInvites() {
       return r;
     } catch (e) {
       return {
-        ok: false as const, status: "error" as const,
+        ok: false as const,
+        status: "error" as const,
         message: e instanceof Error ? e.message : "Failed to resend invite",
       };
     }
@@ -125,7 +157,10 @@ export function useAgentInvites() {
       await resetAgentPassword({ data: { userId, password } });
       return { ok: true as const };
     } catch (e) {
-      return { ok: false as const, error: e instanceof Error ? e.message : "Failed to reset password" };
+      return {
+        ok: false as const,
+        error: e instanceof Error ? e.message : "Failed to reset password",
+      };
     }
   };
 
@@ -137,12 +172,24 @@ export function useAgentInvites() {
       await updateAgentProfile({ data: { userId, ...patch } });
       return { ok: true as const };
     } catch (e) {
-      return { ok: false as const, error: e instanceof Error ? e.message : "Failed to update agent" };
+      return {
+        ok: false as const,
+        error: e instanceof Error ? e.message : "Failed to update agent",
+      };
     }
   };
 
   return {
-    items, loading, reload: load, create, setStatus, remove,
-    deactivate, reactivate, resend, resetPassword, updateProfile,
+    items,
+    loading,
+    reload: load,
+    create,
+    setStatus,
+    remove,
+    deactivate,
+    reactivate,
+    resend,
+    resetPassword,
+    updateProfile,
   };
 }

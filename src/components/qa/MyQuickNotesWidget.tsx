@@ -44,7 +44,10 @@ export function MyQuickNotesWidget() {
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg text-white" style={{ background: "var(--gradient-primary)" }}>
+            <div
+              className="grid h-8 w-8 place-items-center rounded-lg text-white"
+              style={{ background: "var(--gradient-primary)" }}
+            >
               <StickyNote className="h-4 w-4" />
             </div>
             <div>
@@ -52,7 +55,10 @@ export function MyQuickNotesWidget() {
               <p className="mt-0.5 text-[10px] text-muted-foreground">Personal sticky notes</p>
             </div>
           </div>
-          <Link to="/notes" className="text-xs font-medium text-primary inline-flex items-center gap-1">
+          <Link
+            to="/notes"
+            className="text-xs font-medium text-primary inline-flex items-center gap-1"
+          >
             Open <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
@@ -82,7 +88,9 @@ export function MyQuickNotesWidget() {
                 className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-accent"
               >
                 <span className={cn("h-2 w-2 shrink-0 rounded-full", DOT[n.color])} />
-                <span className="min-w-0 flex-1 truncate font-medium">{n.title || n.content_text || "Untitled"}</span>
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {n.title || n.content_text || "Untitled"}
+                </span>
                 <span className="text-[10px] text-muted-foreground">{timeAgo(n.updated_at)}</span>
               </Link>
             ))
@@ -91,7 +99,9 @@ export function MyQuickNotesWidget() {
 
         <div className="mt-3 flex gap-2">
           <Button asChild size="sm" className="flex-1">
-            <Link to="/notes"><Plus className="h-3.5 w-3.5" /> New note</Link>
+            <Link to="/notes">
+              <Plus className="h-3.5 w-3.5" /> New note
+            </Link>
           </Button>
           <Button asChild size="sm" variant="outline" className="flex-1">
             <Link to="/notes">Open Notes</Link>

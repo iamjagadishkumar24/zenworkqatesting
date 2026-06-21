@@ -7,12 +7,18 @@ function applyPreset(defects: D[], preset: string | undefined) {
   if (!preset || preset === "all") return defects;
   return defects.filter((d) => {
     switch (preset) {
-      case "open": return !["Fixed", "Closed"].includes(d.status);
-      case "valid": return d.validity === "Valid";
-      case "invalid": return d.validity === "Invalid";
-      case "fixed": return d.status === "Fixed" || d.status === "Closed";
-      case "retest": return d.status === "Retest Required";
-      default: return true;
+      case "open":
+        return !["Fixed", "Closed"].includes(d.status);
+      case "valid":
+        return d.validity === "Valid";
+      case "invalid":
+        return d.validity === "Invalid";
+      case "fixed":
+        return d.status === "Fixed" || d.status === "Closed";
+      case "retest":
+        return d.status === "Retest Required";
+      default:
+        return true;
     }
   });
 }

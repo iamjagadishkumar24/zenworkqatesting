@@ -16,9 +16,7 @@ export function exportCsv(filename: string, rows: ExportRow[], columns?: string[
   const cols = columns?.length ? columns : Object.keys(rows[0]);
   const data = pickColumns(rows, cols);
   const headers = cols.join(",");
-  const body = data
-    .map((r) => cols.map((h) => JSON.stringify(r[h] ?? "")).join(","))
-    .join("\n");
+  const body = data.map((r) => cols.map((h) => JSON.stringify(r[h] ?? "")).join(",")).join("\n");
   const blob = new Blob([headers + "\n" + body], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -59,7 +57,18 @@ export function exportXlsx(
   toast.success(`Exported ${fname}`);
 }
 
-const WRAP_HINTS = ["description", "notes", "comments", "steps", "expected", "actual", "body", "outcome", "details", "summary"];
+const WRAP_HINTS = [
+  "description",
+  "notes",
+  "comments",
+  "steps",
+  "expected",
+  "actual",
+  "body",
+  "outcome",
+  "details",
+  "summary",
+];
 const DATE_HINTS = ["date", "created", "updated", "reported", "completed", "due", "_at"];
 const URL_RE = /^https?:\/\//i;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
@@ -76,7 +85,8 @@ function isDateCol(header: string) {
 function coerce(value: unknown, header: string): string | number | Date | null {
   if (value === null || value === undefined || value === "") return null;
   if (value instanceof Date) return value;
-  if (typeof value === "number" || typeof value === "boolean") return typeof value === "boolean" ? String(value) : value;
+  if (typeof value === "number" || typeof value === "boolean")
+    return typeof value === "boolean" ? String(value) : value;
   if (typeof value === "string") {
     if (isDateCol(header) && ISO_DATE_RE.test(value)) {
       const d = new Date(value);
@@ -84,7 +94,11 @@ function coerce(value: unknown, header: string): string | number | Date | null {
     }
     return value;
   }
-  try { return JSON.stringify(value); } catch { return String(value); }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }
 
 function buildStyledSheet(cols: string[], rows: ExportRow[]) {

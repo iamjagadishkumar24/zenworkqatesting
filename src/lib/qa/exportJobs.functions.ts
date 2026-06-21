@@ -29,12 +29,25 @@ function matches(d: Defect, f: ExportFilters, isAdmin: boolean, userName: string
   if (f.status && f.status !== "all" && d.status !== f.status) return false;
   if (f.priority && f.priority !== "all" && d.priority !== f.priority) return false;
   if (f.severity && f.severity !== "all" && d.severity !== f.severity) return false;
-  if (f.assignedAgent && f.assignedAgent !== "all" && d.assignedAgent !== f.assignedAgent) return false;
+  if (f.assignedAgent && f.assignedAgent !== "all" && d.assignedAgent !== f.assignedAgent)
+    return false;
   if (f.reporter && f.reporter !== "all" && d.createdBy !== f.reporter) return false;
   if (f.q) {
     const t = f.q.trim().toLowerCase();
     if (t) {
-      const hay = [d.id, d.title, d.formFeature, d.module, d.status, d.priority, d.severity, d.assignedAgent, d.createdBy].join(" ").toLowerCase();
+      const hay = [
+        d.id,
+        d.title,
+        d.formFeature,
+        d.module,
+        d.status,
+        d.priority,
+        d.severity,
+        d.assignedAgent,
+        d.createdBy,
+      ]
+        .join(" ")
+        .toLowerCase();
       if (!hay.includes(t)) return false;
     }
   }
@@ -78,7 +91,11 @@ function dbRowToDefect(row: Record<string, unknown>): Defect {
 async function loadAllowAgentExports(supabase: ReturnType<typeof Object>): Promise<boolean> {
   // typed loosely; supabase param is a SupabaseClient
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (supabase as any).from("app_settings").select("value").eq("key", "allow_agent_exports").maybeSingle();
+  const { data } = await (supabase as any)
+    .from("app_settings")
+    .select("value")
+    .eq("key", "allow_agent_exports")
+    .maybeSingle();
   return data?.value === true || data?.value === "true";
 }
 
@@ -125,17 +142,28 @@ export const createExportJob = createServerFn({ method: "POST" })
     // Process inline; persist updates so client realtime sees progress.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     try {
-      await supabaseAdmin.from("export_jobs").update({ status: "processing", progress: 10, updated_at: new Date().toISOString() }).eq("id", jobRow.id);
+      await supabaseAdmin
+        .from("export_jobs")
+        .update({ status: "processing", progress: 10, updated_at: new Date().toISOString() })
+        .eq("id", jobRow.id);
 
       // Apply env filter at the database for efficiency
-      let query = supabaseAdmin.from("defects").select("*").order("created_at", { ascending: false });
+      let query = supabaseAdmin
+        .from("defects")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (env) query = query.eq("environment", env);
       const { data: defectsRaw, error: dErr } = await query;
       if (dErr) throw new Error(dErr.message);
 
-      const defects = (defectsRaw ?? []).map(dbRowToDefect).filter((d) => matches(d, filters, isAdmin, userName));
+      const defects = (defectsRaw ?? [])
+        .map(dbRowToDefect)
+        .filter((d) => matches(d, filters, isAdmin, userName));
 
-      await supabaseAdmin.from("export_jobs").update({ progress: 50, row_count: defects.length, updated_at: new Date().toISOString() }).eq("id", jobRow.id);
+      await supabaseAdmin
+        .from("export_jobs")
+        .update({ progress: 50, row_count: defects.length, updated_at: new Date().toISOString() })
+        .eq("id", jobRow.id);
 
       const buf = buildReportedErrorsWorkbook(defects);
       const filename = buildReportedErrorsFilename(env);
@@ -147,14 +175,17 @@ export const createExportJob = createServerFn({ method: "POST" })
       });
       if (upErr) throw new Error(upErr.message);
 
-      await supabaseAdmin.from("export_jobs").update({
-        status: "completed",
-        progress: 100,
-        file_path: filePath,
-        file_name: filename,
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq("id", jobRow.id);
+      await supabaseAdmin
+        .from("export_jobs")
+        .update({
+          status: "completed",
+          progress: 100,
+          file_path: filePath,
+          file_name: filename,
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", jobRow.id);
 
       await supabaseAdmin.from("export_audit_log").insert({
         user_id: userId,
@@ -171,11 +202,14 @@ export const createExportJob = createServerFn({ method: "POST" })
       return { jobId: jobRow.id, filePath, filename, rowCount: defects.length };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      await supabaseAdmin.from("export_jobs").update({
-        status: "failed",
-        error: msg,
-        updated_at: new Date().toISOString(),
-      }).eq("id", jobRow.id);
+      await supabaseAdmin
+        .from("export_jobs")
+        .update({
+          status: "failed",
+          error: msg,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", jobRow.id);
       await supabaseAdmin.from("export_audit_log").insert({
         user_id: userId,
         user_name: userName,
@@ -198,11 +232,18 @@ export const retryExportJob = createServerFn({ method: "POST" })
   .inputValidator((data: { jobId: string }) => z.object({ jobId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: isAdminRow } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const { data: isAdminRow } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
     if (!isAdminRow) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: job, error } = await supabaseAdmin.from("export_jobs").select("*").eq("id", data.jobId).maybeSingle();
+    const { data: job, error } = await supabaseAdmin
+      .from("export_jobs")
+      .select("*")
+      .eq("id", data.jobId)
+      .maybeSingle();
     if (error || !job) throw new Error("Job not found");
 
     const filters = FiltersSchema.parse((job.filters ?? {}) as ExportFilters);
@@ -210,37 +251,62 @@ export const retryExportJob = createServerFn({ method: "POST" })
     const ownerIsAdmin = job.role === "admin";
     const userName = job.requested_by_name;
 
-    await supabaseAdmin.from("export_jobs").update({
-      status: "processing", progress: 10, error: null,
-      retries: (job.retries ?? 0) + 1, updated_at: new Date().toISOString(),
-    }).eq("id", job.id);
+    await supabaseAdmin
+      .from("export_jobs")
+      .update({
+        status: "processing",
+        progress: 10,
+        error: null,
+        retries: (job.retries ?? 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", job.id);
 
     try {
-      let query = supabaseAdmin.from("defects").select("*").order("created_at", { ascending: false });
+      let query = supabaseAdmin
+        .from("defects")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (env) query = query.eq("environment", env);
       const { data: defectsRaw, error: dErr } = await query;
       if (dErr) throw new Error(dErr.message);
 
-      const defects = (defectsRaw ?? []).map(dbRowToDefect).filter((d) => matches(d, filters, ownerIsAdmin, userName));
-      await supabaseAdmin.from("export_jobs").update({ progress: 50, row_count: defects.length, updated_at: new Date().toISOString() }).eq("id", job.id);
+      const defects = (defectsRaw ?? [])
+        .map(dbRowToDefect)
+        .filter((d) => matches(d, filters, ownerIsAdmin, userName));
+      await supabaseAdmin
+        .from("export_jobs")
+        .update({ progress: 50, row_count: defects.length, updated_at: new Date().toISOString() })
+        .eq("id", job.id);
 
       const buf = buildReportedErrorsWorkbook(defects);
       const filename = buildReportedErrorsFilename(env);
       const filePath = `${job.requested_by_id}/${job.id}/${filename}`;
       const { error: upErr } = await supabaseAdmin.storage.from("exports").upload(filePath, buf, {
-        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", upsert: true,
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        upsert: true,
       });
       if (upErr) throw new Error(upErr.message);
 
-      await supabaseAdmin.from("export_jobs").update({
-        status: "completed", progress: 100, file_path: filePath, file_name: filename,
-        completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-      }).eq("id", job.id);
+      await supabaseAdmin
+        .from("export_jobs")
+        .update({
+          status: "completed",
+          progress: 100,
+          file_path: filePath,
+          file_name: filename,
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", job.id);
 
       return { jobId: job.id, filePath, filename, rowCount: defects.length };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      await supabaseAdmin.from("export_jobs").update({ status: "failed", error: msg, updated_at: new Date().toISOString() }).eq("id", job.id);
+      await supabaseAdmin
+        .from("export_jobs")
+        .update({ status: "failed", error: msg, updated_at: new Date().toISOString() })
+        .eq("id", job.id);
       throw e;
     }
   });
@@ -251,14 +317,23 @@ export const getExportDownloadUrl = createServerFn({ method: "POST" })
   .inputValidator((data: { jobId: string }) => z.object({ jobId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: job, error } = await supabase.from("export_jobs").select("*").eq("id", data.jobId).maybeSingle();
+    const { data: job, error } = await supabase
+      .from("export_jobs")
+      .select("*")
+      .eq("id", data.jobId)
+      .maybeSingle();
     if (error || !job) throw new Error("Job not found");
     if (!job.file_path) throw new Error("Job not completed yet");
-    const { data: isAdminRow } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const { data: isAdminRow } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
     if (!isAdminRow && job.requested_by_id !== userId) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: signed, error: sErr } = await supabaseAdmin.storage.from("exports").createSignedUrl(job.file_path, 60 * 5);
+    const { data: signed, error: sErr } = await supabaseAdmin.storage
+      .from("exports")
+      .createSignedUrl(job.file_path, 60 * 5);
     if (sErr || !signed) throw new Error(sErr?.message ?? "Failed to sign URL");
     return { url: signed.signedUrl, filename: job.file_name ?? "export.xlsx" };
   });
@@ -269,16 +344,22 @@ export const setAllowAgentExports = createServerFn({ method: "POST" })
   .inputValidator((data: { allowed: boolean }) => z.object({ allowed: z.boolean() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: isAdminRow } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const { data: isAdminRow } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
     if (!isAdminRow) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("app_settings").upsert({
-      key: "allow_agent_exports",
-      value: toJson(data.allowed),
-      updated_at: new Date().toISOString(),
-      updated_by: userId,
-    }, { onConflict: "key" });
+    const { error } = await supabaseAdmin.from("app_settings").upsert(
+      {
+        key: "allow_agent_exports",
+        value: toJson(data.allowed),
+        updated_at: new Date().toISOString(),
+        updated_by: userId,
+      },
+      { onConflict: "key" },
+    );
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -286,15 +367,25 @@ export const setAllowAgentExports = createServerFn({ method: "POST" })
 /** Log a direct (non-job) export from the client for the audit trail. */
 export const logDirectExport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { scope: string; environment: string | null; filters: Record<string, unknown>; rowCount: number; status: "success" | "failed"; error?: string }) =>
-    z.object({
-      scope: z.string(),
-      environment: z.string().nullable(),
-      filters: z.record(z.string(), z.unknown()),
-      rowCount: z.number().int().nonnegative(),
-      status: z.enum(["success", "failed"]),
-      error: z.string().optional(),
-    }).parse(data),
+  .inputValidator(
+    (data: {
+      scope: string;
+      environment: string | null;
+      filters: Record<string, unknown>;
+      rowCount: number;
+      status: "success" | "failed";
+      error?: string;
+    }) =>
+      z
+        .object({
+          scope: z.string(),
+          environment: z.string().nullable(),
+          filters: z.record(z.string(), z.unknown()),
+          rowCount: z.number().int().nonnegative(),
+          status: z.enum(["success", "failed"]),
+          error: z.string().optional(),
+        })
+        .parse(data),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;

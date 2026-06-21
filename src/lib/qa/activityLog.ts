@@ -20,20 +20,29 @@ export async function recordAuthEvent(opts: {
   try {
     const { ua } = getBrowserMeta();
     const summary =
-      opts.kind === "login" ? `${opts.email ?? "user"} signed in` :
-      opts.kind === "logout" ? `${opts.email ?? "user"} signed out` :
-      opts.kind === "password_reset_requested" ? `Password reset requested for ${opts.email ?? "unknown"}` :
-      opts.kind === "profile_updated" ? `${opts.email ?? "user"} updated profile` :
-      `${opts.email ?? "user"} changed email`;
+      opts.kind === "login"
+        ? `${opts.email ?? "user"} signed in`
+        : opts.kind === "logout"
+          ? `${opts.email ?? "user"} signed out`
+          : opts.kind === "password_reset_requested"
+            ? `Password reset requested for ${opts.email ?? "unknown"}`
+            : opts.kind === "profile_updated"
+              ? `${opts.email ?? "user"} updated profile`
+              : `${opts.email ?? "user"} changed email`;
     await supabase.rpc("log_activity", {
-      _category: opts.kind === "profile_updated" || opts.kind === "email_changed" ? "user_mgmt" : "auth",
+      _category:
+        opts.kind === "profile_updated" || opts.kind === "email_changed" ? "user_mgmt" : "auth",
       _action: `auth.${opts.kind}`,
       _summary: summary,
       _record_type: "auth",
       _record_id: opts.email ?? undefined,
       _result: opts.success === false ? "failure" : "success",
       _ua: ua ?? undefined,
-      _metadata: opts.metadata ? (opts.metadata as never) : (opts.reason ? ({ reason: opts.reason } as never) : null),
+      _metadata: opts.metadata
+        ? (opts.metadata as never)
+        : opts.reason
+          ? ({ reason: opts.reason } as never)
+          : null,
     });
   } catch (e) {
     // never block the user flow on audit failure

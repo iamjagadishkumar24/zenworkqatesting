@@ -64,7 +64,12 @@ function pickProvider(): string | null {
   return null;
 }
 
-async function sendViaResend(to: string, subject: string, html: string, text: string): Promise<ProviderResult> {
+async function sendViaResend(
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+): Promise<ProviderResult> {
   const from = process.env.EMAIL_FROM;
   if (!from) return { provider: "resend", status: "failed", error: "EMAIL_FROM not set" };
   try {
@@ -78,15 +83,28 @@ async function sendViaResend(to: string, subject: string, html: string, text: st
     });
     if (!r.ok) {
       const body = await r.text().catch(() => "");
-      return { provider: "resend", status: "failed", error: `HTTP ${r.status}: ${body.slice(0, 200)}` };
+      return {
+        provider: "resend",
+        status: "failed",
+        error: `HTTP ${r.status}: ${body.slice(0, 200)}`,
+      };
     }
     return { provider: "resend", status: "sent" };
   } catch (e) {
-    return { provider: "resend", status: "failed", error: e instanceof Error ? e.message : String(e) };
+    return {
+      provider: "resend",
+      status: "failed",
+      error: e instanceof Error ? e.message : String(e),
+    };
   }
 }
 
-async function sendViaSendgrid(to: string, subject: string, html: string, text: string): Promise<ProviderResult> {
+async function sendViaSendgrid(
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+): Promise<ProviderResult> {
   const from = process.env.EMAIL_FROM;
   if (!from) return { provider: "sendgrid", status: "failed", error: "EMAIL_FROM not set" };
   try {
@@ -108,20 +126,38 @@ async function sendViaSendgrid(to: string, subject: string, html: string, text: 
     });
     if (!r.ok) {
       const body = await r.text().catch(() => "");
-      return { provider: "sendgrid", status: "failed", error: `HTTP ${r.status}: ${body.slice(0, 200)}` };
+      return {
+        provider: "sendgrid",
+        status: "failed",
+        error: `HTTP ${r.status}: ${body.slice(0, 200)}`,
+      };
     }
     return { provider: "sendgrid", status: "sent" };
   } catch (e) {
-    return { provider: "sendgrid", status: "failed", error: e instanceof Error ? e.message : String(e) };
+    return {
+      provider: "sendgrid",
+      status: "failed",
+      error: e instanceof Error ? e.message : String(e),
+    };
   }
 }
 
-async function dispatch(provider: string, to: string, subject: string, html: string, text: string): Promise<ProviderResult> {
+async function dispatch(
+  provider: string,
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+): Promise<ProviderResult> {
   if (provider === "resend") return sendViaResend(to, subject, html, text);
   if (provider === "sendgrid") return sendViaSendgrid(to, subject, html, text);
   // SES / SMTP require additional adapters not safe in the Worker runtime —
   // record the intent so an external worker / cron can pick it up later.
-  return { provider, status: "failed", error: `${provider} not implemented in-runtime; queued in email_log` };
+  return {
+    provider,
+    status: "failed",
+    error: `${provider} not implemented in-runtime; queued in email_log`,
+  };
 }
 
 type RecipientInput = { email: string; name?: string };
@@ -170,7 +206,13 @@ async function recordAndSend(
     return { status: "not_configured" };
   }
 
-  const result = await dispatch(provider, recipient.email, rendered.subject, rendered.html, rendered.text);
+  const result = await dispatch(
+    provider,
+    recipient.email,
+    rendered.subject,
+    rendered.html,
+    rendered.text,
+  );
   await supabaseAdmin.from("email_log").insert({
     to_email: recipient.email,
     to_name: recipient.name ?? null,
@@ -242,7 +284,13 @@ export const sendTaskAssignmentEmail = createServerFn({ method: "POST" })
         failed++;
       }
     }
-    return { configured: provider !== null, provider: provider ?? "none", sent, failed, total: data.recipients.length };
+    return {
+      configured: provider !== null,
+      provider: provider ?? "none",
+      sent,
+      failed,
+      total: data.recipients.length,
+    };
   });
 
 /** Same shape, retest template. */
@@ -286,10 +334,19 @@ export const sendRetestAssignmentEmail = createServerFn({ method: "POST" })
       if (res.status === "sent") sent++;
       else if (res.status === "failed") failed++;
     }
-    return { configured: provider !== null, provider: provider ?? "none", sent, failed, total: data.recipients.length };
+    return {
+      configured: provider !== null,
+      provider: provider ?? "none",
+      sent,
+      failed,
+      total: data.recipients.length,
+    };
   });
 
 /** Lightweight status helper for UIs that want to surface config state. */
 export const getEmailConfigStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => ({ configured: pickProvider() !== null, provider: pickProvider() ?? "none" }));
+  .handler(async () => ({
+    configured: pickProvider() !== null,
+    provider: pickProvider() ?? "none",
+  }));

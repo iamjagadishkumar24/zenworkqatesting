@@ -120,14 +120,24 @@ describe("Defect workflow — state transitions", () => {
 describe("Defect workflow — dashboard counts react to status changes", () => {
   it("Reported defect counts as open + total only", () => {
     expect(counts([makeDefect()])).toEqual({
-      total: 1, open: 1, valid: 0, invalid: 0, fixed: 0, retest: 0,
+      total: 1,
+      open: 1,
+      valid: 0,
+      invalid: 0,
+      fixed: 0,
+      retest: 0,
     });
   });
   it("Marking Fixed flips open→fixed", () => {
     let d = makeDefect();
     d = applyPatch(d, { status: "Fixed" }, "Admin");
     expect(counts([d])).toEqual({
-      total: 1, open: 0, valid: 0, invalid: 0, fixed: 1, retest: 0,
+      total: 1,
+      open: 0,
+      valid: 0,
+      invalid: 0,
+      fixed: 1,
+      retest: 0,
     });
   });
   it("Validity Valid is counted regardless of open/fixed", () => {

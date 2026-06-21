@@ -1,5 +1,12 @@
 export type Role = "admin" | "agent";
-export type User = { id: string; name: string; email: string; role: Role; active: boolean; avatarUrl?: string | null };
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  active: boolean;
+  avatarUrl?: string | null;
+};
 
 export type Environment = "Production" | "Stage";
 export const ENVIRONMENTS: Environment[] = ["Production", "Stage"];

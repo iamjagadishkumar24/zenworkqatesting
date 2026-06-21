@@ -8,14 +8,29 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
@@ -34,9 +49,18 @@ import {
   type RetestState,
 } from "@/lib/qa/adminFilters";
 
-const DEFECT_STATUSES: DefectStatus[] = ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"];
-const PRIORITIES: Priority[] = ["Low","Medium","High","Critical"];
-const SEVERITIES = ["Low","Medium","High","Critical"] as const;
+const DEFECT_STATUSES: DefectStatus[] = [
+  "Reported",
+  "Pending",
+  "Ongoing",
+  "In Progress",
+  "Fixed",
+  "Retest Required",
+  "Reopened",
+  "Closed",
+];
+const PRIORITIES: Priority[] = ["Low", "Medium", "High", "Critical"];
+const SEVERITIES = ["Low", "Medium", "High", "Critical"] as const;
 const MODULES: string[] = MODULE_OPTIONS;
 
 const PRESETS = ["open", "valid", "invalid", "fixed", "retest", "all"] as const;
@@ -74,7 +98,9 @@ function ReportedErrorsPage() {
   const preset = search.preset;
   const [qInput, setQInput] = useState(q);
   // Keep local input in sync when URL changes externally (header search, reset, nav).
-  useEffect(() => { setQInput(q); }, [q]);
+  useEffect(() => {
+    setQInput(q);
+  }, [q]);
   // Debounced write-through from input -> URL.
   useEffect(() => {
     const trimmed = qInput.trim();
@@ -109,7 +135,10 @@ function ReportedErrorsPage() {
 
   // Scope: admins see everything; agents see only their reported errors.
   const scoped = useMemo(() => {
-    const byUser = scopeForUser(defects, currentUser ? { name: currentUser.name, role: currentUser.role } : null);
+    const byUser = scopeForUser(
+      defects,
+      currentUser ? { name: currentUser.name, role: currentUser.role } : null,
+    );
     const byEnv = filterByEnvironment(byUser, env);
     return byEnv.filter((d) => matchesTaxYear(d.taxYear, taxYear));
   }, [defects, currentUser, env, taxYear]);
@@ -119,7 +148,10 @@ function ReportedErrorsPage() {
     [defects],
   );
   const years = useMemo(
-    () => Array.from(new Set(defects.map((d) => d.taxYear ?? "").filter(Boolean))).sort().reverse(),
+    () =>
+      Array.from(new Set(defects.map((d) => d.taxYear ?? "").filter(Boolean)))
+        .sort()
+        .reverse(),
     [defects],
   );
 
@@ -141,20 +173,49 @@ function ReportedErrorsPage() {
     if (!preset || preset === "all") return base;
     return base.filter((d) => {
       switch (preset) {
-        case "open": return !["Fixed", "Closed"].includes(d.status);
-        case "valid": return d.validity === "Valid";
-        case "invalid": return d.validity === "Invalid";
-        case "fixed": return d.status === "Fixed" || d.status === "Closed";
-        case "retest": return d.status === "Retest Required";
-        default: return true;
+        case "open":
+          return !["Fixed", "Closed"].includes(d.status);
+        case "valid":
+          return d.validity === "Valid";
+        case "invalid":
+          return d.validity === "Invalid";
+        case "fixed":
+          return d.status === "Fixed" || d.status === "Closed";
+        case "retest":
+          return d.status === "Retest Required";
+        default:
+          return true;
       }
     });
-  }, [scoped, q, mod, status, prio, sev, agent, reporter, year, hasComments, hasAttach, retest, isAdmin, preset]);
+  }, [
+    scoped,
+    q,
+    mod,
+    status,
+    prio,
+    sev,
+    agent,
+    reporter,
+    year,
+    hasComments,
+    hasAttach,
+    retest,
+    isAdmin,
+    preset,
+  ]);
 
   const resetFilters = () => {
     setQInput("");
-    setMod("all"); setStatus("all"); setPrio("all"); setAgent("all"); setReporter("all");
-    setSev("all"); setYear("all"); setHasComments("any"); setHasAttach("any"); setRetest("any");
+    setMod("all");
+    setStatus("all");
+    setPrio("all");
+    setAgent("all");
+    setReporter("all");
+    setSev("all");
+    setYear("all");
+    setHasComments("any");
+    setHasAttach("any");
+    setRetest("any");
     navigate({ to: "/my-reported-errors", search: {} as never, replace: true });
   };
 
@@ -200,7 +261,9 @@ function ReportedErrorsPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-          <p className="text-sm text-muted-foreground">{description} {filtered.length} shown.</p>
+          <p className="text-sm text-muted-foreground">
+            {description} {filtered.length} shown.
+          </p>
           {preset && (
             <div className="mt-2 flex items-center gap-2 text-sm">
               <Badge variant="secondary">Showing: {PRESET_LABEL[preset as Preset]}</Badge>
@@ -237,37 +300,107 @@ function ReportedErrorsPage() {
                 className="pl-9"
               />
             </div>
-            <FilterSelect value={mod} onChange={setMod} placeholder="Module" options={[{ v: "all", l: "All modules" }, ...MODULES.map((m) => ({ v: m, l: m }))]} />
-            <FilterSelect value={status} onChange={setStatus} placeholder="Status" options={[{ v: "all", l: "All statuses" }, ...DEFECT_STATUSES.map((s) => ({ v: s, l: s }))]} />
-            <FilterSelect value={prio} onChange={setPrio} placeholder="Priority" options={[{ v: "all", l: "All priorities" }, ...PRIORITIES.map((p) => ({ v: p, l: p }))]} />
+            <FilterSelect
+              value={mod}
+              onChange={setMod}
+              placeholder="Module"
+              options={[{ v: "all", l: "All modules" }, ...MODULES.map((m) => ({ v: m, l: m }))]}
+            />
+            <FilterSelect
+              value={status}
+              onChange={setStatus}
+              placeholder="Status"
+              options={[
+                { v: "all", l: "All statuses" },
+                ...DEFECT_STATUSES.map((s) => ({ v: s, l: s })),
+              ]}
+            />
+            <FilterSelect
+              value={prio}
+              onChange={setPrio}
+              placeholder="Priority"
+              options={[
+                { v: "all", l: "All priorities" },
+                ...PRIORITIES.map((p) => ({ v: p, l: p })),
+              ]}
+            />
             {isAdmin && (
               <>
-                <FilterSelect value={agent} onChange={setAgent} placeholder="Assigned"
-                  options={[{ v: "all", l: "All agents" }, ...AGENTS.map((a) => ({ v: a, l: a }))]} />
-                <FilterSelect value={reporter} onChange={setReporter} placeholder="Reported by"
-                  options={[{ v: "all", l: "All reporters" }, ...reporters.map((a) => ({ v: a, l: a }))]} />
-                <FilterSelect value={sev} onChange={setSev} placeholder="Severity"
-                  options={[{ v: "all", l: "All severities" }, ...SEVERITIES.map((s) => ({ v: s, l: s }))]} />
-                <FilterSelect value={year} onChange={setYear} placeholder="Tax year"
-                  options={[{ v: "all", l: "All tax years" }, ...years.map((y) => ({ v: y, l: y }))]} />
-                <FilterSelect value={hasComments} onChange={(v) => setHasComments(v as Presence)} placeholder="Comments"
-                  options={[{ v: "any", l: "Any comments" }, { v: "yes", l: "Has comments" }, { v: "no", l: "No comments" }]} />
-                <FilterSelect value={hasAttach} onChange={(v) => setHasAttach(v as Presence)} placeholder="Attachments"
-                  options={[{ v: "any", l: "Any attachments" }, { v: "yes", l: "Has attachments" }, { v: "no", l: "No attachments" }]} />
-                <FilterSelect value={retest} onChange={(v) => setRetest(v as RetestState)} placeholder="Retest"
+                <FilterSelect
+                  value={agent}
+                  onChange={setAgent}
+                  placeholder="Assigned"
+                  options={[{ v: "all", l: "All agents" }, ...AGENTS.map((a) => ({ v: a, l: a }))]}
+                />
+                <FilterSelect
+                  value={reporter}
+                  onChange={setReporter}
+                  placeholder="Reported by"
+                  options={[
+                    { v: "all", l: "All reporters" },
+                    ...reporters.map((a) => ({ v: a, l: a })),
+                  ]}
+                />
+                <FilterSelect
+                  value={sev}
+                  onChange={setSev}
+                  placeholder="Severity"
+                  options={[
+                    { v: "all", l: "All severities" },
+                    ...SEVERITIES.map((s) => ({ v: s, l: s })),
+                  ]}
+                />
+                <FilterSelect
+                  value={year}
+                  onChange={setYear}
+                  placeholder="Tax year"
+                  options={[
+                    { v: "all", l: "All tax years" },
+                    ...years.map((y) => ({ v: y, l: y })),
+                  ]}
+                />
+                <FilterSelect
+                  value={hasComments}
+                  onChange={(v) => setHasComments(v as Presence)}
+                  placeholder="Comments"
+                  options={[
+                    { v: "any", l: "Any comments" },
+                    { v: "yes", l: "Has comments" },
+                    { v: "no", l: "No comments" },
+                  ]}
+                />
+                <FilterSelect
+                  value={hasAttach}
+                  onChange={(v) => setHasAttach(v as Presence)}
+                  placeholder="Attachments"
+                  options={[
+                    { v: "any", l: "Any attachments" },
+                    { v: "yes", l: "Has attachments" },
+                    { v: "no", l: "No attachments" },
+                  ]}
+                />
+                <FilterSelect
+                  value={retest}
+                  onChange={(v) => setRetest(v as RetestState)}
+                  placeholder="Retest"
                   options={[
                     { v: "any", l: "Any retest state" },
                     { v: "required", l: "Retest required" },
                     { v: "passed", l: "Retest passed" },
                     { v: "failed", l: "Retest failed" },
                     { v: "none", l: "No retest" },
-                  ]} />
+                  ]}
+                />
               </>
             )}
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>{filtered.length} result{filtered.length === 1 ? "" : "s"}</span>
-            <Button size="sm" variant="ghost" onClick={resetFilters}>Reset filters</Button>
+            <span>
+              {filtered.length} result{filtered.length === 1 ? "" : "s"}
+            </span>
+            <Button size="sm" variant="ghost" onClick={resetFilters}>
+              Reset filters
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -298,32 +431,67 @@ function ReportedErrorsPage() {
                   <TableCell className="text-sm">{d.formFeature}</TableCell>
                   <TableCell className="text-xs">{d.taxYear ?? "—"}</TableCell>
                   <TableCell className="max-w-[280px] truncate font-medium">{d.title}</TableCell>
-                  <TableCell><DefectStatusBadge status={d.status} /></TableCell>
-                  <TableCell><PriorityBadge value={d.priority} /></TableCell>
+                  <TableCell>
+                    <DefectStatusBadge status={d.status} />
+                  </TableCell>
+                  <TableCell>
+                    <PriorityBadge value={d.priority} />
+                  </TableCell>
                   <TableCell className="text-sm">{d.createdBy}</TableCell>
                   <TableCell className="text-sm">{d.assignedAgent}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{new Date(d.updatedAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {new Date(d.updatedAt).toLocaleDateString()}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setOpenId(d.id); }} aria-label="View">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenId(d.id);
+                        }}
+                        aria-label="View"
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                       {isAdmin && (
-                        <Button size="icon" variant="ghost" aria-label="Assign / Reassign"
-                          onClick={(e) => { e.stopPropagation(); setReassignFor({ id: d.id, current: d.assignedAgent }); }}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Assign / Reassign"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReassignFor({ id: d.id, current: d.assignedAgent });
+                          }}
+                        >
                           <UserPlus className="h-4 w-4" />
                         </Button>
                       )}
                       {(isAdmin || d.createdBy === currentUser?.name) && (
-                        <Button size="icon" variant="ghost" aria-label="Edit"
-                          onClick={(e) => { e.stopPropagation(); setEditId(d.id); }}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditId(d.id);
+                          }}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                       )}
                       {(isAdmin || d.createdBy === currentUser?.name) && (
-                        <Button size="icon" variant="ghost" aria-label="Delete"
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Delete"
                           className="text-destructive hover:text-destructive"
-                          onClick={(e) => { e.stopPropagation(); setDeleteId(d.id); }}>
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(d.id);
+                          }}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
@@ -333,7 +501,10 @@ function ReportedErrorsPage() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={11}
+                    className="py-12 text-center text-sm text-muted-foreground"
+                  >
                     <Bug className="mx-auto mb-2 h-8 w-8 opacity-40" />
                     No reported errors match the current filters.
                   </TableCell>
@@ -344,8 +515,21 @@ function ReportedErrorsPage() {
         </CardContent>
       </Card>
 
-      <DefectDetailSheet defectId={openId} open={!!openId} onOpenChange={(o) => { if (!o) setOpenId(null); }} />
-      <DefectDetailSheet defectId={editId} open={!!editId} initialEdit onOpenChange={(o) => { if (!o) setEditId(null); }} />
+      <DefectDetailSheet
+        defectId={openId}
+        open={!!openId}
+        onOpenChange={(o) => {
+          if (!o) setOpenId(null);
+        }}
+      />
+      <DefectDetailSheet
+        defectId={editId}
+        open={!!editId}
+        initialEdit
+        onOpenChange={(o) => {
+          if (!o) setEditId(null);
+        }}
+      />
 
       <ExportPreviewDialog
         open={exportOpen}
@@ -369,16 +553,26 @@ function ReportedErrorsPage() {
         <ReassignDialog
           open={!!reassignFor}
           current={reassignFor.current}
-          onOpenChange={(o) => { if (!o) setReassignFor(null); }}
+          onOpenChange={(o) => {
+            if (!o) setReassignFor(null);
+          }}
           onConfirm={async (newAgent) => {
             const res = await updateDefect(reassignFor.id, { assignedAgent: newAgent });
             if (!res.ok) toast.error(res.error ?? "Reassign failed");
-            else { toast.success(`Reassigned to ${newAgent}`); setReassignFor(null); }
+            else {
+              toast.success(`Reassigned to ${newAgent}`);
+              setReassignFor(null);
+            }
           }}
         />
       )}
 
-      <AlertDialog open={!!deleteId} onOpenChange={(o) => { if (!o && !deleting) setDeleteId(null); }}>
+      <AlertDialog
+        open={!!deleteId}
+        onOpenChange={(o) => {
+          if (!o && !deleting) setDeleteId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Reported Error</AlertDialogTitle>
@@ -415,23 +609,40 @@ function ReportedErrorsPage() {
 }
 
 function FilterSelect({
-  value, onChange, placeholder, options,
+  value,
+  onChange,
+  placeholder,
+  options,
 }: {
-  value: string; onChange: (v: string) => void; placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
   options: { v: string; l: string }[];
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger><SelectValue placeholder={placeholder} /></SelectTrigger>
-      <SelectContent>{options.map((o) => <SelectItem key={o.v} value={o.v}>{o.l}</SelectItem>)}</SelectContent>
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((o) => (
+          <SelectItem key={o.v} value={o.v}>
+            {o.l}
+          </SelectItem>
+        ))}
+      </SelectContent>
     </Select>
   );
 }
 
 function ReassignDialog({
-  open, current, onOpenChange, onConfirm,
+  open,
+  current,
+  onOpenChange,
+  onConfirm,
 }: {
-  open: boolean; current: string;
+  open: boolean;
+  current: string;
   onOpenChange: (o: boolean) => void;
   onConfirm: (newAgent: string) => void | Promise<void>;
 }) {
@@ -442,20 +653,32 @@ function ReassignDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Assign / Reassign defect</AlertDialogTitle>
           <AlertDialogDescription>
-            Currently assigned to <span className="font-medium">{current || "—"}</span>. Choose a new agent.
+            Currently assigned to <span className="font-medium">{current || "—"}</span>. Choose a
+            new agent.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="py-2">
           <Select value={pick} onValueChange={setPick}>
-            <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder="Select agent" />
+            </SelectTrigger>
             <SelectContent className="max-h-72">
-              {AGENTS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+              {AGENTS.map((a) => (
+                <SelectItem key={a} value={a}>
+                  {a}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={(e) => { e.preventDefault(); void onConfirm(pick); }}>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              void onConfirm(pick);
+            }}
+          >
             Confirm
           </AlertDialogAction>
         </AlertDialogFooter>

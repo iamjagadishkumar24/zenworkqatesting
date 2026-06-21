@@ -67,14 +67,16 @@ describe("Reported-error export — columns", () => {
   });
 
   it("admin review label reflects validity + status correctly", () => {
-    expect(toReportedErrorRow(makeDefect({ validity: "Invalid" })).adminReview)
-      .toBe("Invalid Error");
-    expect(toReportedErrorRow(makeDefect({ validity: "Valid", status: "Pending" })).adminReview)
-      .toBe("Valid Error");
-    expect(toReportedErrorRow(makeDefect({ status: "Retest Required" })).adminReview)
-      .toBe("Retest Required");
-    expect(toReportedErrorRow(makeDefect({ status: "Fixed" })).adminReview)
-      .toBe("Fixed");
+    expect(toReportedErrorRow(makeDefect({ validity: "Invalid" })).adminReview).toBe(
+      "Invalid Error",
+    );
+    expect(
+      toReportedErrorRow(makeDefect({ validity: "Valid", status: "Pending" })).adminReview,
+    ).toBe("Valid Error");
+    expect(toReportedErrorRow(makeDefect({ status: "Retest Required" })).adminReview).toBe(
+      "Retest Required",
+    );
+    expect(toReportedErrorRow(makeDefect({ status: "Fixed" })).adminReview).toBe("Fixed");
   });
 
   it("filename embeds environment and ISO date", () => {

@@ -2,7 +2,11 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, BellOff, CheckCheck } from "lucide-react";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -31,7 +35,13 @@ export function NotificationsBell() {
   };
 
   return (
-    <DropdownMenu open={open} onOpenChange={(o) => { setOpen(o); if (o && unread > 0) markAll(); }}>
+    <DropdownMenu
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o && unread > 0) markAll();
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <button
           className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-accent transition-colors"
@@ -49,11 +59,9 @@ export function NotificationsBell() {
         <div className="flex items-center justify-between px-3 py-2">
           <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
           {items.length > 0 && (
-            <Button
-              variant="ghost" size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={markAll}
-            ><CheckCheck className="mr-1 h-3 w-3" /> Mark all read</Button>
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={markAll}>
+              <CheckCheck className="mr-1 h-3 w-3" /> Mark all read
+            </Button>
           )}
         </div>
         <DropdownMenuSeparator />

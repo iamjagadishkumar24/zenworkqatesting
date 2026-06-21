@@ -38,18 +38,26 @@ function TaskRedirect() {
         supabase.from("retest_assignment_forms").select("*").eq("assignment_id", taskId),
       ]);
       if (cancelled) return;
-      if (a.error || !a.data) { setState({ status: "denied" }); return; }
+      if (a.error || !a.data) {
+        setState({ status: "denied" });
+        return;
+      }
       const row = a.data as { assigned_agent_id: string | null; module: string };
       const isMine = row.assigned_agent_id === currentUser.id;
       const isAdmin = currentUser.role === "admin";
-      if (!isMine && !isAdmin) { setState({ status: "denied" }); return; }
+      if (!isMine && !isAdmin) {
+        setState({ status: "denied" });
+        return;
+      }
       const firstForm = (f.data?.[0] as { form_name?: string } | undefined)?.form_name;
       const to = routeForModule(row.module);
       const search: Record<string, string> = { assignment: taskId };
       if (firstForm) search.q = firstForm;
       setState({ status: "redirect", to, search });
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [taskId, currentUser]);
 
   if (state.status === "redirect") {

@@ -78,8 +78,12 @@ export function UserAvatar({ name, email, avatarUrl, size = "md", className }: U
     let cancelled = false;
     setResolved(null);
     if (!avatarUrl) return;
-    void resolveSignedUrl(avatarUrl).then((u) => { if (!cancelled) setResolved(u); });
-    return () => { cancelled = true; };
+    void resolveSignedUrl(avatarUrl).then((u) => {
+      if (!cancelled) setResolved(u);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [avatarUrl]);
 
   return (

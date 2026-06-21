@@ -4,13 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type NoteColor = "yellow" | "blue" | "green" | "red" | "purple" | "grey";
 export const NOTE_COLORS: NoteColor[] = ["yellow", "blue", "green", "red", "purple", "grey"];
 
-export type NoteJSON =
-  | string
-  | number
-  | boolean
-  | null
-  | { [k: string]: NoteJSON }
-  | NoteJSON[];
+export type NoteJSON = string | number | boolean | null | { [k: string]: NoteJSON } | NoteJSON[];
 
 export type NoteDTO = {
   id: string;
@@ -108,7 +102,8 @@ export const updateNote = createServerFn({ method: "POST" })
     if (typeof p.title === "string") patch.title = p.title.slice(0, 200);
     if (p.content !== undefined) patch.content = p.content;
     if (typeof p.content_text === "string") patch.content_text = p.content_text.slice(0, 50000);
-    if (typeof p.color === "string" && NOTE_COLORS.includes(p.color as NoteColor)) patch.color = p.color;
+    if (typeof p.color === "string" && NOTE_COLORS.includes(p.color as NoteColor))
+      patch.color = p.color;
     if (Array.isArray(p.tags)) {
       patch.tags = (p.tags as unknown[])
         .filter((t): t is string => typeof t === "string")

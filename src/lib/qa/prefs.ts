@@ -34,17 +34,27 @@ export type AdminPrefs = {
 };
 
 const DEFAULTS: AdminPrefs = {
-  defectStatuses: ["Reported","Pending","Ongoing","In Progress","Fixed","Retest Required","Reopened","Closed"],
-  errorStatuses: ["Open","Triaging","Valid","Invalid","Duplicate","Resolved"],
-  priorities: ["Low","Medium","High","Critical"],
-  severities: ["Low","Medium","High","Critical"],
-  modules: ["1099 Forms","990 Forms","Integrations","1099 Online"],
+  defectStatuses: [
+    "Reported",
+    "Pending",
+    "Ongoing",
+    "In Progress",
+    "Fixed",
+    "Retest Required",
+    "Reopened",
+    "Closed",
+  ],
+  errorStatuses: ["Open", "Triaging", "Valid", "Invalid", "Duplicate", "Resolved"],
+  priorities: ["Low", "Medium", "High", "Critical"],
+  severities: ["Low", "Medium", "High", "Critical"],
+  modules: ["1099 Forms", "990 Forms", "Integrations", "1099 Online"],
   notifyOnAssignEmail: true,
   notifyCriticalSlack: true,
   notifyWeeklyDigest: false,
   notifyOnReopen: true,
   notifyOnComment: false,
-  reportTimezone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC",
+  reportTimezone:
+    typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC",
   reportWeekStart: "monday",
   defaultExportFormat: "xlsx",
   includeCommentsInExport: false,
@@ -68,9 +78,7 @@ function userKey(uid: string | null): string {
 function readFor(uid: string | null): AdminPrefs {
   if (typeof window === "undefined") return DEFAULTS;
   try {
-    const raw =
-      window.localStorage.getItem(userKey(uid)) ??
-      window.localStorage.getItem(BASE_KEY);
+    const raw = window.localStorage.getItem(userKey(uid)) ?? window.localStorage.getItem(BASE_KEY);
     if (!raw) return DEFAULTS;
     return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<AdminPrefs>) };
   } catch {
@@ -95,7 +103,10 @@ export function usePrefs() {
       setUid(id);
       setPrefs(readFor(id));
     });
-    return () => { alive = false; sub.subscription.unsubscribe(); };
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

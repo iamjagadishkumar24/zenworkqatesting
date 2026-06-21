@@ -19,7 +19,15 @@ type D = {
   id: string;
   createdBy: string;
   assignedAgent: string;
-  status: "Reported" | "Pending" | "Ongoing" | "In Progress" | "Fixed" | "Retest Required" | "Reopened" | "Closed";
+  status:
+    | "Reported"
+    | "Pending"
+    | "Ongoing"
+    | "In Progress"
+    | "Fixed"
+    | "Retest Required"
+    | "Reopened"
+    | "Closed";
   validity: "Valid" | "Invalid" | "Unverified";
   module: string;
   formFeature: string;
@@ -27,22 +35,67 @@ type D = {
 };
 
 const seed = (): D[] => [
-  { id: "D-1", createdBy: "Alice", assignedAgent: "Alice", status: "Reported",        validity: "Valid",      module: "1099 Forms",  formFeature: "Form 1099-NEC", environment: "Production" },
-  { id: "D-2", createdBy: "Alice", assignedAgent: "Bob",   status: "Fixed",           validity: "Valid",      module: "1099 Forms",  formFeature: "Form 1099-MISC", environment: "Production" },
-  { id: "D-3", createdBy: "Bob",   assignedAgent: "Alice", status: "Reported",        validity: "Invalid",    module: "Integrations", formFeature: "QuickBooks Online", environment: "Production" },
-  { id: "D-4", createdBy: "Bob",   assignedAgent: "Bob",   status: "Retest Required", validity: "Valid",      module: "Integrations", formFeature: "Xero",           environment: "Stage" },
-  { id: "D-5", createdBy: "Carol", assignedAgent: "Bob",   status: "Closed",          validity: "Valid",      module: "1099 Online", formFeature: "Form 1099-NEC", environment: "Production" },
+  {
+    id: "D-1",
+    createdBy: "Alice",
+    assignedAgent: "Alice",
+    status: "Reported",
+    validity: "Valid",
+    module: "1099 Forms",
+    formFeature: "Form 1099-NEC",
+    environment: "Production",
+  },
+  {
+    id: "D-2",
+    createdBy: "Alice",
+    assignedAgent: "Bob",
+    status: "Fixed",
+    validity: "Valid",
+    module: "1099 Forms",
+    formFeature: "Form 1099-MISC",
+    environment: "Production",
+  },
+  {
+    id: "D-3",
+    createdBy: "Bob",
+    assignedAgent: "Alice",
+    status: "Reported",
+    validity: "Invalid",
+    module: "Integrations",
+    formFeature: "QuickBooks Online",
+    environment: "Production",
+  },
+  {
+    id: "D-4",
+    createdBy: "Bob",
+    assignedAgent: "Bob",
+    status: "Retest Required",
+    validity: "Valid",
+    module: "Integrations",
+    formFeature: "Xero",
+    environment: "Stage",
+  },
+  {
+    id: "D-5",
+    createdBy: "Carol",
+    assignedAgent: "Bob",
+    status: "Closed",
+    validity: "Valid",
+    module: "1099 Online",
+    formFeature: "Form 1099-NEC",
+    environment: "Production",
+  },
 ];
 
 // Mirrors stats computation in src/routes/_app.dashboard.tsx
 function computeKpis(defects: D[]) {
   return {
-    total:   defects.length,
-    open:    defects.filter((d) => !["Fixed", "Closed"].includes(d.status)).length,
-    valid:   defects.filter((d) => d.validity === "Valid").length,
+    total: defects.length,
+    open: defects.filter((d) => !["Fixed", "Closed"].includes(d.status)).length,
+    valid: defects.filter((d) => d.validity === "Valid").length,
     invalid: defects.filter((d) => d.validity === "Invalid").length,
-    fixed:   defects.filter((d) => d.status === "Fixed" || d.status === "Closed").length,
-    retest:  defects.filter((d) => d.status === "Retest Required").length,
+    fixed: defects.filter((d) => d.status === "Fixed" || d.status === "Closed").length,
+    retest: defects.filter((d) => d.status === "Retest Required").length,
   };
 }
 
@@ -102,8 +155,7 @@ describe("delete confirmation contract", () => {
   // The dialog content is the source-of-truth contract — tests guard the copy.
   const DIALOG = {
     title: "Delete Reported Error",
-    message:
-      "Are you sure you want to delete this reported error? This action cannot be undone.",
+    message: "Are you sure you want to delete this reported error? This action cannot be undone.",
     cancel: "Cancel",
     confirm: "Delete",
   };
@@ -125,19 +177,34 @@ describe("post-delete refresh — KPI counts must drop the removed record", () =
   it("Total / Open / Valid / Invalid / Fixed / Retest all recompute after delete", () => {
     const before = seed();
     expect(computeKpis(before)).toEqual({
-      total: 5, open: 3, valid: 4, invalid: 1, fixed: 2, retest: 1,
+      total: 5,
+      open: 3,
+      valid: 4,
+      invalid: 1,
+      fixed: 2,
+      retest: 1,
     });
 
     // Delete an Open + Valid + Retest row → all three counters must drop.
     const after = applyDelete(before, "D-4");
     expect(computeKpis(after)).toEqual({
-      total: 4, open: 2, valid: 3, invalid: 1, fixed: 2, retest: 0,
+      total: 4,
+      open: 2,
+      valid: 3,
+      invalid: 1,
+      fixed: 2,
+      retest: 0,
     });
 
     // Delete an Invalid row → invalid counter drops, fixed/retest unchanged.
     const after2 = applyDelete(after, "D-3");
     expect(computeKpis(after2)).toEqual({
-      total: 3, open: 1, valid: 3, invalid: 0, fixed: 2, retest: 0,
+      total: 3,
+      open: 1,
+      valid: 3,
+      invalid: 0,
+      fixed: 2,
+      retest: 0,
     });
 
     // Delete the only Closed row → fixed counter (Fixed+Closed) drops by 1.
@@ -190,7 +257,12 @@ describe("post-delete refresh — Form Testing Status & module counts", () => {
 
     // KPI numbers Alice sees should also drop accordingly.
     expect(computeKpis(aliceAfter)).toEqual({
-      total: 1, open: 0, valid: 1, invalid: 0, fixed: 1, retest: 0,
+      total: 1,
+      open: 0,
+      valid: 1,
+      invalid: 0,
+      fixed: 1,
+      retest: 0,
     });
   });
 

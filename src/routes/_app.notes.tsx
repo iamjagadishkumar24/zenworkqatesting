@@ -18,11 +18,21 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { NoteEditor } from "@/components/qa/NoteEditor";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Pin, Star, Archive, Trash2, Plus, Search, ArchiveRestore, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -210,14 +220,30 @@ function NotesPage() {
         <>
           {pinned.length > 0 && (
             <section className="space-y-2">
-              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pinned</h3>
-              <NoteGrid notes={pinned} onOpen={setOpenId} onPatch={(id, p) => patch.mutate({ id, patch: p })} onDelete={(n) => setConfirmDelete(n)} />
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Pinned
+              </h3>
+              <NoteGrid
+                notes={pinned}
+                onOpen={setOpenId}
+                onPatch={(id, p) => patch.mutate({ id, patch: p })}
+                onDelete={(n) => setConfirmDelete(n)}
+              />
             </section>
           )}
           {rest.length > 0 && (
             <section className="space-y-2">
-              {pinned.length > 0 && <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Notes</h3>}
-              <NoteGrid notes={rest} onOpen={setOpenId} onPatch={(id, p) => patch.mutate({ id, patch: p })} onDelete={(n) => setConfirmDelete(n)} />
+              {pinned.length > 0 && (
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Notes
+                </h3>
+              )}
+              <NoteGrid
+                notes={rest}
+                onOpen={setOpenId}
+                onPatch={(id, p) => patch.mutate({ id, patch: p })}
+                onDelete={(n) => setConfirmDelete(n)}
+              />
             </section>
           )}
         </>
@@ -277,31 +303,44 @@ function NoteGrid({
           onClick={() => onOpen(n.id)}
         >
           <div className="flex items-start justify-between gap-2">
-            <p className="line-clamp-1 text-sm font-semibold">
-              {n.title || "Untitled"}
-            </p>
+            <p className="line-clamp-1 text-sm font-semibold">{n.title || "Untitled"}</p>
             <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
               <IconBtn
                 title={n.is_pinned ? "Unpin" : "Pin"}
-                onClick={(e) => { e.stopPropagation(); onPatch(n.id, { is_pinned: !n.is_pinned }); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPatch(n.id, { is_pinned: !n.is_pinned });
+                }}
                 active={n.is_pinned}
               >
                 <Pin className="h-3.5 w-3.5" />
               </IconBtn>
               <IconBtn
                 title={n.is_favorite ? "Unfavorite" : "Favorite"}
-                onClick={(e) => { e.stopPropagation(); onPatch(n.id, { is_favorite: !n.is_favorite }); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPatch(n.id, { is_favorite: !n.is_favorite });
+                }}
                 active={n.is_favorite}
               >
                 <Star className="h-3.5 w-3.5" />
               </IconBtn>
               <IconBtn
                 title={n.is_archived ? "Unarchive" : "Archive"}
-                onClick={(e) => { e.stopPropagation(); onPatch(n.id, { is_archived: !n.is_archived }); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPatch(n.id, { is_archived: !n.is_archived });
+                }}
               >
                 <Archive className="h-3.5 w-3.5" />
               </IconBtn>
-              <IconBtn title="Delete" onClick={(e) => { e.stopPropagation(); onDelete(n); }}>
+              <IconBtn
+                title="Delete"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(n);
+                }}
+              >
                 <Trash2 className="h-3.5 w-3.5" />
               </IconBtn>
             </div>
@@ -311,7 +350,12 @@ function NoteGrid({
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-1">
             {n.tags.slice(0, 3).map((t) => (
-              <span key={t} className="rounded-full bg-background/50 px-1.5 py-0.5 text-[10px] text-foreground/70">#{t}</span>
+              <span
+                key={t}
+                className="rounded-full bg-background/50 px-1.5 py-0.5 text-[10px] text-foreground/70"
+              >
+                #{t}
+              </span>
             ))}
           </div>
           <div className="mt-2 flex items-center justify-between text-[10px] text-foreground/60">
@@ -328,8 +372,16 @@ function NoteGrid({
 }
 
 function IconBtn({
-  children, onClick, title, active,
-}: { children: React.ReactNode; onClick: (e: React.MouseEvent) => void; title: string; active?: boolean }) {
+  children,
+  onClick,
+  title,
+  active,
+}: {
+  children: React.ReactNode;
+  onClick: (e: React.MouseEvent) => void;
+  title: string;
+  active?: boolean;
+}) {
   return (
     <button
       type="button"
@@ -396,14 +448,18 @@ function NoteDialog({
 
   // Interval autosave every 60s
   useEffect(() => {
-    const i = setInterval(() => { void doSave(); }, 60000);
+    const i = setInterval(() => {
+      void doSave();
+    }, 60000);
     return () => clearInterval(i);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Flush on tab hide / unload
   useEffect(() => {
-    const flush = () => { void doSave(); };
+    const flush = () => {
+      void doSave();
+    };
     window.addEventListener("visibilitychange", flush);
     window.addEventListener("beforeunload", flush);
     return () => {
@@ -413,7 +469,9 @@ function NoteDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const markDirty = () => { dirtyRef.current = true; };
+  const markDirty = () => {
+    dirtyRef.current = true;
+  };
 
   const handleClose = async () => {
     await doSave();
@@ -423,7 +481,10 @@ function NoteDialog({
   const addTag = () => {
     const t = tagInput.trim().replace(/^#/, "");
     if (!t) return;
-    if (tags.includes(t)) { setTagInput(""); return; }
+    if (tags.includes(t)) {
+      setTagInput("");
+      return;
+    }
     setTags([...tags, t]);
     setTagInput("");
     markDirty();
@@ -436,7 +497,10 @@ function NoteDialog({
           <DialogTitle className="sr-only">Edit note</DialogTitle>
           <Input
             value={title}
-            onChange={(e) => { setTitle(e.target.value); markDirty(); }}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              markDirty();
+            }}
             placeholder="Note title"
             className="border-0 bg-transparent px-0 text-lg font-semibold shadow-none focus-visible:ring-0"
           />
@@ -459,7 +523,10 @@ function NoteDialog({
             <button
               key={c}
               type="button"
-              onClick={() => { setColor(c); markDirty(); }}
+              onClick={() => {
+                setColor(c);
+                markDirty();
+              }}
               title={COLOR_LABEL[c]}
               className={cn(
                 "h-6 w-6 rounded-full border-2 transition-transform hover:scale-110",
@@ -479,7 +546,10 @@ function NoteDialog({
                 #{t}
                 <button
                   type="button"
-                  onClick={() => { setTags(tags.filter((x) => x !== t)); markDirty(); }}
+                  onClick={() => {
+                    setTags(tags.filter((x) => x !== t));
+                    markDirty();
+                  }}
                   aria-label={`Remove tag ${t}`}
                 >
                   <X className="h-3 w-3" />
@@ -506,7 +576,9 @@ function NoteDialog({
           <span className="text-xs text-muted-foreground">
             {saving ? "Saving…" : `Saved · ${timeAgo(savedAt.toISOString())}`}
           </span>
-          <Button variant="outline" onClick={handleClose}>Done</Button>
+          <Button variant="outline" onClick={handleClose}>
+            Done
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

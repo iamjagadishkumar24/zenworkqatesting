@@ -92,7 +92,8 @@ export const previewAssignableFormsForModule = createServerFn({ method: "POST" }
     const page = Math.max(1, Math.floor(Number(d.page) || 1));
     const pageSize = Math.min(100, Math.max(1, Math.floor(Number(d.pageSize) || 24)));
     const sortByRaw = typeof d.sortBy === "string" ? d.sortBy : "name";
-    const sortBy: PreviewSortKey = sortByRaw === "version" || sortByRaw === "createdAt" ? sortByRaw : "name";
+    const sortBy: PreviewSortKey =
+      sortByRaw === "version" || sortByRaw === "createdAt" ? sortByRaw : "name";
     const sortDir: PreviewSortDir = d.sortDir === "desc" ? "desc" : "asc";
     if (module.length > 100) throw new Error("Module is too long");
     if (query.length > 200) throw new Error("Query is too long");
@@ -111,14 +112,20 @@ export const previewAssignableFormsForModule = createServerFn({ method: "POST" }
     for (const r of rows ?? []) {
       const passed = typeof r.passed === "number" ? r.passed : 0;
       const failed = typeof r.failed === "number" ? r.failed : 0;
-      byName.set(
-        r.name as string,
-        { version: passed + failed, createdAt: (r.updated_at as string | null) ?? null },
-      );
+      byName.set(r.name as string, {
+        version: passed + failed,
+        createdAt: (r.updated_at as string | null) ?? null,
+      });
     }
     let all: AssignablePreviewItem[] = catalog.map((name) => {
       const meta = byName.get(name) ?? { version: null, createdAt: null };
-      return { id: name, name, module: data.module, version: meta.version, createdAt: meta.createdAt };
+      return {
+        id: name,
+        name,
+        module: data.module,
+        version: meta.version,
+        createdAt: meta.createdAt,
+      };
     });
     if (data.query) {
       const q = data.query.toLowerCase();

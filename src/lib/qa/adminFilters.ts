@@ -15,7 +15,7 @@ export type Presence = "any" | "yes" | "no";
 
 export type AdminDefectFilters = {
   q?: string;
-  assignedAgent?: string;           // "" | "all" -> any
+  assignedAgent?: string; // "" | "all" -> any
   reporter?: string;
   module?: string;
   taxYear?: string;
@@ -27,14 +27,28 @@ export type AdminDefectFilters = {
   retest?: RetestState;
 };
 
-type AttachKeys = Pick<Defect,
-  "attachmentUrl" | "attachmentUrl2" | "evidenceUrl" | "screenshotUrl"
-  | "videoUrl" | "excelUrl" | "driveUrl" | "jiraUrl">;
+type AttachKeys = Pick<
+  Defect,
+  | "attachmentUrl"
+  | "attachmentUrl2"
+  | "evidenceUrl"
+  | "screenshotUrl"
+  | "videoUrl"
+  | "excelUrl"
+  | "driveUrl"
+  | "jiraUrl"
+>;
 
 export function defectHasAttachments(d: AttachKeys): boolean {
   return Boolean(
-    d.attachmentUrl || d.attachmentUrl2 || d.evidenceUrl || d.screenshotUrl
-    || d.videoUrl || d.excelUrl || d.driveUrl || d.jiraUrl,
+    d.attachmentUrl ||
+    d.attachmentUrl2 ||
+    d.evidenceUrl ||
+    d.screenshotUrl ||
+    d.videoUrl ||
+    d.excelUrl ||
+    d.driveUrl ||
+    d.jiraUrl,
   );
 }
 
@@ -49,10 +63,7 @@ function isAny(v: string | undefined): boolean {
   return !v || v === "all" || v === "any";
 }
 
-export function filterDefectsAdmin<T extends Defect>(
-  defects: T[],
-  f: AdminDefectFilters,
-): T[] {
+export function filterDefectsAdmin<T extends Defect>(defects: T[], f: AdminDefectFilters): T[] {
   const term = (f.q ?? "").trim().toLowerCase();
   return defects.filter((d) => {
     if (!isAny(f.assignedAgent) && d.assignedAgent !== f.assignedAgent) return false;
@@ -61,9 +72,10 @@ export function filterDefectsAdmin<T extends Defect>(
       const wantsForms = f.module === FORMS_MODULE;
       const wantsOnline1099 = f.module === ONLINE_1099_MODULE;
       const matches = wantsForms
-        ? (d.module === FORMS_MODULE || LEGACY_FORM_MODULES.includes(d.module as string))
+        ? d.module === FORMS_MODULE || LEGACY_FORM_MODULES.includes(d.module as string)
         : wantsOnline1099
-          ? (d.module === ONLINE_1099_MODULE || LEGACY_ONLINE_1099_MODULES.includes(d.module as string))
+          ? d.module === ONLINE_1099_MODULE ||
+            LEGACY_ONLINE_1099_MODULES.includes(d.module as string)
           : d.module === f.module;
       if (!matches) return false;
     }
@@ -88,9 +100,19 @@ export function filterDefectsAdmin<T extends Defect>(
 
     if (!term) return true;
     const hay = [
-      d.id, d.title, d.formFeature, d.module, d.status, d.priority, d.severity,
-      d.assignedAgent, d.createdBy, d.taxYear ?? "",
-    ].join(" ").toLowerCase();
+      d.id,
+      d.title,
+      d.formFeature,
+      d.module,
+      d.status,
+      d.priority,
+      d.severity,
+      d.assignedAgent,
+      d.createdBy,
+      d.taxYear ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
     return hay.includes(term);
   });
 }
@@ -118,17 +140,20 @@ export type AdminAuditFilters = {
 };
 
 const ACTION_RULES: Record<Exclude<AuditActionKind, "any">, (action: string) => boolean> = {
-  create:  (a) => /\.created$/.test(a),
-  update:  (a) => /\.(updated|changed|status_changed|priority_changed|severity_changed|validity_changed|reassigned)$/.test(a)
-               || /^defect\.(assigned|reassigned)$/.test(a)
-               || /^task\.(reassigned|status_changed)$/.test(a),
-  close:   (a) => /^(defect|task)\.(closed|completed)$/.test(a),
-  reopen:  (a) => /\.(reopened)$/.test(a),
-  export:  (a) => a.startsWith("export."),
-  assign:  (a) => /\.(assigned|reassigned)$/.test(a),
-  delete:  (a) => /\.(deleted|removed)$/.test(a),
+  create: (a) => /\.created$/.test(a),
+  update: (a) =>
+    /\.(updated|changed|status_changed|priority_changed|severity_changed|validity_changed|reassigned)$/.test(
+      a,
+    ) ||
+    /^defect\.(assigned|reassigned)$/.test(a) ||
+    /^task\.(reassigned|status_changed)$/.test(a),
+  close: (a) => /^(defect|task)\.(closed|completed)$/.test(a),
+  reopen: (a) => /\.(reopened)$/.test(a),
+  export: (a) => a.startsWith("export."),
+  assign: (a) => /\.(assigned|reassigned)$/.test(a),
+  delete: (a) => /\.(deleted|removed)$/.test(a),
   comment: (a) => a.startsWith("comment."),
-  auth:    (a) => a.startsWith("auth."),
+  auth: (a) => a.startsWith("auth."),
 };
 
 export function matchesAuditAction(action: string, kind: AuditActionKind): boolean {
@@ -143,10 +168,7 @@ type AuditRowShape = {
   actor_name: string | null;
 };
 
-export function filterAuditAdmin<T extends AuditRowShape>(
-  rows: T[],
-  f: AdminAuditFilters,
-): T[] {
+export function filterAuditAdmin<T extends AuditRowShape>(rows: T[], f: AdminAuditFilters): T[] {
   return rows.filter((r) => {
     if (f.recordKind && f.recordKind !== "any") {
       const rt = (r.record_type ?? r.category ?? "").toLowerCase();
