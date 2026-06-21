@@ -125,6 +125,7 @@ type FormRow = {
 };
 type NotifRow = {
   id: string;
+  user_id: string;
   type: string;
   title: string;
   body: string;
