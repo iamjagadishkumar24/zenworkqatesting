@@ -484,6 +484,15 @@ export function QAProvider({ children }: { children: ReactNode }) {
     };
     void loadAll();
 
+    if (!liveEnabled) {
+      // Realtime disabled by backend toggle — initial data still loads above,
+      // but we skip opening the WebSocket subscription entirely.
+      setRealtimeStatus("idle");
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const channelName = `qa-realtime-${state.currentUser?.id ?? "anon"}`;
     setRealtimeChannelName(channelName);
     const channel = supabase
