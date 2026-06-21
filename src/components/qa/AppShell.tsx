@@ -30,6 +30,7 @@ import { useTaxYear } from "@/lib/qa/taxYear";
 import { TAX_YEARS } from "@/lib/qa/constants";
 import { usePrefs } from "@/lib/qa/prefs";
 import { UserAvatar } from "./UserAvatar";
+import { BrandLogo } from "./BrandLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,14 +138,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <div
-                className="grid h-8 w-8 place-items-center rounded-lg text-primary-foreground font-bold"
-                style={{ background: "var(--gradient-primary)" }}
-              >
-                Z
-              </div>
+              <BrandLogo className="h-8 w-8" />
               <span className="font-semibold text-sidebar-foreground">Zenwork Testing</span>
             </div>
+          )}
+          {collapsed && (
+            <BrandLogo className="h-7 w-7" />
           )}
           <button
             onClick={() => setCollapsed((c) => !c)}
@@ -180,7 +179,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card/80 px-6 backdrop-blur">
-          <h1 className="text-lg font-semibold tracking-tight">Zenwork Testing</h1>
+          <div className="flex items-center gap-2">
+            <BrandLogo className="h-7 w-7" />
+            <h1 className="text-lg font-semibold tracking-tight">Zenwork Testing</h1>
+          </div>
           {env && (
             <div className="ml-2 flex items-center gap-2">
               <button
