@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQA } from "@/lib/qa/store";
 
 export type AdminPrefs = {
   // Configurable enums
@@ -87,6 +88,8 @@ function readFor(uid: string | null): AdminPrefs {
 }
 
 export function usePrefs() {
+  const { currentUser } = useQA();
+  const isAdmin = currentUser?.role === "admin";
   const [uid, setUid] = useState<string | null>(null);
   const [prefs, setPrefs] = useState<AdminPrefs>(() => readFor(null));
 
@@ -112,15 +115,16 @@ export function usePrefs() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(userKey(uid), JSON.stringify(prefs));
-    // Apply theme. Default is Light; we never auto-detect the OS color
-    // scheme — "system" falls back to Light so new users always start
-    // on the light theme until they explicitly switch.
+    // Apply theme. Default is Light; "system" falls back to Light so new
+    // users always start on the light theme until they explicitly switch.
+    // Dark mode is an Admin-only capability — non-admins (agents) are
+    // pinned to light regardless of any persisted preference.
     const root = document.documentElement;
-    const wantDark = prefs.theme === "dark";
+    const wantDark = isAdmin && prefs.theme === "dark";
     root.classList.toggle("dark", wantDark);
     root.dataset.accent = prefs.accent;
     root.dataset.density = prefs.density;
-  }, [prefs, uid]);
+  }, [prefs, uid, isAdmin]);
 
   const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) =>
     setPrefs((p) => ({ ...p, [k]: v }));
