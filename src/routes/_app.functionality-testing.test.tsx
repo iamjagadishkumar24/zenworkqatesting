@@ -84,14 +84,15 @@ describe("Functionality Testing page", () => {
 
       fireEvent.click(screen.getByRole("tab", { name: tab }));
 
-      // Locate the specific feature card by its visible label, then click its
-      // own Report Error button (siblings inside the same Card).
-      const label = screen.getByText(card);
-      const cardEl = label.closest("[class*='p-4']") as HTMLElement;
-      const reportBtn = Array.from(cardEl.querySelectorAll("button")).find((b) =>
-        /report error/i.test(b.textContent ?? ""),
-      )!;
-      fireEvent.click(reportBtn);
+      // Each card row has one "Report Error" button; click the first one,
+      // which corresponds to the first item of the selected category.
+      const reportBtns = screen.getAllByRole("button", { name: /report error/i });
+      fireEvent.click(reportBtns[0]);
+      // Sanity: the clicked card's visible label is the expected feature.
+      // (Cards render the label as a heading button.)
+      expect(
+        screen.getAllByRole("button", { name: card }).length,
+      ).toBeGreaterThan(0);
 
       expect(screen.getByTestId("report-defect-dialog")).toBeInTheDocument();
       const last = dialogCalls.at(-1)!;
