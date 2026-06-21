@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
@@ -17,6 +17,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { useSavedViews, type ReportFilters } from "@/lib/qa/reportsViews";
+import {
   BarChart,
   Bar,
   XAxis,
@@ -31,11 +39,37 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
-import { Download, Inbox, FileText } from "lucide-react";
+import { Download, Inbox, FileText, Save, Trash2, Loader2 } from "lucide-react";
 import { exportPdf, exportXlsx } from "@/lib/qa/export";
 import { ExportMenu } from "@/components/qa/ExportMenu";
 
+type ReportSearch = ReportFilters;
+const DEFAULT_SEARCH: ReportSearch = {
+  status: "all",
+  testingType: "all",
+  category: "all",
+  agent: "all",
+  dateRange: "all",
+  fromDate: "",
+  toDate: "",
+};
+
+function validateReportSearch(input: Record<string, unknown>): ReportSearch {
+  const s = (k: keyof ReportSearch) =>
+    typeof input[k] === "string" ? (input[k] as string) : DEFAULT_SEARCH[k];
+  return {
+    status: s("status"),
+    testingType: s("testingType"),
+    category: s("category"),
+    agent: s("agent"),
+    dateRange: s("dateRange"),
+    fromDate: s("fromDate"),
+    toDate: s("toDate"),
+  };
+}
+
 export const Route = createFileRoute("/_app/reports")({
+  validateSearch: validateReportSearch,
   component: ReportsPage,
 });
 
@@ -61,17 +95,55 @@ function EmptyBreakdown({ message }: { message: string }) {
 }
 
 function ReportsPage() {
-  const { defects: allDefects } = useQA();
+  const { defects: allDefects, loading } = useQA();
   const { env } = useEnvironment();
   const { taxYear, setTaxYear } = useTaxYear();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { status, testingType, category, agent, dateRange, fromDate, toDate } = search;
 
-  const [status, setStatus] = useState<string>("all");
-  const [testingType, setTestingType] = useState<string>("all");
-  const [category, setCategory] = useState<string>("all");
-  const [agent, setAgent] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<string>("all");
-  const [fromDate, setFromDate] = useState<string>("");
-  const [toDate, setToDate] = useState<string>("");
+  const patchSearch = (patch: Partial<ReportSearch>) =>
+    navigate({
+      replace: true,
+      search: (prev: ReportSearch) => ({ ...prev, ...patch }),
+    });
+  const setStatus = (v: string) => patchSearch({ status: v });
+  const setTestingType = (v: string) => patchSearch({ testingType: v });
+  const setCategory = (v: string) => patchSearch({ category: v });
+  const setAgent = (v: string) => patchSearch({ agent: v });
+  const setDateRange = (v: string) =>
+    patchSearch({ dateRange: v, ...(v === "custom" ? {} : { fromDate: "", toDate: "" }) });
+
+  // Debounced custom date inputs: keep typing local, push to URL after 400ms.
+  const [fromInput, setFromInput] = useState(fromDate);
+  const [toInput, setToInput] = useState(toDate);
+  useEffect(() => setFromInput(fromDate), [fromDate]);
+  useEffect(() => setToInput(toDate), [toDate]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (fromInput !== fromDate || toInput !== toDate)
+        patchSearch({ fromDate: fromInput, toDate: toInput });
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromInput, toInput]);
+
+  const { views, save: saveView, remove: removeView } = useSavedViews();
+  const [viewName, setViewName] = useState("");
+  const [drill, setDrill] = useState<{ title: string; rows: typeof allDefects } | null>(null);
+
+  const resetFilters = () =>
+    navigate({ replace: true, search: () => ({ ...DEFAULT_SEARCH }) });
+
+  const applyView = (name: string) => {
+    const v = views.find((x) => x.name === name);
+    if (v) navigate({ replace: true, search: () => ({ ...v.filters }) });
+  };
+
+  const drillInto = (
+    title: string,
+    pred: (d: (typeof allDefects)[number]) => boolean,
+  ) => setDrill({ title, rows: defects.filter(pred) });
 
   const scoped = useMemo(
     () =>
@@ -284,6 +356,11 @@ function ReportsPage() {
             are added, edited, or deleted.
             {env && <Badge variant="outline">{env}</Badge>}
             <Badge variant="outline">Tax Year: {taxYear === "all" ? "All" : taxYear}</Badge>
+            {loading && (
+              <Badge variant="outline" className="gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" /> Syncing…
+              </Badge>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -430,11 +507,11 @@ function ReportsPage() {
             <div className="flex items-end gap-2">
               <div className="flex-1">
                 <Label>From</Label>
-                <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9" />
+                <Input type="date" value={fromInput} onChange={(e) => setFromInput(e.target.value)} className="h-9" />
               </div>
               <div className="flex-1">
                 <Label>To</Label>
-                <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9" />
+                <Input type="date" value={toInput} onChange={(e) => setToInput(e.target.value)} className="h-9" />
               </div>
             </div>
           )}
@@ -445,16 +522,52 @@ function ReportsPage() {
                 <> (store total {allDefects.length})</>
               )}
             </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setStatus("all"); setTestingType("all"); setCategory("all");
-                setAgent("all"); setDateRange("all"); setFromDate(""); setToDate("");
-              }}
-            >
+            <Button size="sm" variant="ghost" onClick={resetFilters}>
               Reset filters
             </Button>
+          </div>
+          <div className="md:col-span-3 lg:col-span-6 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+            <span className="text-xs font-medium text-muted-foreground">Saved views:</span>
+            {views.length === 0 ? (
+              <span className="text-xs text-muted-foreground">None saved yet.</span>
+            ) : (
+              views.map((v) => (
+                <span key={v.name} className="inline-flex items-center">
+                  <Button size="sm" variant="secondary" className="h-7" onClick={() => applyView(v.name)}>
+                    {v.name}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    aria-label={`Delete ${v.name}`}
+                    onClick={() => removeView(v.name)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </span>
+              ))
+            )}
+            <div className="ml-auto flex items-center gap-1">
+              <Input
+                placeholder="View name"
+                value={viewName}
+                onChange={(e) => setViewName(e.target.value)}
+                className="h-8 w-40"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8"
+                disabled={!viewName.trim()}
+                onClick={() => {
+                  saveView(viewName, { status, testingType, category, agent, dateRange, fromDate, toDate });
+                  setViewName("");
+                }}
+              >
+                <Save className="mr-1 h-3.5 w-3.5" /> Save
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -488,7 +601,23 @@ function ReportsPage() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={passedVsFailed} dataKey="value" nameKey="name" outerRadius={90} label>
+                  <Pie
+                    data={passedVsFailed}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={90}
+                    label
+                    onClick={(p: { name?: string }) =>
+                      drillInto(
+                        `Errors marked ${p?.name ?? ""}`,
+                        (d) =>
+                          p?.name === "Valid"
+                            ? d.validity === "Valid"
+                            : d.validity === "Invalid",
+                      )
+                    }
+                    className="cursor-pointer"
+                  >
                     <Cell fill="oklch(0.62 0.17 150)" />
                     <Cell fill="oklch(0.6 0.22 27)" />
                   </Pie>
@@ -516,12 +645,20 @@ function ReportsPage() {
               <EmptyBreakdown message="No open errors across modules." />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={defectsByModule}>
+                <BarChart
+                  data={defectsByModule}
+                  onClick={(e: { activeLabel?: string }) =>
+                    e?.activeLabel &&
+                    drillInto(`Open errors in ${e.activeLabel}`, (d) =>
+                      d.module === e.activeLabel && !["Fixed", "Closed"].includes(d.status),
+                    )
+                  }
+                >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="module" fontSize={12} />
                   <YAxis fontSize={12} />
                   <Tooltip />
-                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]} className="cursor-pointer">
                     {defectsByModule.map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
@@ -619,12 +756,26 @@ function ReportsPage() {
               <EmptyBreakdown message="No errors assigned to any agent yet." />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={agentDefects} layout="vertical">
+                <BarChart
+                  data={agentDefects}
+                  layout="vertical"
+                  onClick={(e: { activeLabel?: string }) =>
+                    e?.activeLabel &&
+                    drillInto(`Errors handled by ${e.activeLabel}`, (d) =>
+                      d.assignedAgent === e.activeLabel,
+                    )
+                  }
+                >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis type="number" fontSize={12} />
                   <YAxis type="category" dataKey="agent" fontSize={12} width={110} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="oklch(0.55 0.18 255)" radius={[0, 6, 6, 0]} />
+                  <Bar
+                    dataKey="count"
+                    fill="oklch(0.55 0.18 255)"
+                    radius={[0, 6, 6, 0]}
+                    className="cursor-pointer"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -661,6 +812,50 @@ function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+      <Dialog open={!!drill} onOpenChange={(o) => !o && setDrill(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{drill?.title}</DialogTitle>
+            <DialogDescription>
+              {drill?.rows.length ?? 0} matching error{(drill?.rows.length ?? 0) === 1 ? "" : "s"}.
+              Click a row's ID to open it in Error Management.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-left text-xs uppercase">
+                <tr>
+                  <th className="px-3 py-2">ID</th>
+                  <th className="px-3 py-2">Module</th>
+                  <th className="px-3 py-2">Title</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Validity</th>
+                  <th className="px-3 py-2">Assignee</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(drill?.rows ?? []).map((d) => (
+                  <tr key={d.id} className="border-t">
+                    <td className="px-3 py-2 font-mono text-xs">{d.id}</td>
+                    <td className="px-3 py-2">{d.module}</td>
+                    <td className="px-3 py-2">{d.title}</td>
+                    <td className="px-3 py-2">{d.status}</td>
+                    <td className="px-3 py-2">{d.validity ?? "Unverified"}</td>
+                    <td className="px-3 py-2">{d.assignedAgent}</td>
+                  </tr>
+                ))}
+                {(drill?.rows.length ?? 0) === 0 && (
+                  <tr>
+                    <td className="px-3 py-6 text-center text-muted-foreground" colSpan={6}>
+                      No matching errors.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
