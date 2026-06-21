@@ -1,0 +1,2 @@
+ALTER TABLE public.defects ADD COLUMN IF NOT EXISTS quickbooks_desktop_category text;
+CREATE INDEX IF NOT EXISTS defects_qb_desktop_category_idx ON public.defects(quickbooks_desktop_category) WHERE quickbooks_desktop_category IS NOT NULL;

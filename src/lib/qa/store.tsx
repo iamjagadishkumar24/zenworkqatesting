@@ -57,6 +57,7 @@ type DefectRow = {
   status: string; priority: string; severity: string;
   environment: string;
   tax_year: string | null;
+  quickbooks_desktop_category?: string | null;
   assigned_agent: string; created_by: string; updated_by: string;
   version: number; created_at: string; updated_at: string;
 };
@@ -90,6 +91,7 @@ function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersi
     environment: (r.environment as Environment) ?? "Production",
     status: r.status as DefectStatus, priority: r.priority as Priority, severity: r.severity as Severity,
     assignedAgent: r.assigned_agent, createdBy: r.created_by, updatedBy: r.updated_by,
+    qbDesktopCategory: (r.quickbooks_desktop_category as Defect["qbDesktopCategory"]) ?? undefined,
     createdAt: r.created_at, updatedAt: r.updated_at, version: r.version,
     comments: comments
       .filter((c) => c.defect_id === r.id)
@@ -390,7 +392,8 @@ export function QAProvider({ children }: { children: ReactNode }) {
         tax_year: d.taxYear || null,
         status: d.status, priority: d.priority, severity: d.severity,
         assigned_agent: d.assignedAgent, created_by: me.name, updated_by: me.name,
-      });
+        quickbooks_desktop_category: d.qbDesktopCategory ?? null,
+      } as never);
       if (error) return { ok: false, error: error.message };
       return { ok: true };
     },
@@ -412,6 +415,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         taxYear: "tax_year",
         status: "status", priority: "priority", severity: "severity",
         assignedAgent: "assigned_agent",
+        qbDesktopCategory: "quickbooks_desktop_category",
       };
       for (const [k, dbk] of Object.entries(map)) {
         if (k in patch) dbPatch[dbk] = (patch as Record<string, unknown>)[k];

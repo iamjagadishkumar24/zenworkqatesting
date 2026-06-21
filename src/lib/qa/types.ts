@@ -59,6 +59,19 @@ export type Module =
   | "Functionality Testing"
   | "Tax1099 Features";
 
+export type QbDesktopCategory =
+  | "Web Connector"
+  | "Tax1099 PlugIn"
+  | "Web Connector 3.0"
+  | "Two-Report Method";
+
+export const QB_DESKTOP_CATEGORIES: QbDesktopCategory[] = [
+  "Web Connector",
+  "Tax1099 PlugIn",
+  "Web Connector 3.0",
+  "Two-Report Method",
+];
+
 export type TestingModule =
   | "1099 Forms"
   | "990 Forms"
@@ -105,6 +118,7 @@ export type Defect = {
   validity?: "Unverified" | "Valid" | "Invalid";
   environment?: Environment;
   assignedAgent: string;
+  qbDesktopCategory?: QbDesktopCategory;
   createdAt: string;
   updatedAt: string;
   updatedBy: string;

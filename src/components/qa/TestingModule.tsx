@@ -13,7 +13,8 @@ import { DefectDetailSheet } from "./DefectDetailSheet";
 import { ReportDefectDialog } from "./ReportDefectDialog";
 import { Bug, Plus, Search } from "lucide-react";
 import { AGENTS } from "@/lib/qa/constants";
-import type { Module } from "@/lib/qa/types";
+import type { Module, QbDesktopCategory } from "@/lib/qa/types";
+import { QB_DESKTOP_CATEGORIES } from "@/lib/qa/types";
 
 /**
  * Generic testing module page. Used for Integrations, Chatbot Testing,
@@ -44,6 +45,8 @@ export function TestingModule({
 
   const [picked, setPicked] = useState<string | null>(null);
   const [reportFor, setReportFor] = useState<string | null>(null);
+  const [qbCategory, setQbCategory] = useState<QbDesktopCategory | null>(null);
+  const [reportQbCategory, setReportQbCategory] = useState<QbDesktopCategory | null>(null);
   const [viewId, setViewId] = useState<string | null>(null);
   const [q, setQ] = useState("");
 
@@ -69,9 +72,23 @@ export function TestingModule({
     return defects
       .filter((d) => d.module === module && d.formFeature.includes(picked))
       .filter((d) => !env || d.environment === env)
+      .filter((d) =>
+        picked === "QuickBooks Desktop" && qbCategory
+          ? d.qbDesktopCategory === qbCategory
+          : true,
+      )
       .filter((d) => isAdmin || d.assignedAgent === me || d.createdBy === me)
       .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
-  }, [picked, defects, module, env, isAdmin, currentUser]);
+  }, [picked, qbCategory, defects, module, env, isAdmin, currentUser]);
+
+  const isQbDesktop = module === "Integrations" && picked === "QuickBooks Desktop";
+  const qbCategoryCount = (c: QbDesktopCategory) =>
+    defects.filter((d) =>
+      d.module === module &&
+      d.formFeature.includes("QuickBooks Desktop") &&
+      (!env || d.environment === env) &&
+      d.qbDesktopCategory === c,
+    ).length;
 
   // Agents only get their own name in the assigned dropdown
   const allowedAgents = isAdmin ? AGENTS : (currentUser ? [currentUser.name] : []);
@@ -123,7 +140,13 @@ export function TestingModule({
                     )}
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground capitalize">{itemLabel}</p>
-                  <Button size="sm" className="mt-3 w-full" onClick={() => setReportFor(name)}>
+                  <Button size="sm" className="mt-3 w-full" onClick={() => {
+                    if (module === "Integrations" && name === "QuickBooks Desktop") {
+                      setPicked(name);
+                    } else {
+                      setReportFor(name);
+                    }
+                  }}>
                     Report Error
                   </Button>
                 </CardContent>
@@ -138,11 +161,48 @@ export function TestingModule({
             </Card>
           )}
         </div>
-      ) : (
+      ) : isQbDesktop && !qbCategory ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm">
             <Button variant="ghost" size="sm" onClick={() => setPicked(null)}>← Back to {itemLabel}s</Button>
+            <span className="font-medium">QuickBooks Desktop</span>
+            {env && <Badge variant="outline" className="ml-2">{env}</Badge>}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {QB_DESKTOP_CATEGORIES.map((c) => {
+              const count = qbCategoryCount(c);
+              return (
+                <Card key={c} className="border-border">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-semibold leading-tight">{c}</div>
+                      <Badge variant="outline" className="gap-1">
+                        <Bug className="h-3 w-3" /> {count}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{count} error{count === 1 ? "" : "s"}</p>
+                    <div className="flex flex-col gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setQbCategory(c)}>View Errors</Button>
+                      <Button size="sm" onClick={() => { setReportQbCategory(c); setReportFor("QuickBooks Desktop"); }}>
+                        Report Error
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            {isQbDesktop ? (
+              <Button variant="ghost" size="sm" onClick={() => setQbCategory(null)}>← Back to categories</Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => setPicked(null)}>← Back to {itemLabel}s</Button>
+            )}
             <span className="font-medium">{picked}</span>
+            {isQbDesktop && qbCategory && <Badge variant="secondary">{qbCategory}</Badge>}
             {env && <Badge variant="outline" className="ml-2">{env}</Badge>}
           </div>
           <Card>
@@ -186,13 +246,15 @@ export function TestingModule({
 
       <ReportDefectDialog
         open={!!reportFor}
-        onOpenChange={(o) => { if (!o) setReportFor(null); }}
+        onOpenChange={(o) => { if (!o) { setReportFor(null); setReportQbCategory(null); } }}
         defaultForm={module === "Integrations" ? "" : (reportFor ?? "")}
         defaultModule={module}
         defaultAgents={allowedAgents}
         defaultIntegration={module === "Integrations" ? (reportFor ?? "") : ""}
         featureMode={featureMode}
         formOptions={module === "Integrations" ? ["Form 1099-NEC", "Form 1099-MISC"] : undefined}
+        defaultQbCategory={reportQbCategory ?? undefined}
+        lockQbCategory={!!reportQbCategory}
       />
       <DefectDetailSheet
         defectId={viewId}
