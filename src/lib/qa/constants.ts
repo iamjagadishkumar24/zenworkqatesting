@@ -127,6 +127,30 @@ export const FEATURES_TAX1099: string[] = [
   "Audit Trail",
 ];
 
+// Payer & Recipient feature catalogs — surfaced as standalone testing
+// modules so defects can be tagged Module=Payer / Module=Recipient and
+// the same dashboard / filter / assignment plumbing applies.
+export const FEATURES_PAYER: string[] = ["Add Payer", "Bulk Upload"];
+
+export const FEATURES_RECIPIENT: string[] = [
+  "Add Recipient",
+  "Bulk Upload",
+  "Copy Recipient",
+  "Delete Recipient",
+  "Bulk Address Match",
+  "Bulk W9 Request",
+  "Bulk W8 Request",
+  "Bulk Cancel W9",
+  "Bulk Cancel W8",
+  "Bulk Inactivate",
+  "Bulk Reactivate",
+  "Request TIN Match",
+  "Request Consent",
+  "Export to Excel",
+  "Sync to Accounting Software",
+  "Bulk Download W8/W9",
+];
+
 // Shared module/category dropdown options used everywhere (Reported Errors
 // filter, Task Assignment, etc.). Keep this as the single source of truth so
 // new modules show up in every dropdown automatically.
@@ -181,6 +205,8 @@ export function getModuleCatalog(m: string | null | undefined): string[] | null 
   if (m === "Excel Import Testing") return [...FEATURES_EXCEL_IMPORT];
   if (m === "Functionality Testing") return [...FEATURES_FUNCTIONALITY];
   if (m === "Tax1099 Features") return [...FEATURES_TAX1099];
+  if (m === "Payer") return [...FEATURES_PAYER];
+  if (m === "Recipient") return [...FEATURES_RECIPIENT];
   return null;
 }
 
@@ -194,6 +220,8 @@ export const MODULE_OPTIONS: string[] = [
   "Excel Import Testing",
   "Functionality Testing",
   "Tax1099 Features",
+  "Payer",
+  "Recipient",
 ];
 
 // Route path for each module — used to deep-link assigned tasks
@@ -214,6 +242,8 @@ export const MODULE_ROUTES: Record<string, string> = {
   "Excel Import Testing": "/excel-import-testing",
   "Functionality Testing": "/functionality-testing",
   "Tax1099 Features": "/tax1099-features",
+  Payer: "/payer-testing",
+  Recipient: "/recipient-testing",
 };
 
 export function routeForModule(module: string | null | undefined): string {
