@@ -135,6 +135,25 @@ function ReportsPage() {
     if (v) navigate({ replace: true, search: () => ({ ...v.filters }) });
   };
 
+  const baseSpec = useMemo<DefectQuerySpec>(() => {
+    const [from, to] = dateBounds;
+    return {
+      environment: env ?? undefined,
+      taxYear,
+      statusGroup: status as DefectQuerySpec["statusGroup"],
+      testingType,
+      category,
+      agent,
+      from: from ? from.toISOString() : null,
+      to: to ? to.toISOString() : null,
+    };
+    // dateBounds already accounts for fromDate/toDate
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [env, taxYear, status, testingType, category, agent, dateBounds]);
+
+  const drillInto = (title: string, patch: Partial<DefectQuerySpec>) =>
+    setDrill({ title, spec: { ...baseSpec, ...patch } });
+
   const scoped = useMemo(
     () =>
       allDefects.filter(
@@ -598,13 +617,9 @@ function ReportsPage() {
                     outerRadius={90}
                     label
                     onClick={(p: { name?: string }) =>
-                      drillInto(
-                        `Errors marked ${p?.name ?? ""}`,
-                        (d) =>
-                          p?.name === "Valid"
-                            ? d.validity === "Valid"
-                            : d.validity === "Invalid",
-                      )
+                      drillInto(`Errors marked ${p?.name ?? ""}`, {
+                        validity: p?.name === "Valid" ? "Valid" : "Invalid",
+                      })
                     }
                     className="cursor-pointer"
                   >
@@ -639,9 +654,10 @@ function ReportsPage() {
                   data={defectsByModule}
                   onClick={(e: { activeLabel?: string }) =>
                     e?.activeLabel &&
-                    drillInto(`Open errors in ${e.activeLabel}`, (d) =>
-                      d.module === e.activeLabel && !["Fixed", "Closed"].includes(d.status),
-                    )
+                    drillInto(`Open errors in ${e.activeLabel}`, {
+                      module: e.activeLabel,
+                      statusGroup: "Open",
+                    })
                   }
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -751,9 +767,9 @@ function ReportsPage() {
                   layout="vertical"
                   onClick={(e: { activeLabel?: string }) =>
                     e?.activeLabel &&
-                    drillInto(`Errors handled by ${e.activeLabel}`, (d) =>
-                      d.assignedAgent === e.activeLabel,
-                    )
+                    drillInto(`Errors handled by ${e.activeLabel}`, {
+                      agent: e.activeLabel,
+                    })
                   }
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
