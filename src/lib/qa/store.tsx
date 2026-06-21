@@ -548,10 +548,9 @@ export function QAProvider({ children }: { children: ReactNode }) {
       if (error) {
         // Supabase returns a "weak_password" / pwned message when HIBP blocks it.
         const msg = error.message ?? "";
+        const code = (error as { code?: string }).code ?? "";
         const isLeaked =
-          /pwned|leaked|breach|weak_password/i.test(msg) ||
-          // @ts-expect-error supabase-js exposes code on AuthError
-          error.code === "weak_password";
+          /pwned|leaked|breach|weak_password/i.test(msg) || code === "weak_password";
         try {
           const { recordAuthAttempt } = await import("./authAudit.functions");
           void recordAuthAttempt({
