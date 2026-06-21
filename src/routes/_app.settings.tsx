@@ -42,7 +42,12 @@ import { exportCsv, exportXlsx } from "@/lib/qa/export";
 import { useServerFn } from "@tanstack/react-start";
 import { inviteAgent, resetSampleAdmin } from "@/lib/qa/admin.functions";
 import { setAllowAgentExports } from "@/lib/qa/exportJobs.functions";
-import { getQARuntimeConfig, updateQARuntimeConfig } from "@/lib/qa/runtime-config.functions";
+import {
+  getQARuntimeConfig,
+  listQARuntimeConfigAudit,
+  updateQARuntimeConfig,
+  type QARuntimeConfigAuditEntry,
+} from "@/lib/qa/runtime-config.functions";
 import { ExportJobsPanel } from "@/components/qa/ExportJobsPanel";
 import {
   Users,
@@ -706,7 +711,12 @@ function SettingsPage() {
 
         {/* RUNTIME (admin) */}
         <TabsContent value="runtime">
-          {isAdmin ? <RuntimeConfigCard /> : null}
+          {isAdmin ? (
+            <div className="space-y-4">
+              <RuntimeConfigCard />
+              <RuntimeConfigAuditCard />
+            </div>
+          ) : null}
         </TabsContent>
       </Tabs>
 
