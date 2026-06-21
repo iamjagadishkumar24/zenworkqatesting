@@ -261,7 +261,31 @@ function RetestPage() {
                         ) : <Badge variant="outline">{r.priority}</Badge>}
                       </TableCell>
                       <TableCell className="text-xs">{r.tax_year ?? "—"}</TableCell>
-                      <TableCell className="text-xs">{r.due_date ?? "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {r.due_date ? (
+                          <span>
+                            {r.due_date}
+                            {r.due_time && <span className="ml-1 text-muted-foreground">{r.due_time.slice(0,5)}</span>}
+                          </span>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          if (r.status === "Completed") {
+                            return <Badge variant="outline" className="text-[10px]">Completed</Badge>;
+                          }
+                          const info = deadlineInfo(r.deadline_at, now);
+                          if (info.tier === "none") return <span className="text-xs text-muted-foreground">—</span>;
+                          return (
+                            <span className={cn(
+                              "inline-block rounded border px-2 py-0.5 text-[11px] font-mono tabular-nums",
+                              TIER_CLASSES[info.tier],
+                            )}>
+                              {info.isOverdue ? `Overdue +${info.shortLabel}` : info.shortLabel}
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell>
                         <Select value={r.status} disabled={!canEditStatus} onValueChange={async (v) => {
                           const res = await updateAssignment(r.id, { status: v as RetestStatus });
