@@ -360,6 +360,9 @@ export function QAProvider({ children }: { children: ReactNode }) {
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const row = rowToDefect(payload.new as DefectRow, commentsRef.current);
             const exists = next.find((d) => d.id === row.id);
+            // Out-of-order guard: ignore stale realtime events that arrive
+            // after a newer version is already in state.
+            if (exists && exists.version > row.version) return s;
             next = exists ? next.map((d) => (d.id === row.id ? row : d)) : [row, ...next];
           } else if (payload.eventType === "DELETE") {
             const oldId = (payload.old as { id: string }).id;
