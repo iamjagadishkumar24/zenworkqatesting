@@ -907,7 +907,19 @@ function RuntimeConfigAuditCard() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [pageSize, setPageSize] = useState<number>(25);
+  const PAGE_SIZE_STORAGE_KEY = "qa.runtimeAudit.pageSize";
+  const [pageSize, setPageSize] = useState<number>(() => {
+    if (typeof window === "undefined") return 25;
+    const raw = window.localStorage.getItem(PAGE_SIZE_STORAGE_KEY);
+    const n = raw ? Number(raw) : NaN;
+    return PAGE_SIZE_OPTIONS.includes(n as (typeof PAGE_SIZE_OPTIONS)[number]) ? n : 25;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(pageSize));
+    }
+  }, [pageSize]);
 
   const load = (nextPage = page) => {
     setLoading(true);
