@@ -71,6 +71,11 @@ function AuthEventsPage() {
   const [action, setAction] = useState<string>("all");
   const [days, setDays] = useState<string>("7");
   const [selected, setSelected] = useState<Row | null>(null);
+  const [detailSearch, setDetailSearch] = useState("");
+
+  useEffect(() => {
+    setDetailSearch("");
+  }, [selected?.id]);
 
   const load = async () => {
     setLoading(true);
@@ -158,6 +163,28 @@ function AuthEventsPage() {
     (r.metadata && typeof r.metadata.reason === "string" ? (r.metadata.reason as string) : "") ||
     r.summary ||
     "";
+
+  const highlight = (text: string, q: string) => {
+    if (!q) return text;
+    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const parts = text.split(re);
+    return parts.map((p, i) =>
+      re.test(p) ? (
+        <mark key={i} className="rounded bg-yellow-300/70 px-0.5 text-foreground dark:bg-yellow-500/40">
+          {p}
+        </mark>
+      ) : (
+        <span key={i}>{p}</span>
+      ),
+    );
+  };
+
+  const metadataJson = selected ? JSON.stringify(selected.metadata ?? {}, null, 2) : "";
+  const matchCount = detailSearch
+    ? (metadataJson.match(
+        new RegExp(detailSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+      ) ?? []).length
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -300,8 +327,21 @@ function AuthEventsPage() {
               </dl>
               <div className="mt-6">
                 <div className="mb-2 text-xs font-medium text-muted-foreground">Metadata</div>
-                <pre className="max-h-80 overflow-auto rounded-md border bg-muted/40 p-3 text-xs">
-{JSON.stringify(selected.metadata ?? {}, null, 2)}
+                <div className="mb-2 flex items-center gap-2">
+                  <Input
+                    placeholder="Search metadata…"
+                    value={detailSearch}
+                    onChange={(e) => setDetailSearch(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  {detailSearch && (
+                    <span className="whitespace-nowrap text-xs text-muted-foreground">
+                      {matchCount} match{matchCount === 1 ? "" : "es"}
+                    </span>
+                  )}
+                </div>
+                <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-3 text-xs">
+                  {highlight(metadataJson, detailSearch)}
                 </pre>
               </div>
             </>
