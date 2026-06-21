@@ -1,82 +1,68 @@
-## Scope (MVP)
+## Why a plan
 
-Personal sticky notes for every signed-in user (agent + admin), a "My Quick Notes" dashboard widget, and a refreshed dashboard look. Sharing, team/announcement notes, templates, checklists, analytics, and realtime sync are deferred to a follow-up.
+This request bundles ~6 large initiatives (real-time across every screen, permission-scoped channels, countdown timers, audit, admin-only theme, etc.). Trying to ship all of it in one turn would produce a giant unreviewable change and almost certainly break existing flows (auth, RLS, dashboards). Most of the foundations already exist in this project — `activity_log`, `notifications`, `user_roles` + `has_role`, RLS on user-data tables, audit triggers — so the work is wiring real-time + role gates on top, not rebuilding.
 
-## What ships
+I'll ship it in 4 small, reviewable phases. Pick which one to start with.
 
-### 1. Database (one migration)
+---
 
-`public.notes` table:
-- `id uuid pk`, `user_id uuid -> auth.users` (owner)
-- `title text`, `content jsonb` (TipTap JSON), `content_text text` (plain text for search)
-- `color text` default `'yellow'` — one of yellow/blue/green/red/purple/grey
-- `tags text[]` default `'{}'`
-- `is_pinned bool`, `is_favorite bool`, `is_archived bool`
-- `created_at`, `updated_at` (trigger), `updated_by uuid`
+## Phase 1 — Realtime publication + shared subscription hook (foundation)
 
-RLS: owner-only SELECT/INSERT/UPDATE/DELETE scoped to `auth.uid() = user_id`. GRANTs to `authenticated` + `service_role`. Index on `(user_id, is_archived, is_pinned, updated_at desc)` and a GIN index on `tags`.
+**Migration** (one approval):
+- `ALTER PUBLICATION supabase_realtime ADD TABLE` for: `defects`, `defect_comments`, `retest_assignments`, `notifications`, `activity_log`.
+- `ALTER TABLE ... REPLICA IDENTITY FULL` on the same tables so UPDATE/DELETE payloads include old row (needed for diff-based UI updates).
+- Confirm RLS is enabled on each (already is) — Realtime respects RLS, so agents only receive rows they can SELECT. No new policies needed.
 
-### 2. Server functions (`src/lib/qa/notes.functions.ts`)
+**Code**:
+- `src/hooks/useRealtimeTable.ts` — single `useEffect`-based hook that opens one channel per table, tears it down on unmount, and calls `queryClient.invalidateQueries({ queryKey })`. Avoids the "subscribe in render" leak.
+- Wire it in the screens that already use TanStack Query: Dashboard, Defects list, Defect detail, Retest list, Notifications bell, Activity feed. No business-logic changes — Query refetches and the UI updates.
 
-All `requireSupabaseAuth`:
-- `listNotes({ archived?, search?, tag? })`
-- `createNote({})` returns a blank note
-- `updateNote({ id, patch })` — used by autosave
-- `togglePin / toggleFavorite / toggleArchive({ id })`
-- `deleteNote({ id })`
+Deliverable: any admin/agent action triggers a sub-second refresh on every open session for users authorized to see that row.
 
-### 3. Rich text editor
+---
 
-Add deps: `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-placeholder`. Wrapper component `NoteEditor` with a minimal toolbar (bold, italic, strike, bullet/ordered list, heading). Emits `{ json, text }` for save.
+## Phase 2 — Notifications bell + toast, role-scoped
 
-### 4. Notes UI
+- Subscribe to `notifications` filtered by `user_id=eq.${currentUser.id}` (already RLS-protected; the filter just avoids unnecessary client work).
+- Show a `sonner` toast on INSERT, increment unread badge, invalidate the notifications query.
+- No schema change — `notifications` and its triggers already exist.
 
-New route `src/routes/_app.notes.tsx`:
-- Masonry-ish card grid of sticky notes, color-coded with soft tinted backgrounds, rounded corners, subtle shadow + hover lift.
-- Toolbar: search box (title/content/tags), tag chips filter, archived toggle, "New note" button.
-- Pinned section pinned to top.
-- Card actions: pin, favorite, color picker, tag chips, archive, delete (with confirm).
-- Clicking a card opens an inline expanded editor (sheet/dialog) with autosave:
-  - Debounced save after 5s of inactivity
-  - Interval autosave every 60s
-  - Save on `visibilitychange`/`beforeunload` via `navigator.sendBeacon`-style flush (we call the server fn synchronously on blur/unmount)
-- "Saved · 5s ago" status indicator using `updated_at`.
+---
 
-Add sidebar link "Notes" (StickyNote icon) in `AppShell`.
+## Phase 3 — Live countdown timers for retest tasks
 
-### 5. Dashboard widget
+- `useCountdown(deadline_at)` hook: single `setInterval(1000)` shared via context so 50 rows ≠ 50 timers.
+- Renders "2d 4h left" / "Overdue by 3h" / stops at `status='Completed'` (column already exists, `deadline_at` already computed by `retest_compute_deadline` trigger).
+- Pure frontend — no migration.
 
-On `/dashboard`, add `MyQuickNotesWidget`:
-- Counts: Total / Active / Archived
-- Recent 3 notes (title + color dot + relative time)
-- Quick actions: New note, Search (links to /notes), Open Notes
+---
 
-### 6. Dashboard redesign (light touch refresh, not a full rewrite)
+## Phase 4 — Admin-only theme + agent lockdown
 
-Same data and routes — restyled:
-- Glassmorphism KPI cards (`bg-card/60 backdrop-blur`, soft gradient border, animated count-up on mount).
-- Gradient highlight for the active KPI tone.
-- Skeleton loaders while queries resolve.
-- Empty-state illustrations (lucide icon in a tinted circle) on each empty section.
-- Replace the Modules grid with a bento-style layout (2 wide for top module, others 1× tiles).
-- Insert the Quick Notes widget between KPIs and Modules.
-- Add hover-lift + `animate-fade-in` on cards.
+- Add `ThemeProvider` (next-themes-style, class on `<html>`). Default `light`.
+- `useQA().currentUser.role === 'admin'` gates: theme toggle in header + Settings → Appearance section.
+- Agent sessions: provider forces `light` and ignores any persisted value. Toggle component returns `null` for non-admins.
+- Persist admin choice in `localStorage` keyed by user id.
 
-No new tokens needed beyond what already exists in `styles.css` (`--gradient-primary`, `--shadow-elevated`); add a `--gradient-glass` and `.glass-card` utility in `styles.css` via `@utility`.
+---
 
-## Out of scope (follow-up phases)
+## Out of scope for this batch (call out so we don't silently skip)
 
-- Shared/team notes, admin announcements, permissions, realtime channel
-- Templates, checklists with progress, drag-and-drop reordering
-- Notes analytics charts, activity log table, notifications
-- Mobile drag positioning, offline queue
+- Building a brand-new audit pipeline — the existing `activity_log` + `log_activity()` triggers already capture user/action/timestamp/old/new/ip/ua/metadata. Phase 1 makes it live; no new table needed.
+- Rewriting RLS — current policies already enforce role isolation via `has_role()`. I'll spot-fix only if Phase 1 surfaces a gap.
+- Server-Sent Events / custom WebSocket layer — Supabase Realtime over the existing publication is the supported path and scales fine for this app.
 
-## Files
+---
 
-- new: `supabase/migrations/<ts>_notes.sql`
-- new: `src/lib/qa/notes.functions.ts`
-- new: `src/components/qa/NoteEditor.tsx`, `src/components/qa/NoteCard.tsx`, `src/components/qa/MyQuickNotesWidget.tsx`
-- new: `src/routes/_app.notes.tsx`
-- edited: `src/routes/_app.dashboard.tsx` (widget + restyle), `src/components/qa/AppShell.tsx` (nav link), `src/styles.css` (glass utility), `src/integrations/supabase/types.ts` (after migration)
+## Technical notes
 
-Approve to start with the migration, then code.
+- Realtime channels MUST be created inside `useEffect` with a cleanup that calls `supabase.removeChannel(channel)`. A bare `supabase.channel(...).subscribe()` at component scope leaks subscriptions on every render → reconnect loop → bill spike.
+- One channel per logical concern, not per row. Filter server-side with `.on('postgres_changes', { event, schema, table, filter })`.
+- `queryClient.invalidateQueries` is the integration point — don't try to merge realtime payloads into Query cache by hand; let the next fetch reconcile with RLS.
+- Theme: never read role from `localStorage` to decide — read from the auth store. localStorage role checks are trivially bypassable.
+
+---
+
+## Which phase should I start with?
+
+Reply with **1**, **2**, **3**, or **4** (or "all of phase 1+2"). I'd recommend starting with **Phase 1** because every other phase depends on it.

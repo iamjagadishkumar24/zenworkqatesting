@@ -125,6 +125,7 @@ type FormRow = {
 };
 type NotifRow = {
   id: string;
+  user_id: string;
   type: string;
   title: string;
   body: string;
@@ -460,6 +461,12 @@ export function QAProvider({ children }: { children: ReactNode }) {
             let next = s.notifications;
             if (payload.eventType === "INSERT") {
               const n = payload.new as NotifRow;
+              // Live toast for the active user's new notifications.
+              if (n.user_id === state.currentUser?.id) {
+                void import("sonner").then(({ toast }) => {
+                  toast(n.title, { description: n.body ?? undefined });
+                });
+              }
               next = [
                 {
                   id: n.id,
