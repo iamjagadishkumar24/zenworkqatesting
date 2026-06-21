@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Radio, Trash2 } from "lucide-react";
+import { Radio, Trash2, Activity, Clock, Wifi } from "lucide-react";
 
 export const Route = createFileRoute("/_app/realtime-debug")({
   component: RealtimeDebugPage,
@@ -12,6 +14,47 @@ export const Route = createFileRoute("/_app/realtime-debug")({
 function RealtimeDebugPage() {
   const { realtimeEvents, clearRealtimeEvents, currentUser } = useQA();
   const role = currentUser?.role ?? "unknown";
+
+  const [status, setStatus] = useState<string>("connecting");
+  const [latencyMs, setLatencyMs] = useState<number | null>(null);
+  const pingSentAtRef = useRef<number | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  useEffect(() => {
+    const channel = supabase.channel(`rt-diagnostics-${Math.random().toString(36).slice(2, 8)}`, {
+      config: { broadcast: { self: true } },
+    });
+    channelRef.current = channel;
+    channel
+      .on("broadcast", { event: "ping" }, () => {
+        if (pingSentAtRef.current != null) {
+          setLatencyMs(Math.round(performance.now() - pingSentAtRef.current));
+          pingSentAtRef.current = null;
+        }
+      })
+      .subscribe((s) => setStatus(String(s).toLowerCase()));
+
+    const sendPing = () => {
+      if (channel.state !== "joined") return;
+      pingSentAtRef.current = performance.now();
+      void channel.send({ type: "broadcast", event: "ping", payload: { t: Date.now() } });
+    };
+    sendPing();
+    const id = setInterval(sendPing, 5000);
+    return () => {
+      clearInterval(id);
+      void supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const lastEventAt = realtimeEvents[0]?.at ?? null;
+  const lastEventAgo = useTickingAgo(lastEventAt);
+  const statusColor =
+    status === "subscribed" || status === "joined"
+      ? "bg-emerald-500"
+      : status === "closed" || status === "channel_error" || status === "timed_out"
+        ? "bg-red-500"
+        : "bg-amber-500";
 
   return (
     <div className="space-y-4">
@@ -35,6 +78,31 @@ function RealtimeDebugPage() {
           <Trash2 className="mr-2 h-4 w-4" /> Clear
         </Button>
       </div>
+
+      <Card>
+        <CardContent className="grid gap-3 p-4 sm:grid-cols-3">
+          <Stat
+            icon={<Wifi className="h-4 w-4" />}
+            label="Subscription"
+            value={
+              <span className="inline-flex items-center gap-2">
+                <span className={`h-2 w-2 rounded-full ${statusColor}`} />
+                {status}
+              </span>
+            }
+          />
+          <Stat
+            icon={<Activity className="h-4 w-4" />}
+            label="Latency"
+            value={latencyMs == null ? "measuring…" : `${latencyMs} ms`}
+          />
+          <Stat
+            icon={<Clock className="h-4 w-4" />}
+            label="Last event"
+            value={lastEventAgo ?? "none yet"}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-0">
@@ -70,4 +138,41 @@ function RealtimeDebugPage() {
       </Card>
     </div>
   );
+}
+
+function Stat({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-md border p-3">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-1 text-sm font-medium">{value}</div>
+    </div>
+  );
+}
+
+function useTickingAgo(iso: string | null) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!iso) return;
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [iso]);
+  if (!iso) return null;
+  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ${s % 60}s ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m ago`;
 }
