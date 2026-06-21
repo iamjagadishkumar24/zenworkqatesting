@@ -699,6 +699,16 @@ export function QAProvider({ children }: { children: ReactNode }) {
       const me = requireUser();
       const local = state.defects.find((d) => d.id === id);
       if (!local) return { ok: false, error: "Defect not found" };
+      // Optimistic UI: apply the patch to local state immediately so the table
+      // reflects the change while the server request is pending. If the server
+      // rejects (error or version conflict), we restore the previous row below.
+      const previous = local;
+      setState((s) => ({
+        ...s,
+        defects: s.defects.map((d) =>
+          d.id === id ? { ...d, ...patch, updatedBy: me.name } : d,
+        ),
+      }));
       const dbPatch: Record<string, unknown> = { updated_by: me.name };
       const map: Record<string, string> = {
         module: "module",
@@ -735,7 +745,13 @@ export function QAProvider({ children }: { children: ReactNode }) {
         .eq("version", local.version)
         .select()
         .maybeSingle();
-      if (error) return { ok: false, error: error.message };
+      if (error) {
+        setState((s) => ({
+          ...s,
+          defects: s.defects.map((d) => (d.id === id ? previous : d)),
+        }));
+        return { ok: false, error: error.message };
+      }
       if (!data) {
         // Optimistic lock conflict: fetch latest and surface
         const { data: latest } = await supabase
