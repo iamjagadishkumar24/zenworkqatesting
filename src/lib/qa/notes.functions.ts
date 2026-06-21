@@ -4,10 +4,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type NoteColor = "yellow" | "blue" | "green" | "red" | "purple" | "grey";
 export const NOTE_COLORS: NoteColor[] = ["yellow", "blue", "green", "red", "purple", "grey"];
 
+export type NoteJSON =
+  | string
+  | number
+  | boolean
+  | null
+  | { [k: string]: NoteJSON }
+  | NoteJSON[];
+
 export type NoteDTO = {
   id: string;
   title: string;
-  content: unknown;
+  content: NoteJSON;
   content_text: string;
   color: NoteColor;
   tags: string[];
@@ -22,7 +30,7 @@ function row(r: Record<string, unknown>): NoteDTO {
   return {
     id: String(r.id),
     title: String(r.title ?? ""),
-    content: r.content ?? {},
+    content: (r.content as NoteJSON | undefined) ?? {},
     content_text: String(r.content_text ?? ""),
     color: (NOTE_COLORS.includes(r.color as NoteColor) ? r.color : "yellow") as NoteColor,
     tags: Array.isArray(r.tags) ? (r.tags as string[]) : [],
