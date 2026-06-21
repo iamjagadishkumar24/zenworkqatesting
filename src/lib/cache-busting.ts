@@ -16,7 +16,7 @@ function isBrowser() {
 }
 
 function isEnabled() {
-  return isBrowser() && import.meta.env.PROD;
+  return isBrowser();
 }
 
 export function isLikelyChunkLoadError(error: unknown): boolean {
@@ -67,6 +67,8 @@ async function deleteStaleAppShellCaches() {
 async function getLatestVersion(): Promise<string | null> {
   const url = new URL(VERSION_ENDPOINT, window.location.origin);
   url.searchParams.set("t", String(Date.now()));
+  const previewToken = new URLSearchParams(window.location.search).get("__lovable_token");
+  if (previewToken) url.searchParams.set("__lovable_token", previewToken);
   const response = await fetch(url, {
     cache: "no-store",
     headers: { Accept: "application/json" },

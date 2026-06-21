@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/select";
 import { NotificationsBell } from "./NotificationsBell";
 import { toast } from "sonner";
+import { checkForNewAppVersion } from "@/lib/cache-busting";
 
 type NavItem = {
   to: string;
@@ -172,6 +173,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.to}
                 to={item.to}
+                onClick={async (event) => {
+                  if (item.to !== "/dashboard") return;
+                  event.preventDefault();
+                  const reloading = await checkForNewAppVersion("dashboard_nav");
+                  if (!reloading) navigate({ to: item.to as never });
+                }}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   active

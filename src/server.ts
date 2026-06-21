@@ -7,6 +7,40 @@ type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
+const NO_STORE = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+
+function withDeploymentCacheHeaders(request: Request, response: Response): Response {
+  const next = new Response(response.body, response);
+  const url = new URL(request.url);
+  const path = url.pathname;
+  const contentType = next.headers.get("content-type") ?? "";
+
+  if (
+    contentType.includes("text/html") ||
+    path === "/api/public/app-version" ||
+    path === "/api/public/manifest" ||
+    path === "/manifest.webmanifest" ||
+    path === "/sw.js" ||
+    path === "/service-worker.js"
+  ) {
+    next.headers.set("Cache-Control", NO_STORE);
+    next.headers.set("Pragma", "no-cache");
+    next.headers.set("Expires", "0");
+    next.headers.set("Clear-Site-Data", '"cache"');
+    return next;
+  }
+
+  if (/^\/(assets|_build|__vite)\//.test(path) || /\.[a-f0-9]{8,}\.(?:js|mjs|css)$/i.test(path)) {
+    next.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  } else if (/\.(?:js|mjs|css)$/i.test(path)) {
+    next.headers.set("Cache-Control", NO_STORE);
+    next.headers.set("Pragma", "no-cache");
+    next.headers.set("Expires", "0");
+  }
+
+  return next;
+}
+
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
@@ -42,7 +76,7 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return withDeploymentCacheHeaders(request, await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {
