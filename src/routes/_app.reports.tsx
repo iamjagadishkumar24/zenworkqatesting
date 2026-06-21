@@ -59,7 +59,7 @@ function EmptyBreakdown({ message }: { message: string }) {
 }
 
 function ReportsPage() {
-  const { forms, defects: allDefects } = useQA();
+  const { defects: allDefects } = useQA();
   const { env } = useEnvironment();
   const { taxYear, setTaxYear } = useTaxYear();
 
@@ -73,13 +73,13 @@ function ReportsPage() {
   );
 
   const passedVsFailed = useMemo(() => {
-    const passed = forms.reduce((s, f) => s + f.passed, 0);
-    const failed = forms.reduce((s, f) => s + f.failed, 0);
+    const valid = defects.filter((d) => d.validity === "Valid").length;
+    const invalid = defects.filter((d) => d.validity === "Invalid").length;
     return [
-      { name: "Valid", value: passed },
-      { name: "Invalid Errors", value: failed },
+      { name: "Valid", value: valid },
+      { name: "Invalid Errors", value: invalid },
     ];
-  }, [forms]);
+  }, [defects]);
 
   const defectsByModule = useMemo(() => {
     const map: Record<string, number> = {};
@@ -138,13 +138,18 @@ function ReportsPage() {
     return Object.entries(map).map(([agent, count]) => ({ agent, count }));
   }, [defects]);
 
-  const formCoverage = useMemo(
-    () =>
-      forms
-        .slice(0, 10)
-        .map((f) => ({ form: f.name.replace("Form ", ""), passed: f.passed, failed: f.failed })),
-    [forms],
-  );
+  const formCoverage = useMemo(() => {
+    const map: Record<string, { form: string; passed: number; failed: number }> = {};
+    defects.forEach((d) => {
+      const key = d.formFeature || d.module;
+      const e = (map[key] ??= { form: key, passed: 0, failed: 0 });
+      if (d.validity === "Valid") e.passed += 1;
+      else if (d.validity === "Invalid") e.failed += 1;
+    });
+    return Object.values(map)
+      .sort((a, b) => b.passed + b.failed - (a.passed + a.failed))
+      .slice(0, 10);
+  }, [defects]);
 
   return (
     <div className="space-y-6">
@@ -176,18 +181,8 @@ function ReportsPage() {
             label="Forms"
             filename="forms"
             title="Forms export"
-            rows={forms as unknown as Record<string, unknown>[]}
-            columns={[
-              "id",
-              "name",
-              "module",
-              "status",
-              "passed",
-              "failed",
-              "openDefects",
-              "lastTested",
-              "assignedAgent",
-            ]}
+            rows={formCoverage as unknown as Record<string, unknown>[]}
+            columns={["form", "passed", "failed"]}
           />
           <ExportMenu
             label="Errors"
