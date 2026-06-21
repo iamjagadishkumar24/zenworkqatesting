@@ -767,6 +767,99 @@ function AgentExportToggle() {
   );
 }
 
+function RuntimeConfigCard() {
+  const fetchCfg = useServerFn(getQARuntimeConfig);
+  const saveCfg = useServerFn(updateQARuntimeConfig);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<null | "live" | "perf">(null);
+  const [liveEnabled, setLiveEnabled] = useState(true);
+  const [performanceMode, setPerformanceMode] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchCfg()
+      .then((cfg) => {
+        if (cancelled) return;
+        setLiveEnabled(cfg.liveEnabled);
+        setPerformanceMode(cfg.performanceMode);
+        setUpdatedAt(cfg.updatedAt ?? null);
+      })
+      .catch(() => toast.error("Failed to load runtime config"))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchCfg]);
+
+  const apply = async (next: { liveEnabled: boolean; performanceMode: boolean }, which: "live" | "perf") => {
+    setBusy(which);
+    try {
+      const cfg = await saveCfg({ data: next });
+      setLiveEnabled(cfg.liveEnabled);
+      setPerformanceMode(cfg.performanceMode);
+      setUpdatedAt(cfg.updatedAt ?? new Date().toISOString());
+      toast.success("Runtime config updated", {
+        description: "New settings take effect on next page load for connected clients.",
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update runtime config");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Cpu className="h-4 w-4" /> Runtime Execution
+        </CardTitle>
+        <CardDescription>
+          Toggle live realtime execution and the performance throttle for all clients without
+          redeploying. Changes apply on the next page load.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between rounded-md border border-border p-3">
+          <div>
+            <p className="text-sm font-medium">Live execution</p>
+            <p className="text-xs text-muted-foreground">
+              When off, the QA store skips opening the realtime channel entirely.
+            </p>
+          </div>
+          <Switch
+            checked={liveEnabled}
+            disabled={loading || busy !== null}
+            onCheckedChange={(v) => apply({ liveEnabled: v, performanceMode }, "live")}
+            aria-label="Toggle live execution"
+          />
+        </div>
+        <div className="flex items-center justify-between rounded-md border border-border p-3">
+          <div>
+            <p className="text-sm font-medium">Performance mode</p>
+            <p className="text-xs text-muted-foreground">
+              Batches realtime-driven state updates into a single frame to keep the UI smooth
+              under heavy event load.
+            </p>
+          </div>
+          <Switch
+            checked={performanceMode}
+            disabled={loading || busy !== null}
+            onCheckedChange={(v) => apply({ liveEnabled, performanceMode: v }, "perf")}
+            aria-label="Toggle performance mode"
+          />
+        </div>
+        {updatedAt && (
+          <p className="text-xs text-muted-foreground">
+            Last updated {new Date(updatedAt).toLocaleString()}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function InviteAgentCard() {
   const invite = useServerFn(inviteAgent);
   const [email, setEmail] = useState("");
