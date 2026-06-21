@@ -125,6 +125,7 @@ export const FEATURES_TAX1099: string[] = [
   "Corrections",
   "Payments",
   "Audit Trail",
+  "PDF",
 ];
 
 // Zenwork Payments — standalone payments module surfaced both in nav and
