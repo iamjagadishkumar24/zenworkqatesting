@@ -239,8 +239,8 @@ export function LoginPage() {
         {/* Brand / hero panel */}
         <div className="hidden flex-col justify-between lg:flex animate-fade-in">
           <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 text-lg font-black backdrop-blur ring-1 ring-white/20">
-              Z
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 backdrop-blur ring-1 ring-white/20">
+              <BrandLogo className="h-7 w-7" />
             </div>
             <span className="text-xl font-semibold tracking-tight">Zenwork Testing</span>
           </div>
@@ -277,8 +277,8 @@ export function LoginPage() {
           <Card className="w-full max-w-md border-white/15 bg-white/10 text-white shadow-2xl shadow-indigo-900/40 backdrop-blur-xl">
             <CardHeader>
               <div className="mb-2 flex items-center gap-2 lg:hidden">
-                <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/15 text-sm font-black ring-1 ring-white/20">
-                  Z
+                <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                  <BrandLogo className="h-6 w-6" />
                 </div>
                 <span className="text-base font-semibold">Zenwork Testing</span>
               </div>
