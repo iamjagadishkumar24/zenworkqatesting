@@ -909,28 +909,77 @@ function RuntimeConfigAuditCard() {
   const fetchPageSize = useServerFn(getMyRuntimeAuditPageSize);
   const savePageSize = useServerFn(setMyRuntimeAuditPageSize);
   const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+  const DEFAULT_PAGE_SIZE = 25;
+  const isValidPageSize = (n: unknown): n is (typeof PAGE_SIZE_OPTIONS)[number] =>
+    typeof n === "number" && (PAGE_SIZE_OPTIONS as readonly number[]).includes(n);
   const [entries, setEntries] = useState<QARuntimeConfigAuditEntry[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [pageSize, setPageSizeState] = useState<number>(25);
+  const [pageSize, setPageSizeState] = useState<number>(DEFAULT_PAGE_SIZE);
   const [pageSizeReady, setPageSizeReady] = useState(false);
 
   useEffect(() => {
     fetchPageSize()
-      .then((n) => setPageSizeState(n))
+      .then((n) => setPageSizeState(isValidPageSize(n) ? n : DEFAULT_PAGE_SIZE))
       .catch(() => {
-        /* fall back to default */
+        setPageSizeState(DEFAULT_PAGE_SIZE);
+        toast.message("Using default page size", {
+          description: "Could not load your saved preference.",
+        });
       })
       .finally(() => setPageSizeReady(true));
   }, [fetchPageSize]);
 
   const setPageSize = (n: number) => {
-    setPageSizeState(n);
-    savePageSize({ data: { pageSize: n as 10 | 25 | 50 | 100 } }).catch(() =>
-      toast.error("Failed to save page size preference"),
-    );
+    const safe = isValidPageSize(n) ? n : DEFAULT_PAGE_SIZE;
+    const previous = pageSize;
+    setPageSizeState(safe);
+    savePageSize({ data: { pageSize: safe as 10 | 25 | 50 | 100 } }).catch(() => {
+      setPageSizeState(previous);
+      toast.error("Couldn't save page size", {
+        description: "Your preference wasn't synced. Reverted to previous value.",
+      });
+    });
   };
+
+  // Realtime sync of this preference across devices for the current user.
+  useEffect(() => {
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const uid = data.user?.id;
+      if (!uid || cancelled) return;
+      const channel = supabase
+        .channel(`user-prefs-${uid}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "user_preferences",
+            filter: `user_id=eq.${uid}`,
+          },
+          (payload) => {
+            const next = (payload.new as { runtime_audit_page_size?: number } | null)
+              ?.runtime_audit_page_size;
+            if (isValidPageSize(next)) {
+              setPageSizeState((curr) => (curr === next ? curr : next));
+            }
+          },
+        )
+        .subscribe();
+      cleanup = () => {
+        supabase.removeChannel(channel);
+      };
+    })();
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const load = (nextPage = page) => {
     setLoading(true);
