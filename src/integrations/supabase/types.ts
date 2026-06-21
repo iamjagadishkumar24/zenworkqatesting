@@ -582,6 +582,54 @@ export type Database = {
         }
         Relationships: []
       }
+      notes: {
+        Row: {
+          color: string
+          content: Json
+          content_text: string
+          created_at: string
+          id: string
+          is_archived: boolean
+          is_favorite: boolean
+          is_pinned: boolean
+          tags: string[]
+          title: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          content?: Json
+          content_text?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_favorite?: boolean
+          is_pinned?: boolean
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string
+          content?: Json
+          content_text?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_favorite?: boolean
+          is_pinned?: boolean
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
