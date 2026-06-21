@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSavedViews, type ReportFilters } from "@/lib/qa/reportsViews";
-import { DrillDownDialog } from "@/components/qa/DrillDownDialog";
+import { DrillDownDialog, type DrillState } from "@/components/qa/DrillDownDialog";
+import type { DefectQuerySpec } from "@/lib/qa/defectsQuery";
 import {
   BarChart,
   Bar,
@@ -124,7 +125,7 @@ function ReportsPage() {
 
   const { views, save: saveView, remove: removeView } = useSavedViews();
   const [viewName, setViewName] = useState("");
-  const [drill, setDrill] = useState<{ title: string; rows: typeof allDefects } | null>(null);
+  const [drill, setDrill] = useState<DrillState>(null);
 
   const resetFilters = () =>
     navigate({ replace: true, search: () => ({ ...DEFAULT_SEARCH }) });
@@ -133,11 +134,6 @@ function ReportsPage() {
     const v = views.find((x) => x.name === name);
     if (v) navigate({ replace: true, search: () => ({ ...v.filters }) });
   };
-
-  const drillInto = (
-    title: string,
-    pred: (d: (typeof allDefects)[number]) => boolean,
-  ) => setDrill({ title, rows: defects.filter(pred) });
 
   const scoped = useMemo(
     () =>
@@ -212,6 +208,23 @@ function ReportsPage() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scoped, status, testingType, category, agent, dateBounds]);
+
+  const baseSpec = useMemo<DefectQuerySpec>(() => {
+    const [from, to] = dateBounds;
+    return {
+      environment: env ?? undefined,
+      taxYear,
+      statusGroup: status as DefectQuerySpec["statusGroup"],
+      testingType,
+      category,
+      agent,
+      from: from ? from.toISOString() : null,
+      to: to ? to.toISOString() : null,
+    };
+  }, [env, taxYear, status, testingType, category, agent, dateBounds]);
+
+  const drillInto = (title: string, patch: Partial<DefectQuerySpec>) =>
+    setDrill({ title, spec: { ...baseSpec, ...patch } });
 
   // Data-integrity validation: warn when the active filtered set diverges
   // from the scoped total in ways callers wouldn't expect.
@@ -602,13 +615,9 @@ function ReportsPage() {
                     outerRadius={90}
                     label
                     onClick={(p: { name?: string }) =>
-                      drillInto(
-                        `Errors marked ${p?.name ?? ""}`,
-                        (d) =>
-                          p?.name === "Valid"
-                            ? d.validity === "Valid"
-                            : d.validity === "Invalid",
-                      )
+                      drillInto(`Errors marked ${p?.name ?? ""}`, {
+                        validity: p?.name === "Valid" ? "Valid" : "Invalid",
+                      })
                     }
                     className="cursor-pointer"
                   >
@@ -643,9 +652,10 @@ function ReportsPage() {
                   data={defectsByModule}
                   onClick={(e: { activeLabel?: string }) =>
                     e?.activeLabel &&
-                    drillInto(`Open errors in ${e.activeLabel}`, (d) =>
-                      d.module === e.activeLabel && !["Fixed", "Closed"].includes(d.status),
-                    )
+                    drillInto(`Open errors in ${e.activeLabel}`, {
+                      module: e.activeLabel,
+                      statusGroup: "Open",
+                    })
                   }
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -755,9 +765,9 @@ function ReportsPage() {
                   layout="vertical"
                   onClick={(e: { activeLabel?: string }) =>
                     e?.activeLabel &&
-                    drillInto(`Errors handled by ${e.activeLabel}`, (d) =>
-                      d.assignedAgent === e.activeLabel,
-                    )
+                    drillInto(`Errors handled by ${e.activeLabel}`, {
+                      agent: e.activeLabel,
+                    })
                   }
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
