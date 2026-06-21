@@ -11,6 +11,7 @@ import { CheckCircle2, XCircle, Bug, ListChecks, ArrowRight, FileText, Globe, Wr
 import { cn } from "@/lib/utils";
 import { useRetests } from "@/lib/qa/retest";
 import { routeForModule } from "@/lib/qa/constants";
+import { MyQuickNotesWidget } from "@/components/qa/MyQuickNotesWidget";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -120,7 +121,7 @@ function Dashboard() {
           const inner = (
             <Card
               className={cn(
-                "overflow-hidden border-border transition-all",
+                "overflow-hidden border-border bg-card/70 backdrop-blur transition-all animate-fade-in",
                 enabled
                   ? "hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
                   : "opacity-60",
@@ -173,6 +174,21 @@ function Dashboard() {
           );
         })}
       </div>
+
+      <section className="grid gap-3 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <MyQuickNotesWidget />
+        </div>
+        <Card className="lg:col-span-2 border-border bg-card/70 backdrop-blur">
+          <CardContent className="p-4">
+            <h3 className="mb-2 text-sm font-semibold">At a glance</h3>
+            <p className="text-xs text-muted-foreground">
+              {env ? `Environment: ${env}.` : "All environments."} Tax Year: {taxYear === "all" ? "All" : taxYear}.
+              Use Quick Notes to capture observations without creating a full task.
+            </p>
+          </CardContent>
+        </Card>
+      </section>
 
       <section>
         <h3 className="mb-2 text-sm font-semibold">Modules</h3>
