@@ -4,6 +4,17 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "@/lib/qa/store";
 import { usePrefs, type AdminPrefs } from "@/lib/qa/prefs";
+
+const AGENT_THEMES: { value: AdminPrefs["accent"]; label: string; swatch: string }[] = [
+  { value: "light", label: "Light", swatch: "linear-gradient(135deg, oklch(0.96 0.01 255), oklch(0.88 0.02 255))" },
+  { value: "blue", label: "Blue", swatch: "linear-gradient(135deg, oklch(0.55 0.2 255), oklch(0.7 0.18 255))" },
+  { value: "green", label: "Green", swatch: "linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160))" },
+  { value: "purple", label: "Purple", swatch: "linear-gradient(135deg, oklch(0.55 0.22 295), oklch(0.68 0.2 295))" },
+  { value: "orange", label: "Orange", swatch: "linear-gradient(135deg, oklch(0.66 0.18 55), oklch(0.78 0.16 60))" },
+  { value: "pink", label: "Pink", swatch: "linear-gradient(135deg, oklch(0.68 0.2 350), oklch(0.78 0.18 350))" },
+  { value: "grey", label: "Grey", swatch: "linear-gradient(135deg, oklch(0.5 0.02 255), oklch(0.62 0.02 255))" },
+  { value: "teal", label: "Teal", swatch: "linear-gradient(135deg, oklch(0.62 0.13 195), oklch(0.74 0.12 195))" },
+];
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -477,61 +488,72 @@ function SettingsPage() {
                   : "Agents are restricted to the Light theme. Contact an admin for other options."}
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
-              <div>
-                <Label>Color mode</Label>
-                <Select
-                  value={isAdmin ? prefs.theme : "light"}
-                  disabled={!isAdmin}
-                  onValueChange={(v) => {
-                    if (!isAdmin) return;
-                    update("theme", v as AdminPrefs["theme"]);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    {isAdmin && <SelectItem value="system">System</SelectItem>}
-                    {isAdmin && <SelectItem value="dark">Dark</SelectItem>}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className={isAdmin ? undefined : "opacity-60 pointer-events-none"}>
-                <Label>Accent</Label>
-                <Select
-                  value={prefs.accent}
-                  disabled={!isAdmin}
-                  onValueChange={(v) => update("accent", v as AdminPrefs["accent"])}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="blue">Blue (default)</SelectItem>
-                    <SelectItem value="violet">Violet</SelectItem>
-                    <SelectItem value="emerald">Emerald</SelectItem>
-                    <SelectItem value="rose">Rose</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className={isAdmin ? undefined : "opacity-60 pointer-events-none"}>
-                <Label>Density</Label>
-                <Select
-                  value={prefs.density}
-                  disabled={!isAdmin}
-                  onValueChange={(v) => update("density", v as AdminPrefs["density"])}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="comfortable">Comfortable</SelectItem>
-                    <SelectItem value="compact">Compact</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <CardContent className="space-y-6">
+              {isAdmin ? (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <Label>Color mode</Label>
+                      <Select
+                        value={prefs.theme}
+                        onValueChange={(v) => update("theme", v as AdminPrefs["theme"])}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="light">Light</SelectItem>
+                          <SelectItem value="dark">Dark</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Density</Label>
+                      <Select
+                        value={prefs.density}
+                        onValueChange={(v) => update("density", v as AdminPrefs["density"])}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="comfortable">Comfortable</SelectItem>
+                          <SelectItem value="compact">Compact</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <Label className="mb-3 block">Theme Colors</Label>
+                  <div
+                    role="radiogroup"
+                    aria-label="Theme color"
+                    className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+                  >
+                    {AGENT_THEMES.map((t) => {
+                      const active = (prefs.accent ?? "light") === t.value;
+                      return (
+                        <button
+                          key={t.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          aria-label={`${t.label} theme`}
+                          onClick={() => update("accent", t.value as AdminPrefs["accent"])}
+                          className={
+                            "group flex flex-col items-start gap-2 rounded-lg border p-3 text-left transition-all hover:border-primary " +
+                            (active ? "border-primary ring-2 ring-primary/40" : "border-border")
+                          }
+                        >
+                          <span
+                            className="h-10 w-full rounded-md"
+                            style={{ background: t.swatch }}
+                          />
+                          <span className="text-sm font-medium">{t.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

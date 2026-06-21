@@ -22,7 +22,18 @@ export type AdminPrefs = {
   includeCommentsInExport: boolean;
   // Theme
   theme: "system" | "light" | "dark";
-  accent: "blue" | "violet" | "emerald" | "rose";
+  accent:
+    | "blue"
+    | "violet"
+    | "emerald"
+    | "rose"
+    | "light"
+    | "green"
+    | "purple"
+    | "orange"
+    | "pink"
+    | "grey"
+    | "teal";
   density: "comfortable" | "compact";
   // Dashboard
   defaultLanding: "/dashboard" | "/my-reported-errors" | "/my-errors";
