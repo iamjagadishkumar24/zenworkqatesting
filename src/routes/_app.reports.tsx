@@ -521,6 +521,49 @@ function ReportsPage() {
               Reset filters
             </Button>
           </div>
+          <div className="md:col-span-3 lg:col-span-6 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+            <span className="text-xs font-medium text-muted-foreground">Saved views:</span>
+            {views.length === 0 ? (
+              <span className="text-xs text-muted-foreground">None saved yet.</span>
+            ) : (
+              views.map((v) => (
+                <span key={v.name} className="inline-flex items-center">
+                  <Button size="sm" variant="secondary" className="h-7" onClick={() => applyView(v.name)}>
+                    {v.name}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    aria-label={`Delete ${v.name}`}
+                    onClick={() => removeView(v.name)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </span>
+              ))
+            )}
+            <div className="ml-auto flex items-center gap-1">
+              <Input
+                placeholder="View name"
+                value={viewName}
+                onChange={(e) => setViewName(e.target.value)}
+                className="h-8 w-40"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8"
+                disabled={!viewName.trim()}
+                onClick={() => {
+                  saveView(viewName, { status, testingType, category, agent, dateRange, fromDate, toDate });
+                  setViewName("");
+                }}
+              >
+                <Save className="mr-1 h-3.5 w-3.5" /> Save
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
