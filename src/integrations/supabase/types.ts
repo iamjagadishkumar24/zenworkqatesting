@@ -1012,6 +1012,7 @@ export type Database = {
           created_at: string
           default_landing: string
           density: string
+          runtime_audit_page_size: number
           show_agent_chart: boolean
           show_kpi_cards: boolean
           show_trend_chart: boolean
@@ -1024,6 +1025,7 @@ export type Database = {
           created_at?: string
           default_landing?: string
           density?: string
+          runtime_audit_page_size?: number
           show_agent_chart?: boolean
           show_kpi_cards?: boolean
           show_trend_chart?: boolean
@@ -1036,6 +1038,7 @@ export type Database = {
           created_at?: string
           default_landing?: string
           density?: string
+          runtime_audit_page_size?: number
           show_agent_chart?: boolean
           show_kpi_cards?: boolean
           show_trend_chart?: boolean

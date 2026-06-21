@@ -1,0 +1,1 @@
+ALTER TABLE public.user_preferences ADD COLUMN IF NOT EXISTS runtime_audit_page_size integer NOT NULL DEFAULT 25 CHECK (runtime_audit_page_size IN (10, 25, 50, 100));
