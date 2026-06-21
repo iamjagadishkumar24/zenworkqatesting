@@ -42,6 +42,7 @@ import { exportCsv, exportXlsx } from "@/lib/qa/export";
 import { useServerFn } from "@tanstack/react-start";
 import { inviteAgent, resetSampleAdmin } from "@/lib/qa/admin.functions";
 import { setAllowAgentExports } from "@/lib/qa/exportJobs.functions";
+import { getQARuntimeConfig, updateQARuntimeConfig } from "@/lib/qa/runtime-config.functions";
 import { ExportJobsPanel } from "@/components/qa/ExportJobsPanel";
 import {
   Users,
@@ -140,6 +141,10 @@ function SettingsPage() {
           <TabsTrigger value="audit" disabled={!isAdmin}>
             <History className="mr-1 h-3 w-3" />
             Audit Log
+          </TabsTrigger>
+          <TabsTrigger value="runtime" disabled={!isAdmin}>
+            <Cpu className="mr-1 h-3 w-3" />
+            Runtime
           </TabsTrigger>
         </TabsList>
 
@@ -696,6 +701,11 @@ function SettingsPage() {
             <RoleAuditTable />
             <ExportAuditTable />
           </div>
+        </TabsContent>
+
+        {/* RUNTIME (admin) */}
+        <TabsContent value="runtime">
+          {isAdmin ? <RuntimeConfigCard /> : null}
         </TabsContent>
       </Tabs>
 
