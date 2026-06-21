@@ -895,6 +895,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_preferences: {
+        Row: {
+          accent: string
+          created_at: string
+          default_landing: string
+          density: string
+          show_agent_chart: boolean
+          show_kpi_cards: boolean
+          show_trend_chart: boolean
+          theme: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accent?: string
+          created_at?: string
+          default_landing?: string
+          density?: string
+          show_agent_chart?: boolean
+          show_kpi_cards?: boolean
+          show_trend_chart?: boolean
+          theme?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accent?: string
+          created_at?: string
+          default_landing?: string
+          density?: string
+          show_agent_chart?: boolean
+          show_kpi_cards?: boolean
+          show_trend_chart?: boolean
+          theme?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
