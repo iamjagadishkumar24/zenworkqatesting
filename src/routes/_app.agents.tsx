@@ -25,6 +25,16 @@ import {
 
 const PROTECTED_ADMIN_EMAIL = "admin@qaportal.app";
 
+type PurgeCounts = {
+  name: string;
+  defects: number;
+  retest_assignments: number;
+  notifications: number;
+  forms_cleared: number;
+  pending_retests: number;
+  total: number;
+};
+
 export const Route = createFileRoute("/_app/agents")({
   component: AgentsPage,
   errorComponent: ({ error, reset }) => (
@@ -57,6 +67,35 @@ function AgentsPage() {
     { userId: string; name: string; email: string; role: "admin" | "agent"; active: boolean } | null
   >(null);
   const [editSaving, setEditSaving] = useState(false);
+  const [purgeTarget, setPurgeTarget] = useState<{ name: string } | null>(null);
+  const [purgePreview, setPurgePreview] = useState<PurgeCounts | null>(null);
+  const [purgeLoading, setPurgeLoading] = useState(false);
+  const [purgeRunning, setPurgeRunning] = useState(false);
+
+  useEffect(() => {
+    if (!purgeTarget) { setPurgePreview(null); return; }
+    let cancelled = false;
+    setPurgeLoading(true);
+    void (async () => {
+      const { data, error } = await supabase.rpc("preview_agent_purge", { _name: purgeTarget.name });
+      if (cancelled) return;
+      setPurgeLoading(false);
+      if (error) { toast.error(error.message); setPurgeTarget(null); return; }
+      setPurgePreview(data as unknown as PurgeCounts);
+    })();
+    return () => { cancelled = true; };
+  }, [purgeTarget]);
+
+  const confirmPermanentDelete = async () => {
+    if (!purgeTarget) return;
+    setPurgeRunning(true);
+    const { data, error } = await supabase.rpc("purge_agent_data", { _name: purgeTarget.name });
+    setPurgeRunning(false);
+    if (error) { toast.error(error.message); return; }
+    const c = (data ?? {}) as { total_rows?: number };
+    toast.success(`${purgeTarget.name} permanently deleted (${c.total_rows ?? 0} records purged).`);
+    setPurgeTarget(null);
+  };
 
   useEffect(() => {
     if (!currentUser || currentUser.role !== "admin") return;
@@ -337,6 +376,14 @@ function AgentsPage() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
+                          {r.status === "inactive" && (
+                            <Button size="sm" variant="ghost" title="Permanently delete agent & all data"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setPurgeTarget({ name: r.name })}>
+                              <Trash2 className="h-4 w-4" />
+                              <span className="ml-1 text-xs">Purge</span>
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -429,6 +476,43 @@ function AgentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!purgeTarget} onOpenChange={(o) => !o && setPurgeTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently delete {purgeTarget?.name}?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  This removes every record tied to <strong>{purgeTarget?.name}</strong> across the system.
+                  It cannot be undone.
+                </p>
+                {purgeLoading && <p className="text-sm text-muted-foreground">Counting related records…</p>}
+                {purgePreview && (
+                  <ul className="rounded-md border bg-muted/40 p-3 text-sm">
+                    <li>Defects deleted: <strong>{purgePreview.defects}</strong></li>
+                    <li>Retest assignments deleted: <strong>{purgePreview.retest_assignments}</strong></li>
+                    <li>Notifications deleted: <strong>{purgePreview.notifications}</strong></li>
+                    <li>Forms cleared (assignee blanked): <strong>{purgePreview.forms_cleared}</strong></li>
+                    <li>Pending retest invites removed: <strong>{purgePreview.pending_retests}</strong></li>
+                    <li className="mt-1 border-t pt-1">Total rows affected: <strong>{purgePreview.total}</strong></li>
+                  </ul>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={purgeRunning}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmPermanentDelete}
+              disabled={purgeRunning || purgeLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {purgeRunning ? "Purging…" : "Permanently delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

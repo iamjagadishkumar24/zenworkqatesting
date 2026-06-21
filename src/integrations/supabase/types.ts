@@ -892,6 +892,12 @@ export type Database = {
         Args: { _kind: string; _tax_year: string }
         Returns: string
       }
+      preview_agent_purge: { Args: { _name: string }; Returns: Json }
+      purge_agent_data: {
+        Args: { _actor_id?: string; _actor_name?: string; _name: string }
+        Returns: Json
+      }
+      purge_orphaned_agent_refs: { Args: never; Returns: Json }
       user_id_for_name: { Args: { _name: string }; Returns: string }
     }
     Enums: {
