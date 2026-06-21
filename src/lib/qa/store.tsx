@@ -243,6 +243,32 @@ export function QAProvider({ children }: { children: ReactNode }) {
   const roleRef = useRef<Role | "unknown">("unknown");
   roleRef.current = state.currentUser?.role ?? "unknown";
 
+  // ---- Backend-driven runtime config ------------------------------------
+  // `liveEnabled` gates whether the QA store opens the Realtime channel.
+  // `performanceMode` switches realtime state writes to an rAF-batched path
+  // so high event rates can't cause UI lag. Both flags come from the server
+  // (see `runtime-config.functions.ts`); no UI control is exposed.
+  const [runtimeConfig, setRuntimeConfig] = useState<{ liveEnabled: boolean; performanceMode: boolean }>(
+    { liveEnabled: true, performanceMode: false },
+  );
+  const perfModeRef = useRef(false);
+  perfModeRef.current = runtimeConfig.performanceMode;
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { getQARuntimeConfig } = await import("./runtime-config.functions");
+        const cfg = await getQARuntimeConfig();
+        if (!cancelled) setRuntimeConfig(cfg);
+      } catch {
+        // network/SSR failure → keep defaults (live on, perf off)
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // User-visible feedback when realtime drops / recovers. Uses sonner so it
   // sits next to the rest of the app's notifications.
   const prevStatusRef = useRef<RealtimeStatus>("idle");
