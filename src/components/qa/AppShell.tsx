@@ -22,6 +22,7 @@ import {
   UserCog,
   ScrollText,
   StickyNote,
+  ShieldAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
@@ -74,6 +75,7 @@ const nav: NavItem[] = [
   { to: "/notes", label: "Quick Notes", icon: StickyNote },
   { to: "/agents", label: "Agent Management", icon: UserCog, adminOnly: true },
   { to: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
+  { to: "/auth-events", label: "Auth Events", icon: ShieldAlert, adminOnly: true },
   { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
   { to: "/settings", label: "Settings", icon: Settings },
 ];

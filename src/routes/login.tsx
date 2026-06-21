@@ -218,6 +218,19 @@ export function LoginPage() {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setForgotBusy(false);
+    try {
+      const { recordAuthAttempt } = await import("@/lib/qa/authAudit.functions");
+      void recordAuthAttempt({
+        data: {
+          kind: "password_reset_requested",
+          email: cleanEmail,
+          reason: error?.message,
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+        },
+      });
+    } catch {
+      /* noop */
+    }
     // Always show generic success — do not leak whether the email exists
     if (error) console.warn("[reset] non-fatal:", error.message);
     toast.success("If an account exists for that email, a reset link is on its way.");

@@ -502,7 +502,22 @@ export function QAProvider({ children }: { children: ReactNode }) {
     ...state,
     login: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return { ok: false, error: error.message };
+      if (error) {
+        try {
+          const { recordAuthAttempt } = await import("./authAudit.functions");
+          void recordAuthAttempt({
+            data: {
+              kind: "login_failure",
+              email,
+              reason: error.message,
+              user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+            },
+          });
+        } catch {
+          /* noop */
+        }
+        return { ok: false, error: error.message };
+      }
       try {
         const { recordAuthEvent } = await import("./activityLog");
         void recordAuthEvent({ kind: "login", email, success: true });
@@ -530,7 +545,39 @@ export function QAProvider({ children }: { children: ReactNode }) {
         password,
         options: { data: { name }, emailRedirectTo: `${window.location.origin}/dashboard` },
       });
-      if (error) return { ok: false, error: error.message };
+      if (error) {
+        // Supabase returns a "weak_password" / pwned message when HIBP blocks it.
+        const msg = error.message ?? "";
+        const code = (error as { code?: string }).code ?? "";
+        const isLeaked =
+          /pwned|leaked|breach|weak_password/i.test(msg) || code === "weak_password";
+        try {
+          const { recordAuthAttempt } = await import("./authAudit.functions");
+          void recordAuthAttempt({
+            data: {
+              kind: isLeaked ? "leaked_password_blocked" : "signup_failure",
+              email: cleanEmail,
+              reason: msg,
+              user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+            },
+          });
+        } catch {
+          /* noop */
+        }
+        return { ok: false, error: msg };
+      }
+      try {
+        const { recordAuthAttempt } = await import("./authAudit.functions");
+        void recordAuthAttempt({
+          data: {
+            kind: "signup_success",
+            email: cleanEmail,
+            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+          },
+        });
+      } catch {
+        /* noop */
+      }
       return { ok: true };
     },
     logout: async () => {
