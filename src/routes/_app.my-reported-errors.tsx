@@ -42,7 +42,6 @@ import type { DefectStatus, Priority } from "@/lib/qa/types";
 import { AGENTS, MODULE_OPTIONS } from "@/lib/qa/constants";
 import { toast } from "sonner";
 import { validateFilters, buildEmptyResultMessage } from "@/lib/qa/filterValidation";
-import { RealtimeHealthMenu } from "@/components/qa/RealtimeHealthMenu";
 import {
   filterDefectsAdmin,
   type AdminDefectFilters,
@@ -264,7 +263,6 @@ function ReportedErrorsPage() {
           <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
           <p className="text-sm text-muted-foreground inline-flex flex-wrap items-center gap-2">
             {description} {filtered.length} shown.
-            <RealtimeHealthMenu />
           </p>
           {preset && (
             <div className="mt-2 flex items-center gap-2 text-sm">
