@@ -40,27 +40,92 @@ describe("Functionality Testing page", () => {
     expect(screen.getAllByRole("button", { name: /report error/i }).length).toBeGreaterThan(0);
   });
 
-  it("opens ReportDefectDialog only from a per-feature Report Error, with correct module/category/feature linkage", () => {
-    renderAt(1280);
+  // Source-of-truth matrix: each row is (selected category tab, expected
+  // visible feature card label, expected dialog `defaultForm` value).
+  // For Payer/Recipient the items themselves embed "Category · Feature" so
+  // the dialog's defaultForm includes that linkage; for plain categories
+  // (Forms, Integrations, Dashboard) defaultForm equals the feature name.
+  const cases: Array<{
+    tab: string;
+    card: string;
+    expectedForm: string;
+    expectedCategoryPrefix?: string;
+    expectedFeature: string;
+  }> = [
+    {
+      tab: "Forms",
+      card: "Authentication & Login",
+      expectedForm: "Authentication & Login",
+      expectedFeature: "Authentication & Login",
+    },
+    {
+      tab: "Integrations",
+      card: "File Upload",
+      expectedForm: "File Upload",
+      expectedFeature: "File Upload",
+    },
+    {
+      tab: "Dashboard",
+      card: "Dashboard",
+      expectedForm: "Dashboard",
+      expectedFeature: "Dashboard",
+    },
+  ];
 
-    // Before any click, dialog must not be open.
-    expect(screen.queryByTestId("report-defect-dialog")).toBeNull();
-    expect(dialogCalls.every((p) => p.open === false)).toBe(true);
+  it.each(cases)(
+    "Report Error on %s · %s wires module + feature into the dialog",
+    ({ tab, card, expectedForm, expectedFeature }) => {
+      renderAt(1280);
 
-    // Switch to the Payer category and click the first feature's "Report Error".
-    fireEvent.click(screen.getByRole("tab", { name: "Payer" }));
-    const firstFeature = screen.getAllByRole("button", { name: /report error/i })[0];
-    fireEvent.click(firstFeature);
+      // Dialog starts closed.
+      expect(screen.queryByTestId("report-defect-dialog")).toBeNull();
+      expect(dialogCalls.every((p) => p.open === false)).toBe(true);
 
-    // Dialog now rendered open.
-    expect(screen.getByTestId("report-defect-dialog")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("tab", { name: tab }));
 
-    const last = dialogCalls.at(-1)!;
-    expect(last.open).toBe(true);
-    // Module is the DB-stored "Functionality Testing".
-    expect(last.defaultModule).toBe("Functionality Testing");
-    // The defaultForm encodes "Category · Feature" — Category prefix proves linkage.
-    expect(String(last.defaultForm)).toMatch(/^Payer · /);
-    expect(String(last.defaultForm).length).toBeGreaterThan("Payer · ".length);
+      // Locate the specific feature card by its visible label, then click its
+      // own Report Error button (siblings inside the same Card).
+      const label = screen.getByText(card);
+      const cardEl = label.closest("[class*='p-4']") as HTMLElement;
+      const reportBtn = Array.from(cardEl.querySelectorAll("button")).find((b) =>
+        /report error/i.test(b.textContent ?? ""),
+      )!;
+      fireEvent.click(reportBtn);
+
+      expect(screen.getByTestId("report-defect-dialog")).toBeInTheDocument();
+      const last = dialogCalls.at(-1)!;
+      expect(last.open).toBe(true);
+      // Module is hard-wired to "Functionality Testing".
+      expect(last.defaultModule).toBe("Functionality Testing");
+      // Feature is exactly the card label the user clicked.
+      expect(last.defaultForm).toBe(expectedForm);
+      // Integration channel is empty for non-Integrations module rows of the
+      // dialog (Functionality Testing uses formFeature, not integration).
+      expect(last.defaultIntegration).toBe("");
+      // QB-desktop category linkage stays unset for these rows.
+      expect(last.defaultQbCategory).toBeUndefined();
+      expect(last.lockQbCategory).toBe(false);
+      // Sanity: the feature name extracted from defaultForm equals the card.
+      expect(expectedFeature).toBe(card);
+    },
+  );
+
+  it("Payer / Recipient cards encode 'Category · Feature' in defaultForm", () => {
+    for (const tab of ["Payer", "Recipient"] as const) {
+      renderAt(1280);
+      fireEvent.click(screen.getByRole("tab", { name: tab }));
+      const firstReport = screen.getAllByRole("button", { name: /report error/i })[0];
+      fireEvent.click(firstReport);
+
+      const last = dialogCalls.at(-1)!;
+      expect(last.defaultModule).toBe("Functionality Testing");
+      const form = String(last.defaultForm);
+      const [category, ...rest] = form.split(" · ");
+      const feature = rest.join(" · ");
+      expect(category).toBe(tab);
+      expect(feature.length).toBeGreaterThan(0);
+      // The exact "Category · Feature" string is also rendered on the card.
+      expect(screen.getByText(form)).toBeInTheDocument();
+    }
   });
 });
