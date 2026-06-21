@@ -69,7 +69,11 @@ function AuthEventsPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [action, setAction] = useState<string>("all");
-  const [days, setDays] = useState<string>("7");
+  const [minutes, setMinutes] = useState<string>("10080"); // 7d
+  const [metaIp, setMetaIp] = useState("");
+  const [metaUa, setMetaUa] = useState("");
+  const [metaDevice, setMetaDevice] = useState("");
+  const [metaFailure, setMetaFailure] = useState("");
   const [selected, setSelected] = useState<Row | null>(null);
   const [detailSearch, setDetailSearch] = useState("");
 
@@ -81,7 +85,7 @@ function AuthEventsPage() {
     setLoading(true);
     try {
       const since = new Date(
-        Date.now() - Math.max(1, Number(days) || 7) * 86_400_000,
+        Date.now() - Math.max(1, Number(minutes) || 10080) * 60_000,
       ).toISOString();
       let q = supabase
         .from("activity_log")
@@ -107,7 +111,7 @@ function AuthEventsPage() {
   useEffect(() => {
     if (currentUser?.role === "admin") void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.role]);
+  }, [currentUser?.role, minutes]);
 
   const exportCsv = () => {
     const header = [
@@ -148,13 +152,14 @@ function AuthEventsPage() {
 
   const counts = useMemo(() => {
     const c = { success: 0, failure: 0, hibp: 0 } as Record<string, number>;
-    for (const r of rows) {
+    for (const r of filteredRows) {
       if (r.action === "auth.leaked_password_blocked") c.hibp++;
       if (r.result === "success") c.success++;
       else c.failure++;
     }
     return c;
-  }, [rows]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, metaIp, metaUa, metaDevice, metaFailure]);
 
   if (!currentUser) return null;
   if (currentUser.role !== "admin") return <Navigate to="/dashboard" />;
