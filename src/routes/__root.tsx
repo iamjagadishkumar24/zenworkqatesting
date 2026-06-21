@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { QAProvider } from "@/lib/qa/store";
@@ -38,23 +38,63 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
+  const attemptsRef = useRef(0);
+  const [retrying, setRetrying] = useState(false);
+
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+    // Auto-retry transient failures (network, chunk load) up to 2 times.
+    const msg = (error?.message || "").toLowerCase();
+    const transient =
+      msg.includes("failed to fetch") ||
+      msg.includes("networkerror") ||
+      msg.includes("load failed") ||
+      msg.includes("chunkloaderror") ||
+      msg.includes("dynamically imported module") ||
+      msg.includes("importing a module script failed");
+    if (transient && attemptsRef.current < 2) {
+      attemptsRef.current += 1;
+      setRetrying(true);
+      const t = setTimeout(() => {
+        router.invalidate();
+        reset();
+        setRetrying(false);
+      }, 600 * attemptsRef.current);
+      return () => clearTimeout(t);
+    }
+  }, [error, router, reset]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold">This page didn't load</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Something went wrong.</p>
-        <button
-          onClick={() => {
-            router.invalidate();
-            reset();
-          }}
-          className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          Try again
-        </button>
+        <h1 className="text-xl font-semibold">
+          {retrying ? "Reconnecting…" : "This page didn't load"}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {retrying
+            ? "Restoring your session and retrying automatically."
+            : error?.message || "Something went wrong."}
+        </p>
+        {!retrying && (
+          <div className="mt-6 flex justify-center gap-2">
+            <button
+              onClick={() => {
+                attemptsRef.current = 0;
+                router.invalidate();
+                reset();
+              }}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              Reload
+            </button>
+          </div>
+        )}
       </div>
       <DevErrorOverlay error={error} />
     </div>
@@ -129,6 +169,26 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onError = (event: ErrorEvent) => {
+      reportLovableError(event.error ?? new Error(event.message), {
+        source: "window.onerror",
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+      });
+    };
+    const onRejection = (event: PromiseRejectionEvent) => {
+      reportLovableError(event.reason, { source: "unhandledrejection" });
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
+    };
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <QAProvider>
