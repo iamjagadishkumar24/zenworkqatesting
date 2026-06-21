@@ -27,6 +27,56 @@ export function exportCsv(filename: string, rows: ExportRow[], columns?: string[
   toast.success(`Exported ${a.download}`);
 }
 
+export function exportPdf(
+  filename: string,
+  title: string,
+  sections: { name: string; rows: ExportRow[]; columns?: string[] }[],
+  meta?: { filters?: Record<string, unknown> },
+) {
+  const hasAny = sections.some((s) => s.rows.length);
+  if (!hasAny) return toast.error("Nothing to export");
+  const esc = (v: unknown) =>
+    String(v ?? "").replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+    );
+  const filterBlock = meta?.filters
+    ? `<div class="meta"><strong>Filters:</strong> ${Object.entries(meta.filters)
+        .map(([k, v]) => `${esc(k)}=${esc(v)}`)
+        .join(" · ")}</div>`
+    : "";
+  const body = sections
+    .filter((s) => s.rows.length)
+    .map((s) => {
+      const cols = s.columns?.length ? s.columns : Object.keys(s.rows[0]);
+      const head = cols.map((c) => `<th>${esc(c)}</th>`).join("");
+      const trs = s.rows
+        .map(
+          (r) =>
+            `<tr>${cols.map((c) => `<td>${esc((r as ExportRow)[c])}</td>`).join("")}</tr>`,
+        )
+        .join("");
+      return `<h2>${esc(s.name)}</h2><table><thead><tr>${head}</tr></thead><tbody>${trs}</tbody></table>`;
+    })
+    .join("");
+  const html = `<!doctype html><html><head><meta charset="utf-8"/><title>${esc(filename)}</title>
+<style>body{font:12px -apple-system,Segoe UI,sans-serif;padding:24px;color:#111}
+h1{font-size:18px;margin:0 0 4px}h2{font-size:14px;margin:18px 0 6px}
+.meta{color:#555;margin-bottom:12px}
+table{border-collapse:collapse;width:100%;margin-bottom:12px}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top;font-size:11px}
+th{background:#f5f5f5}</style></head><body>
+<h1>${esc(title)}</h1><div class="meta">Generated ${new Date().toLocaleString()}</div>
+${filterBlock}${body}
+<script>window.onload=()=>{setTimeout(()=>window.print(),150)}</script>
+</body></html>`;
+  const w = window.open("", "_blank");
+  if (!w) return toast.error("Pop-up blocked – allow pop-ups to export PDF");
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  toast.success(`Opened ${filename}.pdf for printing`);
+}
+
 export function exportXlsx(
   filename: string,
   sheets: { name: string; rows: ExportRow[]; columns?: string[] }[],
