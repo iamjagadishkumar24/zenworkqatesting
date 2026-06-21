@@ -185,6 +185,24 @@ export function ReportDefectDialog({
               )}
             </div>
           )}
+          {showIntegration && draft._integration === "QuickBooks Desktop" && (
+            <div>
+              <Label>QuickBooks Desktop Category *</Label>
+              {lockQbCategory && draft.qbDesktopCategory ? (
+                <Input value={draft.qbDesktopCategory} readOnly disabled aria-readonly />
+              ) : (
+                <Select
+                  value={draft.qbDesktopCategory ?? ""}
+                  onValueChange={(v) => upd("qbDesktopCategory", v as QbDesktopCategory)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectContent>
+                    {QB_DESKTOP_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
           <div>
             <Label>Environment</Label>
             <Input value={draft.environment ?? env ?? "Production"} readOnly disabled aria-readonly />
