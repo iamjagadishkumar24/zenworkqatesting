@@ -93,6 +93,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
+      ...[
+        { rel: "icon", type: "image/png", href: "/__l5e/assets-v1/b145787e-c597-4847-9e0d-56313bb305d3/zenwork-logo.png" },
+        { rel: "apple-touch-icon", href: "/__l5e/assets-v1/b145787e-c597-4847-9e0d-56313bb305d3/zenwork-logo.png" },
+      ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
