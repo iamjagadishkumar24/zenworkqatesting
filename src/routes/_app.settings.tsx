@@ -821,6 +821,37 @@ function RuntimeConfigCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        <div className="rounded-md border border-border bg-muted/40 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Current effective values
+          </p>
+          <dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
+            <div className="flex items-center justify-between gap-2">
+              <dt className="text-muted-foreground">Live execution</dt>
+              <dd>
+                <Badge variant={liveEnabled ? "default" : "secondary"}>
+                  {loading ? "…" : liveEnabled ? "On" : "Off"}
+                </Badge>
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <dt className="text-muted-foreground">Performance mode</dt>
+              <dd>
+                <Badge variant={performanceMode ? "default" : "secondary"}>
+                  {loading ? "…" : performanceMode ? "On" : "Off"}
+                </Badge>
+              </dd>
+            </div>
+          </dl>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Last updated:{" "}
+            {loading
+              ? "loading…"
+              : updatedAt
+                ? new Date(updatedAt).toLocaleString()
+                : "never"}
+          </p>
+        </div>
         <div className="flex items-center justify-between rounded-md border border-border p-3">
           <div>
             <p className="text-sm font-medium">Live execution</p>
@@ -850,11 +881,6 @@ function RuntimeConfigCard() {
             aria-label="Toggle performance mode"
           />
         </div>
-        {updatedAt && (
-          <p className="text-xs text-muted-foreground">
-            Last updated {new Date(updatedAt).toLocaleString()}
-          </p>
-        )}
       </CardContent>
     </Card>
   );
