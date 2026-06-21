@@ -67,12 +67,12 @@ function Dashboard() {
   }, [scopedDefects]);
 
   const kpis = [
-    { label: "Total Tests", value: stats.total, Icon: ListChecks, tone: "primary", to: "/my-reported-errors" },
-    { label: "Open Errors", value: stats.open, Icon: Bug, tone: "warning", to: "/my-reported-errors" },
-    { label: "Valid Errors", value: stats.valid, Icon: CheckCircle2, tone: "success", to: "/my-reported-errors" },
-    { label: "Invalid Errors", value: stats.invalid, Icon: XCircle, tone: "danger", to: "/my-reported-errors" },
-    { label: "Fixed Errors", value: stats.fixed, Icon: Wrench, tone: "success", to: "/my-reported-errors" },
-    { label: "Retest Errors", value: stats.retest, Icon: RotateCw, tone: "warning", to: "/my-reported-errors" },
+    { label: "Total Tests", value: stats.total, Icon: ListChecks, tone: "primary", preset: "all" as const },
+    { label: "Open Errors", value: stats.open, Icon: Bug, tone: "warning", preset: "open" as const },
+    { label: "Valid Errors", value: stats.valid, Icon: CheckCircle2, tone: "success", preset: "valid" as const },
+    { label: "Invalid Errors", value: stats.invalid, Icon: XCircle, tone: "danger", preset: "invalid" as const },
+    { label: "Fixed Errors", value: stats.fixed, Icon: Wrench, tone: "success", preset: "fixed" as const },
+    { label: "Retest Errors", value: stats.retest, Icon: RotateCw, tone: "warning", preset: "retest" as const },
   ] as const;
 
   const countByModule = (mod: string) =>
@@ -172,7 +172,8 @@ function Dashboard() {
           return (
             <Link
               key={k.label}
-              to={k.to}
+              to="/my-reported-errors"
+              search={{ preset: k.preset } as never}
               className="group block text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
             >
               {inner}
