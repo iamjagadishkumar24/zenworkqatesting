@@ -19,6 +19,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSelectEnvironmentRouteImport } from './routes/_app.select-environment'
 import { Route as AppRetestRouteImport } from './routes/_app.retest'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
+import { Route as AppRealtimeDebugRouteImport } from './routes/_app.realtime-debug'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppNotesRouteImport } from './routes/_app.notes'
@@ -85,6 +86,11 @@ const AppRetestRoute = AppRetestRouteImport.update({
 const AppReportsRoute = AppReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRealtimeDebugRoute = AppRealtimeDebugRouteImport.update({
+  id: '/realtime-debug',
+  path: '/realtime-debug',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOnline1099Route = AppOnline1099RouteImport.update({
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/notes': typeof AppNotesRoute
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
+  '/realtime-debug': typeof AppRealtimeDebugRoute
   '/reports': typeof AppReportsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/notes': typeof AppNotesRoute
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
+  '/realtime-debug': typeof AppRealtimeDebugRoute
   '/reports': typeof AppReportsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
@@ -259,6 +267,7 @@ export interface FileRoutesById {
   '/_app/notes': typeof AppNotesRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
+  '/_app/realtime-debug': typeof AppRealtimeDebugRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/retest': typeof AppRetestRoute
   '/_app/select-environment': typeof AppSelectEnvironmentRoute
@@ -290,6 +299,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/notifications'
     | '/online-1099'
+    | '/realtime-debug'
     | '/reports'
     | '/retest'
     | '/select-environment'
@@ -319,6 +329,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/notifications'
     | '/online-1099'
+    | '/realtime-debug'
     | '/reports'
     | '/retest'
     | '/select-environment'
@@ -349,6 +360,7 @@ export interface FileRouteTypes {
     | '/_app/notes'
     | '/_app/notifications'
     | '/_app/online-1099'
+    | '/_app/realtime-debug'
     | '/_app/reports'
     | '/_app/retest'
     | '/_app/select-environment'
@@ -435,6 +447,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/realtime-debug': {
+      id: '/_app/realtime-debug'
+      path: '/realtime-debug'
+      fullPath: '/realtime-debug'
+      preLoaderRoute: typeof AppRealtimeDebugRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/online-1099': {
@@ -584,6 +603,7 @@ interface AppRouteChildren {
   AppNotesRoute: typeof AppNotesRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
+  AppRealtimeDebugRoute: typeof AppRealtimeDebugRoute
   AppReportsRoute: typeof AppReportsRoute
   AppRetestRoute: typeof AppRetestRoute
   AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
@@ -611,6 +631,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotesRoute: AppNotesRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnline1099Route: AppOnline1099Route,
+  AppRealtimeDebugRoute: AppRealtimeDebugRoute,
   AppReportsRoute: AppReportsRoute,
   AppRetestRoute: AppRetestRoute,
   AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,
