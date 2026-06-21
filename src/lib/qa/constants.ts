@@ -205,8 +205,6 @@ export function getModuleCatalog(m: string | null | undefined): string[] | null 
   if (m === "Excel Import Testing") return [...FEATURES_EXCEL_IMPORT];
   if (m === "Functionality Testing") return [...FEATURES_FUNCTIONALITY];
   if (m === "Tax1099 Features") return [...FEATURES_TAX1099];
-  if (m === "Payer") return [...FEATURES_PAYER];
-  if (m === "Recipient") return [...FEATURES_RECIPIENT];
   return null;
 }
 
@@ -220,8 +218,6 @@ export const MODULE_OPTIONS: string[] = [
   "Excel Import Testing",
   "Functionality Testing",
   "Tax1099 Features",
-  "Payer",
-  "Recipient",
 ];
 
 // Route path for each module — used to deep-link assigned tasks
@@ -242,8 +238,6 @@ export const MODULE_ROUTES: Record<string, string> = {
   "Excel Import Testing": "/excel-import-testing",
   "Functionality Testing": "/functionality-testing",
   "Tax1099 Features": "/tax1099-features",
-  Payer: "/payer-testing",
-  Recipient: "/recipient-testing",
 };
 
 export function routeForModule(module: string | null | undefined): string {

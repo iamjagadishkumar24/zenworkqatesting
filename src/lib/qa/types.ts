@@ -64,9 +64,7 @@ export type Module =
   | "Chatbot Testing"
   | "Excel Import Testing"
   | "Functionality Testing"
-  | "Tax1099 Features"
-  | "Payer"
-  | "Recipient";
+  | "Tax1099 Features";
 
 export type QbDesktopCategory =
   | "Web Connector"

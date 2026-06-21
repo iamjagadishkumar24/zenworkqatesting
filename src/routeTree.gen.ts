@@ -18,8 +18,6 @@ import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSelectEnvironmentRouteImport } from './routes/_app.select-environment'
 import { Route as AppRetestRouteImport } from './routes/_app.retest'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
-import { Route as AppRecipientTestingRouteImport } from './routes/_app.recipient-testing'
-import { Route as AppPayerTestingRouteImport } from './routes/_app.payer-testing'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppNotesRouteImport } from './routes/_app.notes'
@@ -80,16 +78,6 @@ const AppRetestRoute = AppRetestRouteImport.update({
 const AppReportsRoute = AppReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppRecipientTestingRoute = AppRecipientTestingRouteImport.update({
-  id: '/recipient-testing',
-  path: '/recipient-testing',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPayerTestingRoute = AppPayerTestingRouteImport.update({
-  id: '/payer-testing',
-  path: '/payer-testing',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOnline1099Route = AppOnline1099RouteImport.update({
@@ -198,8 +186,6 @@ export interface FileRoutesByFullPath {
   '/notes': typeof AppNotesRoute
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
-  '/payer-testing': typeof AppPayerTestingRoute
-  '/recipient-testing': typeof AppRecipientTestingRoute
   '/reports': typeof AppReportsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
@@ -227,8 +213,6 @@ export interface FileRoutesByTo {
   '/notes': typeof AppNotesRoute
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
-  '/payer-testing': typeof AppPayerTestingRoute
-  '/recipient-testing': typeof AppRecipientTestingRoute
   '/reports': typeof AppReportsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
@@ -258,8 +242,6 @@ export interface FileRoutesById {
   '/_app/notes': typeof AppNotesRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
-  '/_app/payer-testing': typeof AppPayerTestingRoute
-  '/_app/recipient-testing': typeof AppRecipientTestingRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/retest': typeof AppRetestRoute
   '/_app/select-environment': typeof AppSelectEnvironmentRoute
@@ -289,8 +271,6 @@ export interface FileRouteTypes {
     | '/notes'
     | '/notifications'
     | '/online-1099'
-    | '/payer-testing'
-    | '/recipient-testing'
     | '/reports'
     | '/retest'
     | '/select-environment'
@@ -318,8 +298,6 @@ export interface FileRouteTypes {
     | '/notes'
     | '/notifications'
     | '/online-1099'
-    | '/payer-testing'
-    | '/recipient-testing'
     | '/reports'
     | '/retest'
     | '/select-environment'
@@ -348,8 +326,6 @@ export interface FileRouteTypes {
     | '/_app/notes'
     | '/_app/notifications'
     | '/_app/online-1099'
-    | '/_app/payer-testing'
-    | '/_app/recipient-testing'
     | '/_app/reports'
     | '/_app/retest'
     | '/_app/select-environment'
@@ -428,20 +404,6 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof AppReportsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/recipient-testing': {
-      id: '/_app/recipient-testing'
-      path: '/recipient-testing'
-      fullPath: '/recipient-testing'
-      preLoaderRoute: typeof AppRecipientTestingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/payer-testing': {
-      id: '/_app/payer-testing'
-      path: '/payer-testing'
-      fullPath: '/payer-testing'
-      preLoaderRoute: typeof AppPayerTestingRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/online-1099': {
@@ -583,8 +545,6 @@ interface AppRouteChildren {
   AppNotesRoute: typeof AppNotesRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
-  AppPayerTestingRoute: typeof AppPayerTestingRoute
-  AppRecipientTestingRoute: typeof AppRecipientTestingRoute
   AppReportsRoute: typeof AppReportsRoute
   AppRetestRoute: typeof AppRetestRoute
   AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
@@ -610,8 +570,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotesRoute: AppNotesRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnline1099Route: AppOnline1099Route,
-  AppPayerTestingRoute: AppPayerTestingRoute,
-  AppRecipientTestingRoute: AppRecipientTestingRoute,
   AppReportsRoute: AppReportsRoute,
   AppRetestRoute: AppRetestRoute,
   AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,

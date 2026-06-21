@@ -24,8 +24,6 @@ import {
   Sparkles,
   FileUp,
   ClipboardCheck,
-  Users,
-  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRetests } from "@/lib/qa/retest";
@@ -153,8 +151,6 @@ function Dashboard() {
       key: "Functionality Testing",
     },
     { name: "Tax1099 Features", to: "/tax1099-features", Icon: Sparkles, key: "Tax1099 Features" },
-    { name: "Payer", to: "/payer-testing", Icon: UserPlus, key: "Payer" },
-    { name: "Recipient", to: "/recipient-testing", Icon: Users, key: "Recipient" },
   ].map((m) => ({ ...m, bugs: countByModule(m.key) }));
 
   // Only show forms that actually have reported errors in scope
