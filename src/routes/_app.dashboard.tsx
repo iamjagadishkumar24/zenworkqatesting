@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { useRetests } from "@/lib/qa/retest";
 import { routeForModule } from "@/lib/qa/constants";
 import { DeadlineCountdown, AdminDeadlineSummary } from "@/components/qa/DeadlineCountdown";
+import { RealtimeStatus } from "@/components/qa/RealtimeStatus";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -186,6 +187,7 @@ function Dashboard() {
             Real-time QA testing overview across all modules.
             {env && <Badge variant="outline">{env}</Badge>}
             <Badge variant="outline">Tax Year: {taxYear === "all" ? "All" : taxYear}</Badge>
+            <RealtimeStatus />
           </p>
         </div>
         <div className="md:ml-auto">

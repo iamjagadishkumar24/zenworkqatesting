@@ -50,8 +50,11 @@ export type RealtimeDebugEvent = {
   summary: string;
 };
 
+export type RealtimeStatus = "idle" | "connecting" | "connected" | "reconnecting" | "error";
+
 type Ctx = State & {
   realtimeEvents: RealtimeDebugEvent[];
+  realtimeStatus: RealtimeStatus;
   clearRealtimeEvents: () => void;
   login: (email: string, password: string) => Promise<Result>;
   signup: (name: string, email: string, password: string) => Promise<Result>;
@@ -230,6 +233,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
   });
   const commentsRef = useRef<CommentRow[]>([]);
   const [realtimeEvents, setRealtimeEvents] = useState<RealtimeDebugEvent[]>([]);
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>("idle");
   const roleRef = useRef<Role | "unknown">("unknown");
   roleRef.current = state.currentUser?.role ?? "unknown";
   const pushEvent = (e: Omit<RealtimeDebugEvent, "id" | "at" | "role">) => {
@@ -543,7 +547,14 @@ export function QAProvider({ children }: { children: ReactNode }) {
           });
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") setRealtimeStatus("connected");
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
+          setRealtimeStatus("reconnecting");
+        else if (status === "CLOSED") setRealtimeStatus("idle");
+        else setRealtimeStatus("connecting");
+      });
+    setRealtimeStatus("connecting");
 
     return () => {
       cancelled = true;
@@ -560,6 +571,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
   const ctx: Ctx = {
     ...state,
     realtimeEvents,
+    realtimeStatus,
     clearRealtimeEvents: () => setRealtimeEvents([]),
     login: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
