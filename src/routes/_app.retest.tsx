@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useRetests, RETEST_STATUSES, type RetestAssignment, type RetestPriority, type RetestStatus } from "@/lib/qa/retest";
@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { ClipboardCheck, Plus, AlertCircle, RefreshCw, WifiOff, ExternalLink } from "lucide-react";
 import { ClipboardList } from "lucide-react";
 import { routeForModule } from "@/lib/qa/constants";
+import { deadlineInfo, TIER_CLASSES } from "@/lib/qa/deadline";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/retest")({
   component: RetestPage,
@@ -37,6 +39,11 @@ function RetestPage() {
   const { env } = useEnvironment();
   const { items, loading, error, realtimeOk, updateAssignment, reassign, reload } = useRetests();
   const isAdmin = currentUser?.role === "admin";
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
   const [open, setOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitTarget, setSubmitTarget] = useState<RetestAssignment | null>(null);
@@ -200,6 +207,7 @@ function RetestPage() {
                   <TableHead>Priority</TableHead>
                   <TableHead>Tax Year</TableHead>
                   <TableHead>Due</TableHead>
+                  <TableHead>Time Remaining</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Updated</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
