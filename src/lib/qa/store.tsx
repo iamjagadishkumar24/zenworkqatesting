@@ -243,6 +243,32 @@ export function QAProvider({ children }: { children: ReactNode }) {
   const roleRef = useRef<Role | "unknown">("unknown");
   roleRef.current = state.currentUser?.role ?? "unknown";
 
+  // ---- Backend-driven runtime config ------------------------------------
+  // `liveEnabled` gates whether the QA store opens the Realtime channel.
+  // `performanceMode` switches realtime state writes to an rAF-batched path
+  // so high event rates can't cause UI lag. Both flags come from the server
+  // (see `runtime-config.functions.ts`); no UI control is exposed.
+  const [runtimeConfig, setRuntimeConfig] = useState<{ liveEnabled: boolean; performanceMode: boolean }>(
+    { liveEnabled: true, performanceMode: false },
+  );
+  const perfModeRef = useRef(false);
+  perfModeRef.current = runtimeConfig.performanceMode;
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { getQARuntimeConfig } = await import("./runtime-config.functions");
+        const cfg = await getQARuntimeConfig();
+        if (!cancelled) setRuntimeConfig(cfg);
+      } catch {
+        // network/SSR failure → keep defaults (live on, perf off)
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // User-visible feedback when realtime drops / recovers. Uses sonner so it
   // sits next to the rest of the app's notifications.
   const prevStatusRef = useRef<RealtimeStatus>("idle");
@@ -354,8 +380,36 @@ export function QAProvider({ children }: { children: ReactNode }) {
       setState((s) => ({ ...s, loading: false }));
       return;
     }
+    // Backend kill-switch: skip opening the Realtime channel entirely.
+    // The initial loadAll() below still runs so the UI is populated.
+    const liveEnabled = runtimeConfig.liveEnabled;
     let cancelled = false;
     setState((s) => ({ ...s, loading: true }));
+
+    // Performance mode: coalesce realtime-driven state updates inside a
+    // single rAF frame so a burst of events never causes UI lag. Realtime
+    // callbacks below call `applyState` instead of `setState`; in normal
+    // mode it forwards straight to setState.
+    let pendingUpdaters: Array<(s: State) => State> = [];
+    let rafQueued = false;
+    const flushPending = () => {
+      rafQueued = false;
+      const queue = pendingUpdaters;
+      pendingUpdaters = [];
+      if (queue.length === 0) return;
+      setState((s) => queue.reduce((acc, u) => u(acc), s));
+    };
+    const applyState = (updater: (s: State) => State) => {
+      if (!perfModeRef.current) {
+        setState(updater);
+        return;
+      }
+      pendingUpdaters.push(updater);
+      if (rafQueued) return;
+      rafQueued = true;
+      if (typeof requestAnimationFrame === "function") requestAnimationFrame(flushPending);
+      else setTimeout(flushPending, 16);
+    };
 
     const loadAll = async () => {
       const [profilesR, rolesR, formsR, defectsR, commentsR, auditR, notifR] = await Promise.all([
@@ -430,6 +484,15 @@ export function QAProvider({ children }: { children: ReactNode }) {
     };
     void loadAll();
 
+    if (!liveEnabled) {
+      // Realtime disabled by backend toggle — initial data still loads above,
+      // but we skip opening the WebSocket subscription entirely.
+      setRealtimeStatus("idle");
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const channelName = `qa-realtime-${state.currentUser?.id ?? "anon"}`;
     setRealtimeChannelName(channelName);
     const channel = supabase
@@ -446,7 +509,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
               ? `Deleted ${row?.id ?? ""}`
               : `${ev} ${row?.id ?? ""} — status: ${row?.status ?? "?"}`,
         });
-        setState((s) => {
+        applyState((s) => {
           let next = s.defects;
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const row = rowToDefect(payload.new as DefectRow, commentsRef.current);
@@ -489,7 +552,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
             const oldId = (payload.old as { id: string }).id;
             commentsRef.current = commentsRef.current.filter((c) => c.id !== oldId);
           }
-          setState((s) => ({
+          applyState((s) => ({
             ...s,
             defects: s.defects.map((d) => ({
               ...d,
@@ -509,7 +572,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         },
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "forms" }, (payload) => {
-        setState((s) => {
+        applyState((s) => {
           let next = s.forms;
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const row = rowToForm(payload.new as FormRow);
@@ -553,14 +616,14 @@ export function QAProvider({ children }: { children: ReactNode }) {
         { event: "INSERT", schema: "public", table: "defect_audit_log" },
         (payload) => {
           const entry = rowToAudit(payload.new as AuditRow);
-          setState((s) => ({ ...s, audit: [entry, ...s.audit] }));
+          applyState((s) => ({ ...s, audit: [entry, ...s.audit] }));
         },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications" },
         (payload) => {
-          setState((s) => {
+          applyState((s) => {
             let next = s.notifications;
             if (payload.eventType === "INSERT") {
               const n = payload.new as NotifRow;
@@ -609,7 +672,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       void supabase.removeChannel(channel);
     };
-  }, [state.currentUser?.id]);
+  }, [state.currentUser?.id, runtimeConfig.liveEnabled]);
 
   const requireUser = () => {
     const u = state.currentUser;
