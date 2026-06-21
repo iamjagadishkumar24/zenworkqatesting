@@ -497,11 +497,11 @@ function ReportsPage() {
             <div className="flex items-end gap-2">
               <div className="flex-1">
                 <Label>From</Label>
-                <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9" />
+                <Input type="date" value={fromInput} onChange={(e) => setFromInput(e.target.value)} className="h-9" />
               </div>
               <div className="flex-1">
                 <Label>To</Label>
-                <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9" />
+                <Input type="date" value={toInput} onChange={(e) => setToInput(e.target.value)} className="h-9" />
               </div>
             </div>
           )}
@@ -512,14 +512,7 @@ function ReportsPage() {
                 <> (store total {allDefects.length})</>
               )}
             </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setStatus("all"); setTestingType("all"); setCategory("all");
-                setAgent("all"); setDateRange("all"); setFromDate(""); setToDate("");
-              }}
-            >
+            <Button size="sm" variant="ghost" onClick={resetFilters}>
               Reset filters
             </Button>
           </div>
