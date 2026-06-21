@@ -26,9 +26,13 @@ const SECURITY_HEADERS: Record<string, string> = {
 // Apply hardened security headers to every SSR/HTTP response.
 const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
   const result = await next();
-  const response = (result as unknown) as { response?: Response } & Response;
+  const raw = result as unknown;
   const target: Response | undefined =
-    response instanceof Response ? response : response?.response;
+    raw instanceof Response
+      ? raw
+      : raw && typeof raw === "object" && (raw as { response?: unknown }).response instanceof Response
+        ? ((raw as { response: Response }).response)
+        : undefined;
   if (target && target.headers) {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
       if (!target.headers.has(k)) target.headers.set(k, v);
