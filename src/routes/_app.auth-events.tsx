@@ -125,7 +125,7 @@ function AuthEventsPage() {
       "user_agent",
     ];
     const lines = [header.join(",")];
-    for (const r of rows) {
+    for (const r of filteredRows) {
       lines.push(
         [
           r.occurred_at,
