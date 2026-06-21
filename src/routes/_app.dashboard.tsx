@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useTaxYear, matchesTaxYear } from "@/lib/qa/taxYear";
@@ -33,8 +34,41 @@ import { DeadlineCountdown, AdminDeadlineSummary } from "@/components/qa/Deadlin
 import { RealtimeHealthMenu } from "@/components/qa/RealtimeHealthMenu";
 
 export const Route = createFileRoute("/_app/dashboard")({
-  component: Dashboard,
+  component: DashboardRoute,
 });
+
+function DashboardRoute() {
+  return (
+    <ErrorBoundary
+      name="dashboard_root"
+      fallback={({ error, reset }) => (
+        <div className="mx-auto max-w-lg space-y-3 rounded-lg border border-border bg-card/70 p-6 text-center backdrop-blur">
+          <h2 className="text-lg font-semibold">Dashboard is recovering</h2>
+          <p className="text-sm text-muted-foreground">
+            Something went wrong while rendering this section. The issue has been logged.
+          </p>
+          <p className="text-xs text-muted-foreground/80 break-words">{error.message}</p>
+          <div className="flex justify-center gap-2">
+            <button
+              onClick={reset}
+              className="rounded border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+            >
+              Reload page
+            </button>
+          </div>
+        </div>
+      )}
+    >
+      <Dashboard />
+    </ErrorBoundary>
+  );
+}
 
 function Dashboard() {
   const { forms, defects, currentUser } = useQA();

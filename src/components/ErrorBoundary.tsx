@@ -17,9 +17,27 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    const stack = info.componentStack ?? "";
+    // First non-empty frame in a React component stack — that's the throwing component.
+    const componentName =
+      stack
+        .split("\n")
+        .map((l) => l.trim())
+        .find((l) => l.startsWith("at "))
+        ?.replace(/^at\s+/, "")
+        .split(" ")[0] ?? "unknown";
+    const capturedAt = new Date().toISOString();
+    // Always log to the console for fast local debugging.
+    // eslint-disable-next-line no-console
+    console.error(
+      `[ErrorBoundary:${this.props.name || "component_error_boundary"}] ${componentName} @ ${capturedAt}`,
+      error,
+    );
     reportLovableError(error, {
       boundary: this.props.name || "component_error_boundary",
-      componentStack: info.componentStack,
+      componentStack: stack,
+      componentName,
+      capturedAt,
     });
   }
 
