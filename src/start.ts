@@ -1,7 +1,45 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
-
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+
+const SECURITY_HEADERS: Record<string, string> = {
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "Content-Security-Policy": [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https:",
+    "style-src 'self' 'unsafe-inline' https:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+    "connect-src 'self' https: wss:",
+    "manifest-src 'self'",
+    "worker-src 'self' blob:",
+  ].join("; "),
+};
+
+// Apply hardened security headers to every SSR/HTTP response.
+const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+  const result = await next();
+  const raw = result as unknown;
+  const target: Response | undefined =
+    raw instanceof Response
+      ? raw
+      : raw && typeof raw === "object" && (raw as { response?: unknown }).response instanceof Response
+        ? ((raw as { response: Response }).response)
+        : undefined;
+  if (target && target.headers) {
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
+      if (!target.headers.has(k)) target.headers.set(k, v);
+    }
+  }
+  return result;
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -20,5 +58,5 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [errorMiddleware, securityHeadersMiddleware],
 }));
