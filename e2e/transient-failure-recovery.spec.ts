@@ -92,6 +92,7 @@ test.describe("transient failure recovery", () => {
     });
 
     await page.goto("/");
+    await page.evaluate(() => sessionStorage.removeItem("zenwork:last-cache-bust-reload"));
     await page.evaluate(async () => {
       await caches.open("workbox-precache-v2-test").then((cache) => cache.put("/old.js", new Response("old")));
       window.dispatchEvent(new CustomEvent("vite:preloadError", { detail: new Error("Failed to fetch dynamically imported module") }));
