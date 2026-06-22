@@ -41,6 +41,21 @@ jobs:
       - name: Run Playwright tests
         run: bunx playwright test
 
+      - name: 990 schedules regression (validation + rendering gate)
+        id: schedules_990
+        env:
+          PLAYWRIGHT_AGENT_EMAIL: ${{ secrets.PLAYWRIGHT_AGENT_EMAIL }}
+          PLAYWRIGHT_AGENT_PASSWORD: ${{ secrets.PLAYWRIGHT_AGENT_PASSWORD }}
+        run: |
+          if [ -z "$PLAYWRIGHT_AGENT_EMAIL" ] || [ -z "$PLAYWRIGHT_AGENT_PASSWORD" ]; then
+            echo "::error::PLAYWRIGHT_AGENT_EMAIL / PLAYWRIGHT_AGENT_PASSWORD secrets are required to gate 990 schedules"
+            exit 1
+          fi
+          set -o pipefail
+          mkdir -p test-results
+          bunx playwright test e2e/990-schedules.spec.ts \
+            --reporter=list 2>&1 | tee test-results/990-schedules.log
+
       - name: Dashboard hook-order regression (React #310 gate)
         id: dashboard_hook_order
         run: |
