@@ -14,6 +14,8 @@ import type {
   TestStatus,
   User,
 } from "./types";
+import { filterByEnvironment, scopeForUser } from "./scope";
+import { matchesTaxYear, type TaxYearFilter } from "./taxYear";
 
 type DefectWithVersion = Defect & { version: number };
 
@@ -27,6 +29,181 @@ export type NotificationItem = {
   read: boolean;
   createdAt: string;
 };
+
+export type DefectPreset = "open" | "valid" | "invalid" | "fixed" | "retest" | "all";
+
+export type DashboardStats = {
+  total: number;
+  open: number;
+  valid: number;
+  invalid: number;
+  fixed: number;
+  retest: number;
+};
+
+export type AgentWorkloadMetric = {
+  id: string;
+  name: string;
+  assignedDefects: number;
+  openAssignedDefects: number;
+  completedDefects: number;
+  reportedDefects: number;
+  pendingReviewDefects: number;
+  activeRetests: number;
+  completedRetests: number;
+  totalOpenWorkload: number;
+};
+
+type RetestMetricInput = {
+  assigned_agent_id?: string | null;
+  assigned_agent_name?: string | null;
+  status: string;
+};
+
+export function isFixedDefectStatus(status: DefectStatus | string): boolean {
+  return status === "Fixed" || status === "Closed";
+}
+
+export function isOpenDefectStatus(status: DefectStatus | string): boolean {
+  return !isFixedDefectStatus(status);
+}
+
+export function computeDashboardStats<T extends Pick<Defect, "status" | "validity">>(
+  defects: readonly T[],
+): DashboardStats {
+  return {
+    total: defects.length,
+    open: defects.filter((d) => isOpenDefectStatus(d.status)).length,
+    valid: defects.filter((d) => d.validity === "Valid").length,
+    invalid: defects.filter((d) => d.validity === "Invalid").length,
+    fixed: defects.filter((d) => isFixedDefectStatus(d.status)).length,
+    retest: defects.filter((d) => d.status === "Retest Required").length,
+  };
+}
+
+export function scopeDefectsForDashboard<T extends Defect>(
+  defects: readonly T[],
+  currentUser: Pick<User, "name" | "role"> | null,
+  env: Environment | null | undefined,
+  taxYear: TaxYearFilter,
+): T[] {
+  const byUser = scopeForUser([...defects], currentUser);
+  const byEnv = filterByEnvironment(byUser, env);
+  return byEnv.filter((d) => matchesTaxYear(d.taxYear, taxYear));
+}
+
+export function applyDefectPreset<T extends Pick<Defect, "status" | "validity">>(
+  defects: readonly T[],
+  preset?: DefectPreset | string | null,
+): T[] {
+  if (!preset || preset === "all") return [...defects];
+  return defects.filter((d) => {
+    switch (preset) {
+      case "open":
+        return isOpenDefectStatus(d.status);
+      case "valid":
+        return d.validity === "Valid";
+      case "invalid":
+        return d.validity === "Invalid";
+      case "fixed":
+        return isFixedDefectStatus(d.status);
+      case "retest":
+        return d.status === "Retest Required";
+      default:
+        return true;
+    }
+  });
+}
+
+export function searchDefects<
+  T extends Pick<
+    Defect,
+    "id" | "title" | "formFeature" | "module" | "status" | "priority" | "severity" | "assignedAgent" | "createdBy"
+  > & { taxYear?: string },
+>(defects: readonly T[], query: string | null | undefined): T[] {
+  const term = (query ?? "").trim().toLowerCase();
+  if (!term) return [...defects];
+  return defects.filter((d) =>
+    [
+      d.id,
+      d.title,
+      d.formFeature,
+      d.module,
+      d.status,
+      d.priority,
+      d.severity,
+      d.assignedAgent,
+      d.createdBy,
+      d.taxYear ?? "",
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(term),
+  );
+}
+
+export function groupDefectsByField<T extends Defect>(
+  defects: readonly T[],
+  field: keyof Pick<Defect, "module" | "formFeature" | "status" | "assignedAgent" | "createdBy">,
+  fallback = "Unassigned",
+): Record<string, T[]> {
+  return defects.reduce<Record<string, T[]>>((acc, defect) => {
+    const raw = defect[field];
+    const key = typeof raw === "string" && raw.trim() ? raw : fallback;
+    acc[key] = [...(acc[key] ?? []), defect];
+    return acc;
+  }, {});
+}
+
+export function sortDefectsByUpdatedAt<T extends Pick<Defect, "id" | "createdAt" | "updatedAt">>(
+  defects: readonly T[],
+  dir: "asc" | "desc" = "desc",
+): T[] {
+  const factor = dir === "asc" ? 1 : -1;
+  return [...defects].sort((a, b) => {
+    const at = Date.parse(a.updatedAt || a.createdAt || "");
+    const bt = Date.parse(b.updatedAt || b.createdAt || "");
+    const time = (Number.isNaN(at) ? 0 : at) - (Number.isNaN(bt) ? 0 : bt);
+    if (time !== 0) return time * factor;
+    return a.id.localeCompare(b.id) * factor;
+  });
+}
+
+export function computeAgentWorkloadMetrics(
+  users: readonly User[],
+  defects: readonly Defect[],
+  retests: readonly RetestMetricInput[] = [],
+): AgentWorkloadMetric[] {
+  return users
+    .filter((u) => u.role === "agent" && u.active !== false)
+    .map((user) => {
+      const assigned = defects.filter((d) => d.assignedAgent === user.name);
+      const activeRetests = retests.filter(
+        (r) =>
+          r.status !== "Completed" &&
+          (r.assigned_agent_id === user.id || r.assigned_agent_name === user.name),
+      ).length;
+      const completedRetests = retests.filter(
+        (r) =>
+          r.status === "Completed" &&
+          (r.assigned_agent_id === user.id || r.assigned_agent_name === user.name),
+      ).length;
+      const openAssignedDefects = assigned.filter((d) => isOpenDefectStatus(d.status)).length;
+      return {
+        id: user.id,
+        name: user.name,
+        assignedDefects: assigned.length,
+        openAssignedDefects,
+        completedDefects: assigned.filter((d) => isFixedDefectStatus(d.status)).length,
+        reportedDefects: defects.filter((d) => d.createdBy === user.name).length,
+        pendingReviewDefects: assigned.filter((d) => (d.validity ?? "Unverified") === "Unverified")
+          .length,
+        activeRetests,
+        completedRetests,
+        totalOpenWorkload: openAssignedDefects + activeRetests,
+      };
+    });
+}
 
 type State = {
   users: User[];
