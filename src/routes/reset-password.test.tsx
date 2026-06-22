@@ -22,9 +22,9 @@ vi.mock("@/lib/qa/admin.functions", () => ({
 vi.mock("@/integrations/supabase/client", () => {
   const supabase: any = {
     auth: {
-      getSession,
-      updateUser,
-      signOut,
+      getSession: (...a: any[]) => (getSession as any)(...a),
+      updateUser: (...a: any[]) => (updateUser as any)(...a),
+      signOut: (...a: any[]) => (signOut as any)(...a),
     },
   };
   return { supabase };
