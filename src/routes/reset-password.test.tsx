@@ -19,15 +19,16 @@ vi.mock("@tanstack/react-start", () => ({
 vi.mock("@/lib/qa/admin.functions", () => ({
   accountStatus: (args: any) => accountStatusMock(args),
 }));
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: {
+vi.mock("@/integrations/supabase/client", () => {
+  const supabase: any = {
     auth: {
-      getSession: (...a: any[]) => getSession(...a),
-      updateUser: (...a: any[]) => updateUser(...(a as [any])),
-      signOut: (...a: any[]) => signOut(...a),
-    } as any,
-  } as any,
-}));
+      getSession,
+      updateUser,
+      signOut,
+    },
+  };
+  return { supabase };
+});
 vi.mock("sonner", () => ({
   toast: { error: toastError, success: toastSuccess },
 }));
