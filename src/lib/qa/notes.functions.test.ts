@@ -56,7 +56,7 @@ describe("notes.functions validators", () => {
       ],
       error: null,
     });
-    const out = await listNotes({ data: {}, context: c });
+    const out = (await listNotes({ data: {}, context: c })) as Array<Record<string, unknown>>;
     expect(out[0]).toMatchObject({ id: "1", color: "yellow", tags: [], is_pinned: true });
   });
 
@@ -68,7 +68,7 @@ describe("notes.functions validators", () => {
   it("createNote clamps title and rejects unknown color", async () => {
     const long = "x".repeat(300);
     const c = ctx({ data: { id: "n1", title: long.slice(0, 200), color: "yellow", created_at: "", updated_at: "" }, error: null });
-    const out = await createNote({ data: { title: long, color: "rainbow" }, context: c });
+    const out = (await createNote({ data: { title: long, color: "rainbow" }, context: c })) as { color: string; title: string };
     expect(out.color).toBe("yellow");
     expect(out.title.length).toBe(200);
     const insert = c.sb.lastBuilder().calls.find((x: { method: string }) => x.method === "insert");
