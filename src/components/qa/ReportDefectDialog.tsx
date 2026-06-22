@@ -434,6 +434,34 @@ export function ReportDefectDialog({
               placeholder="https://…"
             />
           </div>
+          {scheduleOptions && scheduleOptions.length > 0 && (
+            <div className="sm:col-span-2">
+              <Label>{scheduleLabel}</Label>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Select one or more schedules / related forms to associate with this {draft._form || "form"} report.
+              </p>
+              <div className="mt-2 grid grid-cols-1 gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
+                {scheduleOptions.map((s) => {
+                  const id = `sched-${s.replace(/\s+/g, "-")}`;
+                  const checked = selectedSchedules.includes(s);
+                  return (
+                    <label
+                      key={s}
+                      htmlFor={id}
+                      className="flex cursor-pointer items-center gap-2 text-sm"
+                    >
+                      <Checkbox
+                        id={id}
+                        checked={checked}
+                        onCheckedChange={() => toggleSchedule(s)}
+                      />
+                      <span>{s}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
