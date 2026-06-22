@@ -40,6 +40,7 @@ const SCHEDULES_BY_FORM: Record<string, string[]> = {
     "Schedule N",
     "Schedule R",
     "Schedule O",
+    "Supplemental Information",
   ],
   "Form 990-T": [
     "Form 4562",
@@ -58,6 +59,7 @@ const SCHEDULES_BY_FORM: Record<string, string[]> = {
     "Schedule L",
     "Schedule N",
     "Schedule O",
+    "Supplemental Information",
   ],
   "Form 990-PF": ["Supplemental Information"],
 };
