@@ -2,9 +2,39 @@ import { test, expect, type Page } from "@playwright/test";
 import { AGENT, loginAgent, pickAccent } from "./agent-theme-helpers";
 
 const PAGES = [
-  { path: "/dashboard", name: "dashboard" },
-  { path: "/defects", name: "defects" },
-  { path: "/reports", name: "reports" },
+  {
+    path: "/dashboard",
+    name: "dashboard",
+    extraRegions: [
+      {
+        key: "kpi-tile",
+        selector:
+          'main a[href*="my-reported-errors"], main [data-testid="kpi-card"], main [class*="card"]:has([class*="gradient"])',
+      },
+    ],
+  },
+  {
+    path: "/defects",
+    name: "defects",
+    extraRegions: [
+      {
+        key: "status-dropdown",
+        selector:
+          'main [data-testid="status-filter"], main [role="combobox"]:has-text("status"), main [role="combobox"]',
+      },
+    ],
+  },
+  {
+    path: "/reports",
+    name: "reports",
+    extraRegions: [
+      {
+        key: "chart-highlight",
+        selector:
+          'main [data-testid="report-chart"], main .recharts-wrapper, main svg',
+      },
+    ],
+  },
 ];
 
 // Regions that visibly depend on `--primary` / `--gradient-primary` /
@@ -17,8 +47,13 @@ const REGIONS = [
   { key: "primary-button", selector: 'main button.bg-primary, main [data-variant="default"], main' },
 ];
 
-async function snapshotRegions(page: Page, label: string, pageName: string) {
-  for (const r of REGIONS) {
+async function snapshotRegions(
+  page: Page,
+  label: string,
+  pageName: string,
+  extra: { key: string; selector: string }[] = [],
+) {
+  for (const r of [...REGIONS, ...extra]) {
     const loc = page.locator(r.selector).first();
     if ((await loc.count()) === 0) continue;
     await loc.scrollIntoViewIfNeeded().catch(() => {});
@@ -53,7 +88,7 @@ test.describe("Visual: Light vs Blue accent across pages", () => {
           .toBe(accent.toLowerCase());
 
         await focusFirstInteractive(page);
-        await snapshotRegions(page, accent.toLowerCase(), p.name);
+        await snapshotRegions(page, accent.toLowerCase(), p.name, p.extraRegions);
       }
     });
   }
