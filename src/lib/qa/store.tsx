@@ -280,6 +280,7 @@ type DefectRow = {
   environment: string;
   tax_year: string | null;
   quickbooks_desktop_category?: string | null;
+  schedules?: string[] | null;
   assigned_agent: string;
   created_by: string;
   updated_by: string;
@@ -336,6 +337,7 @@ function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersi
     module: r.module as Module,
     formFeature: r.form_feature,
     taxYear: r.tax_year ?? undefined,
+    schedules: Array.isArray(r.schedules) ? r.schedules : undefined,
     title: r.title,
     description: r.description,
     stepsToReproduce: r.steps_to_reproduce,

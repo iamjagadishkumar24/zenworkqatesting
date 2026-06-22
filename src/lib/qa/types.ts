@@ -108,6 +108,8 @@ export type Defect = {
   module: Module;
   formFeature: string;
   taxYear?: string;
+  /** Optional schedules / supplemental related forms tied to a 990-series report. */
+  schedules?: string[];
   title: string;
   description: string;
   stepsToReproduce: string;
