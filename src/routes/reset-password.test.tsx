@@ -23,7 +23,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
       getSession: () => getSession(),
-      updateUser: (p: any) => updateUser(p),
+    updateUser: ((p: any) => updateUser(p)) as any,
       signOut: () => signOut(),
     },
   },
