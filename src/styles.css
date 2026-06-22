@@ -278,6 +278,18 @@
 :root.dark[data-accent="rose"] { --primary: oklch(0.72 0.2 15); --primary-glow: oklch(0.82 0.18 15); --ring: oklch(0.72 0.2 15); --sidebar-primary: oklch(0.72 0.2 15); }
 
 /* Agent-only accent palette. "light" and "blue" use the default (no override). */
+:root[data-accent="light"] {
+  /* Neutral light-grey accent so the "Light" swatch isn't a silent
+     no-op alias of "Blue" — picking it now visibly changes the
+     dashboard's KPI gradients, primary buttons, focus ring, and
+     sidebar primary, matching the swatch shown in Settings. */
+  --primary: oklch(0.78 0.01 255);
+  --primary-glow: oklch(0.9 0.01 255);
+  --ring: oklch(0.78 0.01 255);
+  --sidebar-primary: oklch(0.78 0.01 255);
+  --sidebar-accent-foreground: oklch(0.45 0.01 255);
+  --gradient-primary: linear-gradient(135deg, oklch(0.9 0.005 255), oklch(0.78 0.01 255));
+}
 :root[data-accent="green"] {
   --primary: oklch(0.6 0.17 155);
   --primary-glow: oklch(0.72 0.15 160);
