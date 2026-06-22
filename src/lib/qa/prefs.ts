@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "@/lib/qa/store";
 import { getMyPreferences, saveMyPreferences } from "@/lib/qa/userPreferences.functions";
+import { toast } from "sonner";
 
 export type AdminPrefs = {
   // Configurable enums
@@ -45,6 +46,14 @@ export type AdminPrefs = {
   csvDelimiter: "," | ";" | "\t";
   importMergeStrategy: "skip-existing" | "overwrite";
 };
+
+// Single source of truth for which accent values the backend will accept.
+// Kept in sync with the zod enum in userPreferences.functions.ts.
+export const ALLOWED_ACCENTS: AdminPrefs["accent"][] = [
+  "blue", "violet", "emerald", "rose",
+  "light", "green", "purple", "orange", "pink", "grey", "teal",
+];
+export const ALLOWED_THEMES: AdminPrefs["theme"][] = ["system", "light", "dark"];
 
 const DEFAULTS: AdminPrefs = {
   defectStatuses: [
