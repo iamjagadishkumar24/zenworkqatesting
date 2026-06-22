@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bug, AlertTriangle } from "lucide-react";
+import { Bug, AlertTriangle, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
@@ -62,6 +62,11 @@ const AREAS = [
   "Other",
 ] as const;
 
+function isValidUrl(u: string) {
+  if (!u) return true;
+  try { new URL(u); return true; } catch { return false; }
+}
+
 export function General990IssuesPanel() {
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
@@ -72,6 +77,10 @@ export function General990IssuesPanel() {
   const [area, setArea] = useState<string>("");
   const [summary, setSummary] = useState("");
   const [description, setDescription] = useState("");
+  const [attachmentLinks, setAttachmentLinks] = useState<string[]>([""]);
+  const [screenshotUrl, setScreenshotUrl] = useState("");
+  const [referenceUrl, setReferenceUrl] = useState("");
+  const [supportingDocUrl, setSupportingDocUrl] = useState("");
 
   const reset = () => {
     setEin("");
@@ -79,6 +88,10 @@ export function General990IssuesPanel() {
     setArea("");
     setSummary("");
     setDescription("");
+    setAttachmentLinks([""]);
+    setScreenshotUrl("");
+    setReferenceUrl("");
+    setSupportingDocUrl("");
   };
 
   const submit = async () => {
@@ -89,6 +102,23 @@ export function General990IssuesPanel() {
       return toast.error("Please provide a more detailed issue description.");
     if (ein && !/^\d{2}-?\d{7}$/.test(ein.trim()))
       return toast.error("EIN must be 9 digits (e.g. 12-3456789).");
+
+    const cleanedLinks = attachmentLinks.map((l) => l.trim()).filter(Boolean);
+    for (const l of cleanedLinks) {
+      if (!isValidUrl(l)) return toast.error(`Invalid attachment link: ${l}`);
+    }
+    for (const [label, v] of [
+      ["Screenshot URL", screenshotUrl],
+      ["Reference URL", referenceUrl],
+      ["Supporting Document Link", supportingDocUrl],
+    ] as const) {
+      if (v && !isValidUrl(v.trim())) return toast.error(`${label} must be a valid URL.`);
+    }
+
+    const extraLinksBlock =
+      cleanedLinks.length > 0
+        ? ["", "Attachment Links:", ...cleanedLinks.map((l, i) => `  ${i + 1}. ${l}`)]
+        : [];
 
     setSubmitting(true);
     const res = await addDefect({
@@ -102,6 +132,7 @@ export function General990IssuesPanel() {
         `Area: ${area}`,
         "",
         description.trim(),
+        ...extraLinksBlock,
       ]
         .filter((v) => v !== null)
         .join("\n"),
@@ -113,6 +144,11 @@ export function General990IssuesPanel() {
       severity: "Medium",
       environment: env ?? undefined,
       assignedAgent: currentUser?.name ?? "",
+      attachmentUrl: cleanedLinks[0] || undefined,
+      attachmentUrl2: cleanedLinks[1] || undefined,
+      screenshotUrl: screenshotUrl.trim() || undefined,
+      evidenceUrl: referenceUrl.trim() || undefined,
+      driveUrl: supportingDocUrl.trim() || undefined,
     });
     setSubmitting(false);
     if (!res.ok) return toast.error(res.error ?? "Could not submit issue.");
@@ -213,6 +249,77 @@ export function General990IssuesPanel() {
                 placeholder="Describe the issue, where it occurs, and any relevant context."
                 rows={5}
               />
+            </div>
+
+            <div className="grid gap-1.5 rounded-md border border-border/60 p-3">
+              <div className="flex items-center justify-between">
+                <Label>Attachment Link(s) (optional)</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setAttachmentLinks((xs) => [...xs, ""])}
+                >
+                  <Plus className="mr-1 h-3 w-3" /> Add link
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Screenshots, recordings, SharePoint / Drive / OneDrive, docs, repro links, related tickets, etc.
+              </p>
+              {attachmentLinks.map((link, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input
+                    value={link}
+                    onChange={(e) =>
+                      setAttachmentLinks((xs) => xs.map((v, idx) => (idx === i ? e.target.value : v)))
+                    }
+                    placeholder="https://…"
+                  />
+                  {attachmentLinks.length > 1 && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() =>
+                        setAttachmentLinks((xs) => xs.filter((_, idx) => idx !== i))
+                      }
+                      aria-label="Remove link"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-1.5">
+                <Label htmlFor="g990-screenshot">Screenshot URL (optional)</Label>
+                <Input
+                  id="g990-screenshot"
+                  value={screenshotUrl}
+                  onChange={(e) => setScreenshotUrl(e.target.value)}
+                  placeholder="https://…"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="g990-ref">Reference URL (optional)</Label>
+                <Input
+                  id="g990-ref"
+                  value={referenceUrl}
+                  onChange={(e) => setReferenceUrl(e.target.value)}
+                  placeholder="https://…"
+                />
+              </div>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="g990-doc">Supporting Document Link (optional)</Label>
+                <Input
+                  id="g990-doc"
+                  value={supportingDocUrl}
+                  onChange={(e) => setSupportingDocUrl(e.target.value)}
+                  placeholder="https://…"
+                />
+              </div>
             </div>
           </div>
 
