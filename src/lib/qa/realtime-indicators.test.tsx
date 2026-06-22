@@ -41,6 +41,11 @@ describe("realtime indicators are hidden post-login", () => {
     expect(storeSource).toContain('setRealtimeStatus("connected")');
   });
 
+  it("store exposes a read-only window probe so E2E can assert liveness without UI", () => {
+    expect(storeSource).toContain("__qaRealtimeProbe");
+    expect(storeSource).toMatch(/channelName,\s*\n\s*status,/);
+  });
+
   it("store does not toast on realtime status transitions", () => {
     // Toast import may still exist for unrelated flows, but the realtime
     // status effect must not invoke toast.error / toast.success with the

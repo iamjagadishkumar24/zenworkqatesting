@@ -54,10 +54,22 @@ test.describe("realtime: admin creates defect → agent dashboard updates live",
         login(agentPage, AGENT_EMAIL!, AGENT_PASSWORD!),
       ]);
 
-      // Agent dashboard must be live before the admin acts.
-      await expect(agentPage.locator('[data-realtime-status="connected"]')).toBeVisible({
-        timeout: 15_000,
-      });
+      // Agent realtime channel must be subscribed before the admin acts.
+      // The UI no longer renders a status indicator; we read the store's
+      // window probe directly so backend liveness is asserted without
+      // requiring any visible "Live"/"Realtime" text.
+      await expect
+        .poll(
+          async () =>
+            agentPage.evaluate(() => {
+              const probe = (window as unknown as {
+                __qaRealtimeProbe?: { status?: string };
+              }).__qaRealtimeProbe;
+              return probe?.status ?? null;
+            }),
+          { timeout: 15_000, intervals: [500, 1000, 2000] },
+        )
+        .toBe("SUBSCRIBED");
 
       const openKpi = agentPage.getByRole("region", { name: /open errors/i }).first();
       const before = Number(((await openKpi.innerText()).match(/\d+/)?.[0]) ?? "0");
@@ -82,9 +94,14 @@ test.describe("realtime: admin creates defect → agent dashboard updates live",
         )
         .toBeGreaterThan(before);
 
-      // Realtime health menu shows a recent event.
-      await agentPage.getByLabel(/open realtime health details/i).click();
-      await expect(agentPage.getByTestId("rt-health-last-event")).toContainText(/ago|just now/);
+      // Realtime health UI has been removed; verify the probe still reports
+      // SUBSCRIBED after the live update was processed.
+      const finalStatus = await agentPage.evaluate(() => {
+        const probe = (window as unknown as { __qaRealtimeProbe?: { status?: string } })
+          .__qaRealtimeProbe;
+        return probe?.status ?? null;
+      });
+      expect(finalStatus).toBe("SUBSCRIBED");
     } finally {
       await adminCtx.close();
       await agentCtx.close();
