@@ -9,23 +9,23 @@ vi.mock("@/integrations/supabase/auth-middleware", () => ({
   requireSupabaseAuth: { __mock: true },
 }));
 
-import {
-  listNotes,
-  createNote,
-  updateNote,
-  deleteNote,
-  noteCounts,
-  NOTE_COLORS,
-} from "./notes.functions";
+import * as Notes from "./notes.functions";
+
+type Call = (a: { data?: unknown; context?: unknown }) => Promise<unknown>;
+const listNotes = Notes.listNotes as unknown as Call;
+const createNote = Notes.createNote as unknown as Call;
+const updateNote = Notes.updateNote as unknown as Call;
+const deleteNote = Notes.deleteNote as unknown as Call;
+const noteCounts = Notes.noteCounts as unknown as Call;
+const { NOTE_COLORS } = Notes;
 
 function ctx(result: unknown = { data: [], error: null }) {
   const sb = createSupabaseMock();
-  // Pre-configure the first builder when from() is called.
-  const orig = sb.from;
+  const orig = sb.from as unknown as (t: unknown) => unknown;
   (sb.from as unknown as { mockImplementation: (fn: (...a: unknown[]) => unknown) => void })
-    .mockImplementation((table: string) => {
-      const b = orig(table) as ReturnType<typeof orig>;
-      (b as unknown as { setResult: (r: unknown) => void }).setResult(result);
+    .mockImplementation((...args: unknown[]) => {
+      const b = orig(args[0]) as { setResult: (r: unknown) => void };
+      b.setResult(result);
       return b;
     });
   return { supabase: sb.client, userId: "user-1", sb };
@@ -114,7 +114,7 @@ describe("notes.functions validators", () => {
       data: [{ is_archived: true }, { is_archived: false }, { is_archived: false }],
       error: null,
     });
-    const out = await noteCounts({ context: c });
+    const out = (await noteCounts({ context: c })) as { total: number; active: number; archived: number };
     expect(out).toEqual({ total: 3, active: 2, archived: 1 });
   });
 
