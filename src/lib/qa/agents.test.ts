@@ -46,8 +46,9 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+const STABLE_USER = { id: "admin-1", name: "Portal Admin", role: "admin" as const };
 vi.mock("./store", () => ({
-  useQA: () => ({ currentUser: { id: "admin-1", name: "Portal Admin", role: "admin" } }),
+  useQA: () => ({ currentUser: STABLE_USER }),
 }));
 
 vi.mock("./admin.functions", () => ({
