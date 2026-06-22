@@ -284,6 +284,7 @@ export type Database = {
           module: string
           priority: string
           quickbooks_desktop_category: string | null
+          schedules: string[]
           screenshot_url: string | null
           severity: string
           status: string
@@ -315,6 +316,7 @@ export type Database = {
           module: string
           priority?: string
           quickbooks_desktop_category?: string | null
+          schedules?: string[]
           screenshot_url?: string | null
           severity?: string
           status?: string
@@ -346,6 +348,7 @@ export type Database = {
           module?: string
           priority?: string
           quickbooks_desktop_category?: string | null
+          schedules?: string[]
           screenshot_url?: string | null
           severity?: string
           status?: string

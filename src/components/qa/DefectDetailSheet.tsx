@@ -567,6 +567,11 @@ export function DefectDetailSheet({
                 <Field label="Description">
                   {defect.description || <span className="text-muted-foreground">—</span>}
                 </Field>
+                {Array.isArray(defect.schedules) && defect.schedules.length > 0 && (
+                  <Field label="Schedules / Related Forms">
+                    <span data-testid="defect-schedules">{defect.schedules.join(", ")}</span>
+                  </Field>
+                )}
                 <Field label="Expected Result / Outcome">{defect.expectedResult || "—"}</Field>
                 <div className="grid gap-3 sm:grid-cols-2 text-xs">
                   <Field label="Assigned Agent">{defect.assignedAgent}</Field>
