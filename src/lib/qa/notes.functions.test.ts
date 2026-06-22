@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createSupabaseMock } from "@/test/supabase-mock";
+import { createSupabaseMock, createQueryBuilder } from "@/test/supabase-mock";
+import { vi as _vi } from "vitest";
 
 vi.mock("@tanstack/react-start", async () => {
   const { createServerFnFactory } = await import("@/test/server-fn-harness");
@@ -21,13 +22,14 @@ const { NOTE_COLORS } = Notes;
 
 function ctx(result: unknown = { data: [], error: null }) {
   const sb = createSupabaseMock();
-  const orig = sb.from as unknown as (t: unknown) => unknown;
-  (sb.from as unknown as { mockImplementation: (fn: (...a: unknown[]) => unknown) => void })
-    .mockImplementation((...args: unknown[]) => {
-      const b = orig(args[0]) as { setResult: (r: unknown) => void };
-      b.setResult(result);
-      return b;
-    });
+  const builders: Array<ReturnType<typeof createQueryBuilder>> = [];
+  (sb.client as { from: unknown }).from = _vi.fn(() => {
+    const b = createQueryBuilder(result as { data?: unknown; error?: unknown });
+    builders.push(b);
+    return b;
+  });
+  (sb as unknown as { lastBuilder: () => unknown }).lastBuilder = () =>
+    builders[builders.length - 1];
   return { supabase: sb.client, userId: "user-1", sb };
 }
 
