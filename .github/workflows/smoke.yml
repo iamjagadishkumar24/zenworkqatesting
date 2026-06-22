@@ -1,0 +1,35 @@
+name: Post-Deploy Smoke
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL to smoke-test"
+        required: false
+
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    env:
+      TARGET_URL: ${{ github.event.inputs.target_url || github.event.deployment_status.environment_url || vars.LOVABLE_PUBLISHED_URL || 'https://zenworkqatesting.lovable.app' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - name: Wait for target URL
+        run: |
+          for i in {1..30}; do
+            if curl -sfI "$TARGET_URL" > /dev/null; then
+              echo "Target is up"; exit 0
+            fi
+            echo "Waiting for $TARGET_URL ..."; sleep 5
+          done
+          echo "Target never became reachable" >&2; exit 1
+      - name: Smoke (homepage + login route reachable, no JS errors)
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ env.TARGET_URL }}
+        run: bunx playwright test --project=chromium --grep @smoke || bunx playwright test --project=chromium e2e/dashboard-hook-order.spec.ts

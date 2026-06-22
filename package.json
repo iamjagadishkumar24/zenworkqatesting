@@ -11,7 +11,10 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "e2e": "playwright test",
-    "e2e:update": "playwright test --update-snapshots"
+    "e2e:update": "playwright test --update-snapshots",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -86,6 +89,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/coverage-v8": "^4.1.9",
     "@vitest/ui": "^4.1.8",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
