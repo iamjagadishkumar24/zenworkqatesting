@@ -8,7 +8,48 @@ type Region = {
   open?: (page: Page) => Promise<void>;
   /** Optional locator override for the screenshot target (e.g. the popover). */
   target?: string;
+  /** Optional pre-step (e.g. scroll the page) run before `open`. */
+  prepare?: (page: Page) => Promise<void>;
 };
+
+const TRIGGER_SELECTOR =
+  'main [data-testid="status-filter"], main [role="combobox"]:has-text("status"), main [role="combobox"]';
+const POPOVER_SELECTOR =
+  '[role="listbox"]:visible, [role="menu"]:visible, [data-radix-popper-content-wrapper] [role="listbox"], [data-radix-popper-content-wrapper] [role="menu"]';
+
+async function openStatusDropdown(page: Page) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count()) === 0) return;
+  // Ensure no stale popover is open.
+  await page.keyboard.press("Escape").catch(() => {});
+  await trigger.scrollIntoViewIfNeeded().catch(() => {});
+  await trigger.click();
+  const popover = page.locator(POPOVER_SELECTOR).first();
+  await popover.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
+  // Wait for the popover to settle: stable bounding box across two frames
+  // and no in-flight CSS animations/transitions on it or its descendants.
+  await page
+    .waitForFunction(
+      (sel) => {
+        const el = document.querySelector(sel) as HTMLElement | null;
+        if (!el) return false;
+        const anims = el.getAnimations({ subtree: true });
+        return anims.every(
+          (a) => a.playState === "finished" || a.playState === "idle",
+        );
+      },
+      POPOVER_SELECTOR,
+      { timeout: 3000 },
+    )
+    .catch(() => {});
+  // Two RAFs to let layout/paint settle.
+  await page.evaluate(
+    () =>
+      new Promise<void>((r) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => r())),
+      ),
+  );
+}
 
 const PAGES = [
   {
@@ -28,28 +69,38 @@ const PAGES = [
     extraRegions: [
       {
         key: "status-dropdown",
-        selector:
-          'main [data-testid="status-filter"], main [role="combobox"]:has-text("status"), main [role="combobox"]',
+        selector: TRIGGER_SELECTOR,
       },
       {
         key: "status-dropdown-open",
-        selector:
-          'main [data-testid="status-filter"], main [role="combobox"]:has-text("status"), main [role="combobox"]',
-        open: async (page) => {
-          const trigger = page
-            .locator(
-              'main [data-testid="status-filter"], main [role="combobox"]:has-text("status"), main [role="combobox"]',
-            )
-            .first();
-          if ((await trigger.count()) === 0) return;
-          await trigger.click();
-          await page
-            .locator('[role="listbox"], [role="menu"]')
-            .first()
-            .waitFor({ state: "visible", timeout: 3000 })
-            .catch(() => {});
+        selector: TRIGGER_SELECTOR,
+        prepare: async (page) => {
+          await page.evaluate(() => window.scrollTo(0, 0));
         },
-        target: '[role="listbox"], [role="menu"]',
+        open: openStatusDropdown,
+        target: POPOVER_SELECTOR,
+      },
+      {
+        key: "status-dropdown-open-scrolled-mid",
+        selector: TRIGGER_SELECTOR,
+        prepare: async (page) => {
+          await page.evaluate(() =>
+            window.scrollTo({ top: Math.round(document.body.scrollHeight / 3), behavior: "instant" as ScrollBehavior }),
+          );
+        },
+        open: openStatusDropdown,
+        target: POPOVER_SELECTOR,
+      },
+      {
+        key: "status-dropdown-open-scrolled-bottom",
+        selector: TRIGGER_SELECTOR,
+        prepare: async (page) => {
+          await page.evaluate(() =>
+            window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" as ScrollBehavior }),
+          );
+        },
+        open: openStatusDropdown,
+        target: POPOVER_SELECTOR,
       },
     ],
   },
@@ -83,6 +134,7 @@ async function snapshotRegions(
   extra: Region[] = [],
 ) {
   for (const r of [...REGIONS, ...extra]) {
+    if (r.prepare) await r.prepare(page);
     if (r.open) await r.open(page);
     const loc = page.locator(r.target ?? r.selector).first();
     if ((await loc.count()) === 0) continue;
@@ -93,6 +145,11 @@ async function snapshotRegions(
     });
     if (r.open) {
       await page.keyboard.press("Escape").catch(() => {});
+      await page
+        .locator(POPOVER_SELECTOR)
+        .first()
+        .waitFor({ state: "hidden", timeout: 2000 })
+        .catch(() => {});
     }
   }
 }
