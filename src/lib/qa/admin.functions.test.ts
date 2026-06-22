@@ -14,20 +14,14 @@ type AdminResult = { data?: unknown; error?: unknown; count?: number | null };
 const adminState: {
   builders: Array<ReturnType<typeof createQueryBuilder>>;
   results: AdminResult[];
-  authAdmin: {
-    createUser: ReturnType<typeof vi.fn>;
-    updateUserById: ReturnType<typeof vi.fn>;
-  };
+  authAdmin: { createUser: ReturnType<typeof vi.fn>; updateUserById: ReturnType<typeof vi.fn> };
   getClaims: ReturnType<typeof vi.fn>;
   rpcResult: { data: unknown; error: unknown };
   rpc: ReturnType<typeof vi.fn>;
 } = {
   builders: [],
   results: [],
-  authAdmin: {
-    createUser: vi.fn(),
-    updateUserById: vi.fn(),
-  },
+  authAdmin: { createUser: vi.fn(), updateUserById: vi.fn() },
   getClaims: vi.fn(),
   rpcResult: { data: null, error: null },
   rpc: vi.fn(),
@@ -41,13 +35,15 @@ vi.mock("@/integrations/supabase/client.server", () => ({
       adminState.builders.push(b);
       return b;
     }),
-    rpc: (...args: unknown[]) => adminState.rpc(...args),
+    rpc: (...args: unknown[]) => (adminState.rpc as (...a: unknown[]) => unknown)(...args),
     auth: {
       admin: {
-        createUser: (...a: unknown[]) => adminState.authAdmin.createUser(...a),
-        updateUserById: (...a: unknown[]) => adminState.authAdmin.updateUserById(...a),
+        createUser: (...a: unknown[]) =>
+          (adminState.authAdmin.createUser as (...x: unknown[]) => unknown)(...a),
+        updateUserById: (...a: unknown[]) =>
+          (adminState.authAdmin.updateUserById as (...x: unknown[]) => unknown)(...a),
       },
-      getClaims: (...a: unknown[]) => adminState.getClaims(...a),
+      getClaims: (...a: unknown[]) => (adminState.getClaims as (...x: unknown[]) => unknown)(...a),
     },
   },
 }));
