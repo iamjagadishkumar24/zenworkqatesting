@@ -7,6 +7,7 @@ export const REPORTED_ERROR_HEADERS = [
   "Date Reported",
   "Agent Name",
   "Form",
+  "Schedules / Related Forms",
   "Error Description",
   "Expected Result / Outcome",
   "Priority",
@@ -27,6 +28,7 @@ export type ReportedErrorRow = {
   agent: string;
   /** legacy alias kept so existing UI tables that read `r.section` still work. */
   section: string;
+  schedules: string;
   description: string;
   expected: string;
   priority: string;
@@ -65,6 +67,7 @@ export function toReportedErrorRow(d: Defect, retest?: RetestSummary | null): Re
     reportedAt: d.createdAt || null,
     agent: d.createdBy ?? "",
     section: d.formFeature || "",
+    schedules: Array.isArray(d.schedules) ? d.schedules.join(", ") : "",
     description: d.description ?? "",
     expected: d.expectedResult ?? "",
     priority: d.priority ?? "",
@@ -95,6 +98,7 @@ function rowToTuple(r: ReportedErrorRow): (string | number | Date | null)[] {
     r.reportedAt ? toDate(r.reportedAt) : null,
     r.agent,
     r.section,
+    r.schedules,
     r.description,
     r.expected,
     r.priority,
@@ -181,12 +185,13 @@ function buildSheet(rows: (string | number | Date | null)[][]) {
   });
   ws["!rows"] = [{ hpt: 22 }];
 
-  // Column indices for the simplified layout (see REPORTED_ERROR_HEADERS).
-  // 0:Date 1:Agent 2:Section 3:Desc 4:Expected 5:Priority 6:Screenshot 7:Link
-  // 8:Jira 9:AdditionalComments 10:AdminReview 11:RetestStatus 12:RetestComments 13:RetestUpdated
-  const wrapCols = new Set([3, 4, 9, 12]);
-  const linkCols = new Set([6, 7, 8]);
-  const dateCols = new Set([0, 13]);
+  // Column indices for the layout (see REPORTED_ERROR_HEADERS).
+  // 0:Date 1:Agent 2:Section 3:Schedules 4:Desc 5:Expected 6:Priority
+  // 7:Screenshot 8:Link 9:Jira 10:AdditionalComments 11:AdminReview
+  // 12:RetestStatus 13:RetestComments 14:RetestUpdated
+  const wrapCols = new Set([3, 4, 5, 10, 13]);
+  const linkCols = new Set([7, 8, 9]);
+  const dateCols = new Set([0, 14]);
   for (let r = 0; r < rows.length; r++) {
     for (let c = 0; c < HEADERS.length; c++) {
       const addr = XLSXStyle.utils.encode_cell({ r: r + 1, c });
