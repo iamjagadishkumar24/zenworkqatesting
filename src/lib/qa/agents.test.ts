@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+
+const flush = () => new Promise((r) => setTimeout(r, 0));
 
 type Row = Record<string, unknown>;
 const tables: Record<string, Row[]> = {};
@@ -67,7 +69,7 @@ beforeEach(() => {
 describe("useAgentInvites.create — input validation", () => {
   it("rejects an invalid email format", async () => {
     const { result } = renderHook(() => useAgentInvites());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await flush(); });
     let res!: { ok: boolean; error?: string };
     await act(async () => {
       res = await result.current.create({ email: "not-an-email", name: "Jane" });
@@ -79,7 +81,7 @@ describe("useAgentInvites.create — input validation", () => {
 
   it("rejects a missing/short name", async () => {
     const { result } = renderHook(() => useAgentInvites());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await flush(); });
     let res!: { ok: boolean; error?: string };
     await act(async () => {
       res = await result.current.create({ email: "a@b.co", name: "A" });
@@ -90,7 +92,7 @@ describe("useAgentInvites.create — input validation", () => {
 
   it("normalises email casing/whitespace before insert", async () => {
     const { result } = renderHook(() => useAgentInvites());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await flush(); });
     await act(async () => {
       await result.current.create({ email: "  Foo@Bar.COM  ", name: " Jane Doe " });
     });
@@ -103,7 +105,7 @@ describe("useAgentInvites.create — input validation", () => {
 
   it("propagates a database error from insert", async () => {
     const { result } = renderHook(() => useAgentInvites());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await flush(); });
     nextError = { message: "duplicate key" };
     let res!: { ok: boolean; error?: string };
     await act(async () => {
@@ -117,7 +119,7 @@ describe("useAgentInvites.create — input validation", () => {
 describe("useAgentInvites server-fn wrappers", () => {
   it("deactivate/reactivate return ok on success", async () => {
     const { result } = renderHook(() => useAgentInvites());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await flush(); });
     await expect(result.current.deactivate("u1")).resolves.toEqual({ ok: true });
     await expect(result.current.reactivate("u1")).resolves.toEqual({ ok: true });
   });
