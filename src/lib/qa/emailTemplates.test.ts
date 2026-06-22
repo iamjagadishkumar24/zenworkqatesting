@@ -43,7 +43,8 @@ describe("renderTaskAssignmentEmail", () => {
       instructions: "<script>bad</script>",
     }).html;
     expect(html).not.toContain("<script>bad");
-    expect(html).not.toContain("onerror=");
+    expect(html).not.toMatch(/<img\b[^>]*onerror=/i);
+    expect(html).toContain("&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");
     expect(html).toContain("&lt;script&gt;bad&lt;/script&gt;");
     expect(html).toContain("A &amp; B &quot;quoted&quot; &lt;tag&gt;");
   });
