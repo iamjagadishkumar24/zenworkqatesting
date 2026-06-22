@@ -14,13 +14,36 @@ async function login(page: Page, email: string, password: string) {
 }
 
 async function readAccent(page: Page) {
-  return page.evaluate(() => ({
-    accent: document.documentElement.dataset.accent,
-    // Primary color drives KPI gradients, module card icons, defects badges.
-    primary: getComputedStyle(document.documentElement)
-      .getPropertyValue("--primary")
-      .trim(),
-  }));
+  // Resolve the --primary token through a real element so Chromium and
+  // Firefox both return a normalized `rgb(...)` / `oklch(...)` string.
+  return page.evaluate(() => {
+    const probe = document.createElement("div");
+    probe.style.color = "hsl(var(--primary))";
+    probe.style.display = "none";
+    document.body.appendChild(probe);
+    const primary = getComputedStyle(probe).color;
+    probe.remove();
+    return {
+      accent: document.documentElement.dataset.accent,
+      primary,
+    };
+  });
+}
+
+// Sample the resolved color of the first matching element. Returns null
+// when nothing matches so callers can skip pages that don't render a
+// given primitive.
+async function sampleColor(
+  page: Page,
+  selector: string,
+  prop: "color" | "backgroundColor" | "borderTopColor",
+) {
+  const loc = page.locator(selector).first();
+  if ((await loc.count()) === 0) return null;
+  return loc.evaluate(
+    (el, p) => getComputedStyle(el as HTMLElement)[p as never] as string,
+    prop,
+  );
 }
 
 test.describe("Agent accent applies across pages after refresh", () => {
@@ -51,6 +74,37 @@ test.describe("Agent accent applies across pages after refresh", () => {
 
       const now = await readAccent(page);
       expect(now.primary).toBe(baseline.primary);
+
+      // Primary button uses the same accent token — Tailwind classes
+      // `bg-primary` / `text-primary` resolve through the CSS variable,
+      // so the computed color must match the root probe in both Chromium
+      // and Firefox.
+      const btnBg = await sampleColor(
+        page,
+        'button.bg-primary, [data-variant="default"]',
+        "backgroundColor",
+      );
+      if (btnBg) expect(btnBg).toBe(baseline.primary);
+
+      // Table headers (when present) use `text-muted-foreground` for the
+      // label color but the column-sort / active state borders pick up
+      // `--primary`. Sample any element that explicitly opts into the
+      // primary color via a Tailwind utility.
+      const accentText = await sampleColor(
+        page,
+        ".text-primary, [data-accent-text='true']",
+        "color",
+      );
+      if (accentText) expect(accentText).toBe(baseline.primary);
+
+      // Badge primary variant (used on the Defects list and Reports
+      // chips) — same token, must match.
+      const badgeBg = await sampleColor(
+        page,
+        '[data-slot="badge"].bg-primary, .badge.bg-primary',
+        "backgroundColor",
+      );
+      if (badgeBg) expect(badgeBg).toBe(baseline.primary);
     }
 
     // Dashboard: KPI gradient + module card icon use var(--gradient-primary)

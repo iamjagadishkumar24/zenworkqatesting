@@ -184,6 +184,7 @@ export function usePrefs() {
       }
       // Best-effort backend sync; localStorage write happens in the apply effect.
       if (uid) {
+        const isThemeChange = k === "accent" || k === "theme";
         void saveMyPreferences({
           data: {
             theme: next.theme,
@@ -194,11 +195,22 @@ export function usePrefs() {
             show_trend_chart: next.showTrendChart,
             show_agent_chart: next.showAgentChart,
           },
-        }).catch((err: unknown) => {
+        })
+        .then(() => {
+          if (isThemeChange) {
+            toast.success("Theme synced", {
+              description:
+                "Your accent color was saved. If it doesn't appear everywhere, refresh the page.",
+            });
+          }
+        })
+        .catch((err: unknown) => {
           // Surface the server's response so the user sees why their
           // selection didn't persist (e.g. unsupported value, RLS denial).
           const msg = err instanceof Error ? err.message : String(err);
-          toast.error(`Couldn't save theme: ${msg}`);
+          toast.error(`Couldn't save theme: ${msg}`, {
+            description: "Try refreshing the page and selecting the color again.",
+          });
         });
       }
       return next;
