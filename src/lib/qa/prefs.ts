@@ -171,6 +171,17 @@ export function usePrefs() {
   const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) =>
     setPrefs((p) => {
       const next = { ...p, [k]: v };
+      // Frontend validation: reject unsupported theme/accent values up front
+      // so a crafted UI can't ask the backend to persist garbage. The toast
+      // mirrors the error the server would have returned.
+      if (k === "accent" && !ALLOWED_ACCENTS.includes(v as AdminPrefs["accent"])) {
+        toast.error(`Unsupported theme color: ${String(v)}`);
+        return p;
+      }
+      if (k === "theme" && !ALLOWED_THEMES.includes(v as AdminPrefs["theme"])) {
+        toast.error(`Unsupported theme mode: ${String(v)}`);
+        return p;
+      }
       // Best-effort backend sync; localStorage write happens in the apply effect.
       if (uid) {
         void saveMyPreferences({
@@ -183,7 +194,12 @@ export function usePrefs() {
             show_trend_chart: next.showTrendChart,
             show_agent_chart: next.showAgentChart,
           },
-        }).catch(() => {});
+        }).catch((err: unknown) => {
+          // Surface the server's response so the user sees why their
+          // selection didn't persist (e.g. unsupported value, RLS denial).
+          const msg = err instanceof Error ? err.message : String(err);
+          toast.error(`Couldn't save theme: ${msg}`);
+        });
       }
       return next;
     });
