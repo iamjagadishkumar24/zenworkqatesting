@@ -87,10 +87,10 @@ describe("runtime-config.functions", () => {
     });
     await listQARuntimeConfigAudit({ data: { page: -5, pageSize: 5000 }, context: c });
     const b = c.builders[c.builders.length - 1];
-    const range = b.calls.find((x) => x.method === "range");
+    const range = b.calls.find((x: { method: string }) => x.method === "range");
     // page=1, pageSize=100 -> range(0, 99)
     expect(range?.args).toEqual([0, 99]);
-    const order = b.calls.find((x) => x.method === "order");
+    const order = b.calls.find((x: { method: string }) => x.method === "order");
     expect(order?.args).toEqual(["created_at", { ascending: false }]);
   });
 
@@ -130,7 +130,9 @@ describe("runtime-config.functions", () => {
     expect(out.page).toBe(2);
     expect(out.pageSize).toBe(10);
     expect(out.entries[0]).toMatchObject({ id: "a1", newLiveEnabled: false });
-    const range = c.builders[c.builders.length - 1].calls.find((x) => x.method === "range");
+    const range = c.builders[c.builders.length - 1].calls.find(
+      (x: { method: string }) => x.method === "range",
+    );
     expect(range?.args).toEqual([10, 19]);
   });
 });
