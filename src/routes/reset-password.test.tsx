@@ -22,11 +22,11 @@ vi.mock("@/lib/qa/admin.functions", () => ({
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
-      getSession: () => getSession(),
-    updateUser: ((p: any) => updateUser(p)) as any,
-      signOut: () => signOut(),
-    },
-  },
+      getSession: (...a: any[]) => getSession(...a),
+      updateUser: (...a: any[]) => updateUser(...(a as [any])),
+      signOut: (...a: any[]) => signOut(...a),
+    } as any,
+  } as any,
 }));
 vi.mock("sonner", () => ({
   toast: { error: toastError, success: toastSuccess },
