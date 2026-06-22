@@ -5,7 +5,7 @@ const flush = () => new Promise((r) => setTimeout(r, 0));
 
 type Row = Record<string, unknown>;
 const tables: Record<string, Row[]> = {};
-let lastInsert: Row | null = null;
+const lastInserts: Record<string, Row | null> = {};
 let nextError: { message: string } | null = null;
 
 function chain(table: string) {
@@ -15,7 +15,7 @@ function chain(table: string) {
     eq: () => api,
     insert: async (row: Row | Row[]) => {
       const arr = Array.isArray(row) ? row : [row];
-      lastInsert = arr[0]!;
+      lastInserts[table] = arr[0]!;
       if (nextError) {
         const e = nextError;
         nextError = null;
@@ -63,7 +63,7 @@ import { useAgentInvites } from "./agents";
 
 beforeEach(() => {
   for (const k of Object.keys(tables)) delete tables[k];
-  lastInsert = null;
+  for (const k of Object.keys(lastInserts)) delete lastInserts[k];
   nextError = null;
 });
 
@@ -77,7 +77,7 @@ describe("useAgentInvites.create — input validation", () => {
     });
     expect(res.ok).toBe(false);
     expect(res.error).toMatch(/valid email/i);
-    expect(lastInsert).toBeNull();
+    expect(lastInserts.agent_invites).toBeUndefined();
   });
 
   it("rejects a missing/short name", async () => {
@@ -97,7 +97,7 @@ describe("useAgentInvites.create — input validation", () => {
     await act(async () => {
       await result.current.create({ email: "  Foo@Bar.COM  ", name: " Jane Doe " });
     });
-    expect(lastInsert).toMatchObject({
+    expect(lastInserts.agent_invites).toMatchObject({
       email: "foo@bar.com",
       name: "Jane Doe",
       created_by: "admin-1",
