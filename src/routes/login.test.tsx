@@ -83,6 +83,9 @@ describe("LoginPage failed login", () => {
 });
 
 describe("LoginPage validation and success", () => {
+  beforeEach(() => {
+    loginMock.mockReset();
+  });
   const submitLoginForm = () => {
     const form = (document.getElementById("email") as HTMLInputElement).closest(
       "form",
