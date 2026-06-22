@@ -40,6 +40,7 @@ describe("Reported-error export — columns", () => {
       "Date Reported",
       "Agent Name",
       "Form",
+      "Schedules / Related Forms",
       "Error Description",
       "Expected Result / Outcome",
       "Priority",
