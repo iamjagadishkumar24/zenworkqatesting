@@ -83,9 +83,16 @@ describe("LoginPage failed login", () => {
 });
 
 describe("LoginPage validation and success", () => {
+  const submitLoginForm = () => {
+    const form = (document.getElementById("email") as HTMLInputElement).closest(
+      "form",
+    ) as HTMLFormElement;
+    fireEvent.submit(form);
+  };
+
   it("blocks submit and warns when email is missing", async () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+    submitLoginForm();
     expect(await screen.findByText(/enter your email/i)).toBeInTheDocument();
     expect(loginMock).not.toHaveBeenCalled();
   });
@@ -96,7 +103,7 @@ describe("LoginPage validation and success", () => {
     fireEvent.change(email, { target: { value: "not-an-email" } });
     const pwd = document.getElementById("pwd") as HTMLInputElement;
     fireEvent.change(pwd, { target: { value: "secret" } });
-    fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+    submitLoginForm();
     expect(await screen.findByText(/invalid email format/i)).toBeInTheDocument();
     expect(loginMock).not.toHaveBeenCalled();
   });
@@ -105,7 +112,7 @@ describe("LoginPage validation and success", () => {
     render(<LoginPage />);
     const email = document.getElementById("email") as HTMLInputElement;
     fireEvent.change(email, { target: { value: "ok@x.com" } });
-    fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+    submitLoginForm();
     expect(await screen.findByText(/enter your password/i)).toBeInTheDocument();
     expect(loginMock).not.toHaveBeenCalled();
   });
