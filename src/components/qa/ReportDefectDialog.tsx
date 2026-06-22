@@ -188,14 +188,14 @@ export function ReportDefectDialog({
     if (draft.attachmentUrl && !isValidUrl(draft.attachmentUrl))
       return toast.error("Attachment URL is not valid");
     if (!draft.taxYear) return toast.error("Please select the tax year for this reported error.");
+    if (scheduleOptions && scheduleOptions.length > 0 && selectedSchedules.length === 0) {
+      return toast.error(`Please select at least one ${scheduleLabel.toLowerCase()} entry.`);
+    }
 
     const payload = {
       ...draft,
       formFeature: featureMode ? draft._form : encodeFormFeature(draft._form, draft._integration),
-      description:
-        selectedSchedules.length > 0
-          ? `${scheduleLabel}: ${selectedSchedules.join(", ")}\n\n${draft.description}`
-          : draft.description,
+      schedules: selectedSchedules.length > 0 ? [...selectedSchedules] : undefined,
     };
     delete (payload as Partial<Draft>)._form;
     delete (payload as Partial<Draft>)._integration;
