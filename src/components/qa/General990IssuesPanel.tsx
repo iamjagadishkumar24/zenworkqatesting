@@ -108,10 +108,10 @@ export function General990IssuesPanel() {
       stepsToReproduce: "",
       expectedResult: "",
       actualResult: "",
-      status: "Open",
+      status: "Reported",
       priority: "Medium",
-      severity: "Minor",
-      environment: env,
+      severity: "Medium",
+      environment: env ?? undefined,
       assignedAgent: currentUser?.name ?? "",
     });
     setSubmitting(false);
