@@ -9,10 +9,9 @@ import {
 import type { Defect } from "./types";
 
 vi.mock("sonner", () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
-vi.mock("xlsx-js-style", async () => {
-  const actual = await vi.importActual<typeof import("xlsx-js-style")>("xlsx-js-style");
-  return { ...actual, default: { ...actual, writeFile: vi.fn() } };
-});
+
+import XLSXStyleActual from "xlsx-js-style";
+const writeFileSpy = vi.spyOn(XLSXStyleActual, "writeFile").mockImplementation(() => undefined as any);
 
 function d(over: Partial<Defect> = {}): Defect {
   return {
@@ -118,10 +117,9 @@ describe("buildReportedErrorsWorkbook", () => {
     const buf = buildReportedErrorsWorkbook([d({ description: "Hello" })]);
     expect(buf.byteLength).toBeGreaterThan(0);
     // Round-trip via the same lib to sanity-check headers and the body row.
-    const XLSX = (await import("xlsx-js-style")).default;
-    const wb = XLSX.read(buf, { type: "array" });
+    const wb = XLSXStyleActual.read(buf, { type: "array" });
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const aoa = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
+    const aoa = XLSXStyleActual.utils.sheet_to_json<string[]>(ws, { header: 1 });
     expect(aoa[0]).toEqual([...REPORTED_ERROR_HEADERS]);
     expect(aoa[1][3]).toBe("Hello");
   });
@@ -130,20 +128,19 @@ describe("buildReportedErrorsWorkbook", () => {
 describe("exportReportedErrorsXlsx", () => {
   it("shows an info toast and writes nothing when defects is empty", async () => {
     const { toast } = await import("sonner");
-    const XLSX = (await import("xlsx-js-style")).default;
+    writeFileSpy.mockClear();
     exportReportedErrorsXlsx([], "Production");
     expect((toast.info as any)).toHaveBeenCalled();
-    expect((XLSX.writeFile as any)).not.toHaveBeenCalled();
+    expect(writeFileSpy).not.toHaveBeenCalled();
   });
 
   it("writes a file and shows a success toast when there are defects", async () => {
     const { toast } = await import("sonner");
-    const XLSX = (await import("xlsx-js-style")).default;
-    (XLSX.writeFile as any).mockClear();
+    writeFileSpy.mockClear();
     (toast.success as any).mockClear();
     exportReportedErrorsXlsx([d()], "Stage");
-    expect((XLSX.writeFile as any)).toHaveBeenCalledTimes(1);
-    const [_wb, filename] = (XLSX.writeFile as any).mock.calls[0];
+    expect(writeFileSpy).toHaveBeenCalledTimes(1);
+    const [, filename] = writeFileSpy.mock.calls[0] as [unknown, string];
     expect(filename).toMatch(/^Zenwork_Error_Report_Stage_\d{4}-\d{2}-\d{2}\.xlsx$/);
     expect((toast.success as any)).toHaveBeenCalledWith(`Exported ${filename}`);
   });
