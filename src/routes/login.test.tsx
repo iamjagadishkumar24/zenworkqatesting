@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 // --- Mocks must be hoisted before importing the route module ---
@@ -79,5 +79,62 @@ describe("LoginPage failed login", () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(alert);
     });
+  });
+});
+
+describe("LoginPage validation and success", () => {
+  beforeEach(() => {
+    loginMock.mockReset();
+  });
+  const submitLoginForm = () => {
+    const form = (document.getElementById("email") as HTMLInputElement).closest(
+      "form",
+    ) as HTMLFormElement;
+    fireEvent.submit(form);
+  };
+
+  it("blocks submit and warns when email is missing", async () => {
+    render(<LoginPage />);
+    submitLoginForm();
+    expect(await screen.findByText(/enter your email/i)).toBeInTheDocument();
+    expect(loginMock).not.toHaveBeenCalled();
+  });
+
+  it("warns on malformed email and does not call login", async () => {
+    render(<LoginPage />);
+    const email = document.getElementById("email") as HTMLInputElement;
+    fireEvent.change(email, { target: { value: "not-an-email" } });
+    const pwd = document.getElementById("pwd") as HTMLInputElement;
+    fireEvent.change(pwd, { target: { value: "secret" } });
+    submitLoginForm();
+    expect(await screen.findByText(/invalid email format/i)).toBeInTheDocument();
+    expect(loginMock).not.toHaveBeenCalled();
+  });
+
+  it("warns when password is missing", async () => {
+    render(<LoginPage />);
+    const email = document.getElementById("email") as HTMLInputElement;
+    fireEvent.change(email, { target: { value: "ok@x.com" } });
+    submitLoginForm();
+    expect(await screen.findByText(/enter your password/i)).toBeInTheDocument();
+    expect(loginMock).not.toHaveBeenCalled();
+  });
+
+  it("persists email on success when remember is checked", async () => {
+    loginMock.mockResolvedValueOnce({ ok: true });
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    render(<LoginPage />);
+    const email = document.getElementById("email") as HTMLInputElement;
+    const pwd = document.getElementById("pwd") as HTMLInputElement;
+    fireEvent.change(email, { target: { value: "User@X.com" } });
+    fireEvent.change(pwd, { target: { value: "ok-pass" } });
+    fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+    await waitFor(() =>
+      expect(loginMock).toHaveBeenCalledWith("user@x.com", "ok-pass"),
+    );
+    await waitFor(() =>
+      expect(setItem).toHaveBeenCalledWith("zenwork.rememberEmail", "user@x.com"),
+    );
+    setItem.mockRestore();
   });
 });
