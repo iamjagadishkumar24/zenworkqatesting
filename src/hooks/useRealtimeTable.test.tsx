@@ -6,15 +6,13 @@ import type { ReactNode } from "react";
 const invalidateQueries = vi.fn();
 const removeChannel = vi.fn();
 const subscribe = vi.fn(() => ({}));
-const onFn = vi.fn(function (this: any) {
-  return { subscribe };
-});
-const channelFn = vi.fn(() => ({ on: onFn }));
+const onFn: any = vi.fn(() => ({ subscribe }));
+const channelFn: any = vi.fn(() => ({ on: onFn }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    channel: (...a: any[]) => channelFn(...a),
-    removeChannel: (...a: any[]) => removeChannel(...a),
+    channel: (name: string) => channelFn(name),
+    removeChannel: (ch: unknown) => removeChannel(ch),
   },
 }));
 
@@ -48,7 +46,9 @@ describe("useRealtimeTable", () => {
     expect(channelFn).toHaveBeenCalledWith(
       expect.stringContaining("rt:defects:user_id=eq.1"),
     );
-    const [, cfg, cb] = onFn.mock.calls[0];
+    const call = onFn.mock.calls[0] as any[];
+    const cfg = call[1];
+    const cb = call[2] as (p: unknown) => void;
     expect(cfg).toMatchObject({
       event: "*",
       schema: "public",
