@@ -1,13 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { createSupabaseMock, createQueryBuilder } from "@/test/supabase-mock";
 
-const supa = vi.hoisted(() => {
-  const { createSupabaseMock } = require("@/test/supabase-mock") as typeof import("@/test/supabase-mock");
-  return createSupabaseMock();
-});
-
+const supa = createSupabaseMock();
 vi.mock("@/integrations/supabase/client", () => ({ supabase: supa.client }));
 
-import { queryDefectsPage, queryDefectsAll, type DefectQuerySpec } from "./defectsQuery";
+const { queryDefectsPage, queryDefectsAll } = await import("./defectsQuery");
+type DefectQuerySpec = import("./defectsQuery").DefectQuerySpec;
 
 function lastCalls() {
   return supa.lastBuilder().calls as Array<{ method: string; args: unknown[] }>;
@@ -37,15 +35,17 @@ describe("queryDefectsPage", () => {
       created_at: "2026-01-01",
       updated_at: "2026-01-02",
     };
-    const out = await (async () => {
-      supa.from.mockImplementationOnce(() => {
-        const { createQueryBuilder } = require("@/test/supabase-mock");
-        const b = createQueryBuilder({ data: [row], count: 1, error: null });
-        supa.builders.push(b);
-        return b;
-      });
-      return queryDefectsPage({ environment: "Production" }, { key: "createdAt", dir: "desc" }, 2, 25);
-    })();
+    supa.from.mockImplementationOnce(() => {
+      const b = createQueryBuilder({ data: [row], count: 1, error: null });
+      supa.builders.push(b);
+      return b;
+    });
+    const out = await queryDefectsPage(
+      { environment: "Production" },
+      { key: "createdAt", dir: "desc" },
+      2,
+      25,
+    );
 
     expect(supa.from).toHaveBeenCalledWith("defects");
     const calls = lastCalls();
@@ -64,7 +64,6 @@ describe("queryDefectsPage", () => {
 
   it("maps Unverified / null validity to 'Pending Review'", async () => {
     supa.from.mockImplementationOnce(() => {
-      const { createQueryBuilder } = require("@/test/supabase-mock");
       const b = createQueryBuilder({
         data: [
           { id: "1", validity: null },
@@ -162,7 +161,6 @@ describe("queryDefectsPage", () => {
 
   it("propagates error from Supabase", async () => {
     supa.from.mockImplementationOnce(() => {
-      const { createQueryBuilder } = require("@/test/supabase-mock");
       const b = createQueryBuilder({ data: null, count: null, error: { message: "boom" } });
       supa.builders.push(b);
       return b;
@@ -189,7 +187,6 @@ describe("queryDefectsAll", () => {
 
   it("stops after first short page", async () => {
     supa.from.mockImplementationOnce(() => {
-      const { createQueryBuilder } = require("@/test/supabase-mock");
       const b = createQueryBuilder({ data: [{ id: "a" }, { id: "b" }], count: 2, error: null });
       supa.builders.push(b);
       return b;
@@ -200,7 +197,6 @@ describe("queryDefectsAll", () => {
   });
 
   it("respects the cap and stops paging once cap is reached", async () => {
-    const { createQueryBuilder } = require("@/test/supabase-mock");
     const fullChunk = Array.from({ length: 1000 }, (_, i) => ({ id: `r${i}` }));
     supa.from
       .mockImplementationOnce(() => {
