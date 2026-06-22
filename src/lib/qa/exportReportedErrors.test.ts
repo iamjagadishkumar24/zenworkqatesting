@@ -121,7 +121,7 @@ describe("buildReportedErrorsWorkbook", () => {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const aoa = XLSXStyleActual.utils.sheet_to_json<string[]>(ws, { header: 1 });
     expect(aoa[0]).toEqual([...REPORTED_ERROR_HEADERS]);
-    expect(aoa[1][3]).toBe("Hello");
+    expect(aoa[1][4]).toBe("Hello");
   });
 });
 
