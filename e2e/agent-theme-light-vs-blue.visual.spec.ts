@@ -147,6 +147,55 @@ async function snapshotEachStatusOption(
   await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
 }
 
+/**
+ * Snapshot the open listbox after Home / End / PageDown / PageUp presses.
+ * PageUp/PageDown are captured opportunistically: if the widget doesn't
+ * support them the highlighted row simply won't move, which is still a
+ * valid visual baseline.
+ */
+async function snapshotStatusNavigationKeys(
+  page: Page,
+  label: string,
+  pageName: string,
+) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count()) === 0) return;
+  await openStatusDropdownByKeyboard(page, 0);
+  const popover = page.locator(POPOVER_SELECTOR).first();
+  if ((await popover.count()) === 0) return;
+
+  const keys = ["End", "Home", "PageDown", "PageUp"] as const;
+  for (const key of keys) {
+    await page.keyboard.press(key);
+    await page
+      .waitForFunction(
+        (sel) => {
+          const el = document.querySelector(sel) as HTMLElement | null;
+          if (!el) return false;
+          const anims = el.getAnimations({ subtree: true });
+          return anims.every(
+            (a) => a.playState === "finished" || a.playState === "idle",
+          );
+        },
+        POPOVER_SELECTOR,
+        { timeout: 2000 },
+      )
+      .catch(() => {});
+    await page.evaluate(
+      () =>
+        new Promise<void>((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => r())),
+        ),
+    );
+    await expect(popover).toHaveScreenshot(
+      `${label}-${pageName}-status-nav-${key.toLowerCase()}.png`,
+      { animations: "disabled", maxDiffPixelRatio: 0.02 },
+    );
+  }
+  await page.keyboard.press("Escape").catch(() => {});
+  await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
+}
+
 const PAGES = [
   {
     path: "/dashboard",
@@ -178,6 +227,8 @@ const PAGES = [
       }
       // Per-option highlight snapshots from the same open popover.
       await snapshotEachStatusOption(page, label, pageName);
+      // Home / End / PageUp / PageDown highlight snapshots.
+      await snapshotStatusNavigationKeys(page, label, pageName);
     },
     extraRegions: [
       {
