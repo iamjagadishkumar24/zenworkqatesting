@@ -51,6 +51,102 @@ async function openStatusDropdown(page: Page) {
   );
 }
 
+/**
+ * Keyboard-only opener: focus the trigger, open via Enter (fall back to
+ * Space), then move the active option with ArrowDown a few times.
+ */
+async function openStatusDropdownByKeyboard(page: Page, arrowDownPresses = 2) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count()) === 0) return;
+  await page.keyboard.press("Escape").catch(() => {});
+  await trigger.scrollIntoViewIfNeeded().catch(() => {});
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  const popover = page.locator(POPOVER_SELECTOR).first();
+  const visible = await popover
+    .waitFor({ state: "visible", timeout: 1500 })
+    .then(() => true)
+    .catch(() => false);
+  if (!visible) {
+    await page.keyboard.press("Space");
+    await popover.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
+  }
+  await page
+    .waitForFunction(
+      (sel) => {
+        const el = document.querySelector(sel) as HTMLElement | null;
+        if (!el) return false;
+        const anims = el.getAnimations({ subtree: true });
+        return anims.every(
+          (a) => a.playState === "finished" || a.playState === "idle",
+        );
+      },
+      POPOVER_SELECTOR,
+      { timeout: 3000 },
+    )
+    .catch(() => {});
+  for (let i = 0; i < arrowDownPresses; i++) {
+    await page.keyboard.press("ArrowDown");
+  }
+  await page.evaluate(
+    () =>
+      new Promise<void>((r) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => r())),
+      ),
+  );
+}
+
+/**
+ * Snapshot every option in the open status dropdown without closing it.
+ * Walks the option list with ArrowDown, captures the popover after each
+ * move so the `highlighted` (aria-selected / data-highlighted) row shifts.
+ */
+async function snapshotEachStatusOption(
+  page: Page,
+  label: string,
+  pageName: string,
+) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count()) === 0) return;
+  await openStatusDropdownByKeyboard(page, 0);
+  const popover = page.locator(POPOVER_SELECTOR).first();
+  if ((await popover.count()) === 0) return;
+  const optionCount = await popover
+    .locator('[role="option"], [role="menuitem"]')
+    .count();
+  const max = Math.min(optionCount, 8); // cap to keep snapshots bounded
+  for (let i = 0; i < max; i++) {
+    await page.keyboard.press("ArrowDown");
+    // Wait for the highlighted row to settle (data-highlighted or aria-selected toggles).
+    await page
+      .waitForFunction(
+        (sel) => {
+          const el = document.querySelector(sel) as HTMLElement | null;
+          if (!el) return false;
+          const anims = el.getAnimations({ subtree: true });
+          return anims.every(
+            (a) => a.playState === "finished" || a.playState === "idle",
+          );
+        },
+        POPOVER_SELECTOR,
+        { timeout: 2000 },
+      )
+      .catch(() => {});
+    await page.evaluate(
+      () =>
+        new Promise<void>((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => r())),
+        ),
+    );
+    await expect(popover).toHaveScreenshot(
+      `${label}-${pageName}-status-option-${i + 1}.png`,
+      { animations: "disabled", maxDiffPixelRatio: 0.02 },
+    );
+  }
+  await page.keyboard.press("Escape").catch(() => {});
+  await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
+}
+
 const PAGES = [
   {
     path: "/dashboard",
@@ -66,6 +162,23 @@ const PAGES = [
   {
     path: "/defects",
     name: "defects",
+    afterRegions: async (page: Page, label: string, pageName: string) => {
+      // Keyboard-driven open + ArrowDown highlight snapshot.
+      await openStatusDropdownByKeyboard(page, 2);
+      const popover = page.locator(POPOVER_SELECTOR).first();
+      if ((await popover.count()) > 0) {
+        await expect(popover).toHaveScreenshot(
+          `${label}-${pageName}-status-dropdown-keyboard.png`,
+          { animations: "disabled", maxDiffPixelRatio: 0.02 },
+        );
+        await page.keyboard.press("Escape").catch(() => {});
+        await popover
+          .waitFor({ state: "hidden", timeout: 2000 })
+          .catch(() => {});
+      }
+      // Per-option highlight snapshots from the same open popover.
+      await snapshotEachStatusOption(page, label, pageName);
+    },
     extraRegions: [
       {
         key: "status-dropdown",
@@ -179,6 +292,9 @@ test.describe("Visual: Light vs Blue accent across pages", () => {
 
         await focusFirstInteractive(page);
         await snapshotRegions(page, accent.toLowerCase(), p.name, p.extraRegions);
+        if ("afterRegions" in p && typeof p.afterRegions === "function") {
+          await p.afterRegions(page, accent.toLowerCase(), p.name);
+        }
       }
     });
   }
