@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { useQA } from "@/lib/qa/store";
+import { computeDashboardStats, scopeDefectsForDashboard, useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useTaxYear, matchesTaxYear } from "@/lib/qa/taxYear";
-import { scopeForUser, filterByEnvironment } from "@/lib/qa/scope";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TestStatusBadge } from "@/components/qa/StatusBadge";
@@ -97,22 +96,11 @@ function Dashboard() {
   }, [myTasks]);
 
   const scopedDefects = useMemo(() => {
-    const byUser = scopeForUser(
-      defects,
-      currentUser ? { name: currentUser.name, role: currentUser.role } : null,
-    );
-    const byEnv = filterByEnvironment(byUser, env);
-    return byEnv.filter((d) => matchesTaxYear(d.taxYear, taxYear));
+    return scopeDefectsForDashboard(defects, currentUser, env, taxYear);
   }, [defects, env, currentUser, taxYear]);
 
   const stats = useMemo(() => {
-    const total = scopedDefects.length;
-    const open = scopedDefects.filter((d) => !["Fixed", "Closed"].includes(d.status)).length;
-    const valid = scopedDefects.filter((d) => d.validity === "Valid").length;
-    const invalid = scopedDefects.filter((d) => d.validity === "Invalid").length;
-    const fixed = scopedDefects.filter((d) => d.status === "Fixed" || d.status === "Closed").length;
-    const retest = scopedDefects.filter((d) => d.status === "Retest Required").length;
-    return { total, open, valid, invalid, fixed, retest };
+    return computeDashboardStats(scopedDefects);
   }, [scopedDefects]);
 
   const kpis = [

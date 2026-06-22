@@ -1,9 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQA } from "@/lib/qa/store";
+import { applyDefectPreset, scopeDefectsForDashboard, useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
-import { useTaxYear, matchesTaxYear } from "@/lib/qa/taxYear";
-import { scopeForUser, filterByEnvironment } from "@/lib/qa/scope";
+import { useTaxYear } from "@/lib/qa/taxYear";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -135,12 +134,7 @@ function ReportedErrorsPage() {
 
   // Scope: admins see everything; agents see only their reported errors.
   const scoped = useMemo(() => {
-    const byUser = scopeForUser(
-      defects,
-      currentUser ? { name: currentUser.name, role: currentUser.role } : null,
-    );
-    const byEnv = filterByEnvironment(byUser, env);
-    return byEnv.filter((d) => matchesTaxYear(d.taxYear, taxYear));
+    return scopeDefectsForDashboard(defects, currentUser, env, taxYear);
   }, [defects, currentUser, env, taxYear]);
 
   const reporters = useMemo(
@@ -170,23 +164,7 @@ function ReportedErrorsPage() {
       retest: isAdmin ? retest : "any",
     };
     const base = filterDefectsAdmin(scoped, f);
-    if (!preset || preset === "all") return base;
-    return base.filter((d) => {
-      switch (preset) {
-        case "open":
-          return !["Fixed", "Closed"].includes(d.status);
-        case "valid":
-          return d.validity === "Valid";
-        case "invalid":
-          return d.validity === "Invalid";
-        case "fixed":
-          return d.status === "Fixed" || d.status === "Closed";
-        case "retest":
-          return d.status === "Retest Required";
-        default:
-          return true;
-      }
-    });
+    return applyDefectPreset(base, preset);
   }, [
     scoped,
     q,
