@@ -14,7 +14,9 @@ export interface MockResult<T = unknown> {
   count?: number | null;
 }
 
-export function createQueryBuilder<T = unknown>(result: MockResult<T> = { data: [], error: null }) {
+export function createQueryBuilder<T = unknown>(
+  result: MockResult<T> = { data: [] as unknown as T, error: null },
+) {
   const calls: ChainCall[] = [];
   const builder: any = {
     calls,
