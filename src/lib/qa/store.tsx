@@ -829,12 +829,24 @@ export function QAProvider({ children }: { children: ReactNode }) {
         }
         else if (status === "CLOSED") setRealtimeStatus("idle");
         else setRealtimeStatus("connecting");
+        // Read-only probe for E2E: lets Playwright assert the realtime
+        // subscription is alive without any visible UI indicator.
+        if (typeof window !== "undefined") {
+          (window as unknown as { __qaRealtimeProbe?: unknown }).__qaRealtimeProbe = {
+            channelName,
+            status,
+            at: Date.now(),
+          };
+        }
       });
     setRealtimeStatus("connecting");
 
     return () => {
       cancelled = true;
       void supabase.removeChannel(channel);
+      if (typeof window !== "undefined") {
+        delete (window as unknown as { __qaRealtimeProbe?: unknown }).__qaRealtimeProbe;
+      }
     };
   }, [state.currentUser?.id, runtimeConfig.liveEnabled]);
 
