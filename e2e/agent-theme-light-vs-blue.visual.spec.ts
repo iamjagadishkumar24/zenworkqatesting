@@ -1,6 +1,15 @@
 import { test, expect, type Page } from "@playwright/test";
 import { AGENT, loginAgent, pickAccent } from "./agent-theme-helpers";
 
+type Region = {
+  key: string;
+  selector: string;
+  /** Optional opener run before snapshotting (e.g. open a dropdown). */
+  open?: (page: Page) => Promise<void>;
+  /** Optional locator override for the screenshot target (e.g. the popover). */
+  target?: string;
+};
+
 const PAGES = [
   {
     path: "/dashboard",
@@ -21,6 +30,26 @@ const PAGES = [
         key: "status-dropdown",
         selector:
           'main [data-testid="status-filter"], main [role="combobox"]:has-text("status"), main [role="combobox"]',
+      },
+      {
+        key: "status-dropdown-open",
+        selector:
+          'main [data-testid="status-filter"], main [role="combobox"]:has-text("status"), main [role="combobox"]',
+        open: async (page) => {
+          const trigger = page
+            .locator(
+              'main [data-testid="status-filter"], main [role="combobox"]:has-text("status"), main [role="combobox"]',
+            )
+            .first();
+          if ((await trigger.count()) === 0) return;
+          await trigger.click();
+          await page
+            .locator('[role="listbox"], [role="menu"]')
+            .first()
+            .waitFor({ state: "visible", timeout: 3000 })
+            .catch(() => {});
+        },
+        target: '[role="listbox"], [role="menu"]',
       },
     ],
   },
@@ -51,16 +80,20 @@ async function snapshotRegions(
   page: Page,
   label: string,
   pageName: string,
-  extra: { key: string; selector: string }[] = [],
+  extra: Region[] = [],
 ) {
   for (const r of [...REGIONS, ...extra]) {
-    const loc = page.locator(r.selector).first();
+    if (r.open) await r.open(page);
+    const loc = page.locator(r.target ?? r.selector).first();
     if ((await loc.count()) === 0) continue;
     await loc.scrollIntoViewIfNeeded().catch(() => {});
     await expect(loc).toHaveScreenshot(`${label}-${pageName}-${r.key}.png`, {
       animations: "disabled",
       maxDiffPixelRatio: 0.02,
     });
+    if (r.open) {
+      await page.keyboard.press("Escape").catch(() => {});
+    }
   }
 }
 
