@@ -504,7 +504,7 @@ function SettingsPage() {
               <CardDescription>
                 {isAdmin
                   ? "Appearance of the portal. Applied immediately."
-                  : "Agents are restricted to the Light theme. Contact an admin for other options."}
+                  : "Pick any theme color below — applied immediately. Light/Dark mode is admin-only."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
