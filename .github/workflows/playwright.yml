@@ -54,7 +54,28 @@ jobs:
           set -o pipefail
           mkdir -p test-results
           bunx playwright test e2e/990-schedules.spec.ts \
-            --reporter=list 2>&1 | tee test-results/990-schedules.log
+            --retries=3 \
+            --trace=retain-on-failure \
+            --output=test-results/990-schedules \
+            --reporter=list,html 2>&1 | tee test-results/990-schedules.log
+
+      - name: Upload 990 schedules HTML report
+        if: always() && steps.schedules_990.conclusion != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-990-schedules
+          path: playwright-report
+          retention-days: 14
+
+      - name: Upload 990 schedules failure artifacts (screenshots, traces, video)
+        if: failure() && steps.schedules_990.conclusion == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failures-990-schedules
+          path: |
+            test-results/990-schedules
+            test-results/990-schedules.log
+          retention-days: 14
 
       - name: Dashboard hook-order regression (React #310 gate)
         id: dashboard_hook_order
