@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -65,6 +66,8 @@ export function ReportDefectDialog({
   lockTaxYear = false,
   defaultQbCategory,
   lockQbCategory = false,
+  scheduleOptions,
+  scheduleLabel = "Schedules / Related Forms",
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -84,6 +87,10 @@ export function ReportDefectDialog({
   defaultQbCategory?: QbDesktopCategory;
   /** Lock the QB Desktop category to the pre-selected value. */
   lockQbCategory?: boolean;
+  /** When provided, show a multi-select of schedules / related forms tied to the parent form. */
+  scheduleOptions?: string[];
+  /** Optional label override for the schedules section. */
+  scheduleLabel?: string;
 }) {
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
@@ -103,6 +110,11 @@ export function ReportDefectDialog({
   const lockIntegration = showIntegration && !!defaultIntegration;
   const showForm = !featureMode;
   const formChoices = formOptions && formOptions.length ? formOptions : FORM_LIST;
+  const [selectedSchedules, setSelectedSchedules] = useState<string[]>([]);
+  const toggleSchedule = (s: string) =>
+    setSelectedSchedules((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+    );
   const [draft, setDraft] = useState<Draft>(() => ({
     module: defaultModule,
     formFeature: "",
@@ -128,6 +140,7 @@ export function ReportDefectDialog({
 
   useEffect(() => {
     if (open) {
+      setSelectedSchedules([]);
       setDraft((d) => ({
         ...d,
         _form: defaultForm || d._form,
@@ -179,6 +192,10 @@ export function ReportDefectDialog({
     const payload = {
       ...draft,
       formFeature: featureMode ? draft._form : encodeFormFeature(draft._form, draft._integration),
+      description:
+        selectedSchedules.length > 0
+          ? `${scheduleLabel}: ${selectedSchedules.join(", ")}\n\n${draft.description}`
+          : draft.description,
     };
     delete (payload as Partial<Draft>)._form;
     delete (payload as Partial<Draft>)._integration;
@@ -417,6 +434,34 @@ export function ReportDefectDialog({
               placeholder="https://…"
             />
           </div>
+          {scheduleOptions && scheduleOptions.length > 0 && (
+            <div className="sm:col-span-2">
+              <Label>{scheduleLabel}</Label>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Select one or more schedules / related forms to associate with this {draft._form || "form"} report.
+              </p>
+              <div className="mt-2 grid grid-cols-1 gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
+                {scheduleOptions.map((s) => {
+                  const id = `sched-${s.replace(/\s+/g, "-")}`;
+                  const checked = selectedSchedules.includes(s);
+                  return (
+                    <label
+                      key={s}
+                      htmlFor={id}
+                      className="flex cursor-pointer items-center gap-2 text-sm"
+                    >
+                      <Checkbox
+                        id={id}
+                        checked={checked}
+                        onCheckedChange={() => toggleSchedule(s)}
+                      />
+                      <span>{s}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter>

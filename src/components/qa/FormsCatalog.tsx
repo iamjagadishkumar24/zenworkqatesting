@@ -14,6 +14,54 @@ import type { Module } from "@/lib/qa/types";
 import { useRetests } from "@/lib/qa/retest";
 import { cn } from "@/lib/utils";
 
+// Schedules / related forms that can be reported under a parent 990-series form.
+// These are NOT separate modules — only multi-select options inside the parent
+// form's Report dialog.
+const SCHEDULES_BY_FORM: Record<string, string[]> = {
+  "Form 990": [
+    "Form 4562",
+    "Form 8868",
+    "Form 4466",
+    "Form 2220",
+    "Form 990-T",
+    "Schedule A",
+    "Schedule B",
+    "Schedule C",
+    "Schedule D",
+    "Schedule E",
+    "Schedule F",
+    "Schedule G",
+    "Schedule H",
+    "Schedule I",
+    "Schedule J",
+    "Schedule K",
+    "Schedule L",
+    "Schedule M",
+    "Schedule N",
+    "Schedule R",
+    "Schedule O",
+  ],
+  "Form 990-T": [
+    "Form 4562",
+    "Form 4797",
+    "Form 4626",
+    "Schedule A (990-T)",
+    "Form 3800",
+    "Supplemental Information",
+  ],
+  "Form 990-EZ": [
+    "Schedule A",
+    "Schedule B",
+    "Schedule C",
+    "Schedule E",
+    "Schedule G",
+    "Schedule L",
+    "Schedule N",
+    "Schedule O",
+  ],
+  "Form 990-PF": ["Supplemental Information"],
+};
+
 export function FormsCatalog({
   module,
   title,
@@ -169,6 +217,7 @@ export function FormsCatalog({
         defaultForm={picked ?? ""}
         defaultModule={module}
         featureMode={featureMode}
+        scheduleOptions={picked ? SCHEDULES_BY_FORM[picked] : undefined}
       />
     </div>
   );
