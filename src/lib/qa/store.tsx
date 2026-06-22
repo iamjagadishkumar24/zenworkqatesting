@@ -446,25 +446,12 @@ export function QAProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // User-visible feedback when realtime drops / recovers. Uses sonner so it
-  // sits next to the rest of the app's notifications.
+  // Realtime status transitions are intentionally NOT surfaced to the user
+  // per product requirement. The subscription keeps running in the background;
+  // we just track the previous value for parity with the public store shape.
   const prevStatusRef = useRef<RealtimeStatus>("idle");
   useEffect(() => {
-    const prev = prevStatusRef.current;
-    if (prev !== realtimeStatus) {
-      if (realtimeStatus === "reconnecting" || realtimeStatus === "error") {
-        toast.error("Realtime disconnected — reconnecting…", {
-          id: "qa-realtime-status",
-          duration: 8000,
-        });
-      } else if (realtimeStatus === "connected" && (prev === "reconnecting" || prev === "error")) {
-        toast.success("Realtime reconnected", {
-          id: "qa-realtime-status",
-          duration: 3000,
-        });
-      }
-      prevStatusRef.current = realtimeStatus;
-    }
+    prevStatusRef.current = realtimeStatus;
   }, [realtimeStatus]);
 
   // Deterministic hook for E2E tests: expose internal setters on window so
