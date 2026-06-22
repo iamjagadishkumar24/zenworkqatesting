@@ -10,6 +10,7 @@ import { Search, Bug, FileText } from "lucide-react";
 import { FORM_LIST, decodeFormFeature } from "@/lib/qa/constants";
 import { excludeNonCatalogForms } from "@/lib/qa/scope";
 import { ReportDefectDialog } from "./ReportDefectDialog";
+import { General990IssuesPanel } from "./General990IssuesPanel";
 import type { Module } from "@/lib/qa/types";
 import { useRetests } from "@/lib/qa/retest";
 import { cn } from "@/lib/utils";
@@ -145,6 +146,8 @@ export function FormsCatalog({
           />
         </div>
       </div>
+
+      {module === "990 Forms" && <General990IssuesPanel />}
 
       {list.length === 0 ? (
         <Card>
