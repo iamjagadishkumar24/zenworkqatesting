@@ -435,7 +435,7 @@ export function ReportDefectDialog({
             />
           </div>
           {scheduleOptions && scheduleOptions.length > 0 && (
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2" data-testid="schedules-section">
               <Label>{scheduleLabel}</Label>
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Select one or more schedules / related forms to associate with this {draft._form || "form"} report.
