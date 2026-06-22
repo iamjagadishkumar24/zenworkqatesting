@@ -24,7 +24,7 @@ function ctx(result: unknown = { data: [], error: null }) {
   const sb = createSupabaseMock();
   const builders: Array<ReturnType<typeof createQueryBuilder>> = [];
   (sb.client as { from: unknown }).from = _vi.fn(() => {
-    const b = createQueryBuilder(result as { data?: unknown; error?: unknown });
+    const b = createQueryBuilder(result as Parameters<typeof createQueryBuilder>[0]);
     builders.push(b);
     return b;
   });
