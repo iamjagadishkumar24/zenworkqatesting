@@ -48,6 +48,10 @@ export function createQueryBuilder<T = unknown>(
     "delete",
     "rpc",
     "filter",
+    "contains",
+    "containedBy",
+    "overlaps",
+    "textSearch",
   ];
   for (const m of chainable) {
     builder[m] = vi.fn((...args: unknown[]) => {
