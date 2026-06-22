@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "@/lib/qa/store";
 import { getMyPreferences, saveMyPreferences } from "@/lib/qa/userPreferences.functions";
+import { toast } from "sonner";
 
 export type AdminPrefs = {
   // Configurable enums
@@ -45,6 +46,14 @@ export type AdminPrefs = {
   csvDelimiter: "," | ";" | "\t";
   importMergeStrategy: "skip-existing" | "overwrite";
 };
+
+// Single source of truth for which accent values the backend will accept.
+// Kept in sync with the zod enum in userPreferences.functions.ts.
+export const ALLOWED_ACCENTS: AdminPrefs["accent"][] = [
+  "blue", "violet", "emerald", "rose",
+  "light", "green", "purple", "orange", "pink", "grey", "teal",
+];
+export const ALLOWED_THEMES: AdminPrefs["theme"][] = ["system", "light", "dark"];
 
 const DEFAULTS: AdminPrefs = {
   defectStatuses: [
@@ -162,6 +171,17 @@ export function usePrefs() {
   const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) =>
     setPrefs((p) => {
       const next = { ...p, [k]: v };
+      // Frontend validation: reject unsupported theme/accent values up front
+      // so a crafted UI can't ask the backend to persist garbage. The toast
+      // mirrors the error the server would have returned.
+      if (k === "accent" && !ALLOWED_ACCENTS.includes(v as AdminPrefs["accent"])) {
+        toast.error(`Unsupported theme color: ${String(v)}`);
+        return p;
+      }
+      if (k === "theme" && !ALLOWED_THEMES.includes(v as AdminPrefs["theme"])) {
+        toast.error(`Unsupported theme mode: ${String(v)}`);
+        return p;
+      }
       // Best-effort backend sync; localStorage write happens in the apply effect.
       if (uid) {
         void saveMyPreferences({
@@ -174,7 +194,12 @@ export function usePrefs() {
             show_trend_chart: next.showTrendChart,
             show_agent_chart: next.showAgentChart,
           },
-        }).catch(() => {});
+        }).catch((err: unknown) => {
+          // Surface the server's response so the user sees why their
+          // selection didn't persist (e.g. unsupported value, RLS denial).
+          const msg = err instanceof Error ? err.message : String(err);
+          toast.error(`Couldn't save theme: ${msg}`);
+        });
       }
       return next;
     });
