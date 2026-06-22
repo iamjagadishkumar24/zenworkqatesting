@@ -30,20 +30,30 @@ async function readAccent(page: Page) {
   });
 }
 
-// Sample the resolved color of the first matching element. Returns null
-// when nothing matches so callers can skip pages that don't render a
-// given primitive.
+// Sample the resolved color of the first VISIBLE element matching any
+// of the candidate selectors. Returns null when nothing matches so
+// callers can skip pages that don't render a given primitive. Trying
+// multiple selectors in order makes the assertions resilient to UI
+// refactors (e.g. shadcn renaming `data-slot`, Tailwind class shuffles,
+// or a page omitting one primitive entirely).
 async function sampleColor(
   page: Page,
-  selector: string,
+  selectors: string[],
   prop: "color" | "backgroundColor" | "borderTopColor",
 ) {
-  const loc = page.locator(selector).first();
-  if ((await loc.count()) === 0) return null;
-  return loc.evaluate(
-    (el, p) => getComputedStyle(el as HTMLElement)[p as never] as string,
-    prop,
-  );
+  for (const sel of selectors) {
+    const loc = page.locator(sel).filter({ visible: true }).first();
+    try {
+      await loc.waitFor({ state: "visible", timeout: 1500 });
+    } catch {
+      continue;
+    }
+    return loc.evaluate(
+      (el, p) => getComputedStyle(el as HTMLElement)[p as never] as string,
+      prop,
+    );
+  }
+  return null;
 }
 
 test.describe("Agent accent applies across pages after refresh", () => {
@@ -75,33 +85,46 @@ test.describe("Agent accent applies across pages after refresh", () => {
       const now = await readAccent(page);
       expect(now.primary).toBe(baseline.primary);
 
-      // Primary button uses the same accent token — Tailwind classes
-      // `bg-primary` / `text-primary` resolve through the CSS variable,
-      // so the computed color must match the root probe in both Chromium
-      // and Firefox.
+      // Primary button — try the shadcn default variant, then any
+      // element using the `bg-primary` token, then a role-based fallback
+      // restricted to buttons that actually render on the accent.
       const btnBg = await sampleColor(
         page,
-        'button.bg-primary, [data-variant="default"]',
-        "backgroundColor",
-      );
+        [
+          'button[data-variant="default"]',
+          'button.bg-primary',
+          '[data-slot="button"].bg-primary',
+          'a.bg-primary',
+        ],
+         "backgroundColor",
+       );
       if (btnBg) expect(btnBg).toBe(baseline.primary);
 
-      // Table headers (when present) use `text-muted-foreground` for the
-      // label color but the column-sort / active state borders pick up
-      // `--primary`. Sample any element that explicitly opts into the
-      // primary color via a Tailwind utility.
+      // Table headers / accent text — only assert when an element
+      // actively opts into the primary color. Role-based `columnheader`
+      // is the most stable handle when present.
       const accentText = await sampleColor(
         page,
-        ".text-primary, [data-accent-text='true']",
+        [
+          'th.text-primary',
+          '[role="columnheader"].text-primary',
+          '.text-primary',
+          '[data-accent-text="true"]',
+        ],
         "color",
       );
       if (accentText) expect(accentText).toBe(baseline.primary);
 
-      // Badge primary variant (used on the Defects list and Reports
-      // chips) — same token, must match.
+      // Badge primary variant — prefer the shadcn slot attribute, fall
+      // back to class-based and role-based matches.
       const badgeBg = await sampleColor(
         page,
-        '[data-slot="badge"].bg-primary, .badge.bg-primary',
+        [
+          '[data-slot="badge"].bg-primary',
+          'span.bg-primary[class*="rounded"]',
+          '[role="status"].bg-primary',
+          '.badge.bg-primary',
+        ],
         "backgroundColor",
       );
       if (badgeBg) expect(badgeBg).toBe(baseline.primary);
