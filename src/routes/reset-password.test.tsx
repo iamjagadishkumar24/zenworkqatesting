@@ -1,36 +1,50 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-const navigateMock = vi.fn();
-const getSession = vi.fn();
-const updateUser = vi.fn(async () => ({ error: null }));
-const signOut = vi.fn(async () => ({}));
-const accountStatusMock = vi.fn();
-const toastError = vi.fn();
-const toastSuccess = vi.fn();
+const h = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
+  getSession: vi.fn(),
+  updateUser: vi.fn(async () => ({ error: null as any })),
+  signOut: vi.fn(async () => ({})),
+  accountStatusMock: vi.fn(),
+  toastError: vi.fn(),
+  toastSuccess: vi.fn(),
+}));
+const {
+  navigateMock,
+  getSession,
+  updateUser,
+  signOut,
+  accountStatusMock,
+  toastError,
+  toastSuccess,
+} = h;
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (cfg: any) => cfg,
-  useNavigate: () => navigateMock,
+  useNavigate: () => h.navigateMock,
 }));
 vi.mock("@tanstack/react-start", () => ({
   useServerFn: (fn: any) => fn,
 }));
 vi.mock("@/lib/qa/admin.functions", () => ({
-  accountStatus: (args: any) => accountStatusMock(args),
+  accountStatus: (args: any) => h.accountStatusMock(args),
 }));
 vi.mock("@/integrations/supabase/client", () => {
   const supabase: any = {
     auth: {
-      getSession: (...a: any[]) => (getSession as any)(...a),
-      updateUser: (...a: any[]) => (updateUser as any)(...a),
-      signOut: (...a: any[]) => (signOut as any)(...a),
+      getSession: (...a: any[]) => (h.getSession as any)(...a),
+      updateUser: (...a: any[]) => (h.updateUser as any)(...a),
+      signOut: (...a: any[]) => (h.signOut as any)(...a),
     },
   };
   return { supabase };
 });
 vi.mock("sonner", () => ({
-  toast: { error: toastError, success: toastSuccess },
+  toast: {
+    error: (...a: any[]) => h.toastError(...a),
+    success: (...a: any[]) => h.toastSuccess(...a),
+  },
 }));
 
 import { Route } from "./reset-password";
