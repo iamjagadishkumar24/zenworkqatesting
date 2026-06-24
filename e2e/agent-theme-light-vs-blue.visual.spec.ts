@@ -196,6 +196,108 @@ async function snapshotStatusNavigationKeys(
   await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
 }
 
+/**
+ * Tab / Shift+Tab focus movement within the open dropdown. Snapshots the
+ * popover plus a small element-level focus snapshot of the currently
+ * focused element (focus ring is driven by `--ring`).
+ */
+async function snapshotStatusTabFocus(
+  page: Page,
+  label: string,
+  pageName: string,
+) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count()) === 0) return;
+  await openStatusDropdownByKeyboard(page, 0);
+  const popover = page.locator(POPOVER_SELECTOR).first();
+  if ((await popover.count()) === 0) return;
+
+  const steps: Array<{ key: "Tab" | "Shift+Tab"; name: string }> = [
+    { key: "Tab", name: "tab-1" },
+    { key: "Tab", name: "tab-2" },
+    { key: "Shift+Tab", name: "shifttab-1" },
+    { key: "Shift+Tab", name: "shifttab-2" },
+  ];
+  for (const step of steps) {
+    await page.keyboard.press(step.key);
+    await page
+      .waitForFunction(
+        (sel) => {
+          const el = document.querySelector(sel) as HTMLElement | null;
+          if (!el) return false;
+          const anims = el.getAnimations({ subtree: true });
+          return anims.every(
+            (a) => a.playState === "finished" || a.playState === "idle",
+          );
+        },
+        POPOVER_SELECTOR,
+        { timeout: 2000 },
+      )
+      .catch(() => {});
+    await page.evaluate(
+      () =>
+        new Promise<void>((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => r())),
+        ),
+    );
+    // Whole-popover snapshot to capture focus ring location.
+    if ((await popover.count()) > 0) {
+      await expect(popover).toHaveScreenshot(
+        `${label}-${pageName}-status-${step.name}-popover.png`,
+        { animations: "disabled", maxDiffPixelRatio: 0.02 },
+      );
+    }
+    // Element-level snapshot of the currently focused control, if any.
+    const focused = page.locator(":focus").first();
+    if ((await focused.count()) > 0) {
+      await expect(focused).toHaveScreenshot(
+        `${label}-${pageName}-status-${step.name}-focused.png`,
+        { animations: "disabled", maxDiffPixelRatio: 0.02 },
+      );
+    }
+  }
+  await page.keyboard.press("Escape").catch(() => {});
+  await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
+}
+
+/**
+ * Functional + visual check: Escape closes the open popover AND focus
+ * returns to the trigger. Asserts hidden state and `:focus` identity,
+ * then snapshots the trigger so the restored focus ring is captured.
+ */
+async function verifyEscapeReturnsFocusToTrigger(
+  page: Page,
+  label: string,
+  pageName: string,
+) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count)) {
+    // no-op guard for type narrowing
+  }
+  if ((await trigger.count()) === 0) return;
+  await openStatusDropdownByKeyboard(page, 0);
+  const popover = page.locator(POPOVER_SELECTOR).first();
+  if ((await popover.count()) === 0) return;
+  await expect(popover).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
+  await expect(popover).toBeHidden();
+
+  // Focus should be back on the trigger.
+  const triggerIsFocused = await page.evaluate((sel) => {
+    const el = document.querySelector(sel) as HTMLElement | null;
+    return !!el && el === document.activeElement;
+  }, TRIGGER_SELECTOR);
+  expect(triggerIsFocused).toBe(true);
+
+  await trigger.scrollIntoViewIfNeeded().catch(() => {});
+  await expect(trigger).toHaveScreenshot(
+    `${label}-${pageName}-status-trigger-focus-restored.png`,
+    { animations: "disabled", maxDiffPixelRatio: 0.02 },
+  );
+}
+
 const PAGES = [
   {
     path: "/dashboard",
@@ -229,6 +331,10 @@ const PAGES = [
       await snapshotEachStatusOption(page, label, pageName);
       // Home / End / PageUp / PageDown highlight snapshots.
       await snapshotStatusNavigationKeys(page, label, pageName);
+      // Tab / Shift+Tab focus snapshots inside the open dropdown.
+      await snapshotStatusTabFocus(page, label, pageName);
+      // Escape closes popover and restores focus to the trigger.
+      await verifyEscapeReturnsFocusToTrigger(page, label, pageName);
     },
     extraRegions: [
       {
