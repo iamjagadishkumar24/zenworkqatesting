@@ -271,9 +271,6 @@ async function verifyEscapeReturnsFocusToTrigger(
   pageName: string,
 ) {
   const trigger = page.locator(TRIGGER_SELECTOR).first();
-  if ((await trigger.count)) {
-    // no-op guard for type narrowing
-  }
   if ((await trigger.count()) === 0) return;
   await openStatusDropdownByKeyboard(page, 0);
   const popover = page.locator(POPOVER_SELECTOR).first();
