@@ -634,6 +634,9 @@ const PAGES = [
       await verifyEscapeFromPositions(page, label, pageName);
       // Click a different option and verify highlight + focus restoration.
       await verifyClickHighlightsAndRestoresFocus(page, label, pageName);
+      // Arrow keys across the popover's scroll boundary keep the active
+      // option visible; snapshots captured per accent.
+      await verifyArrowAcrossScrollBoundary(page, label, pageName);
     },
     extraRegions: [
       {
