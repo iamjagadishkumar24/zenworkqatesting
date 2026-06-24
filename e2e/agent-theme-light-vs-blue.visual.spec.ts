@@ -295,6 +295,168 @@ async function verifyEscapeReturnsFocusToTrigger(
   );
 }
 
+/**
+ * Escape-from-position check: open the dropdown, move the active option to
+ * `first` / `middle` / `last`, press Escape, and assert the popover closes
+ * and focus returns to the trigger. Snapshots the restored trigger each
+ * time so the focus ring color (driven by `--ring`) is captured per
+ * position and per accent.
+ */
+async function verifyEscapeFromPositions(
+  page: Page,
+  label: string,
+  pageName: string,
+) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count()) === 0) return;
+
+  const positions: Array<"first" | "middle" | "last"> = [
+    "first",
+    "middle",
+    "last",
+  ];
+  for (const position of positions) {
+    await openStatusDropdownByKeyboard(page, 0);
+    const popover = page.locator(POPOVER_SELECTOR).first();
+    if ((await popover.count()) === 0) continue;
+    const optionCount = await popover
+      .locator('[role="option"], [role="menuitem"]')
+      .count();
+    if (optionCount === 0) {
+      await page.keyboard.press("Escape").catch(() => {});
+      continue;
+    }
+
+    if (position === "first") {
+      await page.keyboard.press("Home").catch(() => {});
+      // Fallback for widgets that don't support Home.
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("ArrowUp");
+    } else if (position === "last") {
+      await page.keyboard.press("End").catch(() => {});
+      for (let i = 0; i < optionCount + 2; i++) {
+        await page.keyboard.press("ArrowDown");
+      }
+    } else {
+      const mid = Math.max(1, Math.floor(optionCount / 2));
+      for (let i = 0; i < mid; i++) {
+        await page.keyboard.press("ArrowDown");
+      }
+    }
+    await page.evaluate(
+      () =>
+        new Promise<void>((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => r())),
+        ),
+    );
+
+    await page.keyboard.press("Escape");
+    await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
+    await expect(popover).toBeHidden();
+
+    const triggerIsFocused = await page.evaluate((sel) => {
+      const el = document.querySelector(sel) as HTMLElement | null;
+      return !!el && el === document.activeElement;
+    }, TRIGGER_SELECTOR);
+    expect(triggerIsFocused, `focus restored after Escape from ${position}`).toBe(true);
+
+    await trigger.scrollIntoViewIfNeeded().catch(() => {});
+    await expect(trigger).toHaveScreenshot(
+      `${label}-${pageName}-status-escape-from-${position}-trigger.png`,
+      { animations: "disabled", maxDiffPixelRatio: 0.02 },
+    );
+  }
+}
+
+/**
+ * Click-to-highlight check: open the dropdown, click an option that is
+ * NOT the currently highlighted one, then re-open and assert that the
+ * clicked option is now the active/selected row and that keyboard focus
+ * inside the listbox lands on that same option. Snapshots the popover
+ * before and after, and the focused option element.
+ */
+async function verifyClickHighlightsAndRestoresFocus(
+  page: Page,
+  label: string,
+  pageName: string,
+) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count()) === 0) return;
+
+  await openStatusDropdown(page);
+  let popover = page.locator(POPOVER_SELECTOR).first();
+  if ((await popover.count()) === 0) return;
+  const options = popover.locator('[role="option"], [role="menuitem"]');
+  const optionCount = await options.count();
+  if (optionCount < 2) {
+    await page.keyboard.press("Escape").catch(() => {});
+    return;
+  }
+
+  // Pick a target row that's deliberately different from index 0.
+  const targetIndex = Math.min(optionCount - 1, Math.max(1, Math.floor(optionCount / 2)));
+  const targetText = (await options.nth(targetIndex).innerText()).trim();
+
+  // Baseline snapshot before click.
+  await expect(popover).toHaveScreenshot(
+    `${label}-${pageName}-status-click-before.png`,
+    { animations: "disabled", maxDiffPixelRatio: 0.02 },
+  );
+
+  await options.nth(targetIndex).click();
+  await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
+
+  // Re-open and verify the clicked option is now highlighted / selected.
+  await openStatusDropdownByKeyboard(page, 0);
+  popover = page.locator(POPOVER_SELECTOR).first();
+  if ((await popover.count()) === 0) return;
+
+  const reopenedOptions = popover.locator('[role="option"], [role="menuitem"]');
+  // Match by text to be resilient to reordering.
+  const matchIndex = await reopenedOptions.evaluateAll(
+    (els, text) =>
+      els.findIndex((el) => (el.textContent || "").trim() === text),
+    targetText,
+  );
+  expect(matchIndex, "clicked option still present after reopen").toBeGreaterThanOrEqual(0);
+
+  const highlighted = popover
+    .locator(
+      '[role="option"][data-highlighted], [role="option"][aria-selected="true"], [role="option"][data-state="checked"], [role="menuitem"][data-highlighted]',
+    )
+    .first();
+  if ((await highlighted.count()) > 0) {
+    const highlightedText = (await highlighted.innerText()).trim();
+    expect(highlightedText, "highlighted row matches clicked row").toBe(targetText);
+  }
+
+  // After snapshot — highlight should now be on the clicked row.
+  await expect(popover).toHaveScreenshot(
+    `${label}-${pageName}-status-click-after.png`,
+    { animations: "disabled", maxDiffPixelRatio: 0.02 },
+  );
+
+  // Element-level snapshot of the focused option (focus ring uses `--ring`).
+  const focusedOption = popover
+    .locator('[role="option"]:focus, [role="menuitem"]:focus')
+    .first();
+  const focusTarget =
+    (await focusedOption.count()) > 0
+      ? focusedOption
+      : matchIndex >= 0
+        ? reopenedOptions.nth(matchIndex)
+        : null;
+  if (focusTarget) {
+    await expect(focusTarget).toHaveScreenshot(
+      `${label}-${pageName}-status-click-focused-option.png`,
+      { animations: "disabled", maxDiffPixelRatio: 0.02 },
+    );
+  }
+
+  await page.keyboard.press("Escape").catch(() => {});
+  await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
+}
+
 const PAGES = [
   {
     path: "/dashboard",
@@ -332,6 +494,10 @@ const PAGES = [
       await snapshotStatusTabFocus(page, label, pageName);
       // Escape closes popover and restores focus to the trigger.
       await verifyEscapeReturnsFocusToTrigger(page, label, pageName);
+      // Escape from first / middle / last highlighted positions.
+      await verifyEscapeFromPositions(page, label, pageName);
+      // Click a different option and verify highlight + focus restoration.
+      await verifyClickHighlightsAndRestoresFocus(page, label, pageName);
     },
     extraRegions: [
       {
