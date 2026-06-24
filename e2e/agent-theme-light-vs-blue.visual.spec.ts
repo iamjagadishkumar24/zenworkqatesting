@@ -148,6 +148,142 @@ async function snapshotEachStatusOption(
 }
 
 /**
+ * Arrow-across-scroll-boundary check: open the listbox, press ArrowDown
+ * repeatedly so the active option moves past the popover's visible
+ * viewport, and assert the active option is scrolled into view (its
+ * bounding rect intersects the popover's content rect). Snapshots the
+ * popover and the focused/highlighted option for both accents.
+ *
+ * Also walks back up with ArrowUp past the top to confirm the reverse
+ * scroll boundary behaves the same way.
+ */
+async function verifyArrowAcrossScrollBoundary(
+  page: Page,
+  label: string,
+  pageName: string,
+) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count()) === 0) return;
+
+  await openStatusDropdownByKeyboard(page, 0);
+  const popover = page.locator(POPOVER_SELECTOR).first();
+  if ((await popover.count()) === 0) return;
+
+  const options = popover.locator('[role="option"], [role="menuitem"]');
+  const optionCount = await options.count();
+  if (optionCount === 0) {
+    await page.keyboard.press("Escape").catch(() => {});
+    return;
+  }
+
+  // Detect whether the popover is actually scrollable. If not, the test
+  // still asserts the visibility invariant for every option.
+  const popoverMetrics = await popover.evaluate((el) => ({
+    clientHeight: el.clientHeight,
+    scrollHeight: el.scrollHeight,
+  }));
+  const isScrollable =
+    popoverMetrics.scrollHeight > popoverMetrics.clientHeight + 1;
+
+  const activeSelector =
+    '[role="option"][data-highlighted], [role="option"][aria-selected="true"], [role="option"][data-state="checked"], [role="menuitem"][data-highlighted], [role="option"]:focus, [role="menuitem"]:focus';
+
+  const assertActiveVisible = async (stepLabel: string) => {
+    const visible = await page.evaluate(
+      ({ popSel, actSel }) => {
+        const pop = document.querySelector(popSel) as HTMLElement | null;
+        if (!pop) return false;
+        const active = pop.querySelector(actSel) as HTMLElement | null;
+        if (!active) return false;
+        const p = pop.getBoundingClientRect();
+        const a = active.getBoundingClientRect();
+        const verticallyInside = a.top >= p.top - 1 && a.bottom <= p.bottom + 1;
+        return verticallyInside && a.height > 0 && a.width > 0;
+      },
+      { popSel: POPOVER_SELECTOR, actSel: activeSelector },
+    );
+    expect(visible, `active option visible after ${stepLabel}`).toBe(true);
+  };
+
+  // Walk down past the visible viewport so the listbox must auto-scroll.
+  const downPresses = Math.max(optionCount + 2, 12);
+  for (let i = 0; i < downPresses; i++) {
+    await page.keyboard.press("ArrowDown");
+  }
+  await page
+    .waitForFunction(
+      (sel) => {
+        const el = document.querySelector(sel) as HTMLElement | null;
+        if (!el) return false;
+        const anims = el.getAnimations({ subtree: true });
+        return anims.every(
+          (a) => a.playState === "finished" || a.playState === "idle",
+        );
+      },
+      POPOVER_SELECTOR,
+      { timeout: 2000 },
+    )
+    .catch(() => {});
+  await page.evaluate(
+    () =>
+      new Promise<void>((r) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => r())),
+      ),
+  );
+  await assertActiveVisible("ArrowDown past bottom boundary");
+
+  // Snapshot popover at the bottom boundary.
+  await expect(popover).toHaveScreenshot(
+    `${label}-${pageName}-status-scroll-bottom-popover.png`,
+    { animations: "disabled", maxDiffPixelRatio: 0.02 },
+  );
+  const activeBottom = popover.locator(activeSelector).first();
+  if ((await activeBottom.count()) > 0) {
+    await expect(activeBottom).toHaveScreenshot(
+      `${label}-${pageName}-status-scroll-bottom-active.png`,
+      { animations: "disabled", maxDiffPixelRatio: 0.02 },
+    );
+  }
+
+  // Walk back up past the visible viewport.
+  const upPresses = downPresses + 2;
+  for (let i = 0; i < upPresses; i++) {
+    await page.keyboard.press("ArrowUp");
+  }
+  await page.evaluate(
+    () =>
+      new Promise<void>((r) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => r())),
+      ),
+  );
+  await assertActiveVisible("ArrowUp past top boundary");
+
+  await expect(popover).toHaveScreenshot(
+    `${label}-${pageName}-status-scroll-top-popover.png`,
+    { animations: "disabled", maxDiffPixelRatio: 0.02 },
+  );
+  const activeTop = popover.locator(activeSelector).first();
+  if ((await activeTop.count()) > 0) {
+    await expect(activeTop).toHaveScreenshot(
+      `${label}-${pageName}-status-scroll-top-active.png`,
+      { animations: "disabled", maxDiffPixelRatio: 0.02 },
+    );
+  }
+
+  // Annotate (non-fatal) whether scroll actually happened so failures are
+  // easier to triage when a future UI change shortens the list.
+  if (!isScrollable) {
+    test.info().annotations.push({
+      type: "note",
+      description: `${label}/${pageName}: status listbox not scrollable (${optionCount} options) — visibility invariant only.`,
+    });
+  }
+
+  await page.keyboard.press("Escape").catch(() => {});
+  await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
+}
+
+/**
  * Snapshot the open listbox after Home / End / PageDown / PageUp presses.
  * PageUp/PageDown are captured opportunistically: if the widget doesn't
  * support them the highlighted row simply won't move, which is still a
