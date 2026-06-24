@@ -494,6 +494,10 @@ const PAGES = [
       await snapshotStatusTabFocus(page, label, pageName);
       // Escape closes popover and restores focus to the trigger.
       await verifyEscapeReturnsFocusToTrigger(page, label, pageName);
+      // Escape from first / middle / last highlighted positions.
+      await verifyEscapeFromPositions(page, label, pageName);
+      // Click a different option and verify highlight + focus restoration.
+      await verifyClickHighlightsAndRestoresFocus(page, label, pageName);
     },
     extraRegions: [
       {
