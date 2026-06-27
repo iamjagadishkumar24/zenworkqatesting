@@ -18,7 +18,7 @@ export function routeForNotification(
     return { to: "/retest", search: id ? { assignment: id } : undefined };
   }
   // Role-change goes to settings/profile area
-  if (n.type === "role_change") return { to: "/settings" };
+  if (n.type === "role_change") return { to: "/profile" };
   // Defect-related → reported errors, focused on the defect id
   if (n.defectId) return { to: "/my-reported-errors", search: { q: n.defectId } };
   return { to: "/notifications" };

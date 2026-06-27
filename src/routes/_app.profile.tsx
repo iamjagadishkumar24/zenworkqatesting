@@ -127,11 +127,11 @@ import {
 import { Cpu } from "lucide-react";
 import { UserAvatar } from "@/components/qa/UserAvatar";
 
-export const Route = createFileRoute("/_app/settings")({
-  component: SettingsPage,
+export const Route = createFileRoute("/_app/profile")({
+  component: ProfilePage,
 });
 
-function SettingsPage() {
+function ProfilePage() {
   const { currentUser, users, updateUser, forms, defects, audit, addForm, updateForm } = useQA();
   const { prefs, update, reset } = usePrefs();
   const isAdmin = currentUser?.role === "admin";
@@ -140,11 +140,12 @@ function SettingsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
+          <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">Profile <span aria-hidden="true">/</span> Settings</nav>
+          <h2 className="text-2xl font-bold tracking-tight">Profile &amp; Settings</h2>
           <p className="text-sm text-muted-foreground">
             {isAdmin
-              ? "Manage the QA portal — team, modules, taxonomy, notifications and more."
-              : "Your profile and preferences."}
+              ? "Your profile plus every QA portal setting — team, modules, taxonomy, notifications and more."
+              : "Your profile, preferences, and account settings."}
           </p>
         </div>
         {isAdmin && (

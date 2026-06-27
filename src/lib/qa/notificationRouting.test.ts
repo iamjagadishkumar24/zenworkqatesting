@@ -41,8 +41,8 @@ describe("routeForNotification", () => {
     expect(r.to).toBe("/retest");
     expect(r.search).toBeUndefined();
   });
-  it("role_change routes to /settings", () => {
-    expect(routeForNotification(mkNote({ type: "role_change" })).to).toBe("/settings");
+  it("role_change routes to /profile", () => {
+    expect(routeForNotification(mkNote({ type: "role_change" })).to).toBe("/profile");
   });
   it("defect-related notifications focus the my-reported-errors search", () => {
     const r = routeForNotification(mkNote({ type: "defect_assigned", defectId: "ZEN-1" }));

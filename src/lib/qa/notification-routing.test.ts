@@ -32,10 +32,10 @@ describe("routeForNotification", () => {
       routeForNotification({ type: "status", title: "", body: "", defectId: "ZEN-2025-01" }),
     ).toEqual({ to: "/my-reported-errors", search: { q: "ZEN-2025-01" } });
   });
-  it("role_change goes to /settings", () => {
+  it("role_change goes to /profile", () => {
     expect(
       routeForNotification({ type: "role_change", title: "", body: "", defectId: null }).to,
-    ).toBe("/settings");
+    ).toBe("/profile");
   });
   it("fallback is /notifications", () => {
     expect(routeForNotification({ type: "misc", title: "", body: "", defectId: null }).to).toBe(
