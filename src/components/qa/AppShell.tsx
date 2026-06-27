@@ -100,7 +100,6 @@ const nav: NavEntry[] = [
   { to: "/functionality-testing", label: "Functionality", icon: Cpu },
   { to: "/tax1099-features", label: "Tax1099 Features", icon: Sparkles },
   { to: "/zenwork-payments", label: "Zenwork Payments", icon: CreditCard },
-  { to: "/my-reported-errors", label: "Reported Errors", icon: ListChecks },
   { to: "/notes", label: "Quick Notes", icon: StickyNote },
   {
     id: "management",
@@ -115,8 +114,8 @@ const nav: NavEntry[] = [
     id: "reports",
     label: "Reports",
     icon: BarChart3,
-    adminOnly: true,
     items: [
+      { to: "/my-reported-errors", label: "Reported Errors", icon: ListChecks },
       { to: "/reports", label: "Error Reports", icon: BarChart3, adminOnly: true },
       { to: "/reports/performance", label: "Performance", icon: Gauge, adminOnly: true },
       { to: "/reports/user", label: "User", icon: UserSearch, adminOnly: true },
