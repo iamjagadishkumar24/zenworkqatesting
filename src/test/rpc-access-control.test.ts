@@ -55,23 +55,23 @@ function isAdminGuardRejection(error: { message?: string } | null) {
 describeIfEnv('SECURITY DEFINER RPCs — anonymous callers are denied', () => {
   const anon = makeAnon();
 
-  const cases: Array<{ name: string; call: () => PromiseLike<{ error: unknown }> }> = [
+  const cases: Array<{ name: string; call: () => Promise<unknown> }> = [
     {
       name: 'change_user_role',
-      call: () =>
-        anon.rpc('change_user_role', {
+      call: async () =>
+        await anon.rpc('change_user_role', {
           _target: '00000000-0000-0000-0000-000000000000',
           _new_role: 'agent',
         }),
     },
     {
       name: 'preview_agent_purge',
-      call: () => anon.rpc('preview_agent_purge', { _name: 'nobody' }),
+      call: async () => await anon.rpc('preview_agent_purge', { _name: 'nobody' }),
     },
     {
       name: 'purge_agent_data',
-      call: () =>
-        anon.rpc('purge_agent_data', {
+      call: async () =>
+        await anon.rpc('purge_agent_data', {
           _name: 'nobody',
           _actor_id: undefined as never,
           _actor_name: 'attacker',
@@ -79,24 +79,24 @@ describeIfEnv('SECURITY DEFINER RPCs — anonymous callers are denied', () => {
     },
     {
       name: 'purge_orphaned_agent_refs',
-      call: () => anon.rpc('purge_orphaned_agent_refs'),
+      call: async () => await anon.rpc('purge_orphaned_agent_refs'),
     },
     {
       name: 'next_scoped_id',
-      call: () => anon.rpc('next_scoped_id', { _kind: 'defect', _tax_year: '2024' }),
+      call: async () => await anon.rpc('next_scoped_id', { _kind: 'defect', _tax_year: '2024' }),
     },
     {
       name: 'current_user_name',
-      call: () => anon.rpc('current_user_name'),
+      call: async () => await anon.rpc('current_user_name'),
     },
     {
       name: 'user_id_for_name',
-      call: () => anon.rpc('user_id_for_name', { _name: 'nobody' }),
+      call: async () => await anon.rpc('user_id_for_name', { _name: 'nobody' }),
     },
     {
       name: 'has_role',
-      call: () =>
-        anon.rpc('has_role', {
+      call: async () =>
+        await anon.rpc('has_role', {
           _user_id: '00000000-0000-0000-0000-000000000000',
           _role: 'admin',
         }),
