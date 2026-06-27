@@ -4,6 +4,35 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "@/lib/qa/store";
 import { usePrefs, type AdminPrefs } from "@/lib/qa/prefs";
+import { TIME_ZONES } from "@/lib/qa/timezones";
+
+function TimeZoneSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const groups = ["United States", "Canada", "India"] as const;
+  return (
+    <select
+      aria-label="Time zone"
+      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {groups.map((g) => (
+        <optgroup key={g} label={g}>
+          {TIME_ZONES.filter((t) => t.region === g).map((t) => (
+            <option key={`${g}-${t.id}`} value={t.id}>
+              {t.label}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  );
+}
 
 const AGENT_THEMES: { value: AdminPrefs["accent"]; label: string; swatch: string }[] = [
   {
