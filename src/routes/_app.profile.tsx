@@ -494,9 +494,9 @@ function ProfilePage() {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label>Time zone</Label>
-                <Input
+                <TimeZoneSelect
                   value={prefs.reportTimezone}
-                  onChange={(e) => update("reportTimezone", e.target.value)}
+                  onChange={(v) => update("reportTimezone", v)}
                 />
               </div>
               <div>
