@@ -106,7 +106,16 @@ function ReportsPage() {
   const { taxYear, setTaxYear } = useTaxYear();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const { status, testingType, category, agent, dateRange, fromDate, toDate } = search;
+  const {
+    status,
+    testingType,
+    category,
+    agent,
+    dateRange,
+    fromDate,
+    toDate,
+    state: stateFilter,
+  } = search;
 
   const patchSearch = (patch: Partial<ReportSearch>) =>
     navigate({
@@ -117,6 +126,8 @@ function ReportsPage() {
   const setTestingType = (v: string) => patchSearch({ testingType: v });
   const setCategory = (v: string) => patchSearch({ category: v });
   const setAgent = (v: string) => patchSearch({ agent: v });
+  const setStateFilter = (v: string) =>
+    patchSearch({ state: v === "all" || isValidUsState(v) ? v : "all" });
   const setDateRange = (v: string) =>
     patchSearch({ dateRange: v, ...(v === "custom" ? {} : { fromDate: "", toDate: "" }) });
 
@@ -211,13 +222,14 @@ function ReportsPage() {
         return false;
       if (category !== "all" && d.module !== category) return false;
       if (agent !== "all" && d.assignedAgent !== agent && d.createdBy !== agent) return false;
+      if (stateFilter !== "all" && (d.state ?? "") !== stateFilter) return false;
       const created = new Date(d.createdAt);
       if (from && created < from) return false;
       if (to && created >= to) return false;
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scoped, status, testingType, category, agent, dateBounds]);
+  }, [scoped, status, testingType, category, agent, stateFilter, dateBounds]);
 
   const baseSpec = useMemo<DefectQuerySpec>(() => {
     const [from, to] = dateBounds;
@@ -228,10 +240,11 @@ function ReportsPage() {
       testingType,
       category,
       agent,
+      state: stateFilter === "all" ? undefined : stateFilter,
       from: from ? from.toISOString() : null,
       to: to ? to.toISOString() : null,
     };
-  }, [env, taxYear, status, testingType, category, agent, dateBounds]);
+  }, [env, taxYear, status, testingType, category, agent, stateFilter, dateBounds]);
 
   const drillInto = (title: string, patch: Partial<DefectQuerySpec>) =>
     setDrill({ title, spec: { ...baseSpec, ...patch } });
@@ -354,6 +367,7 @@ function ReportsPage() {
     testingType,
     category,
     agent,
+    state: stateFilter === "all" ? "All" : stateFilter,
     dateRange,
     from: fromDate || "—",
     to: toDate || "—",
@@ -636,6 +650,7 @@ function ReportsPage() {
                     dateRange,
                     fromDate,
                     toDate,
+                    state: stateFilter,
                   });
                   setViewName("");
                 }}
