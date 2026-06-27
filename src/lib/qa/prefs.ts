@@ -158,12 +158,13 @@ export function usePrefs() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(userKey(uid), JSON.stringify(prefs));
-    // Apply theme. Default is Light; "system" falls back to Light so new
-    // users always start on the light theme until they explicitly switch.
-    // Dark mode is an Admin-only capability — non-admins (agents) are
-    // pinned to light regardless of any persisted preference.
+    // Apply theme. Available to all roles via the header toggle.
+    // "system" follows the OS preference; "light"/"dark" are explicit.
     const root = document.documentElement;
-    const wantDark = isAdmin && prefs.theme === "dark";
+    const prefersDark =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    const wantDark = prefs.theme === "dark" || (prefs.theme === "system" && prefersDark);
     root.classList.toggle("dark", wantDark);
     // Admins are pinned to the default "blue" accent — agent color themes
     // must never apply to admin sessions even if forced via localStorage
