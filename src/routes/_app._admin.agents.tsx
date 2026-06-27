@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useAgentInvites, type AgentInviteStatus } from "@/lib/qa/agents";
@@ -182,7 +182,6 @@ function AgentsPage() {
   }, [defects]);
 
   if (!currentUser) return null;
-  if (currentUser.role !== "admin") return <Navigate to="/dashboard" replace />;
 
   const submit = async () => {
     setSubmitting(true);
