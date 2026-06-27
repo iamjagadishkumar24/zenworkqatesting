@@ -129,9 +129,7 @@ describe("LoginPage validation and success", () => {
     fireEvent.change(email, { target: { value: "User@X.com" } });
     fireEvent.change(pwd, { target: { value: "ok-pass" } });
     fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
-    await waitFor(() =>
-      expect(loginMock).toHaveBeenCalledWith("user@x.com", "ok-pass"),
-    );
+    await waitFor(() => expect(loginMock).toHaveBeenCalledWith("user@x.com", "ok-pass"));
     await waitFor(() =>
       expect(setItem).toHaveBeenCalledWith("zenwork.rememberEmail", "user@x.com"),
     );

@@ -57,10 +57,8 @@ export async function pickAccent(page: Page, label: string) {
   await page.goto("/settings");
   await page.getByRole("radio", { name: new RegExp(`${label} theme`, "i") }).click();
   await page
-    .waitForFunction(
-      (l) => document.documentElement.dataset.accent === l,
-      label.toLowerCase(),
-      { timeout: 5000 },
-    )
+    .waitForFunction((l) => document.documentElement.dataset.accent === l, label.toLowerCase(), {
+      timeout: 5000,
+    })
     .catch(() => {});
 }

@@ -27,14 +27,9 @@ for (const theme of AGENT_THEMES) {
 
     await page.goto("/", { waitUntil: "networkidle" });
 
-    const results = await new AxeBuilder({ page })
-      .withTags(["wcag2aa"])
-      .include("body")
-      .analyze();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2aa"]).include("body").analyze();
 
-    const contrast = results.violations.filter(
-      (v) => v.id === "color-contrast",
-    );
+    const contrast = results.violations.filter((v) => v.id === "color-contrast");
     expect(contrast, JSON.stringify(contrast, null, 2)).toEqual([]);
   });
 }

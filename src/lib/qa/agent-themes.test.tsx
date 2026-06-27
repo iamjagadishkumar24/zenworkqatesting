@@ -25,7 +25,14 @@ import { usePrefs, type AdminPrefs } from "./prefs";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 const AGENT_ACCENTS: AdminPrefs["accent"][] = [
-  "light", "blue", "green", "purple", "orange", "pink", "grey", "teal",
+  "light",
+  "blue",
+  "green",
+  "purple",
+  "orange",
+  "pink",
+  "grey",
+  "teal",
 ];
 
 beforeEach(() => {
@@ -41,7 +48,9 @@ describe("Agent theme colors", () => {
     currentUser = { role: "agent" };
     currentSession = { user: { id: "agent-1" } };
     const { result, unmount } = renderHook(() => usePrefs());
-    await act(async () => { await flush(); });
+    await act(async () => {
+      await flush();
+    });
 
     // Cycle through all 8 themes; data-accent must update instantly so cards,
     // buttons, sidebar, badges (all driven by --primary / --sidebar-primary)
@@ -53,14 +62,16 @@ describe("Agent theme colors", () => {
 
     // Last pick was "teal" — persists in storage and is reapplied after a
     // remount that simulates logout/login.
-    expect(
-      JSON.parse(window.localStorage.getItem("qa.admin.prefs.v1:agent-1")!).accent,
-    ).toBe("teal");
+    expect(JSON.parse(window.localStorage.getItem("qa.admin.prefs.v1:agent-1")!).accent).toBe(
+      "teal",
+    );
     unmount();
     document.documentElement.removeAttribute("data-accent");
 
     const second = renderHook(() => usePrefs());
-    await act(async () => { await flush(); });
+    await act(async () => {
+      await flush();
+    });
     expect(second.result.current.prefs.accent).toBe("teal");
     expect(document.documentElement.dataset.accent).toBe("teal");
     second.unmount();
@@ -75,7 +86,9 @@ describe("Agent theme colors", () => {
     );
     currentSession = { user: { id: "admin-1" } };
     const { result, unmount } = renderHook(() => usePrefs());
-    await act(async () => { await flush(); });
+    await act(async () => {
+      await flush();
+    });
 
     // Even if the stored value is "purple", the applied UI accent is clamped
     // back to the default "blue".
@@ -95,13 +108,13 @@ describe("Agent theme colors", () => {
     currentUser = { role: "agent" };
     currentSession = { user: { id: "agent-2" } };
     const { result, unmount } = renderHook(() => usePrefs());
-    await act(async () => { await flush(); });
+    await act(async () => {
+      await flush();
+    });
     act(() => result.current.update("accent", "green"));
     expect(document.documentElement.dataset.accent).toBe("green");
     // CSS vars used by cards/buttons/sidebar/badges all key off :root.
-    expect(document.documentElement).toBe(
-      document.querySelector(":root"),
-    );
+    expect(document.documentElement).toBe(document.querySelector(":root"));
     unmount();
   });
 
@@ -112,11 +125,15 @@ describe("Agent theme colors", () => {
     // this test guards against future deletions/typos that would leave a
     // theme partially styled and fail contrast.
     const css = readFileSync(resolve(process.cwd(), "src/styles.css"), "utf8");
-    const REQUIRED = ["--primary", "--primary-glow", "--ring", "--sidebar-primary", "--gradient-primary"];
+    const REQUIRED = [
+      "--primary",
+      "--primary-glow",
+      "--ring",
+      "--sidebar-primary",
+      "--gradient-primary",
+    ];
     for (const accent of ["green", "purple", "orange", "pink", "grey", "teal"]) {
-      const block = css.match(
-        new RegExp(`:root\\[data-accent="${accent}"\\]\\s*\\{([^}]+)\\}`),
-      );
+      const block = css.match(new RegExp(`:root\\[data-accent="${accent}"\\]\\s*\\{([^}]+)\\}`));
       expect(block, `missing CSS block for ${accent}`).not.toBeNull();
       for (const token of REQUIRED) {
         expect(block![1], `${accent} missing ${token}`).toContain(token);

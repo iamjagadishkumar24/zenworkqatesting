@@ -75,10 +75,7 @@ export function TestingModule({
   // store the dashboard uses, so they update live.
   const statusBreakdown = (name: string) => {
     const scoped = defects.filter(
-      (d) =>
-        d.module === module &&
-        d.formFeature.includes(name) &&
-        (!env || d.environment === env),
+      (d) => d.module === module && d.formFeature.includes(name) && (!env || d.environment === env),
     );
     return {
       open: scoped.filter(
@@ -191,11 +188,21 @@ export function TestingModule({
                   <p className="mt-1 text-xs text-muted-foreground capitalize">{itemLabel}</p>
                   {bd && (
                     <div className="mt-2 flex flex-wrap gap-1">
-                      <Badge variant="outline" className="text-[10px]">Open: {bd.open}</Badge>
-                      <Badge variant="outline" className="text-[10px]">In Progress: {bd.inProgress}</Badge>
-                      <Badge variant="outline" className="text-[10px]">Retest: {bd.retest}</Badge>
-                      <Badge variant="outline" className="text-[10px]">Fixed: {bd.fixed}</Badge>
-                      <Badge variant="outline" className="text-[10px]">Invalid: {bd.invalid}</Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        Open: {bd.open}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        In Progress: {bd.inProgress}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        Retest: {bd.retest}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        Fixed: {bd.fixed}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        Invalid: {bd.invalid}
+                      </Badge>
                     </div>
                   )}
                   <Button

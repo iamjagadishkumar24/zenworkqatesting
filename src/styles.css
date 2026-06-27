@@ -171,11 +171,21 @@
 }
 
 @keyframes blob {
-  0%, 100% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(40px, -30px) scale(1.1); }
-  66% { transform: translate(-30px, 30px) scale(0.95); }
+  0%,
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(40px, -30px) scale(1.1);
+  }
+  66% {
+    transform: translate(-30px, 30px) scale(0.95);
+  }
 }
-.animate-blob { animation: blob 14s ease-in-out infinite; will-change: transform; }
+.animate-blob {
+  animation: blob 14s ease-in-out infinite;
+  will-change: transform;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-blob,
@@ -192,10 +202,21 @@
 :root[data-density="compact"] {
   --radius: 0.5rem;
 }
-:root[data-density="compact"] main { padding-top: 1rem; padding-bottom: 1rem; }
-:root[data-density="compact"] .p-5 { padding: 0.875rem; }
-:root[data-density="compact"] .p-4 { padding: 0.625rem; }
-:root[data-density="compact"] td, :root[data-density="compact"] th { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+:root[data-density="compact"] main {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+:root[data-density="compact"] .p-5 {
+  padding: 0.875rem;
+}
+:root[data-density="compact"] .p-4 {
+  padding: 0.625rem;
+}
+:root[data-density="compact"] td,
+:root[data-density="compact"] th {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
 
 /* ============================================================
    Environment themes (Production vs Stage)
@@ -273,9 +294,24 @@
   --sidebar-accent-foreground: oklch(0.62 0.22 15);
   --gradient-primary: linear-gradient(135deg, oklch(0.62 0.22 15), oklch(0.73 0.2 15));
 }
-:root.dark[data-accent="violet"] { --primary: oklch(0.7 0.2 295); --primary-glow: oklch(0.78 0.18 295); --ring: oklch(0.7 0.2 295); --sidebar-primary: oklch(0.7 0.2 295); }
-:root.dark[data-accent="emerald"] { --primary: oklch(0.7 0.16 155); --primary-glow: oklch(0.8 0.14 160); --ring: oklch(0.7 0.16 155); --sidebar-primary: oklch(0.7 0.16 155); }
-:root.dark[data-accent="rose"] { --primary: oklch(0.72 0.2 15); --primary-glow: oklch(0.82 0.18 15); --ring: oklch(0.72 0.2 15); --sidebar-primary: oklch(0.72 0.2 15); }
+:root.dark[data-accent="violet"] {
+  --primary: oklch(0.7 0.2 295);
+  --primary-glow: oklch(0.78 0.18 295);
+  --ring: oklch(0.7 0.2 295);
+  --sidebar-primary: oklch(0.7 0.2 295);
+}
+:root.dark[data-accent="emerald"] {
+  --primary: oklch(0.7 0.16 155);
+  --primary-glow: oklch(0.8 0.14 160);
+  --ring: oklch(0.7 0.16 155);
+  --sidebar-primary: oklch(0.7 0.16 155);
+}
+:root.dark[data-accent="rose"] {
+  --primary: oklch(0.72 0.2 15);
+  --primary-glow: oklch(0.82 0.18 15);
+  --ring: oklch(0.72 0.2 15);
+  --sidebar-primary: oklch(0.72 0.2 15);
+}
 
 /* Agent-only accent palette. "light" and "blue" use the default (no override). */
 :root[data-accent="light"] {

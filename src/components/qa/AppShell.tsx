@@ -162,7 +162,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
             aria-label="Toggle sidebar"
           >
-            {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-4 w-4" />}
+            {collapsed ? (
+              <ChevronRight className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </button>
         </div>
         <nav className="flex flex-col gap-1 p-3">

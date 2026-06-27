@@ -74,9 +74,7 @@ describe("TaxYearProvider", () => {
     });
     expect(result.current.taxYear).toBe(TAX_YEARS[0]);
     act(() => {
-      window.dispatchEvent(
-        new StorageEvent("storage", { key: "zenwork.taxYear", newValue: null }),
-      );
+      window.dispatchEvent(new StorageEvent("storage", { key: "zenwork.taxYear", newValue: null }));
     });
     expect(result.current.taxYear).toBe("all");
   });
@@ -84,9 +82,7 @@ describe("TaxYearProvider", () => {
   it("ignores unrelated storage keys", () => {
     const { result } = renderHook(() => useTaxYear(), { wrapper: wrap });
     act(() => {
-      window.dispatchEvent(
-        new StorageEvent("storage", { key: "unrelated", newValue: "x" }),
-      );
+      window.dispatchEvent(new StorageEvent("storage", { key: "unrelated", newValue: "x" }));
     });
     expect(result.current.taxYear).toBe("all");
   });

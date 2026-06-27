@@ -73,7 +73,10 @@ describe("exportJobs.functions validators", () => {
 
   it("setAllowAgentExports validates boolean and forbids non-admins", async () => {
     await expect(
-      setAllowAgentExports({ data: { allowed: "yes" as unknown as boolean }, context: ctx({ isAdmin: true }) }),
+      setAllowAgentExports({
+        data: { allowed: "yes" as unknown as boolean },
+        context: ctx({ isAdmin: true }),
+      }),
     ).rejects.toThrow(/boolean/i);
     await expect(
       setAllowAgentExports({ data: { allowed: true }, context: ctx({ isAdmin: false }) }),

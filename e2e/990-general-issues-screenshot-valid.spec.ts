@@ -45,11 +45,15 @@ test("valid Screenshot URL renders as a clickable link in the defect detail view
   await cbs.nth(1).click();
   await page.getByRole("option", { name: "Dashboard", exact: true }).click();
   await page.getByLabel(/Issue Summary/i).fill(title);
-  await page.getByLabel(/Issue Description/i)
+  await page
+    .getByLabel(/Issue Description/i)
     .fill("Submission should succeed and the screenshot link must render on the detail view.");
   await page.getByLabel(/Screenshot URL/i).fill(screenshotUrl);
 
-  await page.getByRole("button", { name: /report error/i }).last().click();
+  await page
+    .getByRole("button", { name: /report error/i })
+    .last()
+    .click();
   await expect(page.getByText(/general 990 series issue reported/i)).toBeVisible();
 
   // Open the defect detail view.

@@ -64,7 +64,12 @@ const AREAS = [
 
 function isValidUrl(u: string) {
   if (!u) return true;
-  try { new URL(u); return true; } catch { return false; }
+  try {
+    new URL(u);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function General990IssuesPanel() {
@@ -168,7 +173,9 @@ export function General990IssuesPanel() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold leading-tight">General 990 Series Issues</h3>
-                <Badge variant="outline" className="text-[10px]">Cross-form</Badge>
+                <Badge variant="outline" className="text-[10px]">
+                  Cross-form
+                </Badge>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 Report defects that affect the overall 990 filing experience (EIN lookup, dashboard,
@@ -208,10 +215,14 @@ export function General990IssuesPanel() {
               <div className="grid gap-1.5">
                 <Label>Issue Category *</Label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
                   <SelectContent>
                     {ISSUE_CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -219,10 +230,14 @@ export function General990IssuesPanel() {
               <div className="grid gap-1.5">
                 <Label>Area / Dashboard / Module *</Label>
                 <Select value={area} onValueChange={setArea}>
-                  <SelectTrigger><SelectValue placeholder="Select area" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select area" />
+                  </SelectTrigger>
                   <SelectContent>
                     {AREAS.map((a) => (
-                      <SelectItem key={a} value={a}>{a}</SelectItem>
+                      <SelectItem key={a} value={a}>
+                        {a}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -264,14 +279,17 @@ export function General990IssuesPanel() {
                 </Button>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Screenshots, recordings, SharePoint / Drive / OneDrive, docs, repro links, related tickets, etc.
+                Screenshots, recordings, SharePoint / Drive / OneDrive, docs, repro links, related
+                tickets, etc.
               </p>
               {attachmentLinks.map((link, i) => (
                 <div key={i} className="flex gap-2">
                   <Input
                     value={link}
                     onChange={(e) =>
-                      setAttachmentLinks((xs) => xs.map((v, idx) => (idx === i ? e.target.value : v)))
+                      setAttachmentLinks((xs) =>
+                        xs.map((v, idx) => (idx === i ? e.target.value : v)),
+                      )
                     }
                     placeholder="https://…"
                   />
@@ -280,9 +298,7 @@ export function General990IssuesPanel() {
                       type="button"
                       size="icon"
                       variant="ghost"
-                      onClick={() =>
-                        setAttachmentLinks((xs) => xs.filter((_, idx) => idx !== i))
-                      }
+                      onClick={() => setAttachmentLinks((xs) => xs.filter((_, idx) => idx !== i))}
                       aria-label="Remove link"
                     >
                       <X className="h-4 w-4" />
@@ -324,7 +340,14 @@ export function General990IssuesPanel() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setOpen(false); reset(); }} disabled={submitting}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpen(false);
+                reset();
+              }}
+              disabled={submitting}
+            >
               Cancel
             </Button>
             <Button onClick={submit} disabled={submitting}>

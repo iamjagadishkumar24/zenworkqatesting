@@ -55,9 +55,7 @@ describe("exportCsv", () => {
   });
 
   it("derives columns from the first row when none are passed", () => {
-    const clickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, "click")
-      .mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     exportCsv("data", [{ a: 1, b: "x" }]);
     expect(clickSpy).toHaveBeenCalled();
     expect(h.toastSuccess).toHaveBeenCalledWith(expect.stringMatching(/data\.csv/));
@@ -65,9 +63,7 @@ describe("exportCsv", () => {
   });
 
   it("respects an explicit filename with .csv suffix", () => {
-    const clickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, "click")
-      .mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     exportCsv("report.csv", [{ a: 1 }], ["a"]);
     expect(h.toastSuccess).toHaveBeenCalledWith("Exported report.csv");
     clickSpy.mockRestore();

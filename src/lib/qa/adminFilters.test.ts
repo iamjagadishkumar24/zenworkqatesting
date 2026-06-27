@@ -109,18 +109,20 @@ describe("filterDefectsAdmin", () => {
   });
   it("filters by presence of comments and attachments", () => {
     expect(filterDefectsAdmin(list, { hasComments: "yes" }).map((d) => d.id)).toEqual(["C"]);
-    expect(filterDefectsAdmin(list, { hasComments: "no" }).map((d) => d.id).sort()).toEqual([
-      "A",
-      "B",
-    ]);
+    expect(
+      filterDefectsAdmin(list, { hasComments: "no" })
+        .map((d) => d.id)
+        .sort(),
+    ).toEqual(["A", "B"]);
     expect(filterDefectsAdmin(list, { hasAttachments: "yes" }).map((d) => d.id)).toEqual(["C"]);
   });
   it("filters by retest state", () => {
     expect(filterDefectsAdmin(list, { retest: "required" }).map((d) => d.id)).toEqual(["C"]);
-    expect(filterDefectsAdmin(list, { retest: "none" }).map((d) => d.id).sort()).toEqual([
-      "A",
-      "B",
-    ]);
+    expect(
+      filterDefectsAdmin(list, { retest: "none" })
+        .map((d) => d.id)
+        .sort(),
+    ).toEqual(["A", "B"]);
   });
   it("performs case-insensitive search across id/title/module/agent", () => {
     expect(filterDefectsAdmin(list, { q: "carol" }).map((d) => d.id)).toEqual(["B"]);

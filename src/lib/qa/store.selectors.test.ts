@@ -81,10 +81,30 @@ describe("store selectors: dashboard counts", () => {
 
 describe("store selectors: scoped dashboard data", () => {
   const defects = [
-    mkDefect({ id: "prod-2026-alice", createdBy: "Alice Agent", environment: "Production", taxYear: "2026" }),
-    mkDefect({ id: "stage-2026-alice", createdBy: "Alice Agent", environment: "Stage", taxYear: "2026" }),
-    mkDefect({ id: "prod-2025-bob", createdBy: "Bob Agent", environment: "Production", taxYear: "2025" }),
-    mkDefect({ id: "global-2026-bob", createdBy: "Bob Agent", environment: undefined, taxYear: "2026" }),
+    mkDefect({
+      id: "prod-2026-alice",
+      createdBy: "Alice Agent",
+      environment: "Production",
+      taxYear: "2026",
+    }),
+    mkDefect({
+      id: "stage-2026-alice",
+      createdBy: "Alice Agent",
+      environment: "Stage",
+      taxYear: "2026",
+    }),
+    mkDefect({
+      id: "prod-2025-bob",
+      createdBy: "Bob Agent",
+      environment: "Production",
+      taxYear: "2025",
+    }),
+    mkDefect({
+      id: "global-2026-bob",
+      createdBy: "Bob Agent",
+      environment: undefined,
+      taxYear: "2026",
+    }),
   ];
 
   it("lets admins see environment and tax-year scoped defects, including global rows", () => {
@@ -117,8 +137,22 @@ describe("store selectors: scoped dashboard data", () => {
 describe("store selectors: list presets and search", () => {
   const defects = [
     mkDefect({ id: "ZEN-1", title: "NEC payer mismatch", status: "Reported", validity: "Valid" }),
-    mkDefect({ id: "ZEN-2", title: "K form export", formFeature: "Form 1099-K", status: "Closed", validity: "Invalid", assignedAgent: "Bob Agent" }),
-    mkDefect({ id: "ZEN-3", module: "Integrations", title: "QuickBooks sync", status: "Retest Required", createdBy: "Carol Reporter", taxYear: "2025" }),
+    mkDefect({
+      id: "ZEN-2",
+      title: "K form export",
+      formFeature: "Form 1099-K",
+      status: "Closed",
+      validity: "Invalid",
+      assignedAgent: "Bob Agent",
+    }),
+    mkDefect({
+      id: "ZEN-3",
+      module: "Integrations",
+      title: "QuickBooks sync",
+      status: "Retest Required",
+      createdBy: "Carol Reporter",
+      taxYear: "2025",
+    }),
   ];
 
   it.each([
@@ -133,8 +167,16 @@ describe("store selectors: list presets and search", () => {
   });
 
   it("treats empty or unknown preset/search terms as defensive no-ops", () => {
-    expect(applyDefectPreset(defects, undefined).map((d) => d.id)).toEqual(["ZEN-1", "ZEN-2", "ZEN-3"]);
-    expect(applyDefectPreset(defects, "bogus").map((d) => d.id)).toEqual(["ZEN-1", "ZEN-2", "ZEN-3"]);
+    expect(applyDefectPreset(defects, undefined).map((d) => d.id)).toEqual([
+      "ZEN-1",
+      "ZEN-2",
+      "ZEN-3",
+    ]);
+    expect(applyDefectPreset(defects, "bogus").map((d) => d.id)).toEqual([
+      "ZEN-1",
+      "ZEN-2",
+      "ZEN-3",
+    ]);
     expect(searchDefects(defects, "   ").map((d) => d.id)).toEqual(["ZEN-1", "ZEN-2", "ZEN-3"]);
   });
 
@@ -182,10 +224,33 @@ describe("store selectors: grouped and sorted derived views", () => {
 describe("store selectors: agent workload metrics", () => {
   it("aggregates assigned, completed, review and retest workload per active agent", () => {
     const defects = [
-      mkDefect({ id: "a", assignedAgent: "Alice Agent", status: "Reported", validity: "Unverified", createdBy: "Alice Agent" }),
-      mkDefect({ id: "b", assignedAgent: "Alice Agent", status: "Closed", validity: "Valid", createdBy: "Bob Agent" }),
-      mkDefect({ id: "c", assignedAgent: "Bob Agent", status: "Retest Required", validity: "Invalid", createdBy: "Alice Agent" }),
-      mkDefect({ id: "d", assignedAgent: "Offboarded", status: "Reported", createdBy: "Offboarded" }),
+      mkDefect({
+        id: "a",
+        assignedAgent: "Alice Agent",
+        status: "Reported",
+        validity: "Unverified",
+        createdBy: "Alice Agent",
+      }),
+      mkDefect({
+        id: "b",
+        assignedAgent: "Alice Agent",
+        status: "Closed",
+        validity: "Valid",
+        createdBy: "Bob Agent",
+      }),
+      mkDefect({
+        id: "c",
+        assignedAgent: "Bob Agent",
+        status: "Retest Required",
+        validity: "Invalid",
+        createdBy: "Alice Agent",
+      }),
+      mkDefect({
+        id: "d",
+        assignedAgent: "Offboarded",
+        status: "Reported",
+        createdBy: "Offboarded",
+      }),
     ];
     const retests = [
       { assigned_agent_id: "u-alice", assigned_agent_name: "Alice Agent", status: "Pending" },

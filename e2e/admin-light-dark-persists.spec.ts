@@ -43,11 +43,9 @@ test.describe("Admin Light/Dark mode persists across pages and refresh", () => {
     for (const path of PAGES) {
       await page.goto(path, { waitUntil: "networkidle" });
       await expect
-        .poll(
-          () =>
-            page.evaluate(() => document.documentElement.classList.contains("dark")),
-          { timeout: 10_000 },
-        )
+        .poll(() => page.evaluate(() => document.documentElement.classList.contains("dark")), {
+          timeout: 10_000,
+        })
         .toBe(true);
     }
 
@@ -56,11 +54,9 @@ test.describe("Admin Light/Dark mode persists across pages and refresh", () => {
     for (const path of PAGES) {
       await page.goto(path, { waitUntil: "networkidle" });
       await expect
-        .poll(
-          () =>
-            page.evaluate(() => document.documentElement.classList.contains("dark")),
-          { timeout: 10_000 },
-        )
+        .poll(() => page.evaluate(() => document.documentElement.classList.contains("dark")), {
+          timeout: 10_000,
+        })
         .toBe(false);
     }
   });

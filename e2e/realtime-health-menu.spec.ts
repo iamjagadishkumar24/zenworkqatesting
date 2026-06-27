@@ -13,8 +13,7 @@ import { test, expect, type Page } from "@playwright/test";
  */
 
 const EMAIL = process.env.PLAYWRIGHT_USER_EMAIL ?? process.env.PLAYWRIGHT_AGENT_EMAIL;
-const PASSWORD =
-  process.env.PLAYWRIGHT_USER_PASSWORD ?? process.env.PLAYWRIGHT_AGENT_PASSWORD;
+const PASSWORD = process.env.PLAYWRIGHT_USER_PASSWORD ?? process.env.PLAYWRIGHT_AGENT_PASSWORD;
 
 // Optional second account for the multi-session test. Falls back to admin
 // creds, then to a second agent. The two sessions only need to be distinct
@@ -67,17 +66,21 @@ test.describe("RealtimeHealthMenu on Defects + Reports", () => {
   // Drive store setters directly — no WebSocket race, no network mode.
   const setStatus = (page: Page, status: string) =>
     page.evaluate((s) => {
-      const m = (window as unknown as {
-        __qaRealtimeMock?: { setStatus: (s: string) => void };
-      }).__qaRealtimeMock;
+      const m = (
+        window as unknown as {
+          __qaRealtimeMock?: { setStatus: (s: string) => void };
+        }
+      ).__qaRealtimeMock;
       m?.setStatus(s);
     }, status);
 
   const bumpReconnect = (page: Page) =>
     page.evaluate(() => {
-      const m = (window as unknown as {
-        __qaRealtimeMock?: { bumpReconnect: () => void };
-      }).__qaRealtimeMock;
+      const m = (
+        window as unknown as {
+          __qaRealtimeMock?: { bumpReconnect: () => void };
+        }
+      ).__qaRealtimeMock;
       m?.bumpReconnect();
     });
 
@@ -111,9 +114,7 @@ test.describe("RealtimeHealthMenu on Defects + Reports", () => {
     });
   }
 
-  test("two sessions track reconnect counters and status independently", async ({
-    browser,
-  }) => {
+  test("two sessions track reconnect counters and status independently", async ({ browser }) => {
     test.skip(
       !EMAIL_B || !PASSWORD_B,
       "Set PLAYWRIGHT_USER_B_* (or PLAYWRIGHT_ADMIN_*) to run the multi-session test.",

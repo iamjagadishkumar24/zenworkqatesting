@@ -7,12 +7,10 @@ if (typeof window !== "undefined" && !(window as { __lastReqPatched?: boolean })
   const orig = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input.url;
-    const method = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    const method = (
+      init?.method || (input instanceof Request ? input.method : "GET")
+    ).toUpperCase();
     const at = new Date().toISOString();
     try {
       const res = await orig(input as RequestInfo, init);

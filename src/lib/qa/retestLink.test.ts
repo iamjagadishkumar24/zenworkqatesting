@@ -1,9 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { encodeRetestTitle, extractDefectId, stripDefectTag, isRetestForDefect } from "./retestLink";
+import {
+  encodeRetestTitle,
+  extractDefectId,
+  stripDefectTag,
+  isRetestForDefect,
+} from "./retestLink";
 
 describe("retestLink", () => {
   it("encodes a defect tag into the title", () => {
-    expect(encodeRetestTitle("ZEN-2026-01", "Form NEC fails")).toBe("[DEF:ZEN-2026-01] Form NEC fails");
+    expect(encodeRetestTitle("ZEN-2026-01", "Form NEC fails")).toBe(
+      "[DEF:ZEN-2026-01] Form NEC fails",
+    );
   });
 
   it("caps the encoded title at 240 characters", () => {

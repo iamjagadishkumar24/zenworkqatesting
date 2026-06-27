@@ -43,9 +43,7 @@ describe("useRealtimeTable", () => {
         }),
       { wrapper },
     );
-    expect(channelFn).toHaveBeenCalledWith(
-      expect.stringContaining("rt:defects:user_id=eq.1"),
-    );
+    expect(channelFn).toHaveBeenCalledWith(expect.stringContaining("rt:defects:user_id=eq.1"));
     const call = onFn.mock.calls[0] as any[];
     const cfg = call[1];
     const cb = call[2] as (p: unknown) => void;
@@ -61,19 +59,17 @@ describe("useRealtimeTable", () => {
   });
 
   it("removes channel on unmount", () => {
-    const { unmount } = renderHook(
-      () => useRealtimeTable({ table: "defects", queryKey: ["d"] }),
-      { wrapper },
-    );
+    const { unmount } = renderHook(() => useRealtimeTable({ table: "defects", queryKey: ["d"] }), {
+      wrapper,
+    });
     unmount();
     expect(removeChannel).toHaveBeenCalled();
   });
 
   it("skips subscription when disabled", () => {
-    renderHook(
-      () => useRealtimeTable({ table: "defects", queryKey: ["d"], enabled: false }),
-      { wrapper },
-    );
+    renderHook(() => useRealtimeTable({ table: "defects", queryKey: ["d"], enabled: false }), {
+      wrapper,
+    });
     expect(channelFn).not.toHaveBeenCalled();
   });
 });

@@ -90,8 +90,7 @@ function applySpec(qIn: any, spec: DefectQuerySpec): any {
 
   if (spec.validity === "Valid") q = q.eq("validity", "Valid");
   else if (spec.validity === "Invalid") q = q.eq("validity", "Invalid");
-  else if (spec.validity === "Pending Review")
-    q = q.or("validity.is.null,validity.eq.Unverified");
+  else if (spec.validity === "Pending Review") q = q.or("validity.is.null,validity.eq.Unverified");
 
   switch (spec.statusGroup) {
     case "Open":

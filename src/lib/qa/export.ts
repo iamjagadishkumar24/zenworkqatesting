@@ -36,8 +36,9 @@ export function exportPdf(
   const hasAny = sections.some((s) => s.rows.length);
   if (!hasAny) return toast.error("Nothing to export");
   const esc = (v: unknown) =>
-    String(v ?? "").replace(/[&<>"']/g, (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+    String(v ?? "").replace(
+      /[&<>"']/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
     );
   const filterBlock = meta?.filters
     ? `<div class="meta"><strong>Filters:</strong> ${Object.entries(meta.filters)
@@ -50,10 +51,7 @@ export function exportPdf(
       const cols = s.columns?.length ? s.columns : Object.keys(s.rows[0]);
       const head = cols.map((c) => `<th>${esc(c)}</th>`).join("");
       const trs = s.rows
-        .map(
-          (r) =>
-            `<tr>${cols.map((c) => `<td>${esc((r as ExportRow)[c])}</td>`).join("")}</tr>`,
-        )
+        .map((r) => `<tr>${cols.map((c) => `<td>${esc((r as ExportRow)[c])}</td>`).join("")}</tr>`)
         .join("");
       return `<h2>${esc(s.name)}</h2><table><thead><tr>${head}</tr></thead><tbody>${trs}</tbody></table>`;
     })

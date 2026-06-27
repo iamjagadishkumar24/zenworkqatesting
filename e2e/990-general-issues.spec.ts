@@ -57,13 +57,16 @@ test.describe("General 990 Series Issues panel", () => {
     await page.getByRole("option", { name: "Dashboard", exact: true }).click();
 
     await page.getByLabel(/Issue Summary/i).fill(title);
-    await page.getByLabel(/Issue Description/i).fill(
-      "Dashboard counts are wrong and the page hangs while loading 990 series data.",
-    );
+    await page
+      .getByLabel(/Issue Description/i)
+      .fill("Dashboard counts are wrong and the page hangs while loading 990 series data.");
 
     // Validation: clearing category should block submit.
     // (Quick sanity — leave as a normal positive submit below.)
-    await page.getByRole("button", { name: /report error/i }).last().click();
+    await page
+      .getByRole("button", { name: /report error/i })
+      .last()
+      .click();
     await expect(page.getByText(/general 990 series issue reported/i)).toBeVisible();
 
     // Defect surfaces in the user's reported list with correct module/form name.
@@ -72,7 +75,9 @@ test.describe("General 990 Series Issues panel", () => {
     await expect(row).toBeVisible();
 
     // Module + form name visible somewhere on the row container.
-    const rowContainer = row.locator("xpath=ancestor::tr | ancestor::*[contains(@class,'card')][1]").first();
+    const rowContainer = row
+      .locator("xpath=ancestor::tr | ancestor::*[contains(@class,'card')][1]")
+      .first();
     await expect(rowContainer).toContainText("990 Forms");
     await expect(rowContainer).toContainText("General 990 Series Issues");
 

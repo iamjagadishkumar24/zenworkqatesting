@@ -38,7 +38,9 @@ function DefaultNotFoundComponent() {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 px-4 text-center">
       <h2 className="text-lg font-semibold">Not found</h2>
-      <p className="text-sm text-muted-foreground">This resource doesn't exist or has been moved.</p>
+      <p className="text-sm text-muted-foreground">
+        This resource doesn't exist or has been moved.
+      </p>
     </div>
   );
 }

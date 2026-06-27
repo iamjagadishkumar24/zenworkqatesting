@@ -9,11 +9,13 @@ I'll ship it in 4 small, reviewable phases. Pick which one to start with.
 ## Phase 1 — Realtime publication + shared subscription hook (foundation)
 
 **Migration** (one approval):
+
 - `ALTER PUBLICATION supabase_realtime ADD TABLE` for: `defects`, `defect_comments`, `retest_assignments`, `notifications`, `activity_log`.
 - `ALTER TABLE ... REPLICA IDENTITY FULL` on the same tables so UPDATE/DELETE payloads include old row (needed for diff-based UI updates).
 - Confirm RLS is enabled on each (already is) — Realtime respects RLS, so agents only receive rows they can SELECT. No new policies needed.
 
 **Code**:
+
 - `src/hooks/useRealtimeTable.ts` — single `useEffect`-based hook that opens one channel per table, tears it down on unmount, and calls `queryClient.invalidateQueries({ queryKey })`. Avoids the "subscribe in render" leak.
 - Wire it in the screens that already use TanStack Query: Dashboard, Defects list, Defect detail, Retest list, Notifications bell, Activity feed. No business-logic changes — Query refetches and the UI updates.
 

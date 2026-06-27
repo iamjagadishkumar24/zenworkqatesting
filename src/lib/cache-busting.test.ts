@@ -12,7 +12,9 @@ import {
 
 describe("isLikelyChunkLoadError", () => {
   it("recognises Vite/dynamic import phrasings", () => {
-    expect(isLikelyChunkLoadError(new Error("Failed to fetch dynamically imported module foo"))).toBe(true);
+    expect(
+      isLikelyChunkLoadError(new Error("Failed to fetch dynamically imported module foo")),
+    ).toBe(true);
     expect(isLikelyChunkLoadError(new Error("Importing a module script failed."))).toBe(true);
     expect(isLikelyChunkLoadError(new Error("ChunkLoadError: loading chunk 5 failed"))).toBe(true);
     expect(isLikelyChunkLoadError(new Error("Load failed"))).toBe(true);
@@ -47,8 +49,8 @@ describe("checkForNewAppVersion", () => {
   });
 
   it("returns false when the server reports the same version", async () => {
-    globalThis.fetch = vi.fn(async () =>
-      new Response(JSON.stringify({ version: "v-current" }), { status: 200 }),
+    globalThis.fetch = vi.fn(
+      async () => new Response(JSON.stringify({ version: "v-current" }), { status: 200 }),
     ) as typeof fetch;
     const reloaded = await checkForNewAppVersion("scheduled");
     expect(reloaded).toBe(false);
@@ -57,8 +59,8 @@ describe("checkForNewAppVersion", () => {
   });
 
   it("triggers a cache-busting reload when the version changes", async () => {
-    globalThis.fetch = vi.fn(async () =>
-      new Response(JSON.stringify({ version: "v-next" }), { status: 200 }),
+    globalThis.fetch = vi.fn(
+      async () => new Response(JSON.stringify({ version: "v-next" }), { status: 200 }),
     ) as typeof fetch;
     const reloaded = await checkForNewAppVersion("scheduled");
     expect(reloaded).toBe(true);
@@ -70,21 +72,16 @@ describe("checkForNewAppVersion", () => {
   });
 
   it("respects the reload cooldown window", async () => {
-    window.sessionStorage.setItem(
-      "zenwork:last-cache-bust-reload",
-      String(Date.now()),
-    );
-    globalThis.fetch = vi.fn(async () =>
-      new Response(JSON.stringify({ version: "v-next" }), { status: 200 }),
+    window.sessionStorage.setItem("zenwork:last-cache-bust-reload", String(Date.now()));
+    globalThis.fetch = vi.fn(
+      async () => new Response(JSON.stringify({ version: "v-next" }), { status: 200 }),
     ) as typeof fetch;
     await checkForNewAppVersion("scheduled");
     expect(replaceSpy).not.toHaveBeenCalled();
   });
 
   it("returns false and swallows errors on bad payloads", async () => {
-    globalThis.fetch = vi.fn(async () =>
-      new Response("not json", { status: 200 }),
-    ) as typeof fetch;
+    globalThis.fetch = vi.fn(async () => new Response("not json", { status: 200 })) as typeof fetch;
     await expect(checkForNewAppVersion("scheduled")).resolves.toBe(false);
     expect(replaceSpy).not.toHaveBeenCalled();
   });
@@ -97,9 +94,7 @@ describe("checkForNewAppVersion", () => {
 
 describe("recoverFromPossibleStaleBundle", () => {
   it("no-ops for non-chunk errors", () => {
-    const spy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(new Response("", { status: 200 }));
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("", { status: 200 }));
     recoverFromPossibleStaleBundle(new Error("totally unrelated"));
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
@@ -110,8 +105,8 @@ describe("installCacheBustingVersionCheck", () => {
   beforeEach(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
-    globalThis.fetch = vi.fn(async () =>
-      new Response(JSON.stringify({ version: "v-current" }), { status: 200 }),
+    globalThis.fetch = vi.fn(
+      async () => new Response(JSON.stringify({ version: "v-current" }), { status: 200 }),
     ) as typeof fetch;
   });
   it("seeds the last-seen version and returns a cleanup function", () => {

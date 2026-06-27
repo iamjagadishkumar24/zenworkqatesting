@@ -20,10 +20,9 @@ test.describe("Agent accent persists across logout/login", () => {
     for (const path of ["/dashboard", "/defects", "/reports"]) {
       await page.goto(path, { waitUntil: "networkidle" });
       await expect
-        .poll(
-          () => page.evaluate(() => document.documentElement.dataset.accent),
-          { timeout: 10_000 },
-        )
+        .poll(() => page.evaluate(() => document.documentElement.dataset.accent), {
+          timeout: 10_000,
+        })
         .toBe("purple");
       const after = await readTokens(page);
       expect(after.primary).toBe(before.primary);

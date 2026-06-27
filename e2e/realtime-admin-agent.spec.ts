@@ -22,8 +22,7 @@ const ADMIN_PASSWORD = process.env.PLAYWRIGHT_ADMIN_PASSWORD;
 const AGENT_EMAIL = process.env.PLAYWRIGHT_AGENT_EMAIL;
 const AGENT_PASSWORD = process.env.PLAYWRIGHT_AGENT_PASSWORD;
 
-const hasCreds =
-  !!ADMIN_EMAIL && !!ADMIN_PASSWORD && !!AGENT_EMAIL && !!AGENT_PASSWORD;
+const hasCreds = !!ADMIN_EMAIL && !!ADMIN_PASSWORD && !!AGENT_EMAIL && !!AGENT_PASSWORD;
 
 test.describe("realtime: admin creates defect → agent dashboard updates live", () => {
   test.skip(!hasCreds, "Set PLAYWRIGHT_ADMIN_* and PLAYWRIGHT_AGENT_* env vars to run.");
@@ -62,9 +61,11 @@ test.describe("realtime: admin creates defect → agent dashboard updates live",
         .poll(
           async () =>
             agentPage.evaluate(() => {
-              const probe = (window as unknown as {
-                __qaRealtimeProbe?: { status?: string };
-              }).__qaRealtimeProbe;
+              const probe = (
+                window as unknown as {
+                  __qaRealtimeProbe?: { status?: string };
+                }
+              ).__qaRealtimeProbe;
               return probe?.status ?? null;
             }),
           { timeout: 15_000, intervals: [500, 1000, 2000] },
@@ -72,26 +73,31 @@ test.describe("realtime: admin creates defect → agent dashboard updates live",
         .toBe("SUBSCRIBED");
 
       const openKpi = agentPage.getByRole("region", { name: /open errors/i }).first();
-      const before = Number(((await openKpi.innerText()).match(/\d+/)?.[0]) ?? "0");
+      const before = Number((await openKpi.innerText()).match(/\d+/)?.[0] ?? "0");
 
       // Admin creates a defect assigned to the agent under test.
       await adminPage.goto("/defects");
-      await adminPage.getByRole("button", { name: /new defect|report defect|add defect/i }).first().click();
+      await adminPage
+        .getByRole("button", { name: /new defect|report defect|add defect/i })
+        .first()
+        .click();
       const title = `E2E realtime ${Date.now()}`;
       await adminPage.getByLabel(/title/i).fill(title);
       const agentSelect = adminPage.getByLabel(/assigned agent|assign to/i);
       if (await agentSelect.count()) {
         await agentSelect.click();
-        await adminPage.getByRole("option", { name: new RegExp(AGENT_EMAIL!.split("@")[0], "i") }).click();
+        await adminPage
+          .getByRole("option", { name: new RegExp(AGENT_EMAIL!.split("@")[0], "i") })
+          .click();
       }
       await adminPage.getByRole("button", { name: /^create$|^save$|^submit$/i }).click();
 
       // Agent dashboard updates without navigation.
       await expect
-        .poll(
-          async () => Number(((await openKpi.innerText()).match(/\d+/)?.[0]) ?? "0"),
-          { timeout: 15_000, intervals: [500, 1000, 2000] },
-        )
+        .poll(async () => Number((await openKpi.innerText()).match(/\d+/)?.[0] ?? "0"), {
+          timeout: 15_000,
+          intervals: [500, 1000, 2000],
+        })
         .toBeGreaterThan(before);
 
       // Realtime health UI has been removed; verify the probe still reports

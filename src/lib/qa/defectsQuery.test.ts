@@ -50,7 +50,9 @@ describe("queryDefectsPage", () => {
     expect(supa.from).toHaveBeenCalledWith("defects");
     const calls = lastCalls();
     expect(calls.find((c) => c.method === "select")?.args[1]).toEqual({ count: "exact" });
-    expect(calls.find((c) => c.method === "eq" && c.args[0] === "environment")?.args[1]).toBe("Production");
+    expect(calls.find((c) => c.method === "eq" && c.args[0] === "environment")?.args[1]).toBe(
+      "Production",
+    );
     // Range for page=2 size=25 → 25..49
     const range = calls.find((c) => c.method === "range");
     expect(range?.args).toEqual([25, 49]);
@@ -104,13 +106,18 @@ describe("queryDefectsPage", () => {
     await queryDefectsPage(spec, { key: "updatedAt", dir: "asc" }, 1, 50);
     const calls = lastCalls();
     const has = (m: string, ...args: unknown[]) =>
-      calls.some((c) => c.method === m && args.every((a, i) => JSON.stringify(c.args[i]) === JSON.stringify(a)));
+      calls.some(
+        (c) =>
+          c.method === m && args.every((a, i) => JSON.stringify(c.args[i]) === JSON.stringify(a)),
+      );
     expect(has("eq", "tax_year", "2025")).toBe(true);
     expect(has("eq", "module", "Integrations")).toBe(true);
     expect(has("gte", "created_at", "2026-01-01")).toBe(true);
     expect(has("lt", "created_at", "2026-02-01")).toBe(true);
     // Pending Review validity OR clause appears
-    expect(calls.some((c) => c.method === "or" && /validity\.is\.null/.test(String(c.args[0])))).toBe(true);
+    expect(
+      calls.some((c) => c.method === "or" && /validity\.is\.null/.test(String(c.args[0]))),
+    ).toBe(true);
     // Open status: exclude Fixed/Closed
     expect(calls.some((c) => c.method === "not" && c.args[0] === "status")).toBe(true);
     // Agent OR clause
@@ -133,11 +140,32 @@ describe("queryDefectsPage", () => {
   it("statusGroup variants apply expected filters", async () => {
     for (const [grp, check] of [
       ["Fixed", (calls: any[]) => calls.some((c) => c.method === "in" && c.args[0] === "status")],
-      ["Retest Required", (calls: any[]) => calls.some((c) => c.method === "eq" && c.args[1] === "Retest Required")],
-      ["Valid", (calls: any[]) => calls.some((c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Valid")],
-      ["Invalid", (calls: any[]) => calls.some((c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Invalid")],
-      ["Pending Review", (calls: any[]) => calls.some((c) => c.method === "or" && String(c.args[0]).includes("Unverified"))],
-      ["all", (calls: any[]) => !calls.some((c) => c.method === "in" || (c.method === "eq" && c.args[0] === "validity"))],
+      [
+        "Retest Required",
+        (calls: any[]) => calls.some((c) => c.method === "eq" && c.args[1] === "Retest Required"),
+      ],
+      [
+        "Valid",
+        (calls: any[]) =>
+          calls.some((c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Valid"),
+      ],
+      [
+        "Invalid",
+        (calls: any[]) =>
+          calls.some(
+            (c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Invalid",
+          ),
+      ],
+      [
+        "Pending Review",
+        (calls: any[]) =>
+          calls.some((c) => c.method === "or" && String(c.args[0]).includes("Unverified")),
+      ],
+      [
+        "all",
+        (calls: any[]) =>
+          !calls.some((c) => c.method === "in" || (c.method === "eq" && c.args[0] === "validity")),
+      ],
     ] as const) {
       supa.builders.length = 0;
       await queryDefectsPage({ statusGroup: grp as any }, { key: "id", dir: "asc" }, 1, 10);
@@ -148,10 +176,18 @@ describe("queryDefectsPage", () => {
   it("validity='Valid' and 'Invalid' add direct eq filters", async () => {
     supa.builders.length = 0;
     await queryDefectsPage({ validity: "Valid" }, { key: "id", dir: "asc" }, 1, 10);
-    expect(lastCalls().some((c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Valid")).toBe(true);
+    expect(
+      lastCalls().some(
+        (c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Valid",
+      ),
+    ).toBe(true);
     supa.builders.length = 0;
     await queryDefectsPage({ validity: "Invalid" }, { key: "id", dir: "asc" }, 1, 10);
-    expect(lastCalls().some((c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Invalid")).toBe(true);
+    expect(
+      lastCalls().some(
+        (c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Invalid",
+      ),
+    ).toBe(true);
   });
 
   it("unknown sort key falls back to created_at", async () => {
@@ -165,7 +201,9 @@ describe("queryDefectsPage", () => {
       supa.builders.push(b);
       return b;
     });
-    await expect(queryDefectsPage({}, { key: "id", dir: "asc" }, 1, 10)).rejects.toMatchObject({ message: "boom" });
+    await expect(queryDefectsPage({}, { key: "id", dir: "asc" }, 1, 10)).rejects.toMatchObject({
+      message: "boom",
+    });
   });
 
   it("page=1 with size 10 produces range 0..9", async () => {

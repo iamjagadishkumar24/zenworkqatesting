@@ -31,7 +31,9 @@ test("dashboard renders (or redirects to auth) without React #310", async ({ pag
     expect(body, `body should not contain ${re}`).not.toMatch(re);
   }
   expect(
-    pageErrors.find((m) => /Minified React error #310|hooks than during the previous render/i.test(m)),
+    pageErrors.find((m) =>
+      /Minified React error #310|hooks than during the previous render/i.test(m),
+    ),
     `unexpected hook-order pageerror: ${pageErrors.join(" | ")}`,
   ).toBeUndefined();
 });

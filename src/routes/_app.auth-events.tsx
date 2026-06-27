@@ -202,7 +202,10 @@ function AuthEventsPage() {
     const parts = text.split(re);
     return parts.map((p, i) =>
       re.test(p) ? (
-        <mark key={i} className="rounded bg-yellow-300/70 px-0.5 text-foreground dark:bg-yellow-500/40">
+        <mark
+          key={i}
+          className="rounded bg-yellow-300/70 px-0.5 text-foreground dark:bg-yellow-500/40"
+        >
           {p}
         </mark>
       ) : (
@@ -213,9 +216,10 @@ function AuthEventsPage() {
 
   const metadataJson = selected ? JSON.stringify(selected.metadata ?? {}, null, 2) : "";
   const matchCount = detailSearch
-    ? (metadataJson.match(
-        new RegExp(detailSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
-      ) ?? []).length
+    ? (
+        metadataJson.match(new RegExp(detailSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi")) ??
+        []
+      ).length
     : 0;
 
   return (
@@ -233,43 +237,50 @@ function AuthEventsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Filters</CardTitle>
           <CardDescription>
-            {counts.success} success · {counts.failure} failure · {counts.hibp} leaked-password blocked
+            {counts.success} success · {counts.failure} failure · {counts.hibp} leaked-password
+            blocked
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px_160px_auto_auto]">
-          <Input
-            placeholder="Filter by email contains…"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load()}
-          />
-          <Select value={action} onValueChange={setAction}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {ACTION_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={minutes} onValueChange={setMinutes}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="15">Last 15 minutes</SelectItem>
-              <SelectItem value="60">Last 1 hour</SelectItem>
-              <SelectItem value="1440">Last 24 hours</SelectItem>
-              <SelectItem value="10080">Last 7 days</SelectItem>
-              <SelectItem value="43200">Last 30 days</SelectItem>
-              <SelectItem value="129600">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={load} disabled={loading} variant="outline">
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Apply
-          </Button>
-          <Button onClick={exportCsv} disabled={filteredRows.length === 0}>
-            <Download className="mr-2 h-4 w-4" /> Export CSV
-          </Button>
+            <Input
+              placeholder="Filter by email contains…"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && load()}
+            />
+            <Select value={action} onValueChange={setAction}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ACTION_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={minutes} onValueChange={setMinutes}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15">Last 15 minutes</SelectItem>
+                <SelectItem value="60">Last 1 hour</SelectItem>
+                <SelectItem value="1440">Last 24 hours</SelectItem>
+                <SelectItem value="10080">Last 7 days</SelectItem>
+                <SelectItem value="43200">Last 30 days</SelectItem>
+                <SelectItem value="129600">Last 90 days</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={load} disabled={loading} variant="outline">
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Apply
+            </Button>
+            <Button onClick={exportCsv} disabled={filteredRows.length === 0}>
+              <Download className="mr-2 h-4 w-4" /> Export CSV
+            </Button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted-foreground">Quick range:</span>
@@ -334,7 +345,10 @@ function AuthEventsPage() {
             <TableBody>
               {filteredRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="py-10 text-center text-sm text-muted-foreground"
+                  >
                     {loading ? "Loading…" : "No auth events for the selected filters."}
                   </TableCell>
                 </TableRow>
@@ -355,7 +369,10 @@ function AuthEventsPage() {
                         {r.result}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-[420px] truncate text-xs text-muted-foreground" title={reasonOf(r)}>
+                    <TableCell
+                      className="max-w-[420px] truncate text-xs text-muted-foreground"
+                      title={reasonOf(r)}
+                    >
                       {reasonOf(r)}
                     </TableCell>
                   </TableRow>

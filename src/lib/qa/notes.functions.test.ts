@@ -40,7 +40,9 @@ describe("notes.functions validators", () => {
     const b = c.sb.lastBuilder();
     expect(b.calls.some((x: { method: string }) => x.method === "eq")).toBe(true);
     expect(b.calls.find((x: { method: string }) => x.method === "or")?.args[0]).toContain("hello");
-    expect(b.calls.find((x: { method: string }) => x.method === "contains")?.args[1]).toEqual(["bug"]);
+    expect(b.calls.find((x: { method: string }) => x.method === "contains")?.args[1]).toEqual([
+      "bug",
+    ]);
   });
 
   it("listNotes escapes % and _ in search to prevent ilike wildcards", async () => {
@@ -54,7 +56,15 @@ describe("notes.functions validators", () => {
   it("listNotes maps rows and applies default colour fallback", async () => {
     const c = ctx({
       data: [
-        { id: 1, color: "neon", tags: null, is_pinned: 1, is_archived: 0, created_at: "a", updated_at: "b" },
+        {
+          id: 1,
+          color: "neon",
+          tags: null,
+          is_pinned: 1,
+          is_archived: 0,
+          created_at: "a",
+          updated_at: "b",
+        },
       ],
       error: null,
     });
@@ -69,8 +79,20 @@ describe("notes.functions validators", () => {
 
   it("createNote clamps title and rejects unknown color", async () => {
     const long = "x".repeat(300);
-    const c = ctx({ data: { id: "n1", title: long.slice(0, 200), color: "yellow", created_at: "", updated_at: "" }, error: null });
-    const out = (await createNote({ data: { title: long, color: "rainbow" }, context: c })) as { color: string; title: string };
+    const c = ctx({
+      data: {
+        id: "n1",
+        title: long.slice(0, 200),
+        color: "yellow",
+        created_at: "",
+        updated_at: "",
+      },
+      error: null,
+    });
+    const out = (await createNote({ data: { title: long, color: "rainbow" }, context: c })) as {
+      color: string;
+      title: string;
+    };
     expect(out.color).toBe("yellow");
     expect(out.title.length).toBe(200);
     const insert = c.sb.lastBuilder().calls.find((x: { method: string }) => x.method === "insert");
@@ -78,7 +100,10 @@ describe("notes.functions validators", () => {
   });
 
   it("updateNote requires id and whitelists patch fields", async () => {
-    const c = ctx({ data: { id: "n1", color: "blue", created_at: "", updated_at: "" }, error: null });
+    const c = ctx({
+      data: { id: "n1", color: "blue", created_at: "", updated_at: "" },
+      error: null,
+    });
     await expect(updateNote({ data: { patch: {} }, context: c })).rejects.toThrow("id required");
     await updateNote({
       data: {
@@ -116,7 +141,11 @@ describe("notes.functions validators", () => {
       data: [{ is_archived: true }, { is_archived: false }, { is_archived: false }],
       error: null,
     });
-    const out = (await noteCounts({ context: c })) as { total: number; active: number; archived: number };
+    const out = (await noteCounts({ context: c })) as {
+      total: number;
+      active: number;
+      archived: number;
+    };
     expect(out).toEqual({ total: 3, active: 2, archived: 1 });
   });
 

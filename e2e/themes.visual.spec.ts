@@ -40,10 +40,10 @@ for (const theme of AGENT_THEMES) {
     for (const path of PAGES) {
       test(`renders ${path}`, async ({ page }) => {
         await page.goto(path, { waitUntil: "networkidle" });
-        await expect(page).toHaveScreenshot(
-          `${theme}${path.replace(/\//g, "_") || "_root"}.png`,
-          { fullPage: true, animations: "disabled" },
-        );
+        await expect(page).toHaveScreenshot(`${theme}${path.replace(/\//g, "_") || "_root"}.png`, {
+          fullPage: true,
+          animations: "disabled",
+        });
       });
     }
   });

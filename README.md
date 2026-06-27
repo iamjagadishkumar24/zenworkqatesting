@@ -9,13 +9,13 @@ subscribed. Specs auto-skip when credentials are missing.
 
 ### Required environment variables
 
-| Variable                       | Purpose                                    |
-| ------------------------------ | ------------------------------------------ |
-| `PLAYWRIGHT_ADMIN_EMAIL`       | Email of an existing Admin account         |
-| `PLAYWRIGHT_ADMIN_PASSWORD`    | Password for the Admin account             |
-| `PLAYWRIGHT_AGENT_EMAIL`       | Email of an existing QA Agent account      |
-| `PLAYWRIGHT_AGENT_PASSWORD`    | Password for the QA Agent account          |
-| `PLAYWRIGHT_BASE_URL`          | Optional — defaults to the preview URL     |
+| Variable                    | Purpose                                |
+| --------------------------- | -------------------------------------- |
+| `PLAYWRIGHT_ADMIN_EMAIL`    | Email of an existing Admin account     |
+| `PLAYWRIGHT_ADMIN_PASSWORD` | Password for the Admin account         |
+| `PLAYWRIGHT_AGENT_EMAIL`    | Email of an existing QA Agent account  |
+| `PLAYWRIGHT_AGENT_PASSWORD` | Password for the QA Agent account      |
+| `PLAYWRIGHT_BASE_URL`       | Optional — defaults to the preview URL |
 
 Both accounts must already exist in the target environment with their
 respective roles (`admin` and `agent`).

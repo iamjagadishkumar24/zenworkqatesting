@@ -58,9 +58,7 @@ async function deleteStaleAppShellCaches() {
   const cacheNames = await caches.keys();
   const appShellCachePattern = /(^|[-_])(workbox|precache|runtime|vite-pwa)([-_]|$)/i;
   await Promise.allSettled(
-    cacheNames
-      .filter((name) => appShellCachePattern.test(name))
-      .map((name) => caches.delete(name)),
+    cacheNames.filter((name) => appShellCachePattern.test(name)).map((name) => caches.delete(name)),
   );
 }
 
@@ -75,9 +73,7 @@ async function getLatestVersion(): Promise<string | null> {
   });
   if (!response.ok) return null;
   const payload = (await response.json()) as VersionPayload;
-  return typeof payload.version === "string" && payload.version.length > 0
-    ? payload.version
-    : null;
+  return typeof payload.version === "string" && payload.version.length > 0 ? payload.version : null;
 }
 
 async function reloadWithFreshAppShell(version: string, reason: string) {
@@ -86,10 +82,7 @@ async function reloadWithFreshAppShell(version: string, reason: string) {
   sessionStorage.setItem(RELOAD_STORAGE_KEY, String(Date.now()));
   localStorage.setItem(VERSION_STORAGE_KEY, version);
 
-  await Promise.allSettled([
-    unregisterStaleAppServiceWorkers(),
-    deleteStaleAppShellCaches(),
-  ]);
+  await Promise.allSettled([unregisterStaleAppServiceWorkers(), deleteStaleAppShellCaches()]);
 
   const nextUrl = new URL(window.location.href);
   nextUrl.searchParams.set("__app_version", version);

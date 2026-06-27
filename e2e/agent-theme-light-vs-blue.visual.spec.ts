@@ -34,9 +34,7 @@ async function openStatusDropdown(page: Page) {
         const el = document.querySelector(sel) as HTMLElement | null;
         if (!el) return false;
         const anims = el.getAnimations({ subtree: true });
-        return anims.every(
-          (a) => a.playState === "finished" || a.playState === "idle",
-        );
+        return anims.every((a) => a.playState === "finished" || a.playState === "idle");
       },
       POPOVER_SELECTOR,
       { timeout: 3000 },
@@ -44,10 +42,7 @@ async function openStatusDropdown(page: Page) {
     .catch(() => {});
   // Two RAFs to let layout/paint settle.
   await page.evaluate(
-    () =>
-      new Promise<void>((r) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => r())),
-      ),
+    () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
   );
 }
 
@@ -77,9 +72,7 @@ async function openStatusDropdownByKeyboard(page: Page, arrowDownPresses = 2) {
         const el = document.querySelector(sel) as HTMLElement | null;
         if (!el) return false;
         const anims = el.getAnimations({ subtree: true });
-        return anims.every(
-          (a) => a.playState === "finished" || a.playState === "idle",
-        );
+        return anims.every((a) => a.playState === "finished" || a.playState === "idle");
       },
       POPOVER_SELECTOR,
       { timeout: 3000 },
@@ -89,10 +82,7 @@ async function openStatusDropdownByKeyboard(page: Page, arrowDownPresses = 2) {
     await page.keyboard.press("ArrowDown");
   }
   await page.evaluate(
-    () =>
-      new Promise<void>((r) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => r())),
-      ),
+    () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
   );
 }
 
@@ -101,19 +91,13 @@ async function openStatusDropdownByKeyboard(page: Page, arrowDownPresses = 2) {
  * Walks the option list with ArrowDown, captures the popover after each
  * move so the `highlighted` (aria-selected / data-highlighted) row shifts.
  */
-async function snapshotEachStatusOption(
-  page: Page,
-  label: string,
-  pageName: string,
-) {
+async function snapshotEachStatusOption(page: Page, label: string, pageName: string) {
   const trigger = page.locator(TRIGGER_SELECTOR).first();
   if ((await trigger.count()) === 0) return;
   await openStatusDropdownByKeyboard(page, 0);
   const popover = page.locator(POPOVER_SELECTOR).first();
   if ((await popover.count()) === 0) return;
-  const optionCount = await popover
-    .locator('[role="option"], [role="menuitem"]')
-    .count();
+  const optionCount = await popover.locator('[role="option"], [role="menuitem"]').count();
   const max = Math.min(optionCount, 8); // cap to keep snapshots bounded
   for (let i = 0; i < max; i++) {
     await page.keyboard.press("ArrowDown");
@@ -124,24 +108,19 @@ async function snapshotEachStatusOption(
           const el = document.querySelector(sel) as HTMLElement | null;
           if (!el) return false;
           const anims = el.getAnimations({ subtree: true });
-          return anims.every(
-            (a) => a.playState === "finished" || a.playState === "idle",
-          );
+          return anims.every((a) => a.playState === "finished" || a.playState === "idle");
         },
         POPOVER_SELECTOR,
         { timeout: 2000 },
       )
       .catch(() => {});
     await page.evaluate(
-      () =>
-        new Promise<void>((r) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => r())),
-        ),
+      () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
     );
-    await expect(popover).toHaveScreenshot(
-      `${label}-${pageName}-status-option-${i + 1}.png`,
-      { animations: "disabled", maxDiffPixelRatio: 0.02 },
-    );
+    await expect(popover).toHaveScreenshot(`${label}-${pageName}-status-option-${i + 1}.png`, {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.02,
+    });
   }
   await page.keyboard.press("Escape").catch(() => {});
   await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
@@ -157,11 +136,7 @@ async function snapshotEachStatusOption(
  * Also walks back up with ArrowUp past the top to confirm the reverse
  * scroll boundary behaves the same way.
  */
-async function verifyArrowAcrossScrollBoundary(
-  page: Page,
-  label: string,
-  pageName: string,
-) {
+async function verifyArrowAcrossScrollBoundary(page: Page, label: string, pageName: string) {
   const trigger = page.locator(TRIGGER_SELECTOR).first();
   if ((await trigger.count()) === 0) return;
 
@@ -182,8 +157,7 @@ async function verifyArrowAcrossScrollBoundary(
     clientHeight: el.clientHeight,
     scrollHeight: el.scrollHeight,
   }));
-  const isScrollable =
-    popoverMetrics.scrollHeight > popoverMetrics.clientHeight + 1;
+  const isScrollable = popoverMetrics.scrollHeight > popoverMetrics.clientHeight + 1;
 
   const activeSelector =
     '[role="option"][data-highlighted], [role="option"][aria-selected="true"], [role="option"][data-state="checked"], [role="menuitem"][data-highlighted], [role="option"]:focus, [role="menuitem"]:focus';
@@ -216,27 +190,22 @@ async function verifyArrowAcrossScrollBoundary(
         const el = document.querySelector(sel) as HTMLElement | null;
         if (!el) return false;
         const anims = el.getAnimations({ subtree: true });
-        return anims.every(
-          (a) => a.playState === "finished" || a.playState === "idle",
-        );
+        return anims.every((a) => a.playState === "finished" || a.playState === "idle");
       },
       POPOVER_SELECTOR,
       { timeout: 2000 },
     )
     .catch(() => {});
   await page.evaluate(
-    () =>
-      new Promise<void>((r) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => r())),
-      ),
+    () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
   );
   await assertActiveVisible("ArrowDown past bottom boundary");
 
   // Snapshot popover at the bottom boundary.
-  await expect(popover).toHaveScreenshot(
-    `${label}-${pageName}-status-scroll-bottom-popover.png`,
-    { animations: "disabled", maxDiffPixelRatio: 0.02 },
-  );
+  await expect(popover).toHaveScreenshot(`${label}-${pageName}-status-scroll-bottom-popover.png`, {
+    animations: "disabled",
+    maxDiffPixelRatio: 0.02,
+  });
   const activeBottom = popover.locator(activeSelector).first();
   if ((await activeBottom.count()) > 0) {
     await expect(activeBottom).toHaveScreenshot(
@@ -251,23 +220,20 @@ async function verifyArrowAcrossScrollBoundary(
     await page.keyboard.press("ArrowUp");
   }
   await page.evaluate(
-    () =>
-      new Promise<void>((r) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => r())),
-      ),
+    () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
   );
   await assertActiveVisible("ArrowUp past top boundary");
 
-  await expect(popover).toHaveScreenshot(
-    `${label}-${pageName}-status-scroll-top-popover.png`,
-    { animations: "disabled", maxDiffPixelRatio: 0.02 },
-  );
+  await expect(popover).toHaveScreenshot(`${label}-${pageName}-status-scroll-top-popover.png`, {
+    animations: "disabled",
+    maxDiffPixelRatio: 0.02,
+  });
   const activeTop = popover.locator(activeSelector).first();
   if ((await activeTop.count()) > 0) {
-    await expect(activeTop).toHaveScreenshot(
-      `${label}-${pageName}-status-scroll-top-active.png`,
-      { animations: "disabled", maxDiffPixelRatio: 0.02 },
-    );
+    await expect(activeTop).toHaveScreenshot(`${label}-${pageName}-status-scroll-top-active.png`, {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.02,
+    });
   }
 
   // Annotate (non-fatal) whether scroll actually happened so failures are
@@ -289,11 +255,7 @@ async function verifyArrowAcrossScrollBoundary(
  * support them the highlighted row simply won't move, which is still a
  * valid visual baseline.
  */
-async function snapshotStatusNavigationKeys(
-  page: Page,
-  label: string,
-  pageName: string,
-) {
+async function snapshotStatusNavigationKeys(page: Page, label: string, pageName: string) {
   const trigger = page.locator(TRIGGER_SELECTOR).first();
   if ((await trigger.count()) === 0) return;
   await openStatusDropdownByKeyboard(page, 0);
@@ -309,19 +271,14 @@ async function snapshotStatusNavigationKeys(
           const el = document.querySelector(sel) as HTMLElement | null;
           if (!el) return false;
           const anims = el.getAnimations({ subtree: true });
-          return anims.every(
-            (a) => a.playState === "finished" || a.playState === "idle",
-          );
+          return anims.every((a) => a.playState === "finished" || a.playState === "idle");
         },
         POPOVER_SELECTOR,
         { timeout: 2000 },
       )
       .catch(() => {});
     await page.evaluate(
-      () =>
-        new Promise<void>((r) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => r())),
-        ),
+      () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
     );
     await expect(popover).toHaveScreenshot(
       `${label}-${pageName}-status-nav-${key.toLowerCase()}.png`,
@@ -337,11 +294,7 @@ async function snapshotStatusNavigationKeys(
  * popover plus a small element-level focus snapshot of the currently
  * focused element (focus ring is driven by `--ring`).
  */
-async function snapshotStatusTabFocus(
-  page: Page,
-  label: string,
-  pageName: string,
-) {
+async function snapshotStatusTabFocus(page: Page, label: string, pageName: string) {
   const trigger = page.locator(TRIGGER_SELECTOR).first();
   if ((await trigger.count()) === 0) return;
   await openStatusDropdownByKeyboard(page, 0);
@@ -362,19 +315,14 @@ async function snapshotStatusTabFocus(
           const el = document.querySelector(sel) as HTMLElement | null;
           if (!el) return false;
           const anims = el.getAnimations({ subtree: true });
-          return anims.every(
-            (a) => a.playState === "finished" || a.playState === "idle",
-          );
+          return anims.every((a) => a.playState === "finished" || a.playState === "idle");
         },
         POPOVER_SELECTOR,
         { timeout: 2000 },
       )
       .catch(() => {});
     await page.evaluate(
-      () =>
-        new Promise<void>((r) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => r())),
-        ),
+      () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
     );
     // Whole-popover snapshot to capture focus ring location.
     if ((await popover.count()) > 0) {
@@ -401,11 +349,7 @@ async function snapshotStatusTabFocus(
  * returns to the trigger. Asserts hidden state and `:focus` identity,
  * then snapshots the trigger so the restored focus ring is captured.
  */
-async function verifyEscapeReturnsFocusToTrigger(
-  page: Page,
-  label: string,
-  pageName: string,
-) {
+async function verifyEscapeReturnsFocusToTrigger(page: Page, label: string, pageName: string) {
   const trigger = page.locator(TRIGGER_SELECTOR).first();
   if ((await trigger.count()) === 0) return;
   await openStatusDropdownByKeyboard(page, 0);
@@ -425,10 +369,10 @@ async function verifyEscapeReturnsFocusToTrigger(
   expect(triggerIsFocused).toBe(true);
 
   await trigger.scrollIntoViewIfNeeded().catch(() => {});
-  await expect(trigger).toHaveScreenshot(
-    `${label}-${pageName}-status-trigger-focus-restored.png`,
-    { animations: "disabled", maxDiffPixelRatio: 0.02 },
-  );
+  await expect(trigger).toHaveScreenshot(`${label}-${pageName}-status-trigger-focus-restored.png`, {
+    animations: "disabled",
+    maxDiffPixelRatio: 0.02,
+  });
 }
 
 /**
@@ -438,26 +382,16 @@ async function verifyEscapeReturnsFocusToTrigger(
  * time so the focus ring color (driven by `--ring`) is captured per
  * position and per accent.
  */
-async function verifyEscapeFromPositions(
-  page: Page,
-  label: string,
-  pageName: string,
-) {
+async function verifyEscapeFromPositions(page: Page, label: string, pageName: string) {
   const trigger = page.locator(TRIGGER_SELECTOR).first();
   if ((await trigger.count()) === 0) return;
 
-  const positions: Array<"first" | "middle" | "last"> = [
-    "first",
-    "middle",
-    "last",
-  ];
+  const positions: Array<"first" | "middle" | "last"> = ["first", "middle", "last"];
   for (const position of positions) {
     await openStatusDropdownByKeyboard(page, 0);
     const popover = page.locator(POPOVER_SELECTOR).first();
     if ((await popover.count()) === 0) continue;
-    const optionCount = await popover
-      .locator('[role="option"], [role="menuitem"]')
-      .count();
+    const optionCount = await popover.locator('[role="option"], [role="menuitem"]').count();
     if (optionCount === 0) {
       await page.keyboard.press("Escape").catch(() => {});
       continue;
@@ -480,10 +414,7 @@ async function verifyEscapeFromPositions(
       }
     }
     await page.evaluate(
-      () =>
-        new Promise<void>((r) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => r())),
-        ),
+      () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))),
     );
 
     await page.keyboard.press("Escape");
@@ -511,11 +442,7 @@ async function verifyEscapeFromPositions(
  * inside the listbox lands on that same option. Snapshots the popover
  * before and after, and the focused option element.
  */
-async function verifyClickHighlightsAndRestoresFocus(
-  page: Page,
-  label: string,
-  pageName: string,
-) {
+async function verifyClickHighlightsAndRestoresFocus(page: Page, label: string, pageName: string) {
   const trigger = page.locator(TRIGGER_SELECTOR).first();
   if ((await trigger.count()) === 0) return;
 
@@ -534,10 +461,10 @@ async function verifyClickHighlightsAndRestoresFocus(
   const targetText = (await options.nth(targetIndex).innerText()).trim();
 
   // Baseline snapshot before click.
-  await expect(popover).toHaveScreenshot(
-    `${label}-${pageName}-status-click-before.png`,
-    { animations: "disabled", maxDiffPixelRatio: 0.02 },
-  );
+  await expect(popover).toHaveScreenshot(`${label}-${pageName}-status-click-before.png`, {
+    animations: "disabled",
+    maxDiffPixelRatio: 0.02,
+  });
 
   await options.nth(targetIndex).click();
   await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
@@ -550,8 +477,7 @@ async function verifyClickHighlightsAndRestoresFocus(
   const reopenedOptions = popover.locator('[role="option"], [role="menuitem"]');
   // Match by text to be resilient to reordering.
   const matchIndex = await reopenedOptions.evaluateAll(
-    (els, text) =>
-      els.findIndex((el) => (el.textContent || "").trim() === text),
+    (els, text) => els.findIndex((el) => (el.textContent || "").trim() === text),
     targetText,
   );
   expect(matchIndex, "clicked option still present after reopen").toBeGreaterThanOrEqual(0);
@@ -567,15 +493,13 @@ async function verifyClickHighlightsAndRestoresFocus(
   }
 
   // After snapshot — highlight should now be on the clicked row.
-  await expect(popover).toHaveScreenshot(
-    `${label}-${pageName}-status-click-after.png`,
-    { animations: "disabled", maxDiffPixelRatio: 0.02 },
-  );
+  await expect(popover).toHaveScreenshot(`${label}-${pageName}-status-click-after.png`, {
+    animations: "disabled",
+    maxDiffPixelRatio: 0.02,
+  });
 
   // Element-level snapshot of the focused option (focus ring uses `--ring`).
-  const focusedOption = popover
-    .locator('[role="option"]:focus, [role="menuitem"]:focus')
-    .first();
+  const focusedOption = popover.locator('[role="option"]:focus, [role="menuitem"]:focus').first();
   const focusTarget =
     (await focusedOption.count()) > 0
       ? focusedOption
@@ -614,11 +538,9 @@ async function verifyActivationKeySelectsOption(
 
   // Open and pick a deterministic non-default option (2nd ArrowDown press).
   await openStatusDropdownByKeyboard(page, 0);
-  let popover = page.locator(POPOVER_SELECTOR).first();
+  const popover = page.locator(POPOVER_SELECTOR).first();
   if ((await popover.count()) === 0) return;
-  const optionCount = await popover
-    .locator('[role="option"], [role="menuitem"]')
-    .count();
+  const optionCount = await popover.locator('[role="option"], [role="menuitem"]').count();
   if (optionCount < 2) {
     await page.keyboard.press("Escape").catch(() => {});
     return;
@@ -651,18 +573,14 @@ async function verifyActivationKeySelectsOption(
     const el = document.querySelector(sel) as HTMLElement | null;
     return !!el && el === document.activeElement;
   }, TRIGGER_SELECTOR);
-  expect(
-    triggerIsFocused,
-    `focus restored after ${activationKey} selection`,
-  ).toBe(true);
+  expect(triggerIsFocused, `focus restored after ${activationKey} selection`).toBe(true);
 
   // Trigger's visible label reflects the chosen option.
   if (expectedText) {
     const triggerText = (await trigger.innerText()).trim();
-    expect(
-      triggerText.toLowerCase(),
-      `${activationKey} updates trigger label`,
-    ).toContain(expectedText.toLowerCase());
+    expect(triggerText.toLowerCase(), `${activationKey} updates trigger label`).toContain(
+      expectedText.toLowerCase(),
+    );
   }
 
   await trigger.scrollIntoViewIfNeeded().catch(() => {});
@@ -697,9 +615,7 @@ const PAGES = [
           { animations: "disabled", maxDiffPixelRatio: 0.02 },
         );
         await page.keyboard.press("Escape").catch(() => {});
-        await popover
-          .waitFor({ state: "hidden", timeout: 2000 })
-          .catch(() => {});
+        await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
       }
       // Per-option highlight snapshots from the same open popover.
       await snapshotEachStatusOption(page, label, pageName);
@@ -740,7 +656,10 @@ const PAGES = [
         selector: TRIGGER_SELECTOR,
         prepare: async (page) => {
           await page.evaluate(() =>
-            window.scrollTo({ top: Math.round(document.body.scrollHeight / 3), behavior: "instant" as ScrollBehavior }),
+            window.scrollTo({
+              top: Math.round(document.body.scrollHeight / 3),
+              behavior: "instant" as ScrollBehavior,
+            }),
           );
         },
         open: openStatusDropdown,
@@ -751,7 +670,10 @@ const PAGES = [
         selector: TRIGGER_SELECTOR,
         prepare: async (page) => {
           await page.evaluate(() =>
-            window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" as ScrollBehavior }),
+            window.scrollTo({
+              top: document.body.scrollHeight,
+              behavior: "instant" as ScrollBehavior,
+            }),
           );
         },
         open: openStatusDropdown,
@@ -765,8 +687,7 @@ const PAGES = [
     extraRegions: [
       {
         key: "chart-highlight",
-        selector:
-          'main [data-testid="report-chart"], main .recharts-wrapper, main svg',
+        selector: 'main [data-testid="report-chart"], main .recharts-wrapper, main svg',
       },
     ],
   },
@@ -779,15 +700,13 @@ const PAGES = [
 const REGIONS = [
   { key: "sidebar", selector: '[data-sidebar="sidebar"], aside, nav[role="navigation"]' },
   { key: "kpis", selector: 'main [class*="grid"]:has(a[href*="my-reported-errors"]), main' },
-  { key: "primary-button", selector: 'main button.bg-primary, main [data-variant="default"], main' },
+  {
+    key: "primary-button",
+    selector: 'main button.bg-primary, main [data-variant="default"], main',
+  },
 ];
 
-async function snapshotRegions(
-  page: Page,
-  label: string,
-  pageName: string,
-  extra: Region[] = [],
-) {
+async function snapshotRegions(page: Page, label: string, pageName: string, extra: Region[] = []) {
   for (const r of [...REGIONS, ...extra]) {
     if (r.prepare) await r.prepare(page);
     if (r.open) await r.open(page);

@@ -97,14 +97,18 @@ describe("useSavedViews", () => {
       { user_id: "other", name: "ShouldNotSee", filters: BLANK },
     ];
     const { result } = renderHook(() => useSavedViews());
-    await act(async () => { await flush(); });
+    await act(async () => {
+      await flush();
+    });
     const names = result.current.views.map((v) => v.name).sort();
     expect(names).toEqual(["Alpha", "Beta"]);
   });
 
   it("ignores save calls with a blank name", async () => {
     const { result } = renderHook(() => useSavedViews());
-    await act(async () => { await flush(); });
+    await act(async () => {
+      await flush();
+    });
     await act(async () => {
       await result.current.save("   ", BLANK);
     });
@@ -115,7 +119,9 @@ describe("useSavedViews", () => {
   it("trims the name and replaces existing entry with the same key", async () => {
     tables.report_views = [{ user_id: "user-1", name: "Weekly", filters: BLANK }];
     const { result } = renderHook(() => useSavedViews());
-    await act(async () => { await flush(); });
+    await act(async () => {
+      await flush();
+    });
 
     const filters = { ...BLANK, status: "Open" };
     await act(async () => {
@@ -138,7 +144,9 @@ describe("useSavedViews", () => {
       { user_id: "user-1", name: "B", filters: BLANK },
     ];
     const { result } = renderHook(() => useSavedViews());
-    await act(async () => { await flush(); });
+    await act(async () => {
+      await flush();
+    });
     await act(async () => {
       await result.current.remove("A");
     });
@@ -149,7 +157,9 @@ describe("useSavedViews", () => {
   it("no-ops save/remove when no user is signed in", async () => {
     userId = null;
     const { result } = renderHook(() => useSavedViews());
-    await act(async () => { await flush(); });
+    await act(async () => {
+      await flush();
+    });
     await act(async () => {
       await result.current.save("X", BLANK);
       await result.current.remove("X");

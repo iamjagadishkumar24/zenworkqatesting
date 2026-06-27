@@ -59,7 +59,8 @@ export function createQueryBuilder<T = unknown>(
       return builder;
     });
   }
-  builder.then = (resolve: (v: MockResult<T>) => unknown) => Promise.resolve(builder._result).then(resolve);
+  builder.then = (resolve: (v: MockResult<T>) => unknown) =>
+    Promise.resolve(builder._result).then(resolve);
   builder.setResult = (r: MockResult<T>) => {
     builder._result = r;
   };

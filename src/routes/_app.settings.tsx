@@ -6,17 +6,61 @@ import { useQA } from "@/lib/qa/store";
 import { usePrefs, type AdminPrefs } from "@/lib/qa/prefs";
 
 const AGENT_THEMES: { value: AdminPrefs["accent"]; label: string; swatch: string }[] = [
-  { value: "light", label: "Light", swatch: "linear-gradient(135deg, oklch(0.96 0.01 255), oklch(0.88 0.02 255))" },
-  { value: "blue", label: "Blue", swatch: "linear-gradient(135deg, oklch(0.55 0.2 255), oklch(0.7 0.18 255))" },
-  { value: "green", label: "Green", swatch: "linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160))" },
-  { value: "emerald", label: "Emerald", swatch: "linear-gradient(135deg, oklch(0.62 0.16 155), oklch(0.76 0.14 160))" },
-  { value: "teal", label: "Teal", swatch: "linear-gradient(135deg, oklch(0.62 0.13 195), oklch(0.74 0.12 195))" },
-  { value: "purple", label: "Purple", swatch: "linear-gradient(135deg, oklch(0.55 0.22 295), oklch(0.68 0.2 295))" },
-  { value: "violet", label: "Violet", swatch: "linear-gradient(135deg, oklch(0.58 0.22 295), oklch(0.72 0.2 295))" },
-  { value: "pink", label: "Pink", swatch: "linear-gradient(135deg, oklch(0.68 0.2 350), oklch(0.78 0.18 350))" },
-  { value: "rose", label: "Rose", swatch: "linear-gradient(135deg, oklch(0.65 0.2 15), oklch(0.78 0.18 15))" },
-  { value: "orange", label: "Orange", swatch: "linear-gradient(135deg, oklch(0.66 0.18 55), oklch(0.78 0.16 60))" },
-  { value: "grey", label: "Grey", swatch: "linear-gradient(135deg, oklch(0.5 0.02 255), oklch(0.62 0.02 255))" },
+  {
+    value: "light",
+    label: "Light",
+    swatch: "linear-gradient(135deg, oklch(0.96 0.01 255), oklch(0.88 0.02 255))",
+  },
+  {
+    value: "blue",
+    label: "Blue",
+    swatch: "linear-gradient(135deg, oklch(0.55 0.2 255), oklch(0.7 0.18 255))",
+  },
+  {
+    value: "green",
+    label: "Green",
+    swatch: "linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160))",
+  },
+  {
+    value: "emerald",
+    label: "Emerald",
+    swatch: "linear-gradient(135deg, oklch(0.62 0.16 155), oklch(0.76 0.14 160))",
+  },
+  {
+    value: "teal",
+    label: "Teal",
+    swatch: "linear-gradient(135deg, oklch(0.62 0.13 195), oklch(0.74 0.12 195))",
+  },
+  {
+    value: "purple",
+    label: "Purple",
+    swatch: "linear-gradient(135deg, oklch(0.55 0.22 295), oklch(0.68 0.2 295))",
+  },
+  {
+    value: "violet",
+    label: "Violet",
+    swatch: "linear-gradient(135deg, oklch(0.58 0.22 295), oklch(0.72 0.2 295))",
+  },
+  {
+    value: "pink",
+    label: "Pink",
+    swatch: "linear-gradient(135deg, oklch(0.68 0.2 350), oklch(0.78 0.18 350))",
+  },
+  {
+    value: "rose",
+    label: "Rose",
+    swatch: "linear-gradient(135deg, oklch(0.65 0.2 15), oklch(0.78 0.18 15))",
+  },
+  {
+    value: "orange",
+    label: "Orange",
+    swatch: "linear-gradient(135deg, oklch(0.66 0.18 55), oklch(0.78 0.16 60))",
+  },
+  {
+    value: "grey",
+    label: "Grey",
+    swatch: "linear-gradient(135deg, oklch(0.5 0.02 255), oklch(0.62 0.02 255))",
+  },
 ];
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -517,7 +561,9 @@ function SettingsPage() {
                         value={prefs.theme}
                         onValueChange={(v) => update("theme", v as AdminPrefs["theme"])}
                       >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="light">Light</SelectItem>
                           <SelectItem value="dark">Dark</SelectItem>
@@ -530,7 +576,9 @@ function SettingsPage() {
                         value={prefs.density}
                         onValueChange={(v) => update("density", v as AdminPrefs["density"])}
                       >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="comfortable">Comfortable</SelectItem>
                           <SelectItem value="compact">Compact</SelectItem>
@@ -810,7 +858,10 @@ function RuntimeConfigCard() {
     };
   }, [fetchCfg]);
 
-  const apply = async (next: { liveEnabled: boolean; performanceMode: boolean }, which: "live" | "perf") => {
+  const apply = async (
+    next: { liveEnabled: boolean; performanceMode: boolean },
+    which: "live" | "perf",
+  ) => {
     setBusy(which);
     try {
       const cfg = await saveCfg({ data: next });
@@ -866,11 +917,7 @@ function RuntimeConfigCard() {
           </dl>
           <p className="mt-2 text-xs text-muted-foreground">
             Last updated:{" "}
-            {loading
-              ? "loading…"
-              : updatedAt
-                ? new Date(updatedAt).toLocaleString()
-                : "never"}
+            {loading ? "loading…" : updatedAt ? new Date(updatedAt).toLocaleString() : "never"}
           </p>
         </div>
         <div className="flex items-center justify-between rounded-md border border-border p-3">
@@ -891,8 +938,8 @@ function RuntimeConfigCard() {
           <div>
             <p className="text-sm font-medium">Performance mode</p>
             <p className="text-xs text-muted-foreground">
-              Batches realtime-driven state updates into a single frame to keep the UI smooth
-              under heavy event load.
+              Batches realtime-driven state updates into a single frame to keep the UI smooth under
+              heavy event load.
             </p>
           </div>
           <Switch
@@ -1064,9 +1111,7 @@ function RuntimeConfigAuditCard() {
                   <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
                     <History className="h-6 w-6 opacity-40" />
                     <div className="font-medium text-foreground">No audit entries yet</div>
-                    <div>
-                      Changes to live execution or performance mode will appear here.
-                    </div>
+                    <div>Changes to live execution or performance mode will appear here.</div>
                   </div>
                 </TableCell>
               </TableRow>

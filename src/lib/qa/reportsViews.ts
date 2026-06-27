@@ -103,10 +103,7 @@ export function useSavedViews() {
     save: async (name: string, filters: ReportFilters) => {
       const trimmed = name.trim();
       if (!trimmed || !userId) return;
-      const next = [
-        ...views.filter((v) => v.name !== trimmed),
-        { name: trimmed, filters },
-      ];
+      const next = [...views.filter((v) => v.name !== trimmed), { name: trimmed, filters }];
       setViews(next);
       await supabase
         .from("report_views")
@@ -118,11 +115,7 @@ export function useSavedViews() {
     remove: async (name: string) => {
       if (!userId) return;
       setViews((vs) => vs.filter((v) => v.name !== name));
-      await supabase
-        .from("report_views")
-        .delete()
-        .eq("user_id", userId)
-        .eq("name", name);
+      await supabase.from("report_views").delete().eq("user_id", userId).eq("name", name);
     },
   };
 }
