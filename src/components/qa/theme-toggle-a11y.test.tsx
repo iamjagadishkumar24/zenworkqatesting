@@ -70,7 +70,7 @@ describe("Theme toggle accessibility", () => {
     await user.keyboard("{Enter}");
     expect(screen.getByRole("button")).toHaveAttribute("data-state", "dark");
 
-    await user.keyboard(" ");
+    await user.keyboard("[Space]");
     expect(screen.getByRole("button")).toHaveAttribute("data-state", "system");
 
     await user.keyboard("{Enter}");
