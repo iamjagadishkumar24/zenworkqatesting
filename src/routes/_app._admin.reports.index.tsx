@@ -64,7 +64,7 @@ function validateReportSearch(input: Record<string, unknown>): ReportSearch {
   };
 }
 
-export const Route = createFileRoute("/_app/_admin/reports")({
+export const Route = createFileRoute("/_app/_admin/reports/")({
   validateSearch: validateReportSearch,
   component: ReportsPage,
   pendingComponent: ReportsPendingSkeleton,

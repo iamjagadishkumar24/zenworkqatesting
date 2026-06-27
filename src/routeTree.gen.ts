@@ -39,11 +39,11 @@ import { Route as ApiPublicManifestRouteImport } from './routes/api/public/manif
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as AppTasksTaskIdRouteImport } from './routes/_app.tasks.$taskId'
 import { Route as AppAdminRightsManagementRouteImport } from './routes/_app._admin.rights-management'
-import { Route as AppAdminReportsRouteImport } from './routes/_app._admin.reports'
 import { Route as AppAdminRealtimeDebugRouteImport } from './routes/_app._admin.realtime-debug'
 import { Route as AppAdminAuthEventsRouteImport } from './routes/_app._admin.auth-events'
 import { Route as AppAdminAuditLogRouteImport } from './routes/_app._admin.audit-log'
 import { Route as AppAdminAgentsRouteImport } from './routes/_app._admin.agents'
+import { Route as AppAdminReportsIndexRouteImport } from './routes/_app._admin.reports.index'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -194,11 +194,6 @@ const AppAdminRightsManagementRoute =
     path: '/rights-management',
     getParentRoute: () => AppAdminRoute,
   } as any)
-const AppAdminReportsRoute = AppAdminReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AppAdminRoute,
-} as any)
 const AppAdminRealtimeDebugRoute = AppAdminRealtimeDebugRouteImport.update({
   id: '/realtime-debug',
   path: '/realtime-debug',
@@ -217,6 +212,11 @@ const AppAdminAuditLogRoute = AppAdminAuditLogRouteImport.update({
 const AppAdminAgentsRoute = AppAdminAgentsRouteImport.update({
   id: '/agents',
   path: '/agents',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminReportsIndexRoute = AppAdminReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
   getParentRoute: () => AppAdminRoute,
 } as any)
 
@@ -249,11 +249,11 @@ export interface FileRoutesByFullPath {
   '/audit-log': typeof AppAdminAuditLogRoute
   '/auth-events': typeof AppAdminAuthEventsRoute
   '/realtime-debug': typeof AppAdminRealtimeDebugRoute
-  '/reports': typeof AppAdminReportsRoute
   '/rights-management': typeof AppAdminRightsManagementRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
+  '/reports/': typeof AppAdminReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -284,11 +284,11 @@ export interface FileRoutesByTo {
   '/audit-log': typeof AppAdminAuditLogRoute
   '/auth-events': typeof AppAdminAuthEventsRoute
   '/realtime-debug': typeof AppAdminRealtimeDebugRoute
-  '/reports': typeof AppAdminReportsRoute
   '/rights-management': typeof AppAdminRightsManagementRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
+  '/reports': typeof AppAdminReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -322,11 +322,11 @@ export interface FileRoutesById {
   '/_app/_admin/audit-log': typeof AppAdminAuditLogRoute
   '/_app/_admin/auth-events': typeof AppAdminAuthEventsRoute
   '/_app/_admin/realtime-debug': typeof AppAdminRealtimeDebugRoute
-  '/_app/_admin/reports': typeof AppAdminReportsRoute
   '/_app/_admin/rights-management': typeof AppAdminRightsManagementRoute
   '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
+  '/_app/_admin/reports/': typeof AppAdminReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -359,11 +359,11 @@ export interface FileRouteTypes {
     | '/audit-log'
     | '/auth-events'
     | '/realtime-debug'
-    | '/reports'
     | '/rights-management'
     | '/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
+    | '/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -394,11 +394,11 @@ export interface FileRouteTypes {
     | '/audit-log'
     | '/auth-events'
     | '/realtime-debug'
-    | '/reports'
     | '/rights-management'
     | '/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
+    | '/reports'
   id:
     | '__root__'
     | '/'
@@ -431,11 +431,11 @@ export interface FileRouteTypes {
     | '/_app/_admin/audit-log'
     | '/_app/_admin/auth-events'
     | '/_app/_admin/realtime-debug'
-    | '/_app/_admin/reports'
     | '/_app/_admin/rights-management'
     | '/_app/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
+    | '/_app/_admin/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -659,13 +659,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRightsManagementRouteImport
       parentRoute: typeof AppAdminRoute
     }
-    '/_app/_admin/reports': {
-      id: '/_app/_admin/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AppAdminReportsRouteImport
-      parentRoute: typeof AppAdminRoute
-    }
     '/_app/_admin/realtime-debug': {
       id: '/_app/_admin/realtime-debug'
       path: '/realtime-debug'
@@ -694,6 +687,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAgentsRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/_admin/reports/': {
+      id: '/_app/_admin/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof AppAdminReportsIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
   }
 }
 
@@ -702,8 +702,8 @@ interface AppAdminRouteChildren {
   AppAdminAuditLogRoute: typeof AppAdminAuditLogRoute
   AppAdminAuthEventsRoute: typeof AppAdminAuthEventsRoute
   AppAdminRealtimeDebugRoute: typeof AppAdminRealtimeDebugRoute
-  AppAdminReportsRoute: typeof AppAdminReportsRoute
   AppAdminRightsManagementRoute: typeof AppAdminRightsManagementRoute
+  AppAdminReportsIndexRoute: typeof AppAdminReportsIndexRoute
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
@@ -711,8 +711,8 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminAuditLogRoute: AppAdminAuditLogRoute,
   AppAdminAuthEventsRoute: AppAdminAuthEventsRoute,
   AppAdminRealtimeDebugRoute: AppAdminRealtimeDebugRoute,
-  AppAdminReportsRoute: AppAdminReportsRoute,
   AppAdminRightsManagementRoute: AppAdminRightsManagementRoute,
+  AppAdminReportsIndexRoute: AppAdminReportsIndexRoute,
 }
 
 const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
