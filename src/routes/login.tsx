@@ -243,17 +243,17 @@ export function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0b0a1f] text-white">
+    <div className="relative min-h-dvh overflow-hidden bg-[#0b0a1f] text-white">
       {/* Animated gradient background */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-32 -left-32 h-[28rem] w-[28rem] rounded-full bg-indigo-500/40 blur-3xl animate-blob" />
-        <div className="absolute top-1/3 -right-32 h-[32rem] w-[32rem] rounded-full bg-fuchsia-500/30 blur-3xl animate-blob [animation-delay:2s]" />
-        <div className="absolute -bottom-40 left-1/3 h-[30rem] w-[30rem] rounded-full bg-cyan-400/25 blur-3xl animate-blob [animation-delay:4s]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-32 -left-32 h-[28rem] w-[28rem] rounded-full bg-indigo-500/40 blur-3xl animate-blob motion-reduce:animate-none" />
+        <div className="absolute top-1/3 -right-32 h-[32rem] w-[32rem] rounded-full bg-fuchsia-500/30 blur-3xl animate-blob [animation-delay:2s] motion-reduce:animate-none" />
+        <div className="absolute -bottom-40 left-1/3 h-[30rem] w-[30rem] rounded-full bg-cyan-400/25 blur-3xl animate-blob [animation-delay:4s] motion-reduce:animate-none" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(99,102,241,0.25),transparent_60%)]" />
         <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,.6)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.6)_1px,transparent_1px)] [background-size:42px_42px]" />
       </div>
 
-      <div className="mx-auto grid min-h-screen w-full max-w-7xl items-center gap-10 px-6 py-10 lg:grid-cols-2 lg:px-12">
+      <main className="mx-auto grid min-h-dvh w-full max-w-7xl items-center gap-8 px-4 py-6 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-10 lg:px-12">
         {/* Brand / hero panel */}
         <div className="hidden flex-col justify-between lg:flex animate-fade-in">
           <div className="flex items-center gap-3">
@@ -335,7 +335,9 @@ export function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/40"
+                        aria-invalid={hint?.tone === "error" || hint?.tone === "warn" ? true : undefined}
+                        aria-describedby={hint ? "login-hint" : undefined}
+                        className="h-11 border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-0"
                         placeholder="you@company.com"
                       />
                     </div>
@@ -352,21 +354,24 @@ export function LoginPage() {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
-                          className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40 focus-visible:ring-white/40"
+                          aria-invalid={hint?.tone === "error" ? true : undefined}
+                          aria-describedby={hint ? "login-hint" : undefined}
+                          className="h-11 border-white/20 bg-white/10 pr-12 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-0"
                           placeholder="••••••••"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPwd((v) => !v)}
                           aria-label={showPwd ? "Hide password" : "Show password"}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white"
+                          aria-pressed={showPwd}
+                          className="absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                         >
                           {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <label className="flex cursor-pointer items-center gap-2 text-xs text-white/80">
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-white/80">
                         <Checkbox
                           checked={remember}
                           onCheckedChange={(v) => setRemember(!!v)}
@@ -376,7 +381,7 @@ export function LoginPage() {
                       </label>
                       <button
                         type="button"
-                        className="text-xs font-medium text-white hover:underline"
+                        className="rounded-md px-1 py-1 text-sm font-medium text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                         onClick={() => {
                           if (!forgotEmail) setForgotEmail(email);
                           setForgotOpen((v) => !v);
@@ -388,7 +393,8 @@ export function LoginPage() {
                     <Button
                       type="submit"
                       disabled={submitting}
-                      className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:opacity-95 hover:from-indigo-400 hover:to-fuchsia-400"
+                      aria-busy={submitting}
+                      className="h-11 w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-base font-semibold text-white shadow-lg shadow-indigo-900/30 transition hover:opacity-95 hover:from-indigo-400 hover:to-fuchsia-400 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
                     >
                       {submitting ? (
                         <>
@@ -401,6 +407,7 @@ export function LoginPage() {
                     </Button>
                     {hint && (
                       <div
+                        id="login-hint"
                         ref={hintRef}
                         role="alert"
                         aria-live="assertive"
@@ -426,18 +433,25 @@ export function LoginPage() {
                           QA Agent accounts.
                         </p>
                         <div className="flex gap-2">
+                          <Label htmlFor="forgot-email" className="sr-only">
+                            Email for password reset
+                          </Label>
                           <Input
+                            id="forgot-email"
                             type="email"
+                            autoComplete="email"
                             placeholder="you@company.com"
                             value={forgotEmail}
                             onChange={(e) => setForgotEmail(e.target.value)}
-                            className="h-9 border-white/20 bg-white/10 text-white placeholder:text-white/40"
+                            className="h-10 border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                           />
                           <Button
                             type="button"
                             size="sm"
                             onClick={sendReset}
                             disabled={forgotBusy || !forgotEmail}
+                            aria-busy={forgotBusy}
+                            className="h-10"
                           >
                             {forgotBusy ? "Sending…" : "Send link"}
                           </Button>
@@ -516,10 +530,11 @@ export function LoginPage() {
                       </Label>
                       <Input
                         id="n"
+                        autoComplete="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40"
+                        className="h-11 border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                       />
                     </div>
                     <div>
@@ -529,10 +544,11 @@ export function LoginPage() {
                       <Input
                         id="se"
                         type="email"
+                        autoComplete="email"
                         value={sEmail}
                         onChange={(e) => setSEmail(e.target.value)}
                         required
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40"
+                        className="h-11 border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                       />
                     </div>
                     <div>
@@ -549,18 +565,66 @@ export function LoginPage() {
                           required
                           minLength={8}
                           maxLength={128}
-                          className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40"
+                          aria-describedby="sp-hint sp-meter"
+                          className="h-11 border-white/20 bg-white/10 pr-12 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                         />
                         <button
                           type="button"
                           onClick={() => setShowSPwd((v) => !v)}
                           aria-label={showSPwd ? "Hide password" : "Show password"}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white"
+                          aria-pressed={showSPwd}
+                          className="absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                         >
                           {showSPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
-                      <p className="mt-1 text-[10px] text-white/50">
+                      {(() => {
+                        const checks = [
+                          { ok: sPwd.length >= 8, label: "8+ chars" },
+                          { ok: /[A-Z]/.test(sPwd), label: "Uppercase" },
+                          { ok: /[a-z]/.test(sPwd), label: "Lowercase" },
+                          { ok: /[0-9]/.test(sPwd), label: "Number" },
+                          { ok: /[^A-Za-z0-9]/.test(sPwd), label: "Symbol" },
+                        ];
+                        const score = checks.filter((c) => c.ok).length;
+                        const tone =
+                          score <= 2
+                            ? "bg-red-400"
+                            : score === 3
+                              ? "bg-amber-400"
+                              : score === 4
+                                ? "bg-lime-400"
+                                : "bg-emerald-400";
+                        const label =
+                          score === 0
+                            ? ""
+                            : score <= 2
+                              ? "Weak"
+                              : score === 3
+                                ? "Fair"
+                                : score === 4
+                                  ? "Strong"
+                                  : "Excellent";
+                        return sPwd.length > 0 ? (
+                          <div
+                            id="sp-meter"
+                            className="mt-2 space-y-1"
+                            role="status"
+                            aria-live="polite"
+                          >
+                            <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+                              <div
+                                className={`${tone} transition-all duration-300`}
+                                style={{ width: `${(score / 5) * 100}%` }}
+                              />
+                            </div>
+                            <p className="text-[11px] text-white/70">
+                              Strength: <span className="font-medium text-white">{label}</span>
+                            </p>
+                          </div>
+                        ) : null;
+                      })()}
+                      <p id="sp-hint" className="mt-1 text-[11px] text-white/50">
                         Min 8 chars with uppercase, lowercase, number, and special character. No
                         spaces.
                       </p>
@@ -579,19 +643,23 @@ export function LoginPage() {
                           required
                           minLength={8}
                           maxLength={128}
-                          className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40"
+                          aria-invalid={sPwd2.length > 0 && sPwd !== sPwd2 ? true : undefined}
+                          className="h-11 border-white/20 bg-white/10 pr-12 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                         />
                         <button
                           type="button"
                           onClick={() => setShowSPwd2((v) => !v)}
                           aria-label={showSPwd2 ? "Hide password" : "Show password"}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white"
+                          aria-pressed={showSPwd2}
+                          className="absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                         >
                           {showSPwd2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                       {sPwd2.length > 0 && sPwd !== sPwd2 && (
-                        <p className="mt-1 text-[11px] text-red-200">Passwords do not match.</p>
+                        <p role="alert" className="mt-1 text-[11px] text-red-200">
+                          Passwords do not match.
+                        </p>
                       )}
                     </div>
                     {(() => {
@@ -611,7 +679,8 @@ export function LoginPage() {
                         <Button
                           type="submit"
                           disabled={signingUp || !canSubmit}
-                          className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:from-indigo-400 hover:to-fuchsia-400"
+                          aria-busy={signingUp}
+                          className="h-11 w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-base font-semibold text-white shadow-lg shadow-indigo-900/30 transition hover:from-indigo-400 hover:to-fuchsia-400 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
                         >
                           {signingUp ? (
                             <>
@@ -630,7 +699,7 @@ export function LoginPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
