@@ -78,7 +78,6 @@ const nav: NavItem[] = [
   { to: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
   { to: "/auth-events", label: "Auth Events", icon: ShieldAlert, adminOnly: true },
   { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
-  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -337,8 +336,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="text-xs text-muted-foreground capitalize">{currentUser?.role}</div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
-                Settings
+              <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
+                Profile &amp; Settings
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
