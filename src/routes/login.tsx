@@ -243,17 +243,17 @@ export function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0b0a1f] text-white">
+    <div className="relative min-h-dvh overflow-hidden bg-[#0b0a1f] text-white">
       {/* Animated gradient background */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-32 -left-32 h-[28rem] w-[28rem] rounded-full bg-indigo-500/40 blur-3xl animate-blob" />
-        <div className="absolute top-1/3 -right-32 h-[32rem] w-[32rem] rounded-full bg-fuchsia-500/30 blur-3xl animate-blob [animation-delay:2s]" />
-        <div className="absolute -bottom-40 left-1/3 h-[30rem] w-[30rem] rounded-full bg-cyan-400/25 blur-3xl animate-blob [animation-delay:4s]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-32 -left-32 h-[28rem] w-[28rem] rounded-full bg-indigo-500/40 blur-3xl animate-blob motion-reduce:animate-none" />
+        <div className="absolute top-1/3 -right-32 h-[32rem] w-[32rem] rounded-full bg-fuchsia-500/30 blur-3xl animate-blob [animation-delay:2s] motion-reduce:animate-none" />
+        <div className="absolute -bottom-40 left-1/3 h-[30rem] w-[30rem] rounded-full bg-cyan-400/25 blur-3xl animate-blob [animation-delay:4s] motion-reduce:animate-none" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(99,102,241,0.25),transparent_60%)]" />
         <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,.6)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.6)_1px,transparent_1px)] [background-size:42px_42px]" />
       </div>
 
-      <div className="mx-auto grid min-h-screen w-full max-w-7xl items-center gap-10 px-6 py-10 lg:grid-cols-2 lg:px-12">
+      <main className="mx-auto grid min-h-dvh w-full max-w-7xl items-center gap-8 px-4 py-6 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-10 lg:px-12">
         {/* Brand / hero panel */}
         <div className="hidden flex-col justify-between lg:flex animate-fade-in">
           <div className="flex items-center gap-3">
