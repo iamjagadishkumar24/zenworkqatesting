@@ -570,6 +570,22 @@ function ReportsPage() {
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label>U.S. State</Label>
+            <Select value={stateFilter} onValueChange={setStateFilter}>
+              <SelectTrigger className="h-9" aria-label="Filter by U.S. state">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">All states</SelectItem>
+                {US_STATES.map((s) => (
+                  <SelectItem key={s.code} value={s.code}>
+                    {s.name} ({s.code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {dateRange === "custom" && (
             <div className="flex items-end gap-2">
               <div className="flex-1">
