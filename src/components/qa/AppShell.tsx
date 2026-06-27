@@ -12,7 +12,7 @@ import {
   FileUp,
   CreditCard,
   BarChart3,
-  Settings,
+  // Settings icon removed — Settings nav consolidated into /profile.
   ChevronLeft,
   ChevronRight,
   LogOut,
