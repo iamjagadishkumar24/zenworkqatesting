@@ -29,7 +29,7 @@ async function migrateLegacy(userId: string) {
       legacy.map((v) => ({
         user_id: userId,
         name: v.name,
-        filters: v.filters as unknown as any,
+        filters: v.filters as unknown as Record<string, unknown>,
       })),
       { onConflict: "user_id,name" },
     );
@@ -108,7 +108,11 @@ export function useSavedViews() {
       await supabase
         .from("report_views")
         .upsert(
-          { user_id: userId, name: trimmed, filters: filters as unknown as any },
+          {
+            user_id: userId,
+            name: trimmed,
+            filters: filters as unknown as Record<string, unknown>,
+          },
           { onConflict: "user_id,name" },
         );
     },

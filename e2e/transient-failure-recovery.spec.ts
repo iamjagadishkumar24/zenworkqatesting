@@ -53,7 +53,7 @@ test.describe("transient failure recovery", () => {
     await page.route(/\.(?:js|mjs)(?:\?.*)?$/, async (route) => {
       const url = route.request().url();
       // Only fail one non-entry chunk, once, to simulate a stale deploy.
-      if (chunkFails < 1 && /assets\/.+\-[A-Za-z0-9]{6,}\.(?:js|mjs)/.test(url)) {
+      if (chunkFails < 1 && /assets\/.+-[A-Za-z0-9]{6,}\.(?:js|mjs)/.test(url)) {
         chunkFails += 1;
         await route.fulfill({ status: 502, body: "" });
         return;

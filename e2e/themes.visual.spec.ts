@@ -33,7 +33,9 @@ for (const theme of AGENT_THEMES) {
             "zenwork.prefs",
             JSON.stringify({ ...prev, accent: t, theme: "light" }),
           );
-        } catch {}
+        } catch {
+          /* ignore — best-effort prefs seed */
+        }
       }, theme);
     });
 

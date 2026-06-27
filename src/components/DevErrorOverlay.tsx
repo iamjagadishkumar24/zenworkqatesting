@@ -59,7 +59,6 @@ if (typeof window !== "undefined" && import.meta.env.DEV) {
 }
 
 export function DevErrorOverlay({ error }: { error: Error }) {
-  if (!import.meta.env.DEV) return null;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({ select: (s) => s.location.searchStr });
   const [open, setOpen] = useState(true);
@@ -67,6 +66,8 @@ export function DevErrorOverlay({ error }: { error: Error }) {
   useEffect(() => {
     patchFetch();
   }, []);
+
+  if (!import.meta.env.DEV) return null;
 
   if (!open) {
     return (

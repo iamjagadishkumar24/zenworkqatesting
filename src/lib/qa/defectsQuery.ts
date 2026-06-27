@@ -72,10 +72,18 @@ function mapRow(r: Row): DefectRowLite {
   };
 }
 
-// `any` here is intentional: we share one builder helper between the count
-// query and the paged query so PostgREST's chained types don't need to be
-// threaded through every conditional. RLS still enforces row access.
-function applySpec(qIn: any, spec: DefectQuerySpec): any {
+// Loose builder shape: we share one helper between the count and the paged
+// query so PostgREST's chained types don't need to be threaded through every
+// conditional. RLS still enforces row access.
+type PostgrestLike = {
+  eq: (col: string, val: unknown) => PostgrestLike;
+  ilike: (col: string, val: string) => PostgrestLike;
+  or: (expr: string) => PostgrestLike;
+  gte: (col: string, val: unknown) => PostgrestLike;
+  lt: (col: string, val: unknown) => PostgrestLike;
+  in: (col: string, vals: unknown[]) => PostgrestLike;
+};
+function applySpec<Q extends PostgrestLike>(qIn: Q, spec: DefectQuerySpec): Q {
   let q = qIn;
   if (spec.environment) q = q.eq("environment", spec.environment);
   if (spec.taxYear && spec.taxYear !== "all") q = q.eq("tax_year", spec.taxYear);

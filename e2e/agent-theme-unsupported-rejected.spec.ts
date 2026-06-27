@@ -29,7 +29,9 @@ test.describe("Agent unsupported theme submission is blocked", () => {
     // Simulate a crafted client trying to push an unsupported value through
     // the same path the UI uses. The frontend guard must short-circuit it.
     const result = await page.evaluate(async () => {
-      const mod: any = await import("/src/lib/qa/userPreferences.functions.ts");
+      const mod = (await import("/src/lib/qa/userPreferences.functions.ts")) as {
+        saveMyPreferences: (args: { data: Record<string, unknown> }) => Promise<unknown>;
+      };
       try {
         await mod.saveMyPreferences({
           data: {
