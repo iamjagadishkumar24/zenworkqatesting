@@ -183,6 +183,17 @@ export function usePrefs() {
     root.dataset.density = prefs.density;
   }, [prefs, uid, isAdmin]);
 
+  // When theme === "system", keep in sync with OS-level changes.
+  useEffect(() => {
+    if (typeof window === "undefined" || prefs.theme !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (e: MediaQueryListEvent) => {
+      document.documentElement.classList.toggle("dark", e.matches);
+    };
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, [prefs.theme]);
+
   const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) =>
     setPrefs((p) => {
       const next = { ...p, [k]: v };
