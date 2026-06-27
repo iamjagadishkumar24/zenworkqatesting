@@ -11,6 +11,14 @@ export const Route = createFileRoute("/_app/realtime-debug")({
   component: RealtimeDebugRouteGate,
 });
 
+function RealtimeDebugRouteGate() {
+  const { currentUser } = useQA();
+  if (currentUser && currentUser.role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <RealtimeDebugPage />;
+}
+
 function RealtimeDebugPage() {
   const { realtimeEvents, clearRealtimeEvents, currentUser } = useQA();
   const role = currentUser?.role ?? "unknown";
