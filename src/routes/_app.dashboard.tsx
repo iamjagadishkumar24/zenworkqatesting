@@ -30,9 +30,13 @@ import { cn } from "@/lib/utils";
 import { useRetests } from "@/lib/qa/retest";
 import { routeForModule } from "@/lib/qa/constants";
 import { DeadlineCountdown, AdminDeadlineSummary } from "@/components/qa/DeadlineCountdown";
+import { DashboardSkeleton } from "@/components/qa/RouteSkeletons";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: DashboardRoute,
+  pendingComponent: DashboardSkeleton,
+  pendingMs: 0,
+  pendingMinMs: 150,
 });
 
 function DashboardRoute() {
