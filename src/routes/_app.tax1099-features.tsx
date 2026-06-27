@@ -13,6 +13,7 @@ const ITEMS = [
   "AI Chat Assistance",
   "BOI Reporting",
   "EFTPS",
+  "Knowledge Base",
 ];
 
 export const Route = createFileRoute("/_app/tax1099-features")({
