@@ -199,7 +199,7 @@ export function usePrefs() {
       }
       // Best-effort backend sync; localStorage write happens in the apply effect.
       if (uid) {
-        const isThemeChange = k === "accent" || k === "theme";
+        const isAccentChange = k === "accent";
         void saveMyPreferences({
           data: {
             theme: next.theme,
@@ -212,7 +212,7 @@ export function usePrefs() {
           },
         })
           .then(() => {
-            if (isThemeChange) {
+            if (isAccentChange) {
               toast.success("Theme synced", {
                 description:
                   "Your accent color was saved. If it doesn't appear everywhere, refresh the page.",
