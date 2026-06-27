@@ -8,9 +8,8 @@ import { expect } from "vitest";
 expect.extend(matchers);
 
 declare module "vitest" {
-  interface Assertion<T = unknown> extends matchers.AxeMatchers {
-    _t?: T;
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  interface Assertion<T = any> extends matchers.AxeMatchers {}
   interface AsymmetricMatchersContaining extends matchers.AxeMatchers {}
 }
 
