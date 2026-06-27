@@ -130,6 +130,7 @@ export const FEATURES_TAX1099: string[] = [
   "AI Chat Assistance",
   "BOI Reporting",
   "EFTPS",
+  "Knowledge Base",
 ];
 
 // Zenwork Payments — standalone payments module surfaced both in nav and
