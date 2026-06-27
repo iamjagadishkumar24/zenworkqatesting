@@ -23,6 +23,9 @@ import {
   ScrollText,
   StickyNote,
   ShieldAlert,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
@@ -85,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { env, setEnv } = useEnvironment();
   const { taxYear, setTaxYear } = useTaxYear();
   // Apply user theme/accent/density globally on every page.
-  usePrefs();
+  const { prefs, update: updatePref } = usePrefs();
   // Apply environment theme globally so all pages, modals, tables, etc.
   // pick up the Production/Stage palette automatically.
   useEffect(() => {
