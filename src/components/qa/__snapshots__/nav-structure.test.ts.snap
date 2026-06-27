@@ -1,0 +1,164 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Admin sidebar navigation structure > matches snapshot for labels, routes and ordering 1`] = `
+[
+  {
+    "adminOnly": false,
+    "label": "Dashboard",
+    "to": "/dashboard",
+  },
+  {
+    "adminOnly": false,
+    "label": "Forms",
+    "to": "/forms",
+  },
+  {
+    "adminOnly": false,
+    "label": "1099 Online Forms",
+    "to": "/online-1099",
+  },
+  {
+    "adminOnly": false,
+    "label": "990 Forms",
+    "to": "/990-forms",
+  },
+  {
+    "adminOnly": false,
+    "label": "2290 Forms",
+    "to": "/2290-forms",
+  },
+  {
+    "adminOnly": false,
+    "label": "Integrations",
+    "to": "/integrations",
+  },
+  {
+    "adminOnly": true,
+    "label": "Rights Management",
+    "to": "/rights-management",
+  },
+  {
+    "adminOnly": false,
+    "label": "Knowledge Base",
+    "to": "/knowledge-base",
+  },
+  {
+    "adminOnly": false,
+    "label": "Chatbot",
+    "to": "/chatbot-testing",
+  },
+  {
+    "adminOnly": false,
+    "label": "Excel Import",
+    "to": "/excel-import-testing",
+  },
+  {
+    "adminOnly": false,
+    "label": "Functionality",
+    "to": "/functionality-testing",
+  },
+  {
+    "adminOnly": false,
+    "label": "Tax1099 Features",
+    "to": "/tax1099-features",
+  },
+  {
+    "adminOnly": false,
+    "label": "Zenwork Payments",
+    "to": "/zenwork-payments",
+  },
+  {
+    "adminOnly": false,
+    "label": "Quick Notes",
+    "to": "/notes",
+  },
+  {
+    "group": "Management",
+    "id": "management",
+    "items": [
+      {
+        "adminOnly": false,
+        "label": "Task Management",
+        "to": "/retest",
+      },
+      {
+        "adminOnly": true,
+        "label": "Agent Management",
+        "to": "/agents",
+      },
+    ],
+  },
+  {
+    "group": "Reports",
+    "id": "reports",
+    "items": [
+      {
+        "adminOnly": false,
+        "label": "Reported Errors",
+        "to": "/my-reported-errors",
+      },
+      {
+        "adminOnly": true,
+        "label": "Error Reports",
+        "to": "/reports",
+      },
+      {
+        "adminOnly": true,
+        "label": "Performance",
+        "to": "/reports/performance",
+      },
+      {
+        "adminOnly": true,
+        "label": "User",
+        "to": "/reports/user",
+      },
+      {
+        "adminOnly": true,
+        "label": "Activity",
+        "to": "/reports/activity",
+      },
+      {
+        "adminOnly": true,
+        "label": "Analytics",
+        "to": "/reports/analytics",
+      },
+      {
+        "adminOnly": true,
+        "label": "Audit Report",
+        "to": "/reports/audit",
+      },
+      {
+        "adminOnly": true,
+        "label": "Scheduled",
+        "to": "/reports/scheduled",
+      },
+      {
+        "adminOnly": true,
+        "label": "Export Center",
+        "to": "/reports/export-center",
+      },
+    ],
+  },
+  {
+    "group": "Settings",
+    "id": "settings",
+    "items": [
+      {
+        "adminOnly": false,
+        "label": "Profile & Settings",
+        "to": "/profile",
+      },
+      {
+        "adminOnly": true,
+        "label": "Audit Logs",
+        "to": "/audit-log",
+      },
+      {
+        "adminOnly": true,
+        "label": "Auth Events",
+        "to": "/auth-events",
+      },
+    ],
+  },
+]
+`;
