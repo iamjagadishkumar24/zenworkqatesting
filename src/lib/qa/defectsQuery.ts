@@ -74,17 +74,20 @@ function mapRow(r: Row): DefectRowLite {
 
 // Loose builder shape: we share one helper between the count and the paged
 // query so PostgREST's chained types don't need to be threaded through every
-// conditional. RLS still enforces row access.
-type PostgrestLike = {
-  eq: (col: string, val: unknown) => PostgrestLike;
-  ilike: (col: string, val: string) => PostgrestLike;
-  or: (expr: string) => PostgrestLike;
-  gte: (col: string, val: unknown) => PostgrestLike;
-  lt: (col: string, val: unknown) => PostgrestLike;
-  in: (col: string, vals: unknown[]) => PostgrestLike;
+// conditional. RLS still enforces row access. We type the builder as
+// `unknown` internally and cast through a minimal chainable shape per call —
+// keeps `any` out of the file without re-deriving Postgrest's full generics.
+type Chain = {
+  eq: (c: string, v: unknown) => Chain;
+  ilike: (c: string, v: string) => Chain;
+  or: (e: string) => Chain;
+  gte: (c: string, v: unknown) => Chain;
+  lt: (c: string, v: unknown) => Chain;
+  in: (c: string, v: unknown[]) => Chain;
+  not: (c: string, op: string, v: unknown) => Chain;
 };
-function applySpec<Q extends PostgrestLike>(qIn: Q, spec: DefectQuerySpec): Q {
-  let q = qIn;
+function applySpec<Q>(qIn: Q, spec: DefectQuerySpec): Q {
+  let q = qIn as unknown as Chain;
   if (spec.environment) q = q.eq("environment", spec.environment);
   if (spec.taxYear && spec.taxYear !== "all") q = q.eq("tax_year", spec.taxYear);
   if (spec.module) q = q.eq("module", spec.module);
@@ -122,7 +125,7 @@ function applySpec<Q extends PostgrestLike>(qIn: Q, spec: DefectQuerySpec): Q {
     default:
       break;
   }
-  return q;
+  return q as unknown as Q;
 }
 
 export async function queryDefectsPage(
