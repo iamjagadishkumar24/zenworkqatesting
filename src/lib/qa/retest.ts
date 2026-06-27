@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQA } from "./store";
 import { useEnvironment } from "./environment";
@@ -35,16 +35,58 @@ export type RetestAssignment = {
   forms: RetestForm[];
 };
 
-export function useRetests() {
-  const { currentUser, users } = useQA();
-  const { env } = useEnvironment();
-  const [items, setItems] = useState<RetestAssignment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [realtimeOk, setRealtimeOk] = useState(true);
+// ---------------------------------------------------------------------------
+// Module-level cache + shared realtime channel for retest data.
+//
+// Before: every mount of `useRetests` opened its own Realtime channel and
+// re-ran `SELECT * FROM retest_assignments + retest_assignment_forms` on every
+// postgres_changes event. With multiple route components mounted that caused
+// thousands of redundant fetches (see slow-query audit).
+//
+// After: one shared cache keyed by user+env, refcounted single channel,
+// throttled refetch (300ms trailing) so a burst of realtime events collapses
+// into a single round-trip. Per-call dedup + 5s staleTime makes simultaneous
+// remounts share the same in-flight request.
+// ---------------------------------------------------------------------------
 
-  const load = useCallback(async () => {
-    setLoading(true);
+type Snapshot = {
+  items: RetestAssignment[];
+  loading: boolean;
+  error: string | null;
+  realtimeOk: boolean;
+  fetchedAt: number;
+};
+const EMPTY_SNAPSHOT: Snapshot = {
+  items: [],
+  loading: true,
+  error: null,
+  realtimeOk: true,
+  fetchedAt: 0,
+};
+const RETEST_STALE_MS = 5_000;
+const RETEST_REFETCH_THROTTLE_MS = 300;
+
+type EntryRuntime = {
+  snapshot: Snapshot;
+  listeners: Set<() => void>;
+  refCount: number;
+  inflight: Promise<void> | null;
+  channel: ReturnType<typeof supabase.channel> | null;
+  refetchTimer: ReturnType<typeof setTimeout> | null;
+  retryTimer: ReturnType<typeof setTimeout> | null;
+  attempts: number;
+  cancelled: boolean;
+};
+const entries = new Map<string, EntryRuntime>();
+
+function emit(entry: EntryRuntime, next: Snapshot) {
+  entry.snapshot = next;
+  entry.listeners.forEach((l) => l());
+}
+
+async function fetchRetests(entry: EntryRuntime): Promise<void> {
+  if (entry.inflight) return entry.inflight;
+  const p = (async () => {
     try {
       const [a, f] = await Promise.all([
         supabase.from("retest_assignments").select("*").order("created_at", { ascending: false }),
@@ -57,98 +99,186 @@ export function useRetests() {
         ...r,
         forms: forms.filter((x) => x.assignment_id === r.id),
       }));
-      // Dedupe by id (defensive — protects against stale concurrent fetches).
       const byId = new Map<string, RetestAssignment>();
       for (const r of rows) byId.set(r.id, r);
-      setItems(Array.from(byId.values()));
-      setError(null);
+      emit(entry, {
+        ...entry.snapshot,
+        items: Array.from(byId.values()),
+        loading: false,
+        error: null,
+        fetchedAt: Date.now(),
+      });
     } catch (e) {
       console.warn("useRetests: load failed", e);
-      setError(e instanceof Error ? e.message : "Failed to load tasks");
+      emit(entry, {
+        ...entry.snapshot,
+        loading: false,
+        error: e instanceof Error ? e.message : "Failed to load tasks",
+      });
     } finally {
-      setLoading(false);
+      entry.inflight = null;
     }
-  }, []);
+  })();
+  entry.inflight = p;
+  return p;
+}
 
-  useEffect(() => {
-    if (!currentUser) return;
-    void load();
-    let ch: ReturnType<typeof supabase.channel> | null = null;
-    let cancelled = false;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-    let attempts = 0;
-    const connect = () => {
-      if (cancelled) return;
-      // Unique channel name per attempt so a stale CHANNEL_ERROR socket can't
-      // collide with the retry. Includes user+env so switching environment
-      // tears down the previous channel and never duplicates.
-      const channelName = `retest-${currentUser.id}-${env ?? "any"}-${Date.now()}`;
-      try {
-        ch = supabase
-          .channel(channelName)
-          .on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "retest_assignments" },
-            () => void load(),
-          )
-          .on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "retest_assignment_forms" },
-            () => void load(),
-          )
-          .subscribe((status) => {
-            if (cancelled) return;
-            if (status === "SUBSCRIBED") {
-              attempts = 0;
-              setRealtimeOk(true);
-              return;
-            }
-            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-              // Refresh on reconnect so we don't miss events while offline.
-              void load();
-              // Tear down this channel and schedule a backoff retry.
-              const dead = ch;
-              ch = null;
-              if (dead) {
-                try {
-                  void supabase.removeChannel(dead);
-                } catch {
-                  /* noop */
-                }
-              }
-              attempts += 1;
-              // Only surface the warning after a few sustained failures.
-              if (attempts >= 3) setRealtimeOk(false);
-              const delay = Math.min(30000, 1000 * 2 ** Math.min(attempts, 5));
-              retryTimer = setTimeout(connect, delay);
-            }
-          });
-      } catch (e) {
-        console.warn("useRetests: realtime subscribe failed", e);
-        attempts += 1;
-        if (attempts >= 3) setRealtimeOk(false);
-        retryTimer = setTimeout(connect, Math.min(30000, 1000 * 2 ** Math.min(attempts, 5)));
-      }
-    };
-    connect();
-    return () => {
-      cancelled = true;
-      if (retryTimer) clearTimeout(retryTimer);
-      if (ch) {
-        try {
-          void supabase.removeChannel(ch);
-        } catch {
-          /* noop */
+function scheduleRefetch(entry: EntryRuntime) {
+  if (entry.refetchTimer) return;
+  entry.refetchTimer = setTimeout(() => {
+    entry.refetchTimer = null;
+    void fetchRetests(entry);
+  }, RETEST_REFETCH_THROTTLE_MS);
+}
+
+function openChannel(key: string, entry: EntryRuntime, userId: string, env: string | null) {
+  if (entry.cancelled || entry.channel) return;
+  const channelName = `retest-${userId}-${env ?? "any"}-${Date.now()}`;
+  try {
+    const ch = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "retest_assignments" },
+        () => scheduleRefetch(entry),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "retest_assignment_forms" },
+        () => scheduleRefetch(entry),
+      )
+      .subscribe((status) => {
+        if (entry.cancelled) return;
+        if (status === "SUBSCRIBED") {
+          entry.attempts = 0;
+          emit(entry, { ...entry.snapshot, realtimeOk: true });
+          return;
         }
-      }
-    };
-  }, [currentUser, env, load]);
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          scheduleRefetch(entry);
+          const dead = entry.channel;
+          entry.channel = null;
+          if (dead) {
+            try {
+              void supabase.removeChannel(dead);
+            } catch {
+              /* noop */
+            }
+          }
+          entry.attempts += 1;
+          if (entry.attempts >= 3)
+            emit(entry, { ...entry.snapshot, realtimeOk: false });
+          const delay = Math.min(30000, 1000 * 2 ** Math.min(entry.attempts, 5));
+          entry.retryTimer = setTimeout(() => openChannel(key, entry, userId, env), delay);
+        }
+      });
+    entry.channel = ch;
+  } catch (e) {
+    console.warn("useRetests: realtime subscribe failed", e);
+    entry.attempts += 1;
+    if (entry.attempts >= 3) emit(entry, { ...entry.snapshot, realtimeOk: false });
+    entry.retryTimer = setTimeout(
+      () => openChannel(key, entry, userId, env),
+      Math.min(30000, 1000 * 2 ** Math.min(entry.attempts, 5)),
+    );
+  }
+}
 
-  const scoped = items.filter((r) => {
-    if (env && r.environment !== env) return false;
-    if (currentUser?.role === "agent") return r.assigned_agent_id === currentUser.id;
-    return true;
-  });
+function acquireEntry(userId: string, env: string | null): EntryRuntime {
+  const key = `${userId}::${env ?? "any"}`;
+  let entry = entries.get(key);
+  if (!entry) {
+    entry = {
+      snapshot: EMPTY_SNAPSHOT,
+      listeners: new Set(),
+      refCount: 0,
+      inflight: null,
+      channel: null,
+      refetchTimer: null,
+      retryTimer: null,
+      attempts: 0,
+      cancelled: false,
+    };
+    entries.set(key, entry);
+    openChannel(key, entry, userId, env);
+    void fetchRetests(entry);
+  } else if (Date.now() - entry.snapshot.fetchedAt > RETEST_STALE_MS) {
+    void fetchRetests(entry);
+  }
+  entry.refCount += 1;
+  return entry;
+}
+
+function releaseEntry(userId: string, env: string | null) {
+  const key = `${userId}::${env ?? "any"}`;
+  const entry = entries.get(key);
+  if (!entry) return;
+  entry.refCount -= 1;
+  if (entry.refCount > 0) return;
+  // Teardown: no more consumers. Drop the channel and timers; keep the cache
+  // briefly so quick remounts can reuse it (GC by overwrite on next access).
+  entry.cancelled = true;
+  if (entry.refetchTimer) clearTimeout(entry.refetchTimer);
+  if (entry.retryTimer) clearTimeout(entry.retryTimer);
+  if (entry.channel) {
+    try {
+      void supabase.removeChannel(entry.channel);
+    } catch {
+      /* noop */
+    }
+    entry.channel = null;
+  }
+  entries.delete(key);
+}
+
+export function useRetests() {
+  const { currentUser, users } = useQA();
+  const { env } = useEnvironment();
+
+  // Subscribe to the shared per-(user,env) cache via useSyncExternalStore so
+  // each consumer rerenders only when this slice actually changes.
+  const userId = currentUser?.id ?? null;
+  const envKey = env ?? null;
+  const subscribe = useCallback(
+    (cb: () => void) => {
+      if (!userId) return () => {};
+      const entry = acquireEntry(userId, envKey);
+      entry.listeners.add(cb);
+      return () => {
+        entry.listeners.delete(cb);
+        releaseEntry(userId, envKey);
+      };
+    },
+    [userId, envKey],
+  );
+  const getSnapshot = useCallback((): Snapshot => {
+    if (!userId) return EMPTY_SNAPSHOT;
+    const key = `${userId}::${envKey ?? "any"}`;
+    return entries.get(key)?.snapshot ?? EMPTY_SNAPSHOT;
+  }, [userId, envKey]);
+  const snap = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+  const items = snap.items;
+  const loading = snap.loading;
+  const error = snap.error;
+  const realtimeOk = snap.realtimeOk;
+
+  const scoped = useMemo(
+    () =>
+      items.filter((r) => {
+        if (env && r.environment !== env) return false;
+        if (currentUser?.role === "agent") return r.assigned_agent_id === currentUser.id;
+        return true;
+      }),
+    [items, env, currentUser?.id, currentUser?.role],
+  );
+
+  const load = useCallback(async () => {
+    if (!userId) return;
+    const key = `${userId}::${envKey ?? "any"}`;
+    const entry = entries.get(key);
+    if (entry) await fetchRetests(entry);
+  }, [userId, envKey]);
 
   const createAssignment = async (input: {
     agentName?: string;

@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -484,20 +485,36 @@ export function QAProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Batch realtime debug events via rAF so a burst of postgres_changes (e.g.
+  // bulk update) collapses into a single React state update instead of N.
+  const pendingEventsRef = useRef<RealtimeDebugEvent[]>([]);
+  const eventsFlushRef = useRef<number | null>(null);
+  const flushEvents = () => {
+    eventsFlushRef.current = null;
+    const batch = pendingEventsRef.current;
+    if (batch.length === 0) return;
+    pendingEventsRef.current = [];
+    const last = batch[0].at;
+    setRealtimeLastEventAt(last);
+    setRealtimeEvents((prev) => [...batch, ...prev].slice(0, 100));
+  };
   const pushEvent = (e: Omit<RealtimeDebugEvent, "id" | "at" | "role">) => {
     const at = new Date().toISOString();
-    setRealtimeLastEventAt(at);
-    setRealtimeEvents((prev) =>
-      [
-        {
-          ...e,
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          at,
-          role: roleRef.current,
-        },
-        ...prev,
-      ].slice(0, 100),
-    );
+    pendingEventsRef.current = [
+      {
+        ...e,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        at,
+        role: roleRef.current,
+      },
+      ...pendingEventsRef.current,
+    ].slice(0, 100);
+    if (eventsFlushRef.current != null) return;
+    if (typeof requestAnimationFrame === "function") {
+      eventsFlushRef.current = requestAnimationFrame(flushEvents);
+    } else {
+      eventsFlushRef.current = setTimeout(flushEvents, 16) as unknown as number;
+    }
   };
 
   // Auth lifecycle
@@ -1241,7 +1258,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
 
   return (
     <Context.Provider value={memoCtx}>
-      <RealtimeDebugContext.Provider value={rtDebug}>{children}</RealtimeDebugContext.Provider>
+      <RealtimeDebugContext.Provider value={rtDebug}>
+        <StateMirror state={state} />
+        {children}
+      </RealtimeDebugContext.Provider>
     </Context.Provider>
   );
 }
@@ -1250,6 +1270,70 @@ export function useQA() {
   const c = useContext(Context);
   if (!c) throw new Error("useQA must be used within QAProvider");
   return c;
+}
+
+// ---------------------------------------------------------------------------
+// External store mirror for memoized slice selection.
+//
+// `useQA()` returns the whole Ctx — any change re-renders every consumer.
+// `useQASelector(selector, equality?)` subscribes to a module-level mirror of
+// `state` via `useSyncExternalStore` and only rerenders when the selected
+// slice changes (referential or custom equality). Use it in hot paths like
+// dashboards, lists, and widgets where only a small slice is read.
+// ---------------------------------------------------------------------------
+
+let stateMirror: State | null = null;
+const stateListeners = new Set<() => void>();
+function publishState(next: State) {
+  if (stateMirror === next) return;
+  stateMirror = next;
+  stateListeners.forEach((l) => l());
+}
+function getStateSnapshot(): State {
+  return (
+    stateMirror ?? {
+      users: [],
+      defects: [],
+      forms: [],
+      audit: [],
+      notifications: [],
+      currentUser: null,
+      loading: true,
+    }
+  );
+}
+function subscribeState(cb: () => void) {
+  stateListeners.add(cb);
+  return () => stateListeners.delete(cb);
+}
+function StateMirror({ state }: { state: State }) {
+  useEffect(() => {
+    publishState(state);
+  }, [state]);
+  return null;
+}
+
+const defaultEqual = <T,>(a: T, b: T) => Object.is(a, b);
+export function useQASelector<T>(
+  selector: (s: State) => T,
+  isEqual: (a: T, b: T) => boolean = defaultEqual,
+): T {
+  const lastRef = useRef<{ value: T; src: State | null }>({
+    value: undefined as unknown as T,
+    src: null,
+  });
+  const getSelected = () => {
+    const snap = getStateSnapshot();
+    if (lastRef.current.src === snap) return lastRef.current.value;
+    const next = selector(snap);
+    if (lastRef.current.src !== null && isEqual(lastRef.current.value, next)) {
+      lastRef.current.src = snap;
+      return lastRef.current.value;
+    }
+    lastRef.current = { value: next, src: snap };
+    return next;
+  };
+  return useSyncExternalStore(subscribeState, getSelected, getSelected);
 }
 
 export type RealtimeDebugCtx = {
