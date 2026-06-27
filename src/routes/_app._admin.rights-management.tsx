@@ -67,7 +67,7 @@ type AuditEntry = {
   enabled: boolean;
 };
 
-function RightsManagementPage() {
+export function RightsManagementPage() {
   const [matrix, setMatrix] = useState<Matrix>(() => defaultMatrix());
   const [role, setRole] = useState<Role>("admin");
   const [q, setQ] = useState("");
