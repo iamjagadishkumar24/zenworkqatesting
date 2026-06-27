@@ -23,6 +23,9 @@ import {
   ScrollText,
   StickyNote,
   ShieldAlert,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
@@ -85,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { env, setEnv } = useEnvironment();
   const { taxYear, setTaxYear } = useTaxYear();
   // Apply user theme/accent/density globally on every page.
-  usePrefs();
+  const { prefs, update: updatePref } = usePrefs();
   // Apply environment theme globally so all pages, modals, tables, etc.
   // pick up the Production/Stage palette automatically.
   useEffect(() => {
@@ -310,6 +313,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
           </form>
           <NotificationsBell />
+          {(() => {
+            const order: Array<"light" | "dark" | "system"> = ["light", "dark", "system"];
+            const idx = order.indexOf(prefs.theme);
+            const next = order[(idx + 1) % order.length];
+            const Icon = prefs.theme === "dark" ? Moon : prefs.theme === "system" ? Monitor : Sun;
+            const label =
+              prefs.theme === "dark"
+                ? "Dark"
+                : prefs.theme === "system"
+                  ? "System"
+                  : "Light";
+            return (
+              <button
+                type="button"
+                onClick={() => updatePref("theme", next)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label={`Theme: ${label}. Click to switch to ${next}.`}
+                title={`Theme: ${label} — click for ${next}`}
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </button>
+            );
+          })()}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

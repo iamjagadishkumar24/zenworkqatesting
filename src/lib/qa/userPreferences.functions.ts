@@ -48,20 +48,11 @@ export const saveMyPreferences = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => PrefsInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Role-based rule: agents may pick any of the allowed accent colors,
-    // but Light/Dark mode is admin-only. Coerce non-admins to "light" so a
-    // crafted payload can't dark-mode the portal.
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "admin",
-    });
-    const safe = {
-      ...data,
-      theme: isAdmin ? data.theme : "light",
-    };
+    // Light/Dark/System mode is available to all roles (toggled from the
+    // header). Accent colors remain role-scoped on the client.
     const { error } = await supabase
       .from("user_preferences")
-      .upsert({ user_id: userId, ...safe }, { onConflict: "user_id" });
+      .upsert({ user_id: userId, ...data }, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });

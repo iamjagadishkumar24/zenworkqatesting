@@ -158,12 +158,13 @@ export function usePrefs() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(userKey(uid), JSON.stringify(prefs));
-    // Apply theme. Default is Light; "system" falls back to Light so new
-    // users always start on the light theme until they explicitly switch.
-    // Dark mode is an Admin-only capability — non-admins (agents) are
-    // pinned to light regardless of any persisted preference.
+    // Apply theme. Available to all roles via the header toggle.
+    // "system" follows the OS preference; "light"/"dark" are explicit.
     const root = document.documentElement;
-    const wantDark = isAdmin && prefs.theme === "dark";
+    const prefersDark =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    const wantDark = prefs.theme === "dark" || (prefs.theme === "system" && prefersDark);
     root.classList.toggle("dark", wantDark);
     // Admins are pinned to the default "blue" accent — agent color themes
     // must never apply to admin sessions even if forced via localStorage
@@ -182,6 +183,17 @@ export function usePrefs() {
     root.dataset.density = prefs.density;
   }, [prefs, uid, isAdmin]);
 
+  // When theme === "system", keep in sync with OS-level changes.
+  useEffect(() => {
+    if (typeof window === "undefined" || prefs.theme !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (e: MediaQueryListEvent) => {
+      document.documentElement.classList.toggle("dark", e.matches);
+    };
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, [prefs.theme]);
+
   const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) =>
     setPrefs((p) => {
       const next = { ...p, [k]: v };
@@ -198,7 +210,7 @@ export function usePrefs() {
       }
       // Best-effort backend sync; localStorage write happens in the apply effect.
       if (uid) {
-        const isThemeChange = k === "accent" || k === "theme";
+        const isAccentChange = k === "accent";
         void saveMyPreferences({
           data: {
             theme: next.theme,
@@ -211,7 +223,7 @@ export function usePrefs() {
           },
         })
           .then(() => {
-            if (isThemeChange) {
+            if (isAccentChange) {
               toast.success("Theme synced", {
                 description:
                   "Your accent color was saved. If it doesn't appear everywhere, refresh the page.",
