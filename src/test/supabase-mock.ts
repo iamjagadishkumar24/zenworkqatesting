@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { vi, type Mock } from "vitest";
 
 /**
  * Lightweight chainable mock for the Supabase JS client used by
@@ -14,14 +14,21 @@ export interface MockResult<T = unknown> {
   count?: number | null;
 }
 
+export type QueryBuilder<T = unknown> = {
+  calls: ChainCall[];
+  _result: MockResult<T>;
+  setResult: (r: MockResult<T>) => void;
+  then: (resolve: (v: MockResult<T>) => unknown) => Promise<unknown>;
+} & Record<string, Mock>;
+
 export function createQueryBuilder<T = unknown>(
   result: MockResult<T> = { data: [] as unknown as T, error: null },
-) {
+): QueryBuilder<T> {
   const calls: ChainCall[] = [];
-  const builder: any = {
+  const builder = {
     calls,
     _result: result,
-  };
+  } as QueryBuilder<T>;
   const chainable = [
     "select",
     "eq",
@@ -67,9 +74,15 @@ export function createQueryBuilder<T = unknown>(
   return builder;
 }
 
+export interface ChannelMock {
+  on: Mock;
+  subscribe: Mock;
+  unsubscribe: Mock;
+}
+
 export function createSupabaseMock() {
-  const builders: any[] = [];
-  const channels: any[] = [];
+  const builders: QueryBuilder[] = [];
+  const channels: ChannelMock[] = [];
   const from = vi.fn((_table: string) => {
     const b = createQueryBuilder();
     builders.push(b);
@@ -82,7 +95,7 @@ export function createSupabaseMock() {
     signOut: vi.fn(async () => ({ error: null })),
   };
   const channel = vi.fn((_name: string) => {
-    const ch: any = {
+    const ch: ChannelMock = {
       on: vi.fn(() => ch),
       subscribe: vi.fn((cb?: (s: string) => void) => {
         cb?.("SUBSCRIBED");
@@ -96,7 +109,13 @@ export function createSupabaseMock() {
   const removeChannel = vi.fn();
   const rpc = vi.fn(async () => ({ data: null, error: null }));
   return {
-    client: { from, auth, channel, removeChannel, rpc } as any,
+    client: { from, auth, channel, removeChannel, rpc } as unknown as {
+      from: typeof from;
+      auth: typeof auth;
+      channel: typeof channel;
+      removeChannel: typeof removeChannel;
+      rpc: typeof rpc;
+    },
     builders,
     channels,
     from,

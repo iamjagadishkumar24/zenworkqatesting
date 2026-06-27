@@ -4,8 +4,11 @@ import { cleanup } from "@testing-library/react";
 
 afterEach(() => cleanup());
 
-if (!(globalThis as any).ResizeObserver) {
-  (globalThis as any).ResizeObserver = class {
+type Mutable = Record<string, unknown>;
+const g = globalThis as unknown as Mutable;
+
+if (!g.ResizeObserver) {
+  g.ResizeObserver = class {
     observe() {}
     unobserve() {}
     disconnect() {}
@@ -14,7 +17,7 @@ if (!(globalThis as any).ResizeObserver) {
 
 // jsdom doesn't implement matchMedia
 if (!window.matchMedia) {
-  (window as any).matchMedia = (query: string) => ({
+  (window as unknown as Mutable).matchMedia = (query: string) => ({
     matches: false,
     media: query,
     onchange: null,
