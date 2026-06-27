@@ -390,6 +390,7 @@ export function DefectDetailSheet({
               <Select
                 value={currentAdminReview(defect)}
                 onValueChange={(v) => void applyAdminReview(v as AdminReviewStatus)}
+                disabled={actionBusy}
               >
                 <SelectTrigger className="h-8 w-44 text-xs">
                   <SelectValue />
@@ -406,8 +407,10 @@ export function DefectDetailSheet({
                 size="sm"
                 variant="ghost"
                 onClick={() => quickPatch({ status: "Reopened" }, "Reopened")}
+                disabled={actionBusy}
+                aria-busy={actionBusy}
               >
-                Reopen
+                {actionBusy ? "Working…" : "Reopen"}
               </Button>
             </div>
           )}
