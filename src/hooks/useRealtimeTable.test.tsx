@@ -5,9 +5,9 @@ import type { ReactNode } from "react";
 
 const invalidateQueries = vi.fn();
 const removeChannel = vi.fn();
-const subscribe = vi.fn(() => ({}));
-const onFn = vi.fn(() => ({ subscribe }));
-const channelFn = vi.fn(() => ({ on: onFn }));
+const subscribe = vi.fn((..._args: unknown[]) => ({}));
+const onFn = vi.fn((..._args: unknown[]) => ({ subscribe }));
+const channelFn = vi.fn((..._args: unknown[]) => ({ on: onFn }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
