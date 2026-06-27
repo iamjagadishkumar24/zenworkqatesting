@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,17 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Radio, Trash2, Activity, Clock, Wifi, RefreshCw, CheckCircle2 } from "lucide-react";
 
-export const Route = createFileRoute("/_app/realtime-debug")({
-  component: RealtimeDebugRouteGate,
+export const Route = createFileRoute("/_app/_admin/realtime-debug")({
+  component: RealtimeDebugPage,
 });
-
-function RealtimeDebugRouteGate() {
-  const { currentUser } = useQA();
-  if (currentUser && currentUser.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
-  return <RealtimeDebugPage />;
-}
 
 function RealtimeDebugPage() {
   const { realtimeEvents, clearRealtimeEvents, currentUser } = useQA();

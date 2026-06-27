@@ -18,8 +18,6 @@ import { Route as AppTax1099FeaturesRouteImport } from './routes/_app.tax1099-fe
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSelectEnvironmentRouteImport } from './routes/_app.select-environment'
 import { Route as AppRetestRouteImport } from './routes/_app.retest'
-import { Route as AppReportsRouteImport } from './routes/_app.reports'
-import { Route as AppRealtimeDebugRouteImport } from './routes/_app.realtime-debug'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
@@ -33,14 +31,17 @@ import { Route as AppExcelImportTestingRouteImport } from './routes/_app.excel-i
 import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppChatbotTestingRouteImport } from './routes/_app.chatbot-testing'
-import { Route as AppAuthEventsRouteImport } from './routes/_app.auth-events'
-import { Route as AppAuditLogRouteImport } from './routes/_app.audit-log'
-import { Route as AppAgentsRouteImport } from './routes/_app.agents'
+import { Route as AppAdminRouteImport } from './routes/_app._admin'
 import { Route as App990FormsRouteImport } from './routes/_app.990-forms'
 import { Route as App2290FormsRouteImport } from './routes/_app.2290-forms'
 import { Route as ApiPublicManifestRouteImport } from './routes/api/public/manifest'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as AppTasksTaskIdRouteImport } from './routes/_app.tasks.$taskId'
+import { Route as AppAdminReportsRouteImport } from './routes/_app._admin.reports'
+import { Route as AppAdminRealtimeDebugRouteImport } from './routes/_app._admin.realtime-debug'
+import { Route as AppAdminAuthEventsRouteImport } from './routes/_app._admin.auth-events'
+import { Route as AppAdminAuditLogRouteImport } from './routes/_app._admin.audit-log'
+import { Route as AppAdminAgentsRouteImport } from './routes/_app._admin.agents'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -84,16 +85,6 @@ const AppSelectEnvironmentRoute = AppSelectEnvironmentRouteImport.update({
 const AppRetestRoute = AppRetestRouteImport.update({
   id: '/retest',
   path: '/retest',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppReportsRoute = AppReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppRealtimeDebugRoute = AppRealtimeDebugRouteImport.update({
-  id: '/realtime-debug',
-  path: '/realtime-debug',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -161,19 +152,8 @@ const AppChatbotTestingRoute = AppChatbotTestingRouteImport.update({
   path: '/chatbot-testing',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAuthEventsRoute = AppAuthEventsRouteImport.update({
-  id: '/auth-events',
-  path: '/auth-events',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAuditLogRoute = AppAuditLogRouteImport.update({
-  id: '/audit-log',
-  path: '/audit-log',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAgentsRoute = AppAgentsRouteImport.update({
-  id: '/agents',
-  path: '/agents',
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/_admin',
   getParentRoute: () => AppRoute,
 } as any)
 const App990FormsRoute = App990FormsRouteImport.update({
@@ -201,6 +181,31 @@ const AppTasksTaskIdRoute = AppTasksTaskIdRouteImport.update({
   path: '/tasks/$taskId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminReportsRoute = AppAdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminRealtimeDebugRoute = AppAdminRealtimeDebugRouteImport.update({
+  id: '/realtime-debug',
+  path: '/realtime-debug',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminAuthEventsRoute = AppAdminAuthEventsRouteImport.update({
+  id: '/auth-events',
+  path: '/auth-events',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminAuditLogRoute = AppAdminAuditLogRouteImport.update({
+  id: '/audit-log',
+  path: '/audit-log',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminAgentsRoute = AppAdminAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -208,9 +213,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/2290-forms': typeof App2290FormsRoute
   '/990-forms': typeof App990FormsRoute
-  '/agents': typeof AppAgentsRoute
-  '/audit-log': typeof AppAuditLogRoute
-  '/auth-events': typeof AppAuthEventsRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
@@ -224,13 +226,16 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/profile': typeof AppProfileRoute
-  '/realtime-debug': typeof AppRealtimeDebugRoute
-  '/reports': typeof AppReportsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
   '/zenwork-payments': typeof AppZenworkPaymentsRoute
+  '/agents': typeof AppAdminAgentsRoute
+  '/audit-log': typeof AppAdminAuditLogRoute
+  '/auth-events': typeof AppAdminAuthEventsRoute
+  '/realtime-debug': typeof AppAdminRealtimeDebugRoute
+  '/reports': typeof AppAdminReportsRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
@@ -241,9 +246,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/2290-forms': typeof App2290FormsRoute
   '/990-forms': typeof App990FormsRoute
-  '/agents': typeof AppAgentsRoute
-  '/audit-log': typeof AppAuditLogRoute
-  '/auth-events': typeof AppAuthEventsRoute
   '/chatbot-testing': typeof AppChatbotTestingRoute
   '/dashboard': typeof AppDashboardRoute
   '/defects': typeof AppDefectsRoute
@@ -257,13 +259,16 @@ export interface FileRoutesByTo {
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/profile': typeof AppProfileRoute
-  '/realtime-debug': typeof AppRealtimeDebugRoute
-  '/reports': typeof AppReportsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
   '/zenwork-payments': typeof AppZenworkPaymentsRoute
+  '/agents': typeof AppAdminAgentsRoute
+  '/audit-log': typeof AppAdminAuditLogRoute
+  '/auth-events': typeof AppAdminAuthEventsRoute
+  '/realtime-debug': typeof AppAdminRealtimeDebugRoute
+  '/reports': typeof AppAdminReportsRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
@@ -276,9 +281,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_app/2290-forms': typeof App2290FormsRoute
   '/_app/990-forms': typeof App990FormsRoute
-  '/_app/agents': typeof AppAgentsRoute
-  '/_app/audit-log': typeof AppAuditLogRoute
-  '/_app/auth-events': typeof AppAuthEventsRoute
+  '/_app/_admin': typeof AppAdminRouteWithChildren
   '/_app/chatbot-testing': typeof AppChatbotTestingRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/defects': typeof AppDefectsRoute
@@ -292,13 +295,16 @@ export interface FileRoutesById {
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
   '/_app/profile': typeof AppProfileRoute
-  '/_app/realtime-debug': typeof AppRealtimeDebugRoute
-  '/_app/reports': typeof AppReportsRoute
   '/_app/retest': typeof AppRetestRoute
   '/_app/select-environment': typeof AppSelectEnvironmentRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tax1099-features': typeof AppTax1099FeaturesRoute
   '/_app/zenwork-payments': typeof AppZenworkPaymentsRoute
+  '/_app/_admin/agents': typeof AppAdminAgentsRoute
+  '/_app/_admin/audit-log': typeof AppAdminAuditLogRoute
+  '/_app/_admin/auth-events': typeof AppAdminAuthEventsRoute
+  '/_app/_admin/realtime-debug': typeof AppAdminRealtimeDebugRoute
+  '/_app/_admin/reports': typeof AppAdminReportsRoute
   '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
@@ -311,9 +317,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/2290-forms'
     | '/990-forms'
-    | '/agents'
-    | '/audit-log'
-    | '/auth-events'
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
@@ -327,13 +330,16 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/online-1099'
     | '/profile'
-    | '/realtime-debug'
-    | '/reports'
     | '/retest'
     | '/select-environment'
     | '/settings'
     | '/tax1099-features'
     | '/zenwork-payments'
+    | '/agents'
+    | '/audit-log'
+    | '/auth-events'
+    | '/realtime-debug'
+    | '/reports'
     | '/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
@@ -344,9 +350,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/2290-forms'
     | '/990-forms'
-    | '/agents'
-    | '/audit-log'
-    | '/auth-events'
     | '/chatbot-testing'
     | '/dashboard'
     | '/defects'
@@ -360,13 +363,16 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/online-1099'
     | '/profile'
-    | '/realtime-debug'
-    | '/reports'
     | '/retest'
     | '/select-environment'
     | '/settings'
     | '/tax1099-features'
     | '/zenwork-payments'
+    | '/agents'
+    | '/audit-log'
+    | '/auth-events'
+    | '/realtime-debug'
+    | '/reports'
     | '/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
@@ -378,9 +384,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_app/2290-forms'
     | '/_app/990-forms'
-    | '/_app/agents'
-    | '/_app/audit-log'
-    | '/_app/auth-events'
+    | '/_app/_admin'
     | '/_app/chatbot-testing'
     | '/_app/dashboard'
     | '/_app/defects'
@@ -394,13 +398,16 @@ export interface FileRouteTypes {
     | '/_app/notifications'
     | '/_app/online-1099'
     | '/_app/profile'
-    | '/_app/realtime-debug'
-    | '/_app/reports'
     | '/_app/retest'
     | '/_app/select-environment'
     | '/_app/settings'
     | '/_app/tax1099-features'
     | '/_app/zenwork-payments'
+    | '/_app/_admin/agents'
+    | '/_app/_admin/audit-log'
+    | '/_app/_admin/auth-events'
+    | '/_app/_admin/realtime-debug'
+    | '/_app/_admin/reports'
     | '/_app/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
@@ -478,20 +485,6 @@ declare module '@tanstack/react-router' {
       path: '/retest'
       fullPath: '/retest'
       preLoaderRoute: typeof AppRetestRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/reports': {
-      id: '/_app/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AppReportsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/realtime-debug': {
-      id: '/_app/realtime-debug'
-      path: '/realtime-debug'
-      fullPath: '/realtime-debug'
-      preLoaderRoute: typeof AppRealtimeDebugRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/profile': {
@@ -585,25 +578,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatbotTestingRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/auth-events': {
-      id: '/_app/auth-events'
-      path: '/auth-events'
-      fullPath: '/auth-events'
-      preLoaderRoute: typeof AppAuthEventsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/audit-log': {
-      id: '/_app/audit-log'
-      path: '/audit-log'
-      fullPath: '/audit-log'
-      preLoaderRoute: typeof AppAuditLogRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/agents': {
-      id: '/_app/agents'
-      path: '/agents'
-      fullPath: '/agents'
-      preLoaderRoute: typeof AppAgentsRouteImport
+    '/_app/_admin': {
+      id: '/_app/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/990-forms': {
@@ -641,15 +620,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksTaskIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/_admin/reports': {
+      id: '/_app/_admin/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AppAdminReportsRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/realtime-debug': {
+      id: '/_app/_admin/realtime-debug'
+      path: '/realtime-debug'
+      fullPath: '/realtime-debug'
+      preLoaderRoute: typeof AppAdminRealtimeDebugRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/auth-events': {
+      id: '/_app/_admin/auth-events'
+      path: '/auth-events'
+      fullPath: '/auth-events'
+      preLoaderRoute: typeof AppAdminAuthEventsRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/audit-log': {
+      id: '/_app/_admin/audit-log'
+      path: '/audit-log'
+      fullPath: '/audit-log'
+      preLoaderRoute: typeof AppAdminAuditLogRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/_admin/agents': {
+      id: '/_app/_admin/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AppAdminAgentsRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
   }
 }
+
+interface AppAdminRouteChildren {
+  AppAdminAgentsRoute: typeof AppAdminAgentsRoute
+  AppAdminAuditLogRoute: typeof AppAdminAuditLogRoute
+  AppAdminAuthEventsRoute: typeof AppAdminAuthEventsRoute
+  AppAdminRealtimeDebugRoute: typeof AppAdminRealtimeDebugRoute
+  AppAdminReportsRoute: typeof AppAdminReportsRoute
+}
+
+const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminAgentsRoute: AppAdminAgentsRoute,
+  AppAdminAuditLogRoute: AppAdminAuditLogRoute,
+  AppAdminAuthEventsRoute: AppAdminAuthEventsRoute,
+  AppAdminRealtimeDebugRoute: AppAdminRealtimeDebugRoute,
+  AppAdminReportsRoute: AppAdminReportsRoute,
+}
+
+const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
+  AppAdminRouteChildren,
+)
 
 interface AppRouteChildren {
   App2290FormsRoute: typeof App2290FormsRoute
   App990FormsRoute: typeof App990FormsRoute
-  AppAgentsRoute: typeof AppAgentsRoute
-  AppAuditLogRoute: typeof AppAuditLogRoute
-  AppAuthEventsRoute: typeof AppAuthEventsRoute
+  AppAdminRoute: typeof AppAdminRouteWithChildren
   AppChatbotTestingRoute: typeof AppChatbotTestingRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDefectsRoute: typeof AppDefectsRoute
@@ -663,8 +695,6 @@ interface AppRouteChildren {
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
   AppProfileRoute: typeof AppProfileRoute
-  AppRealtimeDebugRoute: typeof AppRealtimeDebugRoute
-  AppReportsRoute: typeof AppReportsRoute
   AppRetestRoute: typeof AppRetestRoute
   AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -676,9 +706,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   App2290FormsRoute: App2290FormsRoute,
   App990FormsRoute: App990FormsRoute,
-  AppAgentsRoute: AppAgentsRoute,
-  AppAuditLogRoute: AppAuditLogRoute,
-  AppAuthEventsRoute: AppAuthEventsRoute,
+  AppAdminRoute: AppAdminRouteWithChildren,
   AppChatbotTestingRoute: AppChatbotTestingRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDefectsRoute: AppDefectsRoute,
@@ -692,8 +720,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnline1099Route: AppOnline1099Route,
   AppProfileRoute: AppProfileRoute,
-  AppRealtimeDebugRoute: AppRealtimeDebugRoute,
-  AppReportsRoute: AppReportsRoute,
   AppRetestRoute: AppRetestRoute,
   AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,
   AppSettingsRoute: AppSettingsRoute,

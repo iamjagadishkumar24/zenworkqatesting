@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/_app/auth-events")({
+export const Route = createFileRoute("/_app/_admin/auth-events")({
   component: AuthEventsPage,
 });
 
@@ -189,7 +189,6 @@ function AuthEventsPage() {
   }, [filteredRows]);
 
   if (!currentUser) return null;
-  if (currentUser.role !== "admin") return <Navigate to="/dashboard" />;
 
   const reasonOf = (r: Row) =>
     (r.metadata && typeof r.metadata.reason === "string" ? (r.metadata.reason as string) : "") ||
