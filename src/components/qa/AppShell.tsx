@@ -33,6 +33,7 @@ import { useEnvironment } from "@/lib/qa/environment";
 import { useTaxYear } from "@/lib/qa/taxYear";
 import { TAX_YEARS } from "@/lib/qa/constants";
 import { usePrefs } from "@/lib/qa/prefs";
+import { getFirstName } from "@/lib/qa/displayName";
 import { UserAvatar } from "./UserAvatar";
 import { BrandLogo } from "./BrandLogo";
 import {
