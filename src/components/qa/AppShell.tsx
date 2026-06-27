@@ -121,7 +121,7 @@ const nav: NavEntry[] = [
       { to: "/reports/user", label: "User", icon: UserSearch, adminOnly: true },
       { to: "/reports/activity", label: "Activity", icon: Activity, adminOnly: true },
       { to: "/reports/analytics", label: "Analytics", icon: PieChart, adminOnly: true },
-      { to: "/reports/audit", label: "Audit", icon: ScrollText, adminOnly: true },
+      { to: "/reports/audit", label: "Audit Report", icon: ClipboardCheck, adminOnly: true },
       { to: "/reports/scheduled", label: "Scheduled", icon: CalendarClock, adminOnly: true },
       { to: "/reports/export-center", label: "Export Center", icon: DownloadIcon, adminOnly: true },
     ],
