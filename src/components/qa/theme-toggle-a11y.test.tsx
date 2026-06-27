@@ -20,9 +20,6 @@ function ThemeToggleHarness({ initial = "light" as Theme }: { initial?: Theme })
     <button
       type="button"
       onClick={() => setTheme(next)}
-      onKeyDown={(e) => {
-        if (e.key === " ") e.preventDefault();
-      }}
       aria-pressed={pressed}
       data-theme-toggle
       data-state={theme}

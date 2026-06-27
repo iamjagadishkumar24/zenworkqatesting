@@ -334,10 +334,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => updatePref("theme", next)}
-                onKeyDown={(e) => {
-                  // Space/Enter already trigger click; ensure Space doesn't scroll the page.
-                  if (e.key === " ") e.preventDefault();
-                }}
                 aria-pressed={pressed}
                 data-theme-toggle
                 data-state={prefs.theme}
