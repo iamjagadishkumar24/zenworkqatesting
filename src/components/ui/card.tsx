@@ -6,7 +6,13 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
+      // Layered shadow from --shadow-card (hairline + tight near + soft
+      // ambient). border-border/60 keeps the edge subtle so the shadow does
+      // most of the elevation work instead of competing with a hard line.
+      className={cn(
+        "rounded-xl border border-border/60 bg-card text-card-foreground shadow-[var(--shadow-card)]",
+        className,
+      )}
       {...props}
     />
   ),

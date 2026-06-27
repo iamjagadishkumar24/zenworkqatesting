@@ -78,10 +78,12 @@ const COLORS = [
 
 function EmptyBreakdown({ message }: { message: string }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-sm text-muted-foreground">
-      <Inbox className="h-8 w-8 opacity-40" />
-      <p>{message}</p>
-      <p className="text-xs">
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 py-8 text-center text-sm text-muted-foreground">
+      <div className="grid h-12 w-12 place-items-center rounded-full bg-muted/60 ring-1 ring-border/60">
+        <Inbox className="h-5 w-5 text-muted-foreground/70" aria-hidden="true" />
+      </div>
+      <p className="font-medium text-foreground/80">{message}</p>
+      <p className="max-w-xs text-xs leading-relaxed text-muted-foreground/80">
         Report your first error from any module (e.g. Integrations or Excel Import Testing) to
         populate this breakdown.
       </p>

@@ -251,10 +251,28 @@
   will-change: transform;
 }
 
+/* Skeleton shimmer sweep — paired with the ::before strip in
+   src/components/ui/skeleton.tsx. Left-to-right glide reads as "loading
+   forward" instead of the flat pulse most apps ship. */
+@keyframes skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-blob,
   .animate-fade-in,
   .animate-scale-in {
+    animation: none !important;
+  }
+  /* Stop the shimmer sweep for users with reduced-motion preference. The
+     skeleton box remains visible as a static muted placeholder. */
+  [class*="animate-[skeleton-shimmer"]::before,
+  .skeleton-shimmer::before {
     animation: none !important;
   }
   :where(button, a, [role="button"], input, select, textarea, [tabindex]) {

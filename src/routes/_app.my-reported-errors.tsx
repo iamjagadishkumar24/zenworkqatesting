@@ -481,10 +481,20 @@ function ReportedErrorsPage() {
                 <TableRow>
                   <TableCell
                     colSpan={11}
-                    className="py-12 text-center text-sm text-muted-foreground"
+                    className="py-14 text-center text-sm text-muted-foreground"
                   >
-                    <Bug className="mx-auto mb-2 h-8 w-8 opacity-40" />
-                    No reported errors match the current filters.
+                    <div className="mx-auto flex max-w-sm flex-col items-center gap-3">
+                      <div className="grid h-12 w-12 place-items-center rounded-full bg-muted/60 ring-1 ring-border/60">
+                        <Bug className="h-5 w-5 text-muted-foreground/70" aria-hidden="true" />
+                      </div>
+                      <p className="font-medium text-foreground/80">
+                        No reported errors match the current filters.
+                      </p>
+                      <p className="text-xs leading-relaxed text-muted-foreground/80">
+                        Try widening the date range, clearing the search, or resetting status and
+                        module filters.
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
