@@ -156,6 +156,8 @@ export function DefectDetailSheet({
   const [editingText, setEditingText] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState<Partial<Defect>>({});
+  const [saving, setSaving] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
 
   const isAdmin = currentUser?.role === "admin";
   const isOwner = !!defect && defect.createdBy === currentUser?.name;
@@ -247,17 +249,37 @@ export function DefectDetailSheet({
     setDraft({});
   };
   const save = async () => {
-    const res = await updateDefect(defect.id, draft);
-    if (res.ok) {
-      toast.success("Error updated");
-      setEditMode(false);
-    } else if (!res.conflict) toast.error(res.error ?? "Update failed");
+    if (saving) return;
+    setSaving(true);
+    const pending = toast.loading("Saving changes…");
+    try {
+      const res = await updateDefect(defect.id, draft);
+      if (res.ok) {
+        toast.success("Error updated", { id: pending });
+        setEditMode(false);
+      } else if (res.conflict) {
+        toast.dismiss(pending);
+      } else {
+        toast.error(res.error ?? "Update failed", { id: pending });
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const quickPatch = async (patch: Partial<Defect>, msg: string) => {
-    const res = await updateDefect(defect.id, patch);
-    if (res.ok) toast.success(msg);
-    else if (!res.conflict) toast.error(res.error ?? "Failed");
+    if (actionBusy) return { ok: false } as const;
+    setActionBusy(true);
+    const pending = toast.loading(`${msg}…`);
+    try {
+      const res = await updateDefect(defect.id, patch);
+      if (res.ok) toast.success(msg, { id: pending });
+      else if (res.conflict) toast.dismiss(pending);
+      else toast.error(res.error ?? "Failed", { id: pending });
+      return res;
+    } finally {
+      setActionBusy(false);
+    }
   };
 
   // Look up the user id for the original reporter so we can assign the
@@ -368,6 +390,7 @@ export function DefectDetailSheet({
               <Select
                 value={currentAdminReview(defect)}
                 onValueChange={(v) => void applyAdminReview(v as AdminReviewStatus)}
+                disabled={actionBusy}
               >
                 <SelectTrigger className="h-8 w-44 text-xs">
                   <SelectValue />
@@ -384,8 +407,10 @@ export function DefectDetailSheet({
                 size="sm"
                 variant="ghost"
                 onClick={() => quickPatch({ status: "Reopened" }, "Reopened")}
+                disabled={actionBusy}
+                aria-busy={actionBusy}
               >
-                Reopen
+                {actionBusy ? "Working…" : "Reopen"}
               </Button>
             </div>
           )}
@@ -544,10 +569,16 @@ export function DefectDetailSheet({
                   />
                 </Field>
                 <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={cancelEdit}>
+                  <Button variant="outline" onClick={cancelEdit} disabled={saving}>
                     Cancel
                   </Button>
-                  <Button onClick={save}>{isAdmin ? "Save changes" : "Resubmit for review"}</Button>
+                  <Button onClick={save} disabled={saving} aria-busy={saving}>
+                    {saving
+                      ? "Saving…"
+                      : isAdmin
+                        ? "Save changes"
+                        : "Resubmit for review"}
+                  </Button>
                 </div>
               </div>
             ) : (

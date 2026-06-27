@@ -111,6 +111,7 @@ export function ReportDefectDialog({
   const showForm = !featureMode;
   const formChoices = formOptions && formOptions.length ? formOptions : FORM_LIST;
   const [selectedSchedules, setSelectedSchedules] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   const toggleSchedule = (s: string) =>
     setSelectedSchedules((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   const [draft, setDraft] = useState<Draft>(() => ({
@@ -168,6 +169,7 @@ export function ReportDefectDialog({
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   const submit = async () => {
+    if (submitting) return;
     if (showForm && !draft._form) return toast.error("Please select a form");
     if (featureMode && !draft._form) return toast.error("Missing feature context");
     // Integration only applies when reporting from the Integrations module
@@ -198,11 +200,17 @@ export function ReportDefectDialog({
     delete (payload as Partial<Draft>)._form;
     delete (payload as Partial<Draft>)._integration;
 
-    const r = await addDefect(payload);
-    if (!r.ok) return toast.error(r.error ?? "Could not save");
-    toast.success("Error reported");
-    onOpenChange(false);
-    setDraft({
+    setSubmitting(true);
+    const pending = toast.loading("Reporting error…");
+    try {
+      const r = await addDefect(payload);
+      if (!r.ok) {
+        toast.error(r.error ?? "Could not save", { id: pending });
+        return;
+      }
+      toast.success("Error reported", { id: pending });
+      onOpenChange(false);
+      setDraft({
       module: defaultModule,
       formFeature: "",
       title: "",
@@ -220,7 +228,13 @@ export function ReportDefectDialog({
       assignedAgent: currentUser?.role === "agent" ? currentUser.name : AGENTS[0],
       _form: "",
       _integration: "",
-    });
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unexpected error";
+      toast.error(msg, { id: pending });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -464,10 +478,12 @@ export function ReportDefectDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
             Cancel
           </Button>
-          <Button onClick={submit}>Create Error</Button>
+          <Button onClick={submit} disabled={submitting} aria-busy={submitting}>
+            {submitting ? "Creating…" : "Create Error"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
