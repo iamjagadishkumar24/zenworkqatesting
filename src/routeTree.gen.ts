@@ -18,6 +18,7 @@ import { Route as AppTax1099FeaturesRouteImport } from './routes/_app.tax1099-fe
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSelectEnvironmentRouteImport } from './routes/_app.select-environment'
 import { Route as AppRetestRouteImport } from './routes/_app.retest'
+import { Route as AppReportedErrorsRouteImport } from './routes/_app.reported-errors'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
@@ -47,6 +48,7 @@ import { Route as AppAdminAgentsRouteImport } from './routes/_app._admin.agents'
 import { Route as AppAdminReportsIndexRouteImport } from './routes/_app._admin.reports.index'
 import { Route as AppAdminReportsUserRouteImport } from './routes/_app._admin.reports.user'
 import { Route as AppAdminReportsScheduledRouteImport } from './routes/_app._admin.reports.scheduled'
+import { Route as AppAdminReportsReportedErrorsRouteImport } from './routes/_app._admin.reports.reported-errors'
 import { Route as AppAdminReportsPerformanceRouteImport } from './routes/_app._admin.reports.performance'
 import { Route as AppAdminReportsExportCenterRouteImport } from './routes/_app._admin.reports.export-center'
 import { Route as AppAdminReportsAuditRouteImport } from './routes/_app._admin.reports.audit'
@@ -95,6 +97,11 @@ const AppSelectEnvironmentRoute = AppSelectEnvironmentRouteImport.update({
 const AppRetestRoute = AppRetestRouteImport.update({
   id: '/retest',
   path: '/retest',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportedErrorsRoute = AppReportedErrorsRouteImport.update({
+  id: '/reported-errors',
+  path: '/reported-errors',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -243,6 +250,12 @@ const AppAdminReportsScheduledRoute =
     path: '/scheduled',
     getParentRoute: () => AppAdminReportsRoute,
   } as any)
+const AppAdminReportsReportedErrorsRoute =
+  AppAdminReportsReportedErrorsRouteImport.update({
+    id: '/reported-errors',
+    path: '/reported-errors',
+    getParentRoute: () => AppAdminReportsRoute,
+  } as any)
 const AppAdminReportsPerformanceRoute =
   AppAdminReportsPerformanceRouteImport.update({
     id: '/performance',
@@ -292,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/profile': typeof AppProfileRoute
+  '/reported-errors': typeof AppReportedErrorsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
@@ -311,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/reports/audit': typeof AppAdminReportsAuditRoute
   '/reports/export-center': typeof AppAdminReportsExportCenterRoute
   '/reports/performance': typeof AppAdminReportsPerformanceRoute
+  '/reports/reported-errors': typeof AppAdminReportsReportedErrorsRoute
   '/reports/scheduled': typeof AppAdminReportsScheduledRoute
   '/reports/user': typeof AppAdminReportsUserRoute
   '/reports/': typeof AppAdminReportsIndexRoute
@@ -335,6 +350,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/profile': typeof AppProfileRoute
+  '/reported-errors': typeof AppReportedErrorsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
@@ -353,6 +369,7 @@ export interface FileRoutesByTo {
   '/reports/audit': typeof AppAdminReportsAuditRoute
   '/reports/export-center': typeof AppAdminReportsExportCenterRoute
   '/reports/performance': typeof AppAdminReportsPerformanceRoute
+  '/reports/reported-errors': typeof AppAdminReportsReportedErrorsRoute
   '/reports/scheduled': typeof AppAdminReportsScheduledRoute
   '/reports/user': typeof AppAdminReportsUserRoute
   '/reports': typeof AppAdminReportsIndexRoute
@@ -380,6 +397,7 @@ export interface FileRoutesById {
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
   '/_app/profile': typeof AppProfileRoute
+  '/_app/reported-errors': typeof AppReportedErrorsRoute
   '/_app/retest': typeof AppRetestRoute
   '/_app/select-environment': typeof AppSelectEnvironmentRoute
   '/_app/settings': typeof AppSettingsRoute
@@ -399,6 +417,7 @@ export interface FileRoutesById {
   '/_app/_admin/reports/audit': typeof AppAdminReportsAuditRoute
   '/_app/_admin/reports/export-center': typeof AppAdminReportsExportCenterRoute
   '/_app/_admin/reports/performance': typeof AppAdminReportsPerformanceRoute
+  '/_app/_admin/reports/reported-errors': typeof AppAdminReportsReportedErrorsRoute
   '/_app/_admin/reports/scheduled': typeof AppAdminReportsScheduledRoute
   '/_app/_admin/reports/user': typeof AppAdminReportsUserRoute
   '/_app/_admin/reports/': typeof AppAdminReportsIndexRoute
@@ -425,6 +444,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/online-1099'
     | '/profile'
+    | '/reported-errors'
     | '/retest'
     | '/select-environment'
     | '/settings'
@@ -444,6 +464,7 @@ export interface FileRouteTypes {
     | '/reports/audit'
     | '/reports/export-center'
     | '/reports/performance'
+    | '/reports/reported-errors'
     | '/reports/scheduled'
     | '/reports/user'
     | '/reports/'
@@ -468,6 +489,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/online-1099'
     | '/profile'
+    | '/reported-errors'
     | '/retest'
     | '/select-environment'
     | '/settings'
@@ -486,6 +508,7 @@ export interface FileRouteTypes {
     | '/reports/audit'
     | '/reports/export-center'
     | '/reports/performance'
+    | '/reports/reported-errors'
     | '/reports/scheduled'
     | '/reports/user'
     | '/reports'
@@ -512,6 +535,7 @@ export interface FileRouteTypes {
     | '/_app/notifications'
     | '/_app/online-1099'
     | '/_app/profile'
+    | '/_app/reported-errors'
     | '/_app/retest'
     | '/_app/select-environment'
     | '/_app/settings'
@@ -531,6 +555,7 @@ export interface FileRouteTypes {
     | '/_app/_admin/reports/audit'
     | '/_app/_admin/reports/export-center'
     | '/_app/_admin/reports/performance'
+    | '/_app/_admin/reports/reported-errors'
     | '/_app/_admin/reports/scheduled'
     | '/_app/_admin/reports/user'
     | '/_app/_admin/reports/'
@@ -608,6 +633,13 @@ declare module '@tanstack/react-router' {
       path: '/retest'
       fullPath: '/retest'
       preLoaderRoute: typeof AppRetestRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reported-errors': {
+      id: '/_app/reported-errors'
+      path: '/reported-errors'
+      fullPath: '/reported-errors'
+      preLoaderRoute: typeof AppReportedErrorsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/profile': {
@@ -813,6 +845,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminReportsScheduledRouteImport
       parentRoute: typeof AppAdminReportsRoute
     }
+    '/_app/_admin/reports/reported-errors': {
+      id: '/_app/_admin/reports/reported-errors'
+      path: '/reported-errors'
+      fullPath: '/reports/reported-errors'
+      preLoaderRoute: typeof AppAdminReportsReportedErrorsRouteImport
+      parentRoute: typeof AppAdminReportsRoute
+    }
     '/_app/_admin/reports/performance': {
       id: '/_app/_admin/reports/performance'
       path: '/performance'
@@ -857,6 +896,7 @@ interface AppAdminReportsRouteChildren {
   AppAdminReportsAuditRoute: typeof AppAdminReportsAuditRoute
   AppAdminReportsExportCenterRoute: typeof AppAdminReportsExportCenterRoute
   AppAdminReportsPerformanceRoute: typeof AppAdminReportsPerformanceRoute
+  AppAdminReportsReportedErrorsRoute: typeof AppAdminReportsReportedErrorsRoute
   AppAdminReportsScheduledRoute: typeof AppAdminReportsScheduledRoute
   AppAdminReportsUserRoute: typeof AppAdminReportsUserRoute
   AppAdminReportsIndexRoute: typeof AppAdminReportsIndexRoute
@@ -868,6 +908,7 @@ const AppAdminReportsRouteChildren: AppAdminReportsRouteChildren = {
   AppAdminReportsAuditRoute: AppAdminReportsAuditRoute,
   AppAdminReportsExportCenterRoute: AppAdminReportsExportCenterRoute,
   AppAdminReportsPerformanceRoute: AppAdminReportsPerformanceRoute,
+  AppAdminReportsReportedErrorsRoute: AppAdminReportsReportedErrorsRoute,
   AppAdminReportsScheduledRoute: AppAdminReportsScheduledRoute,
   AppAdminReportsUserRoute: AppAdminReportsUserRoute,
   AppAdminReportsIndexRoute: AppAdminReportsIndexRoute,
@@ -917,6 +958,7 @@ interface AppRouteChildren {
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
   AppProfileRoute: typeof AppProfileRoute
+  AppReportedErrorsRoute: typeof AppReportedErrorsRoute
   AppRetestRoute: typeof AppRetestRoute
   AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -943,6 +985,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnline1099Route: AppOnline1099Route,
   AppProfileRoute: AppProfileRoute,
+  AppReportedErrorsRoute: AppReportedErrorsRoute,
   AppRetestRoute: AppRetestRoute,
   AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,
   AppSettingsRoute: AppSettingsRoute,
