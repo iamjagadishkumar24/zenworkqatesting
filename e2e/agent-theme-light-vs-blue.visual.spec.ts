@@ -593,6 +593,85 @@ async function verifyClickHighlightsAndRestoresFocus(
   await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
 }
 
+/**
+ * Activation check: open the dropdown with the keyboard, move the active
+ * option to a known non-default row, press the activation key (Enter or
+ * Space), and assert:
+ *   1. The popover closes.
+ *   2. The trigger's visible label reflects the chosen option.
+ *   3. Focus returns to the trigger.
+ * A trigger snapshot is captured so the accent-colored label/focus ring
+ * is visually compared across Blue and Light.
+ */
+async function verifyActivationKeySelectsOption(
+  page: Page,
+  label: string,
+  pageName: string,
+  activationKey: "Enter" | "Space",
+) {
+  const trigger = page.locator(TRIGGER_SELECTOR).first();
+  if ((await trigger.count()) === 0) return;
+
+  // Open and pick a deterministic non-default option (2nd ArrowDown press).
+  await openStatusDropdownByKeyboard(page, 0);
+  let popover = page.locator(POPOVER_SELECTOR).first();
+  if ((await popover.count()) === 0) return;
+  const optionCount = await popover
+    .locator('[role="option"], [role="menuitem"]')
+    .count();
+  if (optionCount < 2) {
+    await page.keyboard.press("Escape").catch(() => {});
+    return;
+  }
+
+  // Walk to a middle row so the chosen value differs from "All".
+  const steps = Math.max(1, Math.min(optionCount - 1, Math.floor(optionCount / 2)));
+  for (let i = 0; i < steps; i++) {
+    await page.keyboard.press("ArrowDown");
+  }
+
+  // Read the active option's text BEFORE activation so we can compare to
+  // the trigger label afterwards.
+  const activeSelector =
+    '[role="option"][data-highlighted], [role="option"][aria-selected="true"], [role="option"][data-state="checked"], [role="menuitem"][data-highlighted], [role="option"]:focus, [role="menuitem"]:focus';
+  const expectedText = (
+    await popover
+      .locator(activeSelector)
+      .first()
+      .innerText()
+      .catch(() => "")
+  ).trim();
+
+  await page.keyboard.press(activationKey);
+  await popover.waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
+  await expect(popover).toBeHidden();
+
+  // Focus returns to the trigger.
+  const triggerIsFocused = await page.evaluate((sel) => {
+    const el = document.querySelector(sel) as HTMLElement | null;
+    return !!el && el === document.activeElement;
+  }, TRIGGER_SELECTOR);
+  expect(
+    triggerIsFocused,
+    `focus restored after ${activationKey} selection`,
+  ).toBe(true);
+
+  // Trigger's visible label reflects the chosen option.
+  if (expectedText) {
+    const triggerText = (await trigger.innerText()).trim();
+    expect(
+      triggerText.toLowerCase(),
+      `${activationKey} updates trigger label`,
+    ).toContain(expectedText.toLowerCase());
+  }
+
+  await trigger.scrollIntoViewIfNeeded().catch(() => {});
+  await expect(trigger).toHaveScreenshot(
+    `${label}-${pageName}-status-activate-${activationKey.toLowerCase()}-trigger.png`,
+    { animations: "disabled", maxDiffPixelRatio: 0.02 },
+  );
+}
+
 const PAGES = [
   {
     path: "/dashboard",
@@ -637,6 +716,10 @@ const PAGES = [
       // Arrow keys across the popover's scroll boundary keep the active
       // option visible; snapshots captured per accent.
       await verifyArrowAcrossScrollBoundary(page, label, pageName);
+      // Enter and Space activate the focused option, close the popover,
+      // and update the trigger label; focus returns to the trigger.
+      await verifyActivationKeySelectsOption(page, label, pageName, "Enter");
+      await verifyActivationKeySelectsOption(page, label, pageName, "Space");
     },
     extraRegions: [
       {
