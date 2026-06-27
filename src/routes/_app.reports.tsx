@@ -90,10 +90,7 @@ function EmptyBreakdown({ message }: { message: string }) {
 }
 
 function ReportsPage() {
-  const { defects: allDefects, loading, currentUser } = useQA();
-  if (currentUser && currentUser.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const { defects: allDefects, loading } = useQA();
   const { env } = useEnvironment();
   const { taxYear, setTaxYear } = useTaxYear();
   const search = Route.useSearch();
