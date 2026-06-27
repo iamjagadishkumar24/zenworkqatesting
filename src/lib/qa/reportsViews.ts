@@ -107,16 +107,14 @@ export function useSavedViews() {
       if (!trimmed || !userId) return;
       const next = [...views.filter((v) => v.name !== trimmed), { name: trimmed, filters }];
       setViews(next);
-      await supabase
-        .from("report_views")
-        .upsert(
-          {
-            user_id: userId,
-            name: trimmed,
-            filters: filters as unknown as ReportViewsFilters,
-          },
-          { onConflict: "user_id,name" },
-        );
+      await supabase.from("report_views").upsert(
+        {
+          user_id: userId,
+          name: trimmed,
+          filters: filters as unknown as ReportViewsFilters,
+        },
+        { onConflict: "user_id,name" },
+      );
     },
     remove: async (name: string) => {
       if (!userId) return;
