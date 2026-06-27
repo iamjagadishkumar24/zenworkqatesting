@@ -9,7 +9,7 @@ describe("RBAC: canAccessRoute", () => {
     "/my-errors",
     "/retest",
     "/notifications",
-    "/settings",
+    "/profile",
     "/forms",
     "/2290-forms",
   ];

@@ -58,7 +58,7 @@ describe("role-based landing access", () => {
     "/my-errors",
     "/retest",
     "/notifications",
-    "/settings",
+    "/profile",
   ];
   const adminOnly = ["/agents", "/audit-log", "/reports"];
 
