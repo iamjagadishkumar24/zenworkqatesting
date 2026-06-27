@@ -360,9 +360,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </span>
                 ) : (
                   <span
-                    className="hidden sm:inline h-4 w-16 rounded bg-muted animate-pulse"
-                    aria-hidden="true"
-                  />
+                    role="status"
+                    aria-busy="true"
+                    aria-live="polite"
+                    aria-label="Loading account"
+                    className="hidden sm:inline-flex items-center"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="inline-block h-4 w-16 rounded bg-muted animate-pulse motion-reduce:animate-none"
+                    />
+                    <span className="sr-only">Loading your account…</span>
+                  </span>
                 )}
               </button>
             </DropdownMenuTrigger>
