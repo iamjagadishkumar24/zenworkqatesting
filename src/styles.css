@@ -53,21 +53,24 @@
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.985 0.005 250);
-  --foreground: oklch(0.21 0.035 255);
+  /* Refined neutrals — cooler, cleaner enterprise feel (Linear/Vercel-leaning).
+     Slightly higher contrast between bg ↔ card ↔ border so surfaces read as
+     deliberate layers instead of a single flat sheet. */
+  --background: oklch(0.988 0.004 250);
+  --foreground: oklch(0.18 0.03 255);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.035 255);
+  --card-foreground: oklch(0.18 0.03 255);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.035 255);
-  --primary: oklch(0.55 0.18 255);
+  --popover-foreground: oklch(0.18 0.03 255);
+  --primary: oklch(0.54 0.19 258);
   --primary-foreground: oklch(0.99 0 0);
-  --primary-glow: oklch(0.68 0.16 255);
-  --secondary: oklch(0.96 0.01 250);
-  --secondary-foreground: oklch(0.25 0.04 255);
-  --muted: oklch(0.96 0.01 250);
-  --muted-foreground: oklch(0.5 0.03 255);
-  --accent: oklch(0.94 0.03 255);
-  --accent-foreground: oklch(0.25 0.04 255);
+  --primary-glow: oklch(0.69 0.17 258);
+  --secondary: oklch(0.965 0.008 250);
+  --secondary-foreground: oklch(0.22 0.035 255);
+  --muted: oklch(0.965 0.008 250);
+  --muted-foreground: oklch(0.48 0.025 255);
+  --accent: oklch(0.945 0.025 258);
+  --accent-foreground: oklch(0.22 0.035 255);
   --destructive: oklch(0.6 0.22 27);
   --destructive-foreground: oklch(0.99 0 0);
   /* Darkened from L=0.62 → 0.52 so `text-success` on white/card meets AA (>=4.5:1) */
@@ -80,28 +83,38 @@
   --info-foreground: oklch(0.99 0 0);
   /* Slight darken so `text-destructive` on white passes AA */
   --destructive: oklch(0.55 0.22 27);
-  --border: oklch(0.91 0.012 255);
-  --input: oklch(0.91 0.012 255);
-  --ring: oklch(0.55 0.18 255);
-  --chart-1: oklch(0.55 0.18 255);
+  /* Crisper borders so card edges and table dividers don't dissolve into bg. */
+  --border: oklch(0.9 0.01 255);
+  --input: oklch(0.9 0.01 255);
+  --ring: oklch(0.54 0.19 258);
+  --chart-1: oklch(0.54 0.19 258);
   --chart-2: oklch(0.62 0.17 150);
   --chart-3: oklch(0.75 0.16 75);
   --chart-4: oklch(0.6 0.22 27);
   --chart-5: oklch(0.65 0.15 300);
   --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.25 0.04 255);
-  --sidebar-primary: oklch(0.55 0.18 255);
+  --sidebar-foreground: oklch(0.22 0.035 255);
+  --sidebar-primary: oklch(0.54 0.19 258);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.02 255);
-  --sidebar-accent-foreground: oklch(0.55 0.18 255);
-  --sidebar-border: oklch(0.91 0.012 255);
-  --sidebar-ring: oklch(0.55 0.18 255);
-  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.18 255), oklch(0.68 0.16 255));
+  --sidebar-accent: oklch(0.96 0.018 258);
+  --sidebar-accent-foreground: oklch(0.54 0.19 258);
+  --sidebar-border: oklch(0.92 0.01 255);
+  --sidebar-ring: oklch(0.54 0.19 258);
+  --gradient-primary: linear-gradient(135deg, oklch(0.54 0.19 258), oklch(0.69 0.17 258));
   --gradient-success: linear-gradient(135deg, oklch(0.62 0.17 150), oklch(0.72 0.15 160));
   --gradient-warning: linear-gradient(135deg, oklch(0.75 0.16 75), oklch(0.82 0.14 85));
   --gradient-danger: linear-gradient(135deg, oklch(0.6 0.22 27), oklch(0.7 0.2 37));
-  --shadow-card: 0 1px 3px 0 oklch(0.21 0.035 255 / 0.06), 0 1px 2px 0 oklch(0.21 0.035 255 / 0.04);
-  --shadow-elevated: 0 10px 30px -10px oklch(0.55 0.18 255 / 0.2);
+  /* Layered shadows: a hairline + a soft diffuse, matching modern enterprise
+     UI (Linear, Vercel, Stripe). Cooler shadow color tracks the foreground
+     hue so cards feel anchored to the surface instead of floating gray. */
+  --shadow-card:
+    0 0 0 1px oklch(0.18 0.03 255 / 0.04),
+    0 1px 2px -1px oklch(0.18 0.03 255 / 0.06),
+    0 2px 6px -2px oklch(0.18 0.03 255 / 0.05);
+  --shadow-elevated:
+    0 0 0 1px oklch(0.18 0.03 255 / 0.05),
+    0 4px 12px -4px oklch(0.18 0.03 255 / 0.1),
+    0 16px 32px -12px oklch(0.54 0.19 258 / 0.18);
   /* Selected table-row fill. Tinted from primary so it reads as a deliberate
      selection state (>=3:1 vs --card per WCAG non-text contrast) instead of
      blending with --muted/hover. Paired with a 3px inset ring in table.tsx
@@ -116,20 +129,20 @@
    text unreadable for agents using dark mode.
    ============================================================ */
 :root.dark {
-  --background: oklch(0.16 0.02 255);
+  --background: oklch(0.155 0.018 258);
   --foreground: oklch(0.97 0.005 250);
-  --card: oklch(0.21 0.025 255);
+  --card: oklch(0.205 0.022 258);
   --card-foreground: oklch(0.97 0.005 250);
-  --popover: oklch(0.21 0.025 255);
+  --popover: oklch(0.205 0.022 258);
   --popover-foreground: oklch(0.97 0.005 250);
-  --primary: oklch(0.68 0.18 255);
+  --primary: oklch(0.7 0.17 258);
   --primary-foreground: oklch(0.14 0.02 255);
-  --primary-glow: oklch(0.78 0.16 255);
-  --secondary: oklch(0.26 0.03 255);
+  --primary-glow: oklch(0.8 0.15 258);
+  --secondary: oklch(0.255 0.025 258);
   --secondary-foreground: oklch(0.97 0.005 250);
-  --muted: oklch(0.26 0.03 255);
+  --muted: oklch(0.255 0.025 258);
   --muted-foreground: oklch(0.78 0.025 255);
-  --accent: oklch(0.3 0.05 255);
+  --accent: oklch(0.295 0.04 258);
   --accent-foreground: oklch(0.97 0.005 250);
   --destructive: oklch(0.65 0.22 27);
   --destructive-foreground: oklch(0.99 0 0);
@@ -142,20 +155,26 @@
   --warning-foreground: oklch(0.97 0.02 80);
   --info: oklch(0.78 0.13 240);
   --info-foreground: oklch(0.14 0.04 240);
-  --border: oklch(0.3 0.03 255);
-  --input: oklch(0.3 0.03 255);
-  --ring: oklch(0.68 0.18 255);
-  --sidebar: oklch(0.19 0.025 255);
+  --border: oklch(0.295 0.025 258);
+  --input: oklch(0.295 0.025 258);
+  --ring: oklch(0.7 0.17 258);
+  --sidebar: oklch(0.185 0.022 258);
   --sidebar-foreground: oklch(0.95 0.01 250);
-  --sidebar-primary: oklch(0.68 0.18 255);
+  --sidebar-primary: oklch(0.7 0.17 258);
   --sidebar-primary-foreground: oklch(0.14 0.02 255);
-  --sidebar-accent: oklch(0.28 0.04 255);
+  --sidebar-accent: oklch(0.275 0.035 258);
   --sidebar-accent-foreground: oklch(0.95 0.01 250);
-  --sidebar-border: oklch(0.3 0.03 255);
-  --sidebar-ring: oklch(0.68 0.18 255);
-  --gradient-primary: linear-gradient(135deg, oklch(0.68 0.18 255), oklch(0.78 0.16 255));
-  --shadow-card: 0 1px 3px 0 oklch(0 0 0 / 0.4), 0 1px 2px 0 oklch(0 0 0 / 0.3);
-  --shadow-elevated: 0 10px 30px -10px oklch(0 0 0 / 0.5);
+  --sidebar-border: oklch(0.295 0.025 258);
+  --sidebar-ring: oklch(0.7 0.17 258);
+  --gradient-primary: linear-gradient(135deg, oklch(0.7 0.17 258), oklch(0.8 0.15 258));
+  --shadow-card:
+    0 0 0 1px oklch(1 0 0 / 0.04),
+    0 1px 2px -1px oklch(0 0 0 / 0.4),
+    0 2px 6px -2px oklch(0 0 0 / 0.35);
+  --shadow-elevated:
+    0 0 0 1px oklch(1 0 0 / 0.06),
+    0 4px 12px -4px oklch(0 0 0 / 0.5),
+    0 16px 32px -12px oklch(0 0 0 / 0.55);
   --row-selected: color-mix(in oklab, var(--primary) 26%, var(--card));
 }
 
@@ -166,7 +185,54 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-feature-settings: "cv11", "ss01";
+    /* cv11/ss01: stylistic alternates. ss03: curved 6/9 (matches Inter spec).
+       cv02: open 4. "tnum" off here so prose stays proportional; tables and
+       numeric cells opt-in below via the tabular-nums utility. Add
+       -webkit-font-smoothing for crisper rendering on macOS retina. */
+    font-feature-settings: "cv11", "ss01", "ss03", "cv02";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  /* Tabular figures for any element marked numeric — KPIs, table cells with
+     `tabular-nums`, charts. Keeps columns of numbers from jittering. */
+  .tabular-nums,
+  th,
+  td.numeric,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "cv11", "ss01";
+  }
+  /* Smooth, consistent focus rings across interactive primitives. Respects
+     reduced-motion via the @media block below. */
+  :where(button, a, [role="button"], input, select, textarea, [tabindex]) {
+    transition:
+      background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+      color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1),
+      transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  /* Native form controls inherit the page font instead of falling back to
+     the UA default (which causes a perceived font shift inside dialogs). */
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+  /* Smoother scrolling on long pages without breaking hash navigation. */
+  html {
+    scroll-behavior: smooth;
+  }
+  /* Image and SVG defaults: prevent the common max-width regression and the
+     baseline-gap that creates a 4px layout shift under <img> tags. */
+  img,
+  svg,
+  video {
+    display: block;
+    max-width: 100%;
+  }
   }
 }
 
@@ -192,6 +258,12 @@
   .animate-fade-in,
   .animate-scale-in {
     animation: none !important;
+  }
+  :where(button, a, [role="button"], input, select, textarea, [tabindex]) {
+    transition: none !important;
+  }
+  html {
+    scroll-behavior: auto !important;
   }
   * {
     scroll-behavior: auto !important;
