@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,9 @@ export const Route = createFileRoute("/_app/realtime-debug")({
 
 function RealtimeDebugPage() {
   const { realtimeEvents, clearRealtimeEvents, currentUser } = useQA();
+  if (currentUser && currentUser.role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
   const role = currentUser?.role ?? "unknown";
 
   const [status, setStatus] = useState<string>("connecting");
