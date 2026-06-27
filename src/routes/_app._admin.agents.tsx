@@ -59,7 +59,7 @@ type PurgeCounts = {
   total: number;
 };
 
-export const Route = createFileRoute("/_app/agents")({
+export const Route = createFileRoute("/_app/_admin/agents")({
   component: AgentsPage,
   errorComponent: ({ error, reset }) => (
     <div className="rounded-lg border bg-card p-6 text-center">

@@ -63,7 +63,7 @@ function validateReportSearch(input: Record<string, unknown>): ReportSearch {
   };
 }
 
-export const Route = createFileRoute("/_app/reports")({
+export const Route = createFileRoute("/_app/_admin/reports")({
   validateSearch: validateReportSearch,
   component: ReportsRouteGate,
 });

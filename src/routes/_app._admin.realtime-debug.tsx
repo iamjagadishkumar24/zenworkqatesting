@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Radio, Trash2, Activity, Clock, Wifi, RefreshCw, CheckCircle2 } from "lucide-react";
 
-export const Route = createFileRoute("/_app/realtime-debug")({
+export const Route = createFileRoute("/_app/_admin/realtime-debug")({
   component: RealtimeDebugRouteGate,
 });
 

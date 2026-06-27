@@ -31,7 +31,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/_app/auth-events")({
+export const Route = createFileRoute("/_app/_admin/auth-events")({
   component: AuthEventsPage,
 });
 

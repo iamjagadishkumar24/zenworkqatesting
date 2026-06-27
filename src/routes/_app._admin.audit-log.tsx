@@ -48,7 +48,7 @@ import {
   type AuditRecordKind,
 } from "@/lib/qa/adminFilters";
 
-export const Route = createFileRoute("/_app/audit-log")({
+export const Route = createFileRoute("/_app/_admin/audit-log")({
   component: AuditLogPage,
 });
 
