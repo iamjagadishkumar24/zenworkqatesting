@@ -877,3 +877,11 @@ function ReportsPage() {
     </div>
   );
 }
+
+function ReportsRouteGate() {
+  const { currentUser } = useQA();
+  if (currentUser && currentUser.role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <ReportsPage />;
+}
