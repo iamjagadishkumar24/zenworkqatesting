@@ -15,11 +15,11 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppZenworkPaymentsRouteImport } from './routes/_app.zenwork-payments'
 import { Route as AppTax1099FeaturesRouteImport } from './routes/_app.tax1099-features'
-import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSelectEnvironmentRouteImport } from './routes/_app.select-environment'
 import { Route as AppRetestRouteImport } from './routes/_app.retest'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppRealtimeDebugRouteImport } from './routes/_app.realtime-debug'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppNotesRouteImport } from './routes/_app.notes'
@@ -70,11 +70,6 @@ const AppTax1099FeaturesRoute = AppTax1099FeaturesRouteImport.update({
   path: '/tax1099-features',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppSelectEnvironmentRoute = AppSelectEnvironmentRouteImport.update({
   id: '/select-environment',
   path: '/select-environment',
@@ -93,6 +88,11 @@ const AppReportsRoute = AppReportsRouteImport.update({
 const AppRealtimeDebugRoute = AppRealtimeDebugRouteImport.update({
   id: '/realtime-debug',
   path: '/realtime-debug',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOnline1099Route = AppOnline1099RouteImport.update({
@@ -217,11 +217,11 @@ export interface FileRoutesByFullPath {
   '/notes': typeof AppNotesRoute
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
+  '/profile': typeof AppProfileRoute
   '/realtime-debug': typeof AppRealtimeDebugRoute
   '/reports': typeof AppReportsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
-  '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
   '/zenwork-payments': typeof AppZenworkPaymentsRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
@@ -249,11 +249,11 @@ export interface FileRoutesByTo {
   '/notes': typeof AppNotesRoute
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
+  '/profile': typeof AppProfileRoute
   '/realtime-debug': typeof AppRealtimeDebugRoute
   '/reports': typeof AppReportsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
-  '/settings': typeof AppSettingsRoute
   '/tax1099-features': typeof AppTax1099FeaturesRoute
   '/zenwork-payments': typeof AppZenworkPaymentsRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
@@ -283,11 +283,11 @@ export interface FileRoutesById {
   '/_app/notes': typeof AppNotesRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
+  '/_app/profile': typeof AppProfileRoute
   '/_app/realtime-debug': typeof AppRealtimeDebugRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/retest': typeof AppRetestRoute
   '/_app/select-environment': typeof AppSelectEnvironmentRoute
-  '/_app/settings': typeof AppSettingsRoute
   '/_app/tax1099-features': typeof AppTax1099FeaturesRoute
   '/_app/zenwork-payments': typeof AppZenworkPaymentsRoute
   '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
@@ -317,11 +317,11 @@ export interface FileRouteTypes {
     | '/notes'
     | '/notifications'
     | '/online-1099'
+    | '/profile'
     | '/realtime-debug'
     | '/reports'
     | '/retest'
     | '/select-environment'
-    | '/settings'
     | '/tax1099-features'
     | '/zenwork-payments'
     | '/tasks/$taskId'
@@ -349,11 +349,11 @@ export interface FileRouteTypes {
     | '/notes'
     | '/notifications'
     | '/online-1099'
+    | '/profile'
     | '/realtime-debug'
     | '/reports'
     | '/retest'
     | '/select-environment'
-    | '/settings'
     | '/tax1099-features'
     | '/zenwork-payments'
     | '/tasks/$taskId'
@@ -382,11 +382,11 @@ export interface FileRouteTypes {
     | '/_app/notes'
     | '/_app/notifications'
     | '/_app/online-1099'
+    | '/_app/profile'
     | '/_app/realtime-debug'
     | '/_app/reports'
     | '/_app/retest'
     | '/_app/select-environment'
-    | '/_app/settings'
     | '/_app/tax1099-features'
     | '/_app/zenwork-payments'
     | '/_app/tasks/$taskId'
@@ -447,13 +447,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTax1099FeaturesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/settings': {
-      id: '/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/select-environment': {
       id: '/_app/select-environment'
       path: '/select-environment'
@@ -480,6 +473,13 @@ declare module '@tanstack/react-router' {
       path: '/realtime-debug'
       fullPath: '/realtime-debug'
       preLoaderRoute: typeof AppRealtimeDebugRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/online-1099': {
@@ -643,11 +643,11 @@ interface AppRouteChildren {
   AppNotesRoute: typeof AppNotesRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
+  AppProfileRoute: typeof AppProfileRoute
   AppRealtimeDebugRoute: typeof AppRealtimeDebugRoute
   AppReportsRoute: typeof AppReportsRoute
   AppRetestRoute: typeof AppRetestRoute
   AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
-  AppSettingsRoute: typeof AppSettingsRoute
   AppTax1099FeaturesRoute: typeof AppTax1099FeaturesRoute
   AppZenworkPaymentsRoute: typeof AppZenworkPaymentsRoute
   AppTasksTaskIdRoute: typeof AppTasksTaskIdRoute
@@ -671,11 +671,11 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotesRoute: AppNotesRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnline1099Route: AppOnline1099Route,
+  AppProfileRoute: AppProfileRoute,
   AppRealtimeDebugRoute: AppRealtimeDebugRoute,
   AppReportsRoute: AppReportsRoute,
   AppRetestRoute: AppRetestRoute,
   AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,
-  AppSettingsRoute: AppSettingsRoute,
   AppTax1099FeaturesRoute: AppTax1099FeaturesRoute,
   AppZenworkPaymentsRoute: AppZenworkPaymentsRoute,
   AppTasksTaskIdRoute: AppTasksTaskIdRoute,

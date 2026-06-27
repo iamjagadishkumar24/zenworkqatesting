@@ -127,7 +127,7 @@ import {
 import { Cpu } from "lucide-react";
 import { UserAvatar } from "@/components/qa/UserAvatar";
 
-export const Route = createFileRoute("/_app/settings")({
+export const Route = createFileRoute("/_app/profile")({
   component: SettingsPage,
 });
 
