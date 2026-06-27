@@ -118,7 +118,8 @@ export const FEATURES_FUNCTIONALITY: string[] = [
 ];
 export const FEATURES_TAX1099: string[] = [
   "TIN Match",
-  "W-9 Solicitation",
+  "W-9 Form",
+  "W-8 Form",
   "State Filing",
   "Recipient Portal",
   "Bulk Upload",
@@ -126,6 +127,9 @@ export const FEATURES_TAX1099: string[] = [
   "Payments",
   "Audit Trail",
   "PDF",
+  "AI Chat Assistance",
+  "BOI Reporting",
+  "EFTPS",
 ];
 
 // Zenwork Payments — standalone payments module surfaced both in nav and

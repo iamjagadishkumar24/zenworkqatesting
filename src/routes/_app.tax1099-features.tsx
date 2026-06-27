@@ -3,12 +3,16 @@ import { TestingModule } from "@/components/qa/TestingModule";
 
 const ITEMS = [
   "TIN Match",
-  "W-9 Solicitation",
+  "W-9 Form",
+  "W-8 Form",
   "Bulk Upload",
   "Vendor Management",
   "State Filing",
   "E-Delivery",
   "Print & Mail",
+  "AI Chat Assistance",
+  "BOI Reporting",
+  "EFTPS",
 ];
 
 export const Route = createFileRoute("/_app/tax1099-features")({
