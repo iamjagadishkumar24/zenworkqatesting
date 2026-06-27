@@ -38,6 +38,7 @@ import {
 import { Download, Inbox, FileText, Save, Trash2, Loader2 } from "lucide-react";
 import { exportPdf, exportXlsx } from "@/lib/qa/export";
 import { ExportMenu } from "@/components/qa/ExportMenu";
+import { US_STATES, isValidUsState } from "@/lib/qa/constants";
 
 type ReportSearch = ReportFilters;
 const DEFAULT_SEARCH: ReportSearch = {
@@ -48,11 +49,14 @@ const DEFAULT_SEARCH: ReportSearch = {
   dateRange: "all",
   fromDate: "",
   toDate: "",
+  state: "all",
 };
 
 function validateReportSearch(input: Record<string, unknown>): ReportSearch {
   const s = (k: keyof ReportSearch) =>
     typeof input[k] === "string" ? (input[k] as string) : DEFAULT_SEARCH[k];
+  const rawState = typeof input.state === "string" ? (input.state as string) : "all";
+  const safeState = rawState === "all" || isValidUsState(rawState) ? rawState : "all";
   return {
     status: s("status"),
     testingType: s("testingType"),
@@ -61,6 +65,7 @@ function validateReportSearch(input: Record<string, unknown>): ReportSearch {
     dateRange: s("dateRange"),
     fromDate: s("fromDate"),
     toDate: s("toDate"),
+    state: safeState,
   };
 }
 
