@@ -49,8 +49,9 @@ export const getRouter = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        retry: (failureCount, error: any) => {
-          const status = error?.status ?? error?.response?.status;
+        retry: (failureCount, error: unknown) => {
+          const e = error as { status?: number; response?: { status?: number } } | null;
+          const status = e?.status ?? e?.response?.status;
           if (status && status >= 400 && status < 500 && status !== 408 && status !== 429) {
             return false;
           }
