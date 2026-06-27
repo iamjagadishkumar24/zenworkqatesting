@@ -238,7 +238,13 @@ export function RightsManagementPage() {
               </TableHeader>
               <TableBody>
                 {pageItems.map((mod) => {
-                  const perms = matrix[role][mod];
+                  const perms =
+                    matrix[role]?.[mod] ?? {
+                      view: false,
+                      create: false,
+                      edit: false,
+                      delete: false,
+                    };
                   const enabledCount = ACTIONS.filter((a) => perms[a]).length;
                   return (
                     <TableRow key={mod}>
