@@ -716,6 +716,10 @@ const PAGES = [
       // Arrow keys across the popover's scroll boundary keep the active
       // option visible; snapshots captured per accent.
       await verifyArrowAcrossScrollBoundary(page, label, pageName);
+      // Enter and Space activate the focused option, close the popover,
+      // and update the trigger label; focus returns to the trigger.
+      await verifyActivationKeySelectsOption(page, label, pageName, "Enter");
+      await verifyActivationKeySelectsOption(page, label, pageName, "Space");
     },
     extraRegions: [
       {
