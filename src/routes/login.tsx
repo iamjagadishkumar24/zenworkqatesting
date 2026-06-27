@@ -335,7 +335,9 @@ export function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/40"
+                        aria-invalid={hint?.tone === "error" || hint?.tone === "warn" ? true : undefined}
+                        aria-describedby={hint ? "login-hint" : undefined}
+                        className="h-11 border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-0"
                         placeholder="you@company.com"
                       />
                     </div>
@@ -352,21 +354,24 @@ export function LoginPage() {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
-                          className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40 focus-visible:ring-white/40"
+                          aria-invalid={hint?.tone === "error" ? true : undefined}
+                          aria-describedby={hint ? "login-hint" : undefined}
+                          className="h-11 border-white/20 bg-white/10 pr-12 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-0"
                           placeholder="••••••••"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPwd((v) => !v)}
                           aria-label={showPwd ? "Hide password" : "Show password"}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white"
+                          aria-pressed={showPwd}
+                          className="absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                         >
                           {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <label className="flex cursor-pointer items-center gap-2 text-xs text-white/80">
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-white/80">
                         <Checkbox
                           checked={remember}
                           onCheckedChange={(v) => setRemember(!!v)}
@@ -376,7 +381,7 @@ export function LoginPage() {
                       </label>
                       <button
                         type="button"
-                        className="text-xs font-medium text-white hover:underline"
+                        className="rounded-md px-1 py-1 text-sm font-medium text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                         onClick={() => {
                           if (!forgotEmail) setForgotEmail(email);
                           setForgotOpen((v) => !v);
@@ -388,7 +393,8 @@ export function LoginPage() {
                     <Button
                       type="submit"
                       disabled={submitting}
-                      className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:opacity-95 hover:from-indigo-400 hover:to-fuchsia-400"
+                      aria-busy={submitting}
+                      className="h-11 w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-base font-semibold text-white shadow-lg shadow-indigo-900/30 transition hover:opacity-95 hover:from-indigo-400 hover:to-fuchsia-400 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
                     >
                       {submitting ? (
                         <>
@@ -401,6 +407,7 @@ export function LoginPage() {
                     </Button>
                     {hint && (
                       <div
+                        id="login-hint"
                         ref={hintRef}
                         role="alert"
                         aria-live="assertive"
