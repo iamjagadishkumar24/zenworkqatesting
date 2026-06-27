@@ -45,6 +45,7 @@ import { Route as AppAdminAuthEventsRouteImport } from './routes/_app._admin.aut
 import { Route as AppAdminAuditLogRouteImport } from './routes/_app._admin.audit-log'
 import { Route as AppAdminAgentsRouteImport } from './routes/_app._admin.agents'
 import { Route as AppAdminReportsIndexRouteImport } from './routes/_app._admin.reports.index'
+import { Route as AppAdminReportsPerformanceRouteImport } from './routes/_app._admin.reports.performance'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -225,6 +226,12 @@ const AppAdminReportsIndexRoute = AppAdminReportsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppAdminReportsRoute,
 } as any)
+const AppAdminReportsPerformanceRoute =
+  AppAdminReportsPerformanceRouteImport.update({
+    id: '/performance',
+    path: '/performance',
+    getParentRoute: () => AppAdminReportsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -260,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
+  '/reports/performance': typeof AppAdminReportsPerformanceRoute
   '/reports/': typeof AppAdminReportsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -295,6 +303,7 @@ export interface FileRoutesByTo {
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
+  '/reports/performance': typeof AppAdminReportsPerformanceRoute
   '/reports': typeof AppAdminReportsIndexRoute
 }
 export interface FileRoutesById {
@@ -334,6 +343,7 @@ export interface FileRoutesById {
   '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
+  '/_app/_admin/reports/performance': typeof AppAdminReportsPerformanceRoute
   '/_app/_admin/reports/': typeof AppAdminReportsIndexRoute
 }
 export interface FileRouteTypes {
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
+    | '/reports/performance'
     | '/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -407,6 +418,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
+    | '/reports/performance'
     | '/reports'
   id:
     | '__root__'
@@ -445,6 +457,7 @@ export interface FileRouteTypes {
     | '/_app/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
+    | '/_app/_admin/reports/performance'
     | '/_app/_admin/reports/'
   fileRoutesById: FileRoutesById
 }
@@ -711,14 +724,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminReportsIndexRouteImport
       parentRoute: typeof AppAdminReportsRoute
     }
+    '/_app/_admin/reports/performance': {
+      id: '/_app/_admin/reports/performance'
+      path: '/performance'
+      fullPath: '/reports/performance'
+      preLoaderRoute: typeof AppAdminReportsPerformanceRouteImport
+      parentRoute: typeof AppAdminReportsRoute
+    }
   }
 }
 
 interface AppAdminReportsRouteChildren {
+  AppAdminReportsPerformanceRoute: typeof AppAdminReportsPerformanceRoute
   AppAdminReportsIndexRoute: typeof AppAdminReportsIndexRoute
 }
 
 const AppAdminReportsRouteChildren: AppAdminReportsRouteChildren = {
+  AppAdminReportsPerformanceRoute: AppAdminReportsPerformanceRoute,
   AppAdminReportsIndexRoute: AppAdminReportsIndexRoute,
 }
 
