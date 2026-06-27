@@ -28,6 +28,9 @@ import {
   Sun,
   Moon,
   Monitor,
+  ChevronDown,
+  Settings as SettingsIcon,
+  Users as UsersIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQA } from "@/lib/qa/store";
@@ -65,7 +68,19 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
   adminOnly?: boolean;
 };
-const nav: NavItem[] = [
+
+type NavGroup = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  adminOnly?: boolean;
+  items: NavItem[];
+};
+
+type NavEntry = NavItem | NavGroup;
+const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
+
+const nav: NavEntry[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/forms", label: "Forms", icon: FileText },
   { to: "/online-1099", label: "1099 Online Forms", icon: Globe },
@@ -80,12 +95,33 @@ const nav: NavItem[] = [
   { to: "/tax1099-features", label: "Tax1099 Features", icon: Sparkles },
   { to: "/zenwork-payments", label: "Zenwork Payments", icon: CreditCard },
   { to: "/my-reported-errors", label: "Reported Errors", icon: ListChecks },
-  { to: "/retest", label: "Task Assignments", icon: ClipboardCheck },
   { to: "/notes", label: "Quick Notes", icon: StickyNote },
-  { to: "/agents", label: "Agent Management", icon: UserCog, adminOnly: true },
-  { to: "/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
-  { to: "/auth-events", label: "Auth Events", icon: ShieldAlert, adminOnly: true },
-  { to: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
+  {
+    id: "management",
+    label: "Management",
+    icon: UsersIcon,
+    items: [
+      { to: "/retest", label: "Task Management", icon: ClipboardCheck },
+      { to: "/agents", label: "Agent Management", icon: UserCog, adminOnly: true },
+    ],
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    icon: BarChart3,
+    adminOnly: true,
+    items: [{ to: "/reports", label: "Error Reports", icon: BarChart3, adminOnly: true }],
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: SettingsIcon,
+    items: [
+      { to: "/profile", label: "Profile & Settings", icon: SettingsIcon },
+      { to: "/audit-log", label: "Audit Logs", icon: ScrollText, adminOnly: true },
+      { to: "/auth-events", label: "Auth Events", icon: ShieldAlert, adminOnly: true },
+    ],
+  },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -113,7 +149,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountAnnouncement, setAccountAnnouncement] = useState("");
   const isAdmin = currentUser?.role === "admin";
-  const visibleNav = nav.filter((n) => !n.adminOnly || isAdmin);
+  const visibleNav: NavEntry[] = nav
+    .filter((n) => !n.adminOnly || isAdmin)
+    .map((entry) => {
+      if (!isGroup(entry)) return entry;
+      const items = entry.items.filter((i) => !i.adminOnly || isAdmin);
+      return { ...entry, items };
+    })
+    .filter((entry) => !isGroup(entry) || entry.items.length > 0);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const toggleGroup = (id: string) => setOpenGroups((s) => ({ ...s, [id]: !s[id] }));
 
   // Keep header input in sync with the reported-errors URL `?q=`,
   // and clear it when navigating to any other page so old text never lingers.
@@ -179,7 +224,97 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
         <nav className="flex flex-col gap-1 p-3">
-          {visibleNav.map((item) => {
+          {visibleNav.map((entry) => {
+            if (isGroup(entry)) {
+              const Icon = entry.icon;
+              const groupActive = entry.items.some(
+                (i) => path === i.to || path.startsWith(i.to + "/"),
+              );
+              const open = openGroups[entry.id] ?? groupActive;
+              if (collapsed) {
+                return (
+                  <div key={entry.id} className="flex flex-col gap-1">
+                    {entry.items.map((item) => {
+                      const active = path === item.to || path.startsWith(item.to + "/");
+                      const ItemIcon = item.icon;
+                      return (
+                        <Link
+                          key={item.to}
+                          to={item.to}
+                          className={cn(
+                            "flex items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                            active
+                              ? "text-primary-foreground shadow-sm"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent/60",
+                          )}
+                          style={active ? { background: "var(--gradient-primary)" } : undefined}
+                          title={item.label}
+                          aria-label={item.label}
+                        >
+                          <ItemIcon className="h-4 w-4 shrink-0" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                );
+              }
+              return (
+                <div key={entry.id} className="flex flex-col">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(entry.id)}
+                    aria-expanded={open}
+                    aria-controls={`nav-group-${entry.id}`}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                      groupActive
+                        ? "text-sidebar-foreground bg-sidebar-accent/40"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/60",
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="flex-1 truncate text-left">{entry.label}</span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-transform",
+                        open ? "rotate-180" : "rotate-0",
+                      )}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {open && (
+                    <div
+                      id={`nav-group-${entry.id}`}
+                      role="group"
+                      aria-label={entry.label}
+                      className="mt-1 ml-3 flex flex-col gap-1 border-l border-sidebar-border pl-2"
+                    >
+                      {entry.items.map((item) => {
+                        const active = path === item.to || path.startsWith(item.to + "/");
+                        const ItemIcon = item.icon;
+                        return (
+                          <Link
+                            key={item.to}
+                            to={item.to}
+                            className={cn(
+                              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                              active
+                                ? "text-primary-foreground shadow-sm"
+                                : "text-sidebar-foreground hover:bg-sidebar-accent/60",
+                            )}
+                            style={active ? { background: "var(--gradient-primary)" } : undefined}
+                          >
+                            <ItemIcon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            const item = entry;
             const active = path === item.to || path.startsWith(item.to + "/");
             const Icon = item.icon;
             return (

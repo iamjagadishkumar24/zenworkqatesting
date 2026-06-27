@@ -289,6 +289,7 @@ type DefectRow = {
   tax_year: string | null;
   quickbooks_desktop_category?: string | null;
   schedules?: string[] | null;
+  state?: string | null;
   assigned_agent: string;
   created_by: string;
   updated_by: string;
@@ -368,6 +369,7 @@ function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersi
     createdBy: r.created_by,
     updatedBy: r.updated_by,
     qbDesktopCategory: (r.quickbooks_desktop_category as Defect["qbDesktopCategory"]) ?? undefined,
+    state: r.state ?? undefined,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     version: r.version,
@@ -1005,6 +1007,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         updated_by: me.name,
         quickbooks_desktop_category: d.qbDesktopCategory ?? null,
         schedules: Array.isArray(d.schedules) ? d.schedules : [],
+        state: d.state ?? null,
       } as never);
       if (error) return { ok: false, error: error.message };
       return { ok: true };
@@ -1048,6 +1051,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         assignedAgent: "assigned_agent",
         qbDesktopCategory: "quickbooks_desktop_category",
         schedules: "schedules",
+        state: "state",
       };
       for (const [k, dbk] of Object.entries(map)) {
         if (k in patch) dbPatch[dbk] = (patch as Record<string, unknown>)[k];

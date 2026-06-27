@@ -29,6 +29,8 @@ import {
   encodeFormFeature,
   TAX_YEARS,
   DEFAULT_TAX_YEAR,
+  US_STATES,
+  isValidUsState,
 } from "@/lib/qa/constants";
 import type { Defect, Module, Priority, QbDesktopCategory } from "@/lib/qa/types";
 import { QB_DESKTOP_CATEGORIES } from "@/lib/qa/types";
@@ -68,6 +70,7 @@ export function ReportDefectDialog({
   lockQbCategory = false,
   scheduleOptions,
   scheduleLabel = "Schedules / Related Forms",
+  requireState = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -91,6 +94,11 @@ export function ReportDefectDialog({
   scheduleOptions?: string[];
   /** Optional label override for the schedules section. */
   scheduleLabel?: string;
+  /**
+   * When true, require an explicit U.S. state on this report. Used only by the
+   * State Filing feature card so the dropdown stays hidden everywhere else.
+   */
+  requireState?: boolean;
 }) {
   const { addDefect, currentUser } = useQA();
   const { env } = useEnvironment();
@@ -111,6 +119,7 @@ export function ReportDefectDialog({
   const showForm = !featureMode;
   const formChoices = formOptions && formOptions.length ? formOptions : FORM_LIST;
   const [selectedSchedules, setSelectedSchedules] = useState<string[]>([]);
+  const [stateCode, setStateCode] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const toggleSchedule = (s: string) =>
     setSelectedSchedules((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
@@ -140,6 +149,7 @@ export function ReportDefectDialog({
   useEffect(() => {
     if (open) {
       setSelectedSchedules([]);
+      setStateCode("");
       setDraft((d) => ({
         ...d,
         _form: defaultForm || d._form,
@@ -191,11 +201,15 @@ export function ReportDefectDialog({
     if (scheduleOptions && scheduleOptions.length > 0 && selectedSchedules.length === 0) {
       return toast.error(`Please select at least one ${scheduleLabel.toLowerCase()} entry.`);
     }
+    if (requireState && !isValidUsState(stateCode)) {
+      return toast.error("Please select the U.S. state for this State Filing error.");
+    }
 
     const payload = {
       ...draft,
       formFeature: featureMode ? draft._form : encodeFormFeature(draft._form, draft._integration),
       schedules: selectedSchedules.length > 0 ? [...selectedSchedules] : undefined,
+      state: requireState ? stateCode : undefined,
     };
     delete (payload as Partial<Draft>)._form;
     delete (payload as Partial<Draft>)._integration;
@@ -446,6 +460,31 @@ export function ReportDefectDialog({
               placeholder="https://…"
             />
           </div>
+          {requireState && (
+            <div className="sm:col-span-2" data-testid="state-filing-state">
+              <Label htmlFor="state-filing-state-select">U.S. State *</Label>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Select the state this State Filing issue applies to. One state per report.
+              </p>
+              <Select value={stateCode} onValueChange={(v) => setStateCode(v)}>
+                <SelectTrigger
+                  id="state-filing-state-select"
+                  aria-required="true"
+                  aria-invalid={requireState && !isValidUsState(stateCode) ? true : undefined}
+                  className="mt-2"
+                >
+                  <SelectValue placeholder="Select a U.S. state or territory" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {US_STATES.map((s) => (
+                    <SelectItem key={s.code} value={s.code}>
+                      {s.name} ({s.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {scheduleOptions && scheduleOptions.length > 0 && (
             <div className="sm:col-span-2" data-testid="schedules-section">
               <Label>{scheduleLabel}</Label>
