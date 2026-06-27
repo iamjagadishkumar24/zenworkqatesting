@@ -67,7 +67,7 @@ type AuditEntry = {
   enabled: boolean;
 };
 
-function RightsManagementPage() {
+export function RightsManagementPage() {
   const [matrix, setMatrix] = useState<Matrix>(() => defaultMatrix());
   const [role, setRole] = useState<Role>("admin");
   const [q, setQ] = useState("");
@@ -238,7 +238,13 @@ function RightsManagementPage() {
               </TableHeader>
               <TableBody>
                 {pageItems.map((mod) => {
-                  const perms = matrix[role][mod];
+                  const perms =
+                    matrix[role]?.[mod] ?? {
+                      view: false,
+                      create: false,
+                      edit: false,
+                      delete: false,
+                    };
                   const enabledCount = ACTIONS.filter((a) => perms[a]).length;
                   return (
                     <TableRow key={mod}>
