@@ -930,6 +930,50 @@ function ReportsPage() {
             )}
           </CardContent>
         </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>State Filing Errors by U.S. State</CardTitle>
+            <ExportMenu
+              label="Export"
+              filename="errors-by-state"
+              title="Errors by U.S. State"
+              rows={stateBreakdown as unknown as Record<string, unknown>[]}
+              columns={["code", "name", "count"]}
+            />
+          </CardHeader>
+          <CardContent className="h-80">
+            {stateBreakdown.length === 0 ? (
+              <EmptyBreakdown message="No State Filing errors recorded for the active filters." />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={stateBreakdown}
+                  onClick={(e: { activeLabel?: string }) =>
+                    e?.activeLabel &&
+                    isValidUsState(e.activeLabel) &&
+                    drillInto(`State Filing errors in ${e.activeLabel}`, { state: e.activeLabel })
+                  }
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="code" fontSize={11} />
+                  <YAxis fontSize={12} allowDecimals={false} />
+                  <Tooltip
+                    formatter={(v: number) => [v, "Errors"]}
+                    labelFormatter={(code: string) =>
+                      US_STATES.find((s) => s.code === code)?.name ?? code
+                    }
+                  />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]} className="cursor-pointer">
+                    {stateBreakdown.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
       </div>
       <DrillDownDialog drill={drill} onClose={() => setDrill(null)} filters={activeFilters} />
     </div>
