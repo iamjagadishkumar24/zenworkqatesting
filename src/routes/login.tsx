@@ -433,18 +433,25 @@ export function LoginPage() {
                           QA Agent accounts.
                         </p>
                         <div className="flex gap-2">
+                          <Label htmlFor="forgot-email" className="sr-only">
+                            Email for password reset
+                          </Label>
                           <Input
+                            id="forgot-email"
                             type="email"
+                            autoComplete="email"
                             placeholder="you@company.com"
                             value={forgotEmail}
                             onChange={(e) => setForgotEmail(e.target.value)}
-                            className="h-9 border-white/20 bg-white/10 text-white placeholder:text-white/40"
+                            className="h-10 border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                           />
                           <Button
                             type="button"
                             size="sm"
                             onClick={sendReset}
                             disabled={forgotBusy || !forgotEmail}
+                            aria-busy={forgotBusy}
+                            className="h-10"
                           >
                             {forgotBusy ? "Sending…" : "Send link"}
                           </Button>
