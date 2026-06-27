@@ -249,3 +249,10 @@ export function usePrefs() {
 }
 
 export const PREF_DEFAULTS = DEFAULTS;
+
+/** Hook returning the user's preferred IANA time zone with safe fallbacks. */
+export function useUserTimeZone(): string {
+  const { prefs } = usePrefs();
+  const tz = prefs.reportTimezone;
+  return isValidTimeZone(tz) ? tz : defaultTimeZone();
+}
