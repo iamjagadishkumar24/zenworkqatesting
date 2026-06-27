@@ -289,6 +289,7 @@ type DefectRow = {
   tax_year: string | null;
   quickbooks_desktop_category?: string | null;
   schedules?: string[] | null;
+  state?: string | null;
   assigned_agent: string;
   created_by: string;
   updated_by: string;
