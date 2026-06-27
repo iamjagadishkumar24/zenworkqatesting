@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
         .split(" ")[0] ?? "unknown";
     const capturedAt = new Date().toISOString();
     // Always log to the console for fast local debugging.
-    // eslint-disable-next-line no-console
+
     console.error(
       `[ErrorBoundary:${this.props.name || "component_error_boundary"}] ${componentName} @ ${capturedAt}`,
       error,
@@ -53,9 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
           <p className="font-medium">This section couldn't load.</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {this.state.error.message}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{this.state.error.message}</p>
           <button
             onClick={this.reset}
             className="mt-2 rounded border px-2 py-1 text-xs hover:bg-muted"

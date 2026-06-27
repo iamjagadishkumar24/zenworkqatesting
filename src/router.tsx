@@ -38,7 +38,9 @@ function DefaultNotFoundComponent() {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 px-4 text-center">
       <h2 className="text-lg font-semibold">Not found</h2>
-      <p className="text-sm text-muted-foreground">This resource doesn't exist or has been moved.</p>
+      <p className="text-sm text-muted-foreground">
+        This resource doesn't exist or has been moved.
+      </p>
     </div>
   );
 }
@@ -47,8 +49,9 @@ export const getRouter = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        retry: (failureCount, error: any) => {
-          const status = error?.status ?? error?.response?.status;
+        retry: (failureCount, error: unknown) => {
+          const e = error as { status?: number; response?: { status?: number } } | null;
+          const status = e?.status ?? e?.response?.status;
           if (status && status >= 400 && status < 500 && status !== 408 && status !== 429) {
             return false;
           }

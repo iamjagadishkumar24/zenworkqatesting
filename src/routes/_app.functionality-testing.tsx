@@ -31,7 +31,11 @@ function FunctionalityTestingPage() {
   const active = CATEGORIES.find((c) => c.key === category) ?? CATEGORIES[0];
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Functionality Testing categories">
+      <div
+        className="flex flex-wrap gap-2"
+        role="tablist"
+        aria-label="Functionality Testing categories"
+      >
         {CATEGORIES.map((c) => {
           const selected = c.key === category;
           return (

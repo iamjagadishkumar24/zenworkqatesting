@@ -46,10 +46,7 @@ function computeKpis(
 
 // "Database" reference: re-implements the same predicates as raw SQL-style
 // counters. If either side drifts, the assertions below will fail.
-function dbCounts(
-  defects: D[],
-  filter: Parameters<typeof computeKpis>[1] = {},
-) {
+function dbCounts(defects: D[], filter: Parameters<typeof computeKpis>[1] = {}) {
   const within = (d: D) =>
     (!filter.env || d.environment === filter.env) &&
     (!filter.taxYear || filter.taxYear === "all" || d.taxYear === filter.taxYear) &&
@@ -73,14 +70,70 @@ function dbCounts(
 }
 
 const FIXTURE: D[] = [
-  { status: "Reported", validity: "Valid", environment: "Production", taxYear: "2025", assignedAgent: "alice", createdAt: "2025-01-05" },
-  { status: "In Progress", validity: "Valid", environment: "Production", taxYear: "2025", assignedAgent: "bob", createdAt: "2025-02-10" },
-  { status: "Fixed", validity: "Valid", environment: "Production", taxYear: "2025", assignedAgent: "alice", createdAt: "2025-03-12" },
-  { status: "Closed", validity: "Invalid", environment: "Production", taxYear: "2025", assignedAgent: null, createdAt: "2025-04-01" },
-  { status: "Retest Required", validity: "Valid", environment: "Stage", taxYear: "2025", assignedAgent: "alice", createdAt: "2025-04-15" },
-  { status: "Reported", validity: "Invalid", environment: "Stage", taxYear: "2024", assignedAgent: "bob", createdAt: "2024-12-30" },
-  { status: "Open", validity: "Valid", environment: "Stage", taxYear: "2024", assignedAgent: null, createdAt: "2024-06-01" },
-  { status: "Fixed", validity: "Invalid", environment: "Stage", taxYear: "2024", assignedAgent: "alice", createdAt: "2024-08-20" },
+  {
+    status: "Reported",
+    validity: "Valid",
+    environment: "Production",
+    taxYear: "2025",
+    assignedAgent: "alice",
+    createdAt: "2025-01-05",
+  },
+  {
+    status: "In Progress",
+    validity: "Valid",
+    environment: "Production",
+    taxYear: "2025",
+    assignedAgent: "bob",
+    createdAt: "2025-02-10",
+  },
+  {
+    status: "Fixed",
+    validity: "Valid",
+    environment: "Production",
+    taxYear: "2025",
+    assignedAgent: "alice",
+    createdAt: "2025-03-12",
+  },
+  {
+    status: "Closed",
+    validity: "Invalid",
+    environment: "Production",
+    taxYear: "2025",
+    assignedAgent: null,
+    createdAt: "2025-04-01",
+  },
+  {
+    status: "Retest Required",
+    validity: "Valid",
+    environment: "Stage",
+    taxYear: "2025",
+    assignedAgent: "alice",
+    createdAt: "2025-04-15",
+  },
+  {
+    status: "Reported",
+    validity: "Invalid",
+    environment: "Stage",
+    taxYear: "2024",
+    assignedAgent: "bob",
+    createdAt: "2024-12-30",
+  },
+  {
+    status: "Open",
+    validity: "Valid",
+    environment: "Stage",
+    taxYear: "2024",
+    assignedAgent: null,
+    createdAt: "2024-06-01",
+  },
+  {
+    status: "Fixed",
+    validity: "Invalid",
+    environment: "Stage",
+    taxYear: "2024",
+    assignedAgent: "alice",
+    createdAt: "2024-08-20",
+  },
 ];
 
 const PERMUTATIONS: Parameters<typeof computeKpis>[1][] = [
@@ -132,8 +185,22 @@ describe("dashboard KPIs — edge cases", () => {
 
   it("late retests stay in 'open' AND 'retest' across time-window filters", () => {
     const late: D[] = [
-      { status: "Retest Required", validity: "Valid", environment: "Production", taxYear: "2025", assignedAgent: "carol", createdAt: "2025-06-01" },
-      { status: "Retest Required", validity: "Invalid", environment: "Production", taxYear: "2025", assignedAgent: "dan",   createdAt: "2025-06-15" },
+      {
+        status: "Retest Required",
+        validity: "Valid",
+        environment: "Production",
+        taxYear: "2025",
+        assignedAgent: "carol",
+        createdAt: "2025-06-01",
+      },
+      {
+        status: "Retest Required",
+        validity: "Invalid",
+        environment: "Production",
+        taxYear: "2025",
+        assignedAgent: "dan",
+        createdAt: "2025-06-15",
+      },
     ];
     const all = [...FIXTURE, ...late];
     const windowFilter = { since: "2025-05-01", until: "2025-07-01" };
@@ -145,11 +212,46 @@ describe("dashboard KPIs — edge cases", () => {
 
   it("multiple agents — per-agent counts sum to the unscoped total", () => {
     const multi: D[] = [
-      { status: "Reported",        validity: "Valid",   environment: "Production", taxYear: "2026", assignedAgent: "alice", createdAt: "2026-01-01" },
-      { status: "In Progress",     validity: "Valid",   environment: "Production", taxYear: "2026", assignedAgent: "bob",   createdAt: "2026-01-02" },
-      { status: "Retest Required", validity: "Valid",   environment: "Production", taxYear: "2026", assignedAgent: "carol", createdAt: "2026-01-03" },
-      { status: "Fixed",           validity: "Invalid", environment: "Production", taxYear: "2026", assignedAgent: "dan",   createdAt: "2026-01-04" },
-      { status: "Closed",          validity: "Invalid", environment: "Production", taxYear: "2026", assignedAgent: "eve",   createdAt: "2026-01-05" },
+      {
+        status: "Reported",
+        validity: "Valid",
+        environment: "Production",
+        taxYear: "2026",
+        assignedAgent: "alice",
+        createdAt: "2026-01-01",
+      },
+      {
+        status: "In Progress",
+        validity: "Valid",
+        environment: "Production",
+        taxYear: "2026",
+        assignedAgent: "bob",
+        createdAt: "2026-01-02",
+      },
+      {
+        status: "Retest Required",
+        validity: "Valid",
+        environment: "Production",
+        taxYear: "2026",
+        assignedAgent: "carol",
+        createdAt: "2026-01-03",
+      },
+      {
+        status: "Fixed",
+        validity: "Invalid",
+        environment: "Production",
+        taxYear: "2026",
+        assignedAgent: "dan",
+        createdAt: "2026-01-04",
+      },
+      {
+        status: "Closed",
+        validity: "Invalid",
+        environment: "Production",
+        taxYear: "2026",
+        assignedAgent: "eve",
+        createdAt: "2026-01-05",
+      },
     ];
     const total = computeKpis(multi, { taxYear: "2026" });
     const per = ["alice", "bob", "carol", "dan", "eve"].map((a) =>
@@ -171,8 +273,22 @@ describe("dashboard KPIs — edge cases", () => {
 
   it("unassigned defects are excluded by per-agent filter but counted globally", () => {
     const data: D[] = [
-      { status: "Reported", validity: "Valid", environment: "Production", taxYear: "2027", assignedAgent: null, createdAt: "2027-01-01" },
-      { status: "Reported", validity: "Valid", environment: "Production", taxYear: "2027", assignedAgent: "alice", createdAt: "2027-01-02" },
+      {
+        status: "Reported",
+        validity: "Valid",
+        environment: "Production",
+        taxYear: "2027",
+        assignedAgent: null,
+        createdAt: "2027-01-01",
+      },
+      {
+        status: "Reported",
+        validity: "Valid",
+        environment: "Production",
+        taxYear: "2027",
+        assignedAgent: "alice",
+        createdAt: "2027-01-02",
+      },
     ];
     expect(computeKpis(data, { taxYear: "2027" }).open).toBe(2);
     expect(computeKpis(data, { taxYear: "2027", agent: "alice" }).open).toBe(1);

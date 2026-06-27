@@ -118,7 +118,15 @@ export function applyDefectPreset<T extends Pick<Defect, "status" | "validity">>
 export function searchDefects<
   T extends Pick<
     Defect,
-    "id" | "title" | "formFeature" | "module" | "status" | "priority" | "severity" | "assignedAgent" | "createdBy"
+    | "id"
+    | "title"
+    | "formFeature"
+    | "module"
+    | "status"
+    | "priority"
+    | "severity"
+    | "assignedAgent"
+    | "createdBy"
   > & { taxYear?: string },
 >(defects: readonly T[], query: string | null | undefined): T[] {
   const term = (query ?? "").trim().toLowerCase();
@@ -427,9 +435,10 @@ export function QAProvider({ children }: { children: ReactNode }) {
   // `performanceMode` switches realtime state writes to an rAF-batched path
   // so high event rates can't cause UI lag. Both flags come from the server
   // (see `runtime-config.functions.ts`); no UI control is exposed.
-  const [runtimeConfig, setRuntimeConfig] = useState<{ liveEnabled: boolean; performanceMode: boolean }>(
-    { liveEnabled: true, performanceMode: false },
-  );
+  const [runtimeConfig, setRuntimeConfig] = useState<{
+    liveEnabled: boolean;
+    performanceMode: boolean;
+  }>({ liveEnabled: true, performanceMode: false });
   const perfModeRef = useRef(false);
   perfModeRef.current = runtimeConfig.performanceMode;
   useEffect(() => {
@@ -665,7 +674,9 @@ export function QAProvider({ children }: { children: ReactNode }) {
       .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "defects" }, (payload) => {
         const ev = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
-        const row = (payload.new ?? payload.old) as { id?: string; title?: string; status?: string } | undefined;
+        const row = (payload.new ?? payload.old) as
+          | { id?: string; title?: string; status?: string }
+          | undefined;
         pushEvent({
           table: "defects",
           event: ev,
@@ -828,8 +839,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           setRealtimeStatus("reconnecting");
           setRealtimeReconnectAttempts((n) => n + 1);
-        }
-        else if (status === "CLOSED") setRealtimeStatus("idle");
+        } else if (status === "CLOSED") setRealtimeStatus("idle");
         else setRealtimeStatus("connecting");
         // Read-only probe for E2E: lets Playwright assert the realtime
         // subscription is alive without any visible UI indicator.
@@ -915,8 +925,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         // Supabase returns a "weak_password" / pwned message when HIBP blocks it.
         const msg = error.message ?? "";
         const code = (error as { code?: string }).code ?? "";
-        const isLeaked =
-          /pwned|leaked|breach|weak_password/i.test(msg) || code === "weak_password";
+        const isLeaked = /pwned|leaked|breach|weak_password/i.test(msg) || code === "weak_password";
         try {
           const { recordAuthAttempt } = await import("./authAudit.functions");
           void recordAuthAttempt({
@@ -1011,9 +1020,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
       const previous = local;
       setState((s) => ({
         ...s,
-        defects: s.defects.map((d) =>
-          d.id === id ? { ...d, ...patch, updatedBy: me.name } : d,
-        ),
+        defects: s.defects.map((d) => (d.id === id ? { ...d, ...patch, updatedBy: me.name } : d)),
       }));
       const dbPatch: Record<string, unknown> = { updated_by: me.name };
       const map: Record<string, string> = {

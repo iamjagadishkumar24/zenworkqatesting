@@ -127,8 +127,7 @@ function ReportsPage() {
   const [viewName, setViewName] = useState("");
   const [drill, setDrill] = useState<DrillState>(null);
 
-  const resetFilters = () =>
-    navigate({ replace: true, search: () => ({ ...DEFAULT_SEARCH }) });
+  const resetFilters = () => navigate({ replace: true, search: () => ({ ...DEFAULT_SEARCH }) });
 
   const applyView = (name: string) => {
     const v = views.find((x) => x.name === name);
@@ -229,12 +228,18 @@ function ReportsPage() {
   // Data-integrity validation: warn when the active filtered set diverges
   // from the scoped total in ways callers wouldn't expect.
   useEffect(() => {
-    if (status === "all" && testingType === "all" && category === "all" && agent === "all" && dateRange === "all") {
+    if (
+      status === "all" &&
+      testingType === "all" &&
+      category === "all" &&
+      agent === "all" &&
+      dateRange === "all"
+    ) {
       if (defects.length !== scoped.length) {
-        console.warn(
-          "[Reports integrity] filtered count mismatch with scoped store",
-          { reports: defects.length, store: scoped.length },
-        );
+        console.warn("[Reports integrity] filtered count mismatch with scoped store", {
+          reports: defects.length,
+          store: scoped.length,
+        });
       }
     }
   }, [defects.length, scoped.length, status, testingType, category, agent, dateRange]);
@@ -457,10 +462,22 @@ function ReportsPage() {
           <div>
             <Label>Status</Label>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {["all", "Open", "Fixed", "Retest Required", "Valid", "Invalid", "Pending Review"].map((s) => (
-                  <SelectItem key={s} value={s}>{s === "all" ? "All statuses" : s}</SelectItem>
+                {[
+                  "all",
+                  "Open",
+                  "Fixed",
+                  "Retest Required",
+                  "Valid",
+                  "Invalid",
+                  "Pending Review",
+                ].map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s === "all" ? "All statuses" : s}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -468,10 +485,14 @@ function ReportsPage() {
           <div>
             <Label>Testing Type</Label>
             <Select value={testingType} onValueChange={setTestingType}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {["all", "Functionality", "Integration", "Regression", "UI", "API"].map((s) => (
-                  <SelectItem key={s} value={s}>{s === "all" ? "All types" : s}</SelectItem>
+                  <SelectItem key={s} value={s}>
+                    {s === "all" ? "All types" : s}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -479,27 +500,41 @@ function ReportsPage() {
           <div>
             <Label>Category</Label>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All categories</SelectItem>
-                {categories.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label>Agent</Label>
             <Select value={agent} onValueChange={setAgent}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All agents</SelectItem>
-                {agents.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+                {agents.map((a) => (
+                  <SelectItem key={a} value={a}>
+                    {a}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label>Date</Label>
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All time</SelectItem>
                 <SelectItem value="today">Today</SelectItem>
@@ -514,20 +549,29 @@ function ReportsPage() {
             <div className="flex items-end gap-2">
               <div className="flex-1">
                 <Label>From</Label>
-                <Input type="date" value={fromInput} onChange={(e) => setFromInput(e.target.value)} className="h-9" />
+                <Input
+                  type="date"
+                  value={fromInput}
+                  onChange={(e) => setFromInput(e.target.value)}
+                  className="h-9"
+                />
               </div>
               <div className="flex-1">
                 <Label>To</Label>
-                <Input type="date" value={toInput} onChange={(e) => setToInput(e.target.value)} className="h-9" />
+                <Input
+                  type="date"
+                  value={toInput}
+                  onChange={(e) => setToInput(e.target.value)}
+                  className="h-9"
+                />
               </div>
             </div>
           )}
           <div className="md:col-span-3 lg:col-span-6 flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
             <span>
-              Showing <strong className="text-foreground">{defects.length}</strong> of {scoped.length} errors in scope
-              {scoped.length !== allDefects.length && (
-                <> (store total {allDefects.length})</>
-              )}
+              Showing <strong className="text-foreground">{defects.length}</strong> of{" "}
+              {scoped.length} errors in scope
+              {scoped.length !== allDefects.length && <> (store total {allDefects.length})</>}
             </span>
             <Button size="sm" variant="ghost" onClick={resetFilters}>
               Reset filters
@@ -540,7 +584,12 @@ function ReportsPage() {
             ) : (
               views.map((v) => (
                 <span key={v.name} className="inline-flex items-center">
-                  <Button size="sm" variant="secondary" className="h-7" onClick={() => applyView(v.name)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-7"
+                    onClick={() => applyView(v.name)}
+                  >
                     {v.name}
                   </Button>
                   <Button
@@ -568,7 +617,15 @@ function ReportsPage() {
                 className="h-8"
                 disabled={!viewName.trim()}
                 onClick={() => {
-                  saveView(viewName, { status, testingType, category, agent, dateRange, fromDate, toDate });
+                  saveView(viewName, {
+                    status,
+                    testingType,
+                    category,
+                    agent,
+                    dateRange,
+                    fromDate,
+                    toDate,
+                  });
                   setViewName("");
                 }}
               >

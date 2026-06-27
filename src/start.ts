@@ -27,8 +27,16 @@ function applyCacheHeaders(request: Request, response: Response) {
   const url = new URL(request.url);
   const path = url.pathname;
   const contentType = response.headers.get("content-type") ?? "";
-  if (path === "/api/public/app-version" || path === "/api/public/manifest" || path === "/manifest.webmanifest" || contentType.includes("text/html")) {
-    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  if (
+    path === "/api/public/app-version" ||
+    path === "/api/public/manifest" ||
+    path === "/manifest.webmanifest" ||
+    contentType.includes("text/html")
+  ) {
+    response.headers.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+    );
     response.headers.set("Pragma", "no-cache");
     response.headers.set("Expires", "0");
     return;
@@ -45,8 +53,10 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ next, reque
   const target: Response | undefined =
     raw instanceof Response
       ? raw
-      : raw && typeof raw === "object" && (raw as { response?: unknown }).response instanceof Response
-        ? ((raw as { response: Response }).response)
+      : raw &&
+          typeof raw === "object" &&
+          (raw as { response?: unknown }).response instanceof Response
+        ? (raw as { response: Response }).response
         : undefined;
   if (target && target.headers) {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) {

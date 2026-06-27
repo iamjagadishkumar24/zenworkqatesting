@@ -5,13 +5,13 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 const loginMock = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (cfg: any) => cfg,
+  createFileRoute: () => (cfg: unknown) => cfg,
   useNavigate: () => vi.fn(),
   Navigate: () => null,
 }));
 
 vi.mock("@tanstack/react-start", () => ({
-  useServerFn: (fn: any) => fn,
+  useServerFn: <F,>(fn: F): F => fn,
 }));
 
 vi.mock("@/lib/qa/admin.functions", () => ({
@@ -129,9 +129,7 @@ describe("LoginPage validation and success", () => {
     fireEvent.change(email, { target: { value: "User@X.com" } });
     fireEvent.change(pwd, { target: { value: "ok-pass" } });
     fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
-    await waitFor(() =>
-      expect(loginMock).toHaveBeenCalledWith("user@x.com", "ok-pass"),
-    );
+    await waitFor(() => expect(loginMock).toHaveBeenCalledWith("user@x.com", "ok-pass"));
     await waitFor(() =>
       expect(setItem).toHaveBeenCalledWith("zenwork.rememberEmail", "user@x.com"),
     );

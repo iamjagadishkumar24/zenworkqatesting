@@ -7,14 +7,17 @@ const h = vi.hoisted(() => ({
   listNotes: vi.fn(),
 }));
 
+type LinkProps = { children?: ReactNode; href?: string; to?: string } & Record<string, unknown>;
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, ...rest }: any) => <a {...rest}>{children}</a>,
+  Link: ({ children, ...rest }: LinkProps) => (
+    <a {...(rest as Record<string, unknown>)}>{children}</a>
+  ),
 }));
 vi.mock("@tanstack/react-start", () => ({
-  useServerFn: (fn: any) => fn,
+  useServerFn: <F,>(fn: F): F => fn,
 }));
 vi.mock("@/lib/qa/notes.functions", () => ({
-  listNotes: (...a: any[]) => h.listNotes(...a),
+  listNotes: (...a: unknown[]) => h.listNotes(...a),
 }));
 
 import { MyQuickNotesWidget } from "./MyQuickNotesWidget";
@@ -32,7 +35,7 @@ describe("MyQuickNotesWidget", () => {
   });
 
   it("renders Active/Archived counts and at most 3 recent notes", async () => {
-    h.listNotes.mockImplementation(({ data }: any) =>
+    h.listNotes.mockImplementation(({ data }: { data: { archived?: boolean } }) =>
       Promise.resolve(
         data.archived
           ? [{ id: "a1" }, { id: "a2" }]
@@ -56,7 +59,7 @@ describe("MyQuickNotesWidget", () => {
   });
 
   it("falls back to Untitled when title and content are empty", async () => {
-    h.listNotes.mockImplementation(({ data }: any) =>
+    h.listNotes.mockImplementation(({ data }: { data: { archived?: boolean } }) =>
       Promise.resolve(
         data.archived
           ? []

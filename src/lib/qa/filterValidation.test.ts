@@ -31,7 +31,9 @@ describe("validateFilters", () => {
   const rows = [d(), d({ id: "ZEN-2", module: "Integrations", assignedAgent: "Bob" })];
 
   it("warns on Invalid + Fixed/Closed", () => {
-    expect(validateFilters({ validity: "Invalid", status: "Fixed" }, rows)[0]).toMatch(/Filter conflict/);
+    expect(validateFilters({ validity: "Invalid", status: "Fixed" }, rows)[0]).toMatch(
+      /Filter conflict/,
+    );
     expect(validateFilters({ validity: "Invalid", status: "Closed" }, rows)[0]).toMatch(/Closed/);
   });
 
@@ -67,7 +69,9 @@ describe("buildEmptyResultMessage", () => {
 
   it("returns warning text when warnings exist", () => {
     const w = ["A.", "B."];
-    expect(buildEmptyResultMessage({ validity: "Invalid", status: "Fixed" } as FilterState, w)).toBe("A. B.");
+    expect(
+      buildEmptyResultMessage({ validity: "Invalid", status: "Fixed" } as FilterState, w),
+    ).toBe("A. B.");
   });
 
   it("lists active filter keys when no warnings", () => {

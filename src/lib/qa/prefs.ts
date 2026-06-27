@@ -50,8 +50,17 @@ export type AdminPrefs = {
 // Single source of truth for which accent values the backend will accept.
 // Kept in sync with the zod enum in userPreferences.functions.ts.
 export const ALLOWED_ACCENTS: AdminPrefs["accent"][] = [
-  "blue", "violet", "emerald", "rose",
-  "light", "green", "purple", "orange", "pink", "grey", "teal",
+  "blue",
+  "violet",
+  "emerald",
+  "rose",
+  "light",
+  "green",
+  "purple",
+  "orange",
+  "pink",
+  "grey",
+  "teal",
 ];
 export const ALLOWED_THEMES: AdminPrefs["theme"][] = ["system", "light", "dark"];
 
@@ -160,10 +169,15 @@ export function usePrefs() {
     // must never apply to admin sessions even if forced via localStorage
     // or query string.
     const AGENT_ONLY: AdminPrefs["accent"][] = [
-      "light", "green", "purple", "orange", "pink", "grey", "teal",
+      "light",
+      "green",
+      "purple",
+      "orange",
+      "pink",
+      "grey",
+      "teal",
     ];
-    const accent =
-      isAdmin && AGENT_ONLY.includes(prefs.accent) ? "blue" : prefs.accent;
+    const accent = isAdmin && AGENT_ONLY.includes(prefs.accent) ? "blue" : prefs.accent;
     root.dataset.accent = accent;
     root.dataset.density = prefs.density;
   }, [prefs, uid, isAdmin]);
@@ -196,22 +210,22 @@ export function usePrefs() {
             show_agent_chart: next.showAgentChart,
           },
         })
-        .then(() => {
-          if (isThemeChange) {
-            toast.success("Theme synced", {
-              description:
-                "Your accent color was saved. If it doesn't appear everywhere, refresh the page.",
+          .then(() => {
+            if (isThemeChange) {
+              toast.success("Theme synced", {
+                description:
+                  "Your accent color was saved. If it doesn't appear everywhere, refresh the page.",
+              });
+            }
+          })
+          .catch((err: unknown) => {
+            // Surface the server's response so the user sees why their
+            // selection didn't persist (e.g. unsupported value, RLS denial).
+            const msg = err instanceof Error ? err.message : String(err);
+            toast.error(`Couldn't save theme: ${msg}`, {
+              description: "Try refreshing the page and selecting the color again.",
             });
-          }
-        })
-        .catch((err: unknown) => {
-          // Surface the server's response so the user sees why their
-          // selection didn't persist (e.g. unsupported value, RLS denial).
-          const msg = err instanceof Error ? err.message : String(err);
-          toast.error(`Couldn't save theme: ${msg}`, {
-            description: "Try refreshing the page and selecting the color again.",
           });
-        });
       }
       return next;
     });

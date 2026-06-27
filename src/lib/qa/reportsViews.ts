@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+type ReportViewsFilters = Database["public"]["Tables"]["report_views"]["Insert"]["filters"];
 
 export type ReportFilters = {
   status: string;
@@ -29,7 +31,7 @@ async function migrateLegacy(userId: string) {
       legacy.map((v) => ({
         user_id: userId,
         name: v.name,
-        filters: v.filters as unknown as any,
+        filters: v.filters as unknown as ReportViewsFilters,
       })),
       { onConflict: "user_id,name" },
     );
@@ -103,26 +105,21 @@ export function useSavedViews() {
     save: async (name: string, filters: ReportFilters) => {
       const trimmed = name.trim();
       if (!trimmed || !userId) return;
-      const next = [
-        ...views.filter((v) => v.name !== trimmed),
-        { name: trimmed, filters },
-      ];
+      const next = [...views.filter((v) => v.name !== trimmed), { name: trimmed, filters }];
       setViews(next);
-      await supabase
-        .from("report_views")
-        .upsert(
-          { user_id: userId, name: trimmed, filters: filters as unknown as any },
-          { onConflict: "user_id,name" },
-        );
+      await supabase.from("report_views").upsert(
+        {
+          user_id: userId,
+          name: trimmed,
+          filters: filters as unknown as ReportViewsFilters,
+        },
+        { onConflict: "user_id,name" },
+      );
     },
     remove: async (name: string) => {
       if (!userId) return;
       setViews((vs) => vs.filter((v) => v.name !== name));
-      await supabase
-        .from("report_views")
-        .delete()
-        .eq("user_id", userId)
-        .eq("name", name);
+      await supabase.from("report_views").delete().eq("user_id", userId).eq("name", name);
     },
   };
 }

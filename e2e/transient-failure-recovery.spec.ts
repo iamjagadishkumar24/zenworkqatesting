@@ -20,10 +20,12 @@ const VERSION_ENDPOINT = "/api/public/app-version";
 async function gotoAndAssertNoHardError(page: Page, path: string) {
   await page.goto(path, { waitUntil: "domcontentloaded" });
   // Give the app up to 15s — covers a couple of auto-retry cycles.
-  await expect.poll(
-    async () => (await page.locator("body").innerText()).includes(FORBIDDEN_TEXT),
-    { timeout: 15_000, intervals: [250, 500, 1000] },
-  ).toBe(false);
+  await expect
+    .poll(async () => (await page.locator("body").innerText()).includes(FORBIDDEN_TEXT), {
+      timeout: 15_000,
+      intervals: [250, 500, 1000],
+    })
+    .toBe(false);
   await expect(page.locator("body")).not.toContainText(FORBIDDEN_TEXT);
 }
 
@@ -51,7 +53,7 @@ test.describe("transient failure recovery", () => {
     await page.route(/\.(?:js|mjs)(?:\?.*)?$/, async (route) => {
       const url = route.request().url();
       // Only fail one non-entry chunk, once, to simulate a stale deploy.
-      if (chunkFails < 1 && /assets\/.+\-[A-Za-z0-9]{6,}\.(?:js|mjs)/.test(url)) {
+      if (chunkFails < 1 && /assets\/.+-[A-Za-z0-9]{6,}\.(?:js|mjs)/.test(url)) {
         chunkFails += 1;
         await route.fulfill({ status: 502, body: "" });
         return;
@@ -94,8 +96,14 @@ test.describe("transient failure recovery", () => {
     await page.goto("/");
     await page.evaluate(() => sessionStorage.removeItem("zenwork:last-cache-bust-reload"));
     await page.evaluate(async () => {
-      await caches.open("workbox-precache-v2-test").then((cache) => cache.put("/old.js", new Response("old")));
-      window.dispatchEvent(new CustomEvent("vite:preloadError", { detail: new Error("Failed to fetch dynamically imported module") }));
+      await caches
+        .open("workbox-precache-v2-test")
+        .then((cache) => cache.put("/old.js", new Response("old")));
+      window.dispatchEvent(
+        new CustomEvent("vite:preloadError", {
+          detail: new Error("Failed to fetch dynamically imported module"),
+        }),
+      );
     });
 
     await page.waitForURL(/__app_version=e2e-new-deployment/, { timeout: 15_000 });
@@ -105,7 +113,9 @@ test.describe("transient failure recovery", () => {
     expect(remainingCaches).not.toContain("workbox-precache-v2-test");
   });
 
-  test("clicking Dashboard with stale JS chunks → recovers via reload, no hard error", async ({ page }) => {
+  test("clicking Dashboard with stale JS chunks → recovers via reload, no hard error", async ({
+    page,
+  }) => {
     // Simulate a fresh deployment: version endpoint reports a new version.
     await page.route(`**${VERSION_ENDPOINT}**`, async (route) => {
       await route.fulfill({
@@ -146,7 +156,9 @@ test.describe("transient failure recovery", () => {
       await page.evaluate(() => {
         window.dispatchEvent(
           new CustomEvent("vite:preloadError", {
-            detail: new Error("Failed to fetch dynamically imported module: /assets/dashboard-abcdef.js"),
+            detail: new Error(
+              "Failed to fetch dynamically imported module: /assets/dashboard-abcdef.js",
+            ),
           }),
         );
       });

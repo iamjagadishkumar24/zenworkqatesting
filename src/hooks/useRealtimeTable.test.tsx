@@ -5,9 +5,9 @@ import type { ReactNode } from "react";
 
 const invalidateQueries = vi.fn();
 const removeChannel = vi.fn();
-const subscribe = vi.fn(() => ({}));
-const onFn: any = vi.fn(() => ({ subscribe }));
-const channelFn: any = vi.fn(() => ({ on: onFn }));
+const subscribe = vi.fn((..._args: unknown[]) => ({}));
+const onFn = vi.fn((..._args: unknown[]) => ({ subscribe }));
+const channelFn = vi.fn((..._args: unknown[]) => ({ on: onFn }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -20,7 +20,7 @@ import { useRealtimeTable } from "./useRealtimeTable";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient();
-  qc.invalidateQueries = invalidateQueries as any;
+  qc.invalidateQueries = invalidateQueries as unknown as typeof qc.invalidateQueries;
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
@@ -43,10 +43,8 @@ describe("useRealtimeTable", () => {
         }),
       { wrapper },
     );
-    expect(channelFn).toHaveBeenCalledWith(
-      expect.stringContaining("rt:defects:user_id=eq.1"),
-    );
-    const call = onFn.mock.calls[0] as any[];
+    expect(channelFn).toHaveBeenCalledWith(expect.stringContaining("rt:defects:user_id=eq.1"));
+    const call = onFn.mock.calls[0] as unknown as unknown[];
     const cfg = call[1];
     const cb = call[2] as (p: unknown) => void;
     expect(cfg).toMatchObject({
@@ -61,19 +59,17 @@ describe("useRealtimeTable", () => {
   });
 
   it("removes channel on unmount", () => {
-    const { unmount } = renderHook(
-      () => useRealtimeTable({ table: "defects", queryKey: ["d"] }),
-      { wrapper },
-    );
+    const { unmount } = renderHook(() => useRealtimeTable({ table: "defects", queryKey: ["d"] }), {
+      wrapper,
+    });
     unmount();
     expect(removeChannel).toHaveBeenCalled();
   });
 
   it("skips subscription when disabled", () => {
-    renderHook(
-      () => useRealtimeTable({ table: "defects", queryKey: ["d"], enabled: false }),
-      { wrapper },
-    );
+    renderHook(() => useRealtimeTable({ table: "defects", queryKey: ["d"], enabled: false }), {
+      wrapper,
+    });
     expect(channelFn).not.toHaveBeenCalled();
   });
 });

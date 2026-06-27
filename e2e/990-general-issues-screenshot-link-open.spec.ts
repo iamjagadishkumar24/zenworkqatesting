@@ -37,7 +37,10 @@ async function createScreenshotDefect(page: Page, screenshotUrl: string) {
   await page.getByLabel(/Issue Summary/i).fill(title);
   await page.getByLabel(/Issue Description/i).fill("Screenshot link open + a11y check.");
   await page.getByLabel(/Screenshot URL/i).fill(screenshotUrl);
-  await page.getByRole("button", { name: /report error/i }).last().click();
+  await page
+    .getByRole("button", { name: /report error/i })
+    .last()
+    .click();
   await expect(page.getByText(/general 990 series issue reported/i)).toBeVisible();
 
   await page.goto("/my-reported-errors");
@@ -88,10 +91,7 @@ test.describe("General 990 — Screenshot link open + accessibility", () => {
     // Keyboard focus + activation.
     await link.focus();
     await expect(link).toBeFocused();
-    const [popup] = await Promise.all([
-      context.waitForEvent("page"),
-      page.keyboard.press("Enter"),
-    ]);
+    const [popup] = await Promise.all([context.waitForEvent("page"), page.keyboard.press("Enter")]);
     await popup.waitForLoadState("domcontentloaded").catch(() => {});
     expect(popup.url()).toBe(url);
     await popup.close();

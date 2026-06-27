@@ -112,9 +112,7 @@ export function ReportDefectDialog({
   const formChoices = formOptions && formOptions.length ? formOptions : FORM_LIST;
   const [selectedSchedules, setSelectedSchedules] = useState<string[]>([]);
   const toggleSchedule = (s: string) =>
-    setSelectedSchedules((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
-    );
+    setSelectedSchedules((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   const [draft, setDraft] = useState<Draft>(() => ({
     module: defaultModule,
     formFeature: "",
@@ -438,7 +436,8 @@ export function ReportDefectDialog({
             <div className="sm:col-span-2" data-testid="schedules-section">
               <Label>{scheduleLabel}</Label>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Select one or more schedules / related forms to associate with this {draft._form || "form"} report.
+                Select one or more schedules / related forms to associate with this{" "}
+                {draft._form || "form"} report.
               </p>
               <div className="mt-2 grid grid-cols-1 gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
                 {scheduleOptions.map((s) => {

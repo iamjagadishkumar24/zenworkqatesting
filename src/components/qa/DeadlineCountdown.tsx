@@ -86,7 +86,9 @@ export function DeadlineCountdown() {
             </span>
           ) : (
             <span className="font-mono tabular-nums">
-              {primaryInfo.isOverdue ? `+${primaryInfo.shortLabel} Overdue` : `${primaryInfo.shortLabel} Left`}
+              {primaryInfo.isOverdue
+                ? `+${primaryInfo.shortLabel} Overdue`
+                : `${primaryInfo.shortLabel} Left`}
             </span>
           )}
         </button>
@@ -101,20 +103,20 @@ export function DeadlineCountdown() {
         <div className="max-h-80 overflow-y-auto p-2">
           {rows.map(({ r, info }) => (
             <Link
-                key={r.id}
-                to="/tasks/$taskId"
-                params={{ taskId: r.id }}
-                className="flex items-center justify-between gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted/60"
+              key={r.id}
+              to="/tasks/$taskId"
+              params={{ taskId: r.id }}
+              className="flex items-center justify-between gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted/60"
+            >
+              <span className="min-w-0 flex-1 truncate">{r.title || r.id}</span>
+              <span
+                className={cn(
+                  "rounded border px-1.5 py-0.5 font-mono text-[11px] tabular-nums",
+                  TIER_CLASSES[info.tier],
+                )}
               >
-                <span className="min-w-0 flex-1 truncate">{r.title || r.id}</span>
-                <span
-                  className={cn(
-                    "rounded border px-1.5 py-0.5 font-mono text-[11px] tabular-nums",
-                    TIER_CLASSES[info.tier],
-                  )}
-                >
-                  {info.isOverdue ? `+${info.shortLabel}` : info.shortLabel}
-                </span>
+                {info.isOverdue ? `+${info.shortLabel}` : info.shortLabel}
+              </span>
             </Link>
           ))}
         </div>

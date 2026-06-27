@@ -72,11 +72,22 @@ function mapRow(r: Row): DefectRowLite {
   };
 }
 
-// `any` here is intentional: we share one builder helper between the count
-// query and the paged query so PostgREST's chained types don't need to be
-// threaded through every conditional. RLS still enforces row access.
-function applySpec(qIn: any, spec: DefectQuerySpec): any {
-  let q = qIn;
+// Loose builder shape: we share one helper between the count and the paged
+// query so PostgREST's chained types don't need to be threaded through every
+// conditional. RLS still enforces row access. We type the builder as
+// `unknown` internally and cast through a minimal chainable shape per call —
+// keeps `any` out of the file without re-deriving Postgrest's full generics.
+type Chain = {
+  eq: (c: string, v: unknown) => Chain;
+  ilike: (c: string, v: string) => Chain;
+  or: (e: string) => Chain;
+  gte: (c: string, v: unknown) => Chain;
+  lt: (c: string, v: unknown) => Chain;
+  in: (c: string, v: unknown[]) => Chain;
+  not: (c: string, op: string, v: unknown) => Chain;
+};
+function applySpec<Q>(qIn: Q, spec: DefectQuerySpec): Q {
+  let q = qIn as unknown as Chain;
   if (spec.environment) q = q.eq("environment", spec.environment);
   if (spec.taxYear && spec.taxYear !== "all") q = q.eq("tax_year", spec.taxYear);
   if (spec.module) q = q.eq("module", spec.module);
@@ -90,8 +101,7 @@ function applySpec(qIn: any, spec: DefectQuerySpec): any {
 
   if (spec.validity === "Valid") q = q.eq("validity", "Valid");
   else if (spec.validity === "Invalid") q = q.eq("validity", "Invalid");
-  else if (spec.validity === "Pending Review")
-    q = q.or("validity.is.null,validity.eq.Unverified");
+  else if (spec.validity === "Pending Review") q = q.or("validity.is.null,validity.eq.Unverified");
 
   switch (spec.statusGroup) {
     case "Open":
@@ -115,7 +125,7 @@ function applySpec(qIn: any, spec: DefectQuerySpec): any {
     default:
       break;
   }
-  return q;
+  return q as unknown as Q;
 }
 
 export async function queryDefectsPage(

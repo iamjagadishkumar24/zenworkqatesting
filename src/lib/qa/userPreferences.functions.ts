@@ -5,8 +5,17 @@ import { z } from "zod";
 const PrefsInput = z.object({
   theme: z.enum(["system", "light", "dark"]),
   accent: z.enum([
-    "blue", "violet", "emerald", "rose",
-    "light", "green", "purple", "orange", "pink", "grey", "teal",
+    "blue",
+    "violet",
+    "emerald",
+    "rose",
+    "light",
+    "green",
+    "purple",
+    "orange",
+    "pink",
+    "grey",
+    "teal",
   ]),
   density: z.enum(["comfortable", "compact"]),
   default_landing: z.enum(["/dashboard", "/my-reported-errors", "/my-errors"]),
@@ -15,12 +24,7 @@ const PrefsInput = z.object({
   show_agent_chart: z.boolean(),
 });
 
-const RuntimeAuditPageSize = z.union([
-  z.literal(10),
-  z.literal(25),
-  z.literal(50),
-  z.literal(100),
-]);
+const RuntimeAuditPageSize = z.union([z.literal(10), z.literal(25), z.literal(50), z.literal(100)]);
 
 export type RemotePrefs = z.infer<typeof PrefsInput>;
 
@@ -77,9 +81,7 @@ export const getMyRuntimeAuditPageSize = createServerFn({ method: "GET" })
 
 export const setMyRuntimeAuditPageSize = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ pageSize: RuntimeAuditPageSize }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ pageSize: RuntimeAuditPageSize }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await supabase

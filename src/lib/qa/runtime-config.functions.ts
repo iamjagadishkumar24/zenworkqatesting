@@ -59,14 +59,12 @@ export const getQARuntimeConfig = createServerFn({ method: "GET" }).handler(
  */
 export const updateQARuntimeConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (data: { liveEnabled: boolean; performanceMode: boolean }) => {
-      if (typeof data?.liveEnabled !== "boolean" || typeof data?.performanceMode !== "boolean") {
-        throw new Error("Invalid payload");
-      }
-      return { liveEnabled: data.liveEnabled, performanceMode: data.performanceMode };
-    },
-  )
+  .inputValidator((data: { liveEnabled: boolean; performanceMode: boolean }) => {
+    if (typeof data?.liveEnabled !== "boolean" || typeof data?.performanceMode !== "boolean") {
+      throw new Error("Invalid payload");
+    }
+    return { liveEnabled: data.liveEnabled, performanceMode: data.performanceMode };
+  })
   .handler(async ({ data, context }): Promise<QARuntimeConfig> => {
     const { data: isAdmin, error: roleErr } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
@@ -163,7 +161,11 @@ export const listQARuntimeConfigAudit = createServerFn({ method: "GET" })
     if (!isAdmin) throw new Response("Forbidden", { status: 403 });
     const from = (data.page - 1) * data.pageSize;
     const to = from + data.pageSize - 1;
-    const { data: rows, error, count } = await context.supabase
+    const {
+      data: rows,
+      error,
+      count,
+    } = await context.supabase
       .from("qa_runtime_config_audit")
       .select(
         "id, old_live_enabled, new_live_enabled, old_performance_mode, new_performance_mode, changed_by_id, changed_by_name, changed_by_email, created_at",

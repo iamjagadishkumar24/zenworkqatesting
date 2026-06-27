@@ -104,7 +104,10 @@ test.describe("990 schedules / related forms", () => {
       page,
     }) => {
       // Open the report dialog for this specific form card.
-      const card = page.locator(`text=${c.form}`).first().locator("xpath=ancestor::*[contains(@class,'group') or self::div][1]");
+      const card = page
+        .locator(`text=${c.form}`)
+        .first()
+        .locator("xpath=ancestor::*[contains(@class,'group') or self::div][1]");
       await card.getByRole("button", { name: /report error/i }).click();
 
       const section = page.getByTestId("schedules-section");

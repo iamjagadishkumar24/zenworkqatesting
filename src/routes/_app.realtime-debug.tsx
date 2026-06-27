@@ -34,10 +34,9 @@ function RealtimeDebugPage() {
       void supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
-    const channel = supabase.channel(
-      `rt-diagnostics-${Math.random().toString(36).slice(2, 8)}`,
-      { config: { broadcast: { self: true } } },
-    );
+    const channel = supabase.channel(`rt-diagnostics-${Math.random().toString(36).slice(2, 8)}`, {
+      config: { broadcast: { self: true } },
+    });
     channelRef.current = channel;
     channel
       .on("broadcast", { event: "ping" }, () => {
@@ -97,7 +96,6 @@ function RealtimeDebugPage() {
       if (channelRef.current) void supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const lastEventAt = realtimeEvents[0]?.at ?? null;
@@ -118,8 +116,8 @@ function RealtimeDebugPage() {
           </h2>
           <p className="text-sm text-muted-foreground">
             Live stream of defect and comment events your role ({role}) is receiving via Supabase
-            Realtime. RLS filters these per user — what you see here is exactly what your client
-            is allowed to react to.
+            Realtime. RLS filters these per user — what you see here is exactly what your client is
+            allowed to react to.
           </p>
         </div>
         <Button

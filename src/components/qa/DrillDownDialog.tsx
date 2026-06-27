@@ -7,11 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Loader2 } from "lucide-react";
@@ -111,9 +107,7 @@ export function DrillDownDialog({
 
   const toggleSort = (key: string) => {
     setSort((s) =>
-      s.key === key
-        ? { key, dir: s.dir === "asc" ? "desc" : "asc" }
-        : { key, dir: "asc" },
+      s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" },
     );
     setPage(1);
   };
@@ -178,9 +172,7 @@ export function DrillDownDialog({
                         checked={visible.includes(String(c.key))}
                         onCheckedChange={(v) =>
                           setVisible((cur) =>
-                            v
-                              ? [...cur, String(c.key)]
-                              : cur.filter((k) => k !== String(c.key)),
+                            v ? [...cur, String(c.key)] : cur.filter((k) => k !== String(c.key)),
                           )
                         }
                       />
@@ -258,9 +250,7 @@ export function DrillDownDialog({
                   {visibleCols.map((c) => (
                     <td
                       key={String(c.key)}
-                      className={
-                        c.key === "id" ? "px-3 py-2 font-mono text-xs" : "px-3 py-2"
-                      }
+                      className={c.key === "id" ? "px-3 py-2 font-mono text-xs" : "px-3 py-2"}
                     >
                       {cellValue(d, String(c.key))}
                     </td>

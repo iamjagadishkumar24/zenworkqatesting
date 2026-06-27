@@ -33,17 +33,19 @@ for (const theme of AGENT_THEMES) {
             "zenwork.prefs",
             JSON.stringify({ ...prev, accent: t, theme: "light" }),
           );
-        } catch {}
+        } catch {
+          /* ignore — best-effort prefs seed */
+        }
       }, theme);
     });
 
     for (const path of PAGES) {
       test(`renders ${path}`, async ({ page }) => {
         await page.goto(path, { waitUntil: "networkidle" });
-        await expect(page).toHaveScreenshot(
-          `${theme}${path.replace(/\//g, "_") || "_root"}.png`,
-          { fullPage: true, animations: "disabled" },
-        );
+        await expect(page).toHaveScreenshot(`${theme}${path.replace(/\//g, "_") || "_root"}.png`, {
+          fullPage: true,
+          animations: "disabled",
+        });
       });
     }
   });

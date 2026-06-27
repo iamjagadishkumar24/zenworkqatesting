@@ -11,7 +11,9 @@ import type { Defect } from "./types";
 vi.mock("sonner", () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
 
 import XLSXStyleActual from "xlsx-js-style";
-const writeFileSpy = vi.spyOn(XLSXStyleActual, "writeFile").mockImplementation(() => undefined as any);
+const writeFileSpy = vi
+  .spyOn(XLSXStyleActual, "writeFile")
+  .mockImplementation((() => undefined) as unknown as typeof XLSXStyleActual.writeFile);
 
 function d(over: Partial<Defect> = {}): Defect {
   return {
@@ -59,11 +61,17 @@ describe("toReportedErrorRow + adminReviewLabel branches", () => {
     expect(toReportedErrorRow(d({ validity: "Invalid" })).adminReview).toBe("Invalid Error");
   });
   it("returns 'Valid Error' for Valid + Reported|Pending", () => {
-    expect(toReportedErrorRow(d({ validity: "Valid", status: "Reported" })).adminReview).toBe("Valid Error");
-    expect(toReportedErrorRow(d({ validity: "Valid", status: "Pending" })).adminReview).toBe("Valid Error");
+    expect(toReportedErrorRow(d({ validity: "Valid", status: "Reported" })).adminReview).toBe(
+      "Valid Error",
+    );
+    expect(toReportedErrorRow(d({ validity: "Valid", status: "Pending" })).adminReview).toBe(
+      "Valid Error",
+    );
   });
   it("returns 'Retest Required'", () => {
-    expect(toReportedErrorRow(d({ status: "Retest Required" })).adminReview).toBe("Retest Required");
+    expect(toReportedErrorRow(d({ status: "Retest Required" })).adminReview).toBe(
+      "Retest Required",
+    );
   });
   it("returns 'Fixed' for Fixed/Closed", () => {
     expect(toReportedErrorRow(d({ status: "Fixed" })).adminReview).toBe("Fixed");
@@ -81,9 +89,24 @@ describe("toReportedErrorRow + adminReviewLabel branches", () => {
       d({
         createdBy: "Alice",
         comments: [
-          { id: "1", author: "Alice", text: "mine", createdAt: "" } as any,
-          { id: "2", author: "Bob", text: "not mine", createdAt: "" } as any,
-          { id: "3", author: "Alice", text: "mine2", createdAt: "" } as any,
+          {
+            id: "1",
+            author: "Alice",
+            text: "mine",
+            createdAt: "",
+          } as unknown as Defect["comments"][number],
+          {
+            id: "2",
+            author: "Bob",
+            text: "not mine",
+            createdAt: "",
+          } as unknown as Defect["comments"][number],
+          {
+            id: "3",
+            author: "Alice",
+            text: "mine2",
+            createdAt: "",
+          } as unknown as Defect["comments"][number],
         ],
       }),
     );
@@ -101,13 +124,17 @@ describe("toReportedErrorRow + adminReviewLabel branches", () => {
     expect(r.retestUpdatedAt).toBe("2026-02-02T00:00:00Z");
   });
   it("prefers screenshotUrl over fallbacks; falls through to evidenceUrl when others empty", () => {
-    expect(toReportedErrorRow(d({ screenshotUrl: "a", videoUrl: "b" } as any)).screenshot).toBe("a");
-    expect(toReportedErrorRow(d({ evidenceUrl: "e" } as any)).screenshot).toBe("e");
+    expect(
+      toReportedErrorRow(d({ screenshotUrl: "a", videoUrl: "b" } as Partial<Defect>)).screenshot,
+    ).toBe("a");
+    expect(toReportedErrorRow(d({ evidenceUrl: "e" } as Partial<Defect>)).screenshot).toBe("e");
     expect(toReportedErrorRow(d()).screenshot).toBe("");
   });
   it("link prefers driveUrl then evidenceUrl", () => {
-    expect(toReportedErrorRow(d({ driveUrl: "d", evidenceUrl: "e" } as any)).link).toBe("d");
-    expect(toReportedErrorRow(d({ evidenceUrl: "e" } as any)).link).toBe("e");
+    expect(toReportedErrorRow(d({ driveUrl: "d", evidenceUrl: "e" } as Partial<Defect>)).link).toBe(
+      "d",
+    );
+    expect(toReportedErrorRow(d({ evidenceUrl: "e" } as Partial<Defect>)).link).toBe("e");
     expect(toReportedErrorRow(d()).link).toBe("");
   });
 });
@@ -130,18 +157,20 @@ describe("exportReportedErrorsXlsx", () => {
     const { toast } = await import("sonner");
     writeFileSpy.mockClear();
     exportReportedErrorsXlsx([], "Production");
-    expect((toast.info as any)).toHaveBeenCalled();
+    expect(toast.info as unknown as { toHaveBeenCalled: () => void }).toHaveBeenCalled();
     expect(writeFileSpy).not.toHaveBeenCalled();
   });
 
   it("writes a file and shows a success toast when there are defects", async () => {
     const { toast } = await import("sonner");
     writeFileSpy.mockClear();
-    (toast.success as any).mockClear();
+    (toast.success as unknown as { mockClear: () => void }).mockClear();
     exportReportedErrorsXlsx([d()], "Stage");
     expect(writeFileSpy).toHaveBeenCalledTimes(1);
     const [, filename] = writeFileSpy.mock.calls[0] as [unknown, string];
     expect(filename).toMatch(/^Zenwork_Error_Report_Stage_\d{4}-\d{2}-\d{2}\.xlsx$/);
-    expect((toast.success as any)).toHaveBeenCalledWith(`Exported ${filename}`);
+    expect(toast.success as unknown as (s: string) => void).toHaveBeenCalledWith(
+      `Exported ${filename}`,
+    );
   });
 });

@@ -49,9 +49,9 @@ test("General 990 issue: multiple attachment links render and open from detail v
   await comboboxes.nth(1).click();
   await page.getByRole("option", { name: "Dashboard", exact: true }).click();
   await page.getByLabel(/Issue Summary/i).fill(title);
-  await page.getByLabel(/Issue Description/i).fill(
-    "Multiple attachment links should be retained and rendered as openable references.",
-  );
+  await page
+    .getByLabel(/Issue Description/i)
+    .fill("Multiple attachment links should be retained and rendered as openable references.");
 
   // Attachment links — one row exists by default; add two more.
   const linkInputs = () => dialog.locator('input[placeholder="https://…"]');
@@ -61,7 +61,10 @@ test("General 990 issue: multiple attachment links render and open from detail v
     await linkInputs().nth(i).fill(links[i]);
   }
 
-  await page.getByRole("button", { name: /report error/i }).last().click();
+  await page
+    .getByRole("button", { name: /report error/i })
+    .last()
+    .click();
   await expect(page.getByText(/general 990 series issue reported/i)).toBeVisible();
 
   // Open the defect from the user's reported list.

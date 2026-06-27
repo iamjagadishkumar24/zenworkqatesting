@@ -84,9 +84,7 @@ describe("Functionality Testing page", () => {
       fireEvent.click(reportBtns[0]);
       // Sanity: the clicked card's visible label is the expected feature.
       // (Cards render the label as a heading button.)
-      expect(
-        screen.getAllByRole("button", { name: card }).length,
-      ).toBeGreaterThan(0);
+      expect(screen.getAllByRole("button", { name: card }).length).toBeGreaterThan(0);
 
       expect(screen.getByTestId("report-defect-dialog")).toBeInTheDocument();
       const last = dialogCalls.at(-1)!;

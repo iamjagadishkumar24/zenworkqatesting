@@ -48,10 +48,7 @@ async function sampleColor(
     } catch {
       continue;
     }
-    return loc.evaluate(
-      (el, p) => getComputedStyle(el as HTMLElement)[p as never] as string,
-      prop,
-    );
+    return loc.evaluate((el, p) => getComputedStyle(el as HTMLElement)[p as never] as string, prop);
   }
   return null;
 }
@@ -92,12 +89,12 @@ test.describe("Agent accent applies across pages after refresh", () => {
         page,
         [
           'button[data-variant="default"]',
-          'button.bg-primary',
+          "button.bg-primary",
           '[data-slot="button"].bg-primary',
-          'a.bg-primary',
+          "a.bg-primary",
         ],
-         "backgroundColor",
-       );
+        "backgroundColor",
+      );
       if (btnBg) expect(btnBg).toBe(baseline.primary);
 
       // Table headers / accent text — only assert when an element
@@ -106,9 +103,9 @@ test.describe("Agent accent applies across pages after refresh", () => {
       const accentText = await sampleColor(
         page,
         [
-          'th.text-primary',
+          "th.text-primary",
           '[role="columnheader"].text-primary',
-          '.text-primary',
+          ".text-primary",
           '[data-accent-text="true"]',
         ],
         "color",
@@ -123,7 +120,7 @@ test.describe("Agent accent applies across pages after refresh", () => {
           '[data-slot="badge"].bg-primary',
           'span.bg-primary[class*="rounded"]',
           '[role="status"].bg-primary',
-          '.badge.bg-primary',
+          ".badge.bg-primary",
         ],
         "backgroundColor",
       );
@@ -141,9 +138,7 @@ test.describe("Agent accent applies across pages after refresh", () => {
 
     // Defects list page renders with accent applied.
     await page.goto("/defects", { waitUntil: "networkidle" });
-    const defectsAccent = await page.evaluate(
-      () => document.documentElement.dataset.accent,
-    );
+    const defectsAccent = await page.evaluate(() => document.documentElement.dataset.accent);
     expect(defectsAccent).toBe("green");
   });
 });

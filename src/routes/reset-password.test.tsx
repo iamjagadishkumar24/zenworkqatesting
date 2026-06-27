@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import type { ComponentType } from "react";
 
 const h = vi.hoisted(() => ({
   navigateMock: vi.fn(),
   getSession: vi.fn(),
-  updateUser: vi.fn(async () => ({ error: null as any })),
+  updateUser: vi.fn(async () => ({ error: null as { message: string } | null })),
   signOut: vi.fn(async () => ({})),
   accountStatusMock: vi.fn(),
   toastError: vi.fn(),
@@ -21,34 +22,36 @@ const {
 } = h;
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (cfg: any) => cfg,
+  createFileRoute: () => (cfg: unknown) => cfg,
   useNavigate: () => h.navigateMock,
 }));
 vi.mock("@tanstack/react-start", () => ({
-  useServerFn: (fn: any) => fn,
+  useServerFn: <F,>(fn: F): F => fn,
 }));
 vi.mock("@/lib/qa/admin.functions", () => ({
-  accountStatus: (args: any) => h.accountStatusMock(args),
+  accountStatus: (args: unknown) => h.accountStatusMock(args),
 }));
 vi.mock("@/integrations/supabase/client", () => {
-  const supabase: any = {
+  const supabase = {
     auth: {
-      getSession: (...a: any[]) => (h.getSession as any)(...a),
-      updateUser: (...a: any[]) => (h.updateUser as any)(...a),
-      signOut: (...a: any[]) => (h.signOut as any)(...a),
+      getSession: (...a: unknown[]) => (h.getSession as (...x: unknown[]) => unknown)(...a),
+      updateUser: (...a: unknown[]) => (h.updateUser as (...x: unknown[]) => unknown)(...a),
+      signOut: (...a: unknown[]) => (h.signOut as (...x: unknown[]) => unknown)(...a),
     },
   };
   return { supabase };
 });
 vi.mock("sonner", () => ({
   toast: {
-    error: (...a: any[]) => h.toastError(...a),
-    success: (...a: any[]) => h.toastSuccess(...a),
+    error: (...a: unknown[]) => h.toastError(...a),
+    success: (...a: unknown[]) => h.toastSuccess(...a),
   },
 }));
 
 import { Route } from "./reset-password";
-const ResetPasswordPage = (Route as any).options?.component ?? (Route as any).component;
+type RouteWithComponent = { options?: { component?: ComponentType }; component?: ComponentType };
+const routeRef = Route as unknown as RouteWithComponent;
+const ResetPasswordPage = (routeRef.options?.component ?? routeRef.component) as ComponentType;
 
 describe("ResetPasswordPage", () => {
   beforeEach(() => {

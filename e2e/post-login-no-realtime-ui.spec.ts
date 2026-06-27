@@ -43,9 +43,12 @@ async function assertRealtimeAlive(page: Page) {
     .poll(
       async () =>
         page.evaluate(() => {
-          const probe = (window as unknown as { __qaRealtimeProbe?: { channelName?: string; status?: string } })
-            .__qaRealtimeProbe;
-          return probe ? { channel: probe.channelName ?? null, status: probe.status ?? null } : null;
+          const probe = (
+            window as unknown as { __qaRealtimeProbe?: { channelName?: string; status?: string } }
+          ).__qaRealtimeProbe;
+          return probe
+            ? { channel: probe.channelName ?? null, status: probe.status ?? null }
+            : null;
         }),
       { timeout: 15_000, intervals: [500, 1000, 2000] },
     )
@@ -54,7 +57,7 @@ async function assertRealtimeAlive(page: Page) {
 
 async function assertNoRealtimeIndicator(page: Page) {
   // No dedicated indicator components rendered.
-  await expect(page.locator('[data-realtime-status]')).toHaveCount(0);
+  await expect(page.locator("[data-realtime-status]")).toHaveCount(0);
   await expect(page.getByLabel(/realtime health/i)).toHaveCount(0);
   // No forbidden text anywhere on the visible page.
   const bodyText = (await page.locator("body").innerText()).normalize();
@@ -63,7 +66,7 @@ async function assertNoRealtimeIndicator(page: Page) {
   }
   // No sonner toast surfaced with realtime copy.
   const toasterText = await page
-    .locator('[data-sonner-toaster]')
+    .locator("[data-sonner-toaster]")
     .innerText()
     .catch(() => "");
   for (const pattern of FORBIDDEN_REALTIME_PHRASES) {
@@ -106,7 +109,7 @@ for (const role of ["admin", "agent"] as const) {
             { animations: "disabled", maxDiffPixelRatio: 0.02 },
           );
         }
-        const toaster = page.locator('[data-sonner-toaster]').first();
+        const toaster = page.locator("[data-sonner-toaster]").first();
         if (await toaster.count()) {
           await expect(toaster).toHaveScreenshot(
             `${role}-${route.path.replace(/\W+/g, "_")}-toaster.png`,

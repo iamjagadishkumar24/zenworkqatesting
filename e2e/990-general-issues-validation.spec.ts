@@ -37,7 +37,11 @@ async function openGeneral990Dialog(page: Page) {
   return dialog;
 }
 
-async function fillRequiredFields(page: Page, dialog: ReturnType<Page["getByRole"]>, title: string) {
+async function fillRequiredFields(
+  page: Page,
+  dialog: ReturnType<Page["getByRole"]>,
+  title: string,
+) {
   const cbs = dialog.getByRole("combobox");
   await cbs.nth(0).click();
   await page.getByRole("option", { name: "Dashboard", exact: true }).click();
@@ -60,7 +64,10 @@ test.describe("General 990 Series Issues — URL validation & edit", () => {
     const linkInputs = dialog.locator('input[placeholder="https://…"]');
     await linkInputs.first().fill("not a url");
 
-    await page.getByRole("button", { name: /report error/i }).last().click();
+    await page
+      .getByRole("button", { name: /report error/i })
+      .last()
+      .click();
     await expect(page.getByText(/invalid attachment link/i)).toBeVisible();
     // Dialog must remain open — submission was blocked.
     await expect(dialog).toBeVisible();
@@ -72,12 +79,17 @@ test.describe("General 990 Series Issues — URL validation & edit", () => {
     await fillRequiredFields(page, dialog, `E2E Invalid Ref ${Date.now()}`);
 
     await page.getByLabel(/Reference URL/i).fill("htp:/bad");
-    await page.getByRole("button", { name: /report error/i }).last().click();
+    await page
+      .getByRole("button", { name: /report error/i })
+      .last()
+      .click();
     await expect(page.getByText(/reference url must be a valid url/i)).toBeVisible();
     await expect(dialog).toBeVisible();
   });
 
-  test("empty attachment rows are ignored and valid links submit successfully", async ({ page }) => {
+  test("empty attachment rows are ignored and valid links submit successfully", async ({
+    page,
+  }) => {
     const dialog = await openGeneral990Dialog(page);
     const title = `E2E Mixed Links ${Date.now()}`;
     await fillRequiredFields(page, dialog, title);
@@ -88,18 +100,26 @@ test.describe("General 990 Series Issues — URL validation & edit", () => {
     const linkInputs = dialog.locator('input[placeholder="https://…"]');
     await linkInputs.nth(0).fill("https://example.com/only-link");
 
-    await page.getByRole("button", { name: /report error/i }).last().click();
+    await page
+      .getByRole("button", { name: /report error/i })
+      .last()
+      .click();
     await expect(page.getByText(/general 990 series issue reported/i)).toBeVisible();
   });
 
-  test("editing an existing defect's attachment links updates the detail view", async ({ page }) => {
+  test("editing an existing defect's attachment links updates the detail view", async ({
+    page,
+  }) => {
     // Create a defect with an initial attachment link.
     const dialog = await openGeneral990Dialog(page);
     const title = `E2E Edit Links ${Date.now()}`;
     await fillRequiredFields(page, dialog, title);
     const linkInputs = dialog.locator('input[placeholder="https://…"]');
     await linkInputs.first().fill("https://example.com/original");
-    await page.getByRole("button", { name: /report error/i }).last().click();
+    await page
+      .getByRole("button", { name: /report error/i })
+      .last()
+      .click();
     await expect(page.getByText(/general 990 series issue reported/i)).toBeVisible();
 
     // Open the defect and switch to edit mode.

@@ -20,12 +20,10 @@ function patchFetch() {
   const orig = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input.url;
-    const method = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    const method = (
+      init?.method || (input instanceof Request ? input.method : "GET")
+    ).toUpperCase();
     const start = performance.now();
     const at = new Date().toISOString();
     try {
@@ -61,7 +59,6 @@ if (typeof window !== "undefined" && import.meta.env.DEV) {
 }
 
 export function DevErrorOverlay({ error }: { error: Error }) {
-  if (!import.meta.env.DEV) return null;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({ select: (s) => s.location.searchStr });
   const [open, setOpen] = useState(true);
@@ -69,6 +66,8 @@ export function DevErrorOverlay({ error }: { error: Error }) {
   useEffect(() => {
     patchFetch();
   }, []);
+
+  if (!import.meta.env.DEV) return null;
 
   if (!open) {
     return (
@@ -90,7 +89,9 @@ export function DevErrorOverlay({ error }: { error: Error }) {
           <span className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
             Dev Error
           </span>
-          <span className="text-red-300">{error.name}: {error.message}</span>
+          <span className="text-red-300">
+            {error.name}: {error.message}
+          </span>
         </div>
         <button
           onClick={() => setOpen(false)}
@@ -104,8 +105,14 @@ export function DevErrorOverlay({ error }: { error: Error }) {
         <section>
           <h3 className="mb-1 text-[10px] uppercase text-zinc-400">Route</h3>
           <div className="rounded bg-zinc-900 p-2">
-            <div><span className="text-zinc-500">path:</span> {pathname}</div>
-            {search ? <div><span className="text-zinc-500">search:</span> {search}</div> : null}
+            <div>
+              <span className="text-zinc-500">path:</span> {pathname}
+            </div>
+            {search ? (
+              <div>
+                <span className="text-zinc-500">search:</span> {search}
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -133,7 +140,7 @@ export function DevErrorOverlay({ error }: { error: Error }) {
       <section className="mt-3">
         <h3 className="mb-1 text-[10px] uppercase text-zinc-400">Stack trace</h3>
         <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-zinc-900 p-2 text-[11px] leading-relaxed text-zinc-200">
-{error.stack || "(no stack)"}
+          {error.stack || "(no stack)"}
         </pre>
       </section>
 

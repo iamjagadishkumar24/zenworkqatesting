@@ -30,12 +30,19 @@ const getQARuntimeConfig = RC.getQARuntimeConfig as unknown as Call;
 const updateQARuntimeConfig = RC.updateQARuntimeConfig as unknown as Call;
 const listQARuntimeConfigAudit = RC.listQARuntimeConfigAudit as unknown as Call;
 
-function makeCtx(opts: { isAdmin?: boolean; listResult?: { data?: unknown; error?: unknown; count?: number | null } } = {}) {
+function makeCtx(
+  opts: {
+    isAdmin?: boolean;
+    listResult?: { data?: unknown; error?: unknown; count?: number | null };
+  } = {},
+) {
   const rpc = vi.fn(async () => ({ data: !!opts.isAdmin, error: null }));
   const builders: Array<ReturnType<typeof createQueryBuilder>> = [];
   const from = vi.fn(() => {
     const b = createQueryBuilder(
-      (opts.listResult ?? { data: [], error: null, count: 0 }) as Parameters<typeof createQueryBuilder>[0],
+      (opts.listResult ?? { data: [], error: null, count: 0 }) as Parameters<
+        typeof createQueryBuilder
+      >[0],
     );
     builders.push(b);
     return b;
@@ -51,7 +58,11 @@ beforeEach(() => {
 describe("runtime-config.functions", () => {
   it("getQARuntimeConfig falls back to env defaults when DB row missing", async () => {
     adminResult = { data: null, error: null };
-    const out = (await getQARuntimeConfig({})) as { liveEnabled: boolean; performanceMode: boolean; updatedAt: string | null };
+    const out = (await getQARuntimeConfig({})) as {
+      liveEnabled: boolean;
+      performanceMode: boolean;
+      updatedAt: string | null;
+    };
     expect(out.liveEnabled).toBe(true);
     expect(out.performanceMode).toBe(false);
     expect(out.updatedAt).toBeNull();
@@ -62,8 +73,16 @@ describe("runtime-config.functions", () => {
       data: { live_enabled: false, performance_mode: true, updated_at: "2025-01-01T00:00:00Z" },
       error: null,
     };
-    const out = (await getQARuntimeConfig({})) as { liveEnabled: boolean; performanceMode: boolean; updatedAt: string | null };
-    expect(out).toEqual({ liveEnabled: false, performanceMode: true, updatedAt: "2025-01-01T00:00:00Z" });
+    const out = (await getQARuntimeConfig({})) as {
+      liveEnabled: boolean;
+      performanceMode: boolean;
+      updatedAt: string | null;
+    };
+    expect(out).toEqual({
+      liveEnabled: false,
+      performanceMode: true,
+      updatedAt: "2025-01-01T00:00:00Z",
+    });
   });
 
   it("updateQARuntimeConfig rejects non-boolean payloads", async () => {
@@ -96,9 +115,9 @@ describe("runtime-config.functions", () => {
 
   it("listQARuntimeConfigAudit forbids non-admin", async () => {
     const c = makeCtx({ isAdmin: false });
-    await expect(
-      listQARuntimeConfigAudit({ data: {}, context: c }),
-    ).rejects.toMatchObject({ status: 403 });
+    await expect(listQARuntimeConfigAudit({ data: {}, context: c })).rejects.toMatchObject({
+      status: 403,
+    });
   });
 
   it("listQARuntimeConfigAudit maps DB rows and returns pagination metadata", async () => {
@@ -125,7 +144,12 @@ describe("runtime-config.functions", () => {
     const out = (await listQARuntimeConfigAudit({
       data: { page: 2, pageSize: 10 },
       context: c,
-    })) as { entries: Array<{ id: string; newLiveEnabled: boolean }>; total: number; page: number; pageSize: number };
+    })) as {
+      entries: Array<{ id: string; newLiveEnabled: boolean }>;
+      total: number;
+      page: number;
+      pageSize: number;
+    };
     expect(out.total).toBe(42);
     expect(out.page).toBe(2);
     expect(out.pageSize).toBe(10);

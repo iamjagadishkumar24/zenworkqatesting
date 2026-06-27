@@ -181,16 +181,29 @@ describe("admin.functions validators", () => {
     })) as { ok: boolean; status: string };
     expect(r1).toMatchObject({ ok: false, status: "not_invited" });
 
-    queueAdminResults({ data: { id: 1, email: "x@y.co", name: "X", status: "inactive", user_id: null }, error: null });
-    const r2 = (await resendAgentInvite({ data: { email: "x@y.co" }, context: ctxAdmin })) as { status: string };
+    queueAdminResults({
+      data: { id: 1, email: "x@y.co", name: "X", status: "inactive", user_id: null },
+      error: null,
+    });
+    const r2 = (await resendAgentInvite({ data: { email: "x@y.co" }, context: ctxAdmin })) as {
+      status: string;
+    };
     expect(r2.status).toBe("inactive");
 
-    queueAdminResults({ data: { id: 1, email: "x@y.co", name: "X", status: "pending", user_id: "u1" }, error: null });
-    const r3 = (await resendAgentInvite({ data: { email: "x@y.co" }, context: ctxAdmin })) as { status: string };
+    queueAdminResults({
+      data: { id: 1, email: "x@y.co", name: "X", status: "pending", user_id: "u1" },
+      error: null,
+    });
+    const r3 = (await resendAgentInvite({ data: { email: "x@y.co" }, context: ctxAdmin })) as {
+      status: string;
+    };
     expect(r3.status).toBe("already_active");
 
     queueAdminResults(
-      { data: { id: 7, email: "x@y.co", name: "X", status: "pending", user_id: null }, error: null }, // invite lookup
+      {
+        data: { id: 7, email: "x@y.co", name: "X", status: "pending", user_id: null },
+        error: null,
+      }, // invite lookup
       { data: null, error: null }, // update
       { data: { name: "Admin" }, error: null }, // getActorName
       { data: null, error: null }, // audit insert
@@ -205,29 +218,49 @@ describe("admin.functions validators", () => {
 
   it("resetAgentPassword validators reject missing userId and weak password", async () => {
     await expect(
-      resetAgentPassword({ data: { userId: "", password: "longenough" }, context: makeCtx({ isAdmin: true }) }),
+      resetAgentPassword({
+        data: { userId: "", password: "longenough" },
+        context: makeCtx({ isAdmin: true }),
+      }),
     ).rejects.toThrow(/userId required/);
     await expect(
-      resetAgentPassword({ data: { userId: "u1", password: "short" }, context: makeCtx({ isAdmin: true }) }),
+      resetAgentPassword({
+        data: { userId: "u1", password: "short" },
+        context: makeCtx({ isAdmin: true }),
+      }),
     ).rejects.toThrow(/at least 8/);
   });
 
   it("updateAgentProfile validates name/email/role and gates on admin", async () => {
     await expect(
-      updateAgentProfile({ data: { userId: "u1", role: "owner" as unknown as "admin" }, context: makeCtx({ isAdmin: true }) }),
+      updateAgentProfile({
+        data: { userId: "u1", role: "owner" as unknown as "admin" },
+        context: makeCtx({ isAdmin: true }),
+      }),
     ).rejects.toThrow(/Invalid role/);
     await expect(
-      updateAgentProfile({ data: { userId: "u1", name: "x" }, context: makeCtx({ isAdmin: true }) }),
+      updateAgentProfile({
+        data: { userId: "u1", name: "x" },
+        context: makeCtx({ isAdmin: true }),
+      }),
     ).rejects.toThrow(/Name is required/);
     await expect(
-      updateAgentProfile({ data: { userId: "u1", email: "bad" }, context: makeCtx({ isAdmin: true }) }),
+      updateAgentProfile({
+        data: { userId: "u1", email: "bad" },
+        context: makeCtx({ isAdmin: true }),
+      }),
     ).rejects.toThrow(/valid email/);
     await expect(
-      updateAgentProfile({ data: { userId: "u1", name: "Alice" }, context: makeCtx({ isAdmin: false }) }),
+      updateAgentProfile({
+        data: { userId: "u1", name: "Alice" },
+        context: makeCtx({ isAdmin: false }),
+      }),
     ).rejects.toThrow(/Only admins/);
   });
 
   it("sampleAdminStatus forbids non-admins", async () => {
-    await expect(sampleAdminStatus({ context: makeCtx({ isAdmin: false }) })).rejects.toThrow(/Forbidden/);
+    await expect(sampleAdminStatus({ context: makeCtx({ isAdmin: false }) })).rejects.toThrow(
+      /Forbidden/,
+    );
   });
 });
