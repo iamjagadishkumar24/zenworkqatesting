@@ -55,7 +55,7 @@ function isAdminGuardRejection(error: { message?: string } | null) {
 describeIfEnv('SECURITY DEFINER RPCs — anonymous callers are denied', () => {
   const anon = makeAnon();
 
-  const cases: Array<{ name: string; call: () => Promise<{ error: unknown }> }> = [
+  const cases: Array<{ name: string; call: () => PromiseLike<{ error: unknown }> }> = [
     {
       name: 'change_user_role',
       call: () =>
@@ -104,7 +104,8 @@ describeIfEnv('SECURITY DEFINER RPCs — anonymous callers are denied', () => {
   ];
 
   it.each(cases)('anon → $name is denied at the API layer', async ({ call }) => {
-    const { error } = (await call()) as { error: { code?: string; message?: string } | null };
+    const result = (await call()) as { error: { code?: string; message?: string } | null };
+    const { error } = result;
     expect(error, 'anon must not be able to invoke this RPC').not.toBeNull();
     expect(
       isPermissionDenied(error),
