@@ -24,6 +24,7 @@ import { Route as AppNotificationsRouteImport } from './routes/_app.notification
 import { Route as AppNotesRouteImport } from './routes/_app.notes'
 import { Route as AppMyReportedErrorsRouteImport } from './routes/_app.my-reported-errors'
 import { Route as AppMyErrorsRouteImport } from './routes/_app.my-errors'
+import { Route as AppKnowledgeBaseRouteImport } from './routes/_app.knowledge-base'
 import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
 import { Route as AppFunctionalityTestingRouteImport } from './routes/_app.functionality-testing'
 import { Route as AppFormsRouteImport } from './routes/_app.forms'
@@ -116,6 +117,11 @@ const AppMyReportedErrorsRoute = AppMyReportedErrorsRouteImport.update({
 const AppMyErrorsRoute = AppMyErrorsRouteImport.update({
   id: '/my-errors',
   path: '/my-errors',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppKnowledgeBaseRoute = AppKnowledgeBaseRouteImport.update({
+  id: '/knowledge-base',
+  path: '/knowledge-base',
   getParentRoute: () => AppRoute,
 } as any)
 const AppIntegrationsRoute = AppIntegrationsRouteImport.update({
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/forms': typeof AppFormsRoute
   '/functionality-testing': typeof AppFunctionalityTestingRoute
   '/integrations': typeof AppIntegrationsRoute
+  '/knowledge-base': typeof AppKnowledgeBaseRoute
   '/my-errors': typeof AppMyErrorsRoute
   '/my-reported-errors': typeof AppMyReportedErrorsRoute
   '/notes': typeof AppNotesRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/forms': typeof AppFormsRoute
   '/functionality-testing': typeof AppFunctionalityTestingRoute
   '/integrations': typeof AppIntegrationsRoute
+  '/knowledge-base': typeof AppKnowledgeBaseRoute
   '/my-errors': typeof AppMyErrorsRoute
   '/my-reported-errors': typeof AppMyReportedErrorsRoute
   '/notes': typeof AppNotesRoute
@@ -298,6 +306,7 @@ export interface FileRoutesById {
   '/_app/forms': typeof AppFormsRoute
   '/_app/functionality-testing': typeof AppFunctionalityTestingRoute
   '/_app/integrations': typeof AppIntegrationsRoute
+  '/_app/knowledge-base': typeof AppKnowledgeBaseRoute
   '/_app/my-errors': typeof AppMyErrorsRoute
   '/_app/my-reported-errors': typeof AppMyReportedErrorsRoute
   '/_app/notes': typeof AppNotesRoute
@@ -334,6 +343,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/functionality-testing'
     | '/integrations'
+    | '/knowledge-base'
     | '/my-errors'
     | '/my-reported-errors'
     | '/notes'
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/functionality-testing'
     | '/integrations'
+    | '/knowledge-base'
     | '/my-errors'
     | '/my-reported-errors'
     | '/notes'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/_app/forms'
     | '/_app/functionality-testing'
     | '/_app/integrations'
+    | '/_app/knowledge-base'
     | '/_app/my-errors'
     | '/_app/my-reported-errors'
     | '/_app/notes'
@@ -540,6 +552,13 @@ declare module '@tanstack/react-router' {
       path: '/my-errors'
       fullPath: '/my-errors'
       preLoaderRoute: typeof AppMyErrorsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/knowledge-base': {
+      id: '/_app/knowledge-base'
+      path: '/knowledge-base'
+      fullPath: '/knowledge-base'
+      preLoaderRoute: typeof AppKnowledgeBaseRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/integrations': {
@@ -711,6 +730,7 @@ interface AppRouteChildren {
   AppFormsRoute: typeof AppFormsRoute
   AppFunctionalityTestingRoute: typeof AppFunctionalityTestingRoute
   AppIntegrationsRoute: typeof AppIntegrationsRoute
+  AppKnowledgeBaseRoute: typeof AppKnowledgeBaseRoute
   AppMyErrorsRoute: typeof AppMyErrorsRoute
   AppMyReportedErrorsRoute: typeof AppMyReportedErrorsRoute
   AppNotesRoute: typeof AppNotesRoute
@@ -736,6 +756,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFormsRoute: AppFormsRoute,
   AppFunctionalityTestingRoute: AppFunctionalityTestingRoute,
   AppIntegrationsRoute: AppIntegrationsRoute,
+  AppKnowledgeBaseRoute: AppKnowledgeBaseRoute,
   AppMyErrorsRoute: AppMyErrorsRoute,
   AppMyReportedErrorsRoute: AppMyReportedErrorsRoute,
   AppNotesRoute: AppNotesRoute,
