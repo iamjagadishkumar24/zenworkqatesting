@@ -630,7 +630,7 @@ export function LoginPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
