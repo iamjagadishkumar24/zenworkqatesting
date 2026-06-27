@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { DefectsSkeleton } from "@/components/qa/RouteSkeletons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { applyDefectPreset, scopeDefectsForDashboard, useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
@@ -82,6 +83,9 @@ export const Route = createFileRoute("/_app/my-reported-errors")({
         : undefined,
   }),
   component: ReportedErrorsPage,
+  pendingComponent: DefectsSkeleton,
+  pendingMs: 0,
+  pendingMinMs: 150,
 });
 
 function ReportedErrorsPage() {
