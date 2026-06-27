@@ -86,7 +86,7 @@ type NavGroup = {
 type NavEntry = NavItem | NavGroup;
 const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
 
-const nav: NavEntry[] = [
+export const nav: NavEntry[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/forms", label: "Forms", icon: FileText },
   { to: "/online-1099", label: "1099 Online Forms", icon: Globe },
