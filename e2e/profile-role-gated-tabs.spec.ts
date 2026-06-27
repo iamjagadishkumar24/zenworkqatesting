@@ -70,23 +70,25 @@ test.describe("Profile role-gated tabs", () => {
     }
   });
 
-  test("agent cannot change dark/light mode (admin-only control)", async ({ page }) => {
+  test("agent cannot change Color mode / Density (admin-only controls)", async ({ page }) => {
     await loginAgent(page);
     await page.goto("/profile");
-    // Activate theme tab
     await page.locator(`[role="tab"][value="theme"]`).first().click();
 
-    // Light/Dark mode toggle is admin-only per the page copy.
-    const lightDarkToggle = page.getByRole("button", { name: /^(light|dark) mode$/i });
-    await expect(lightDarkToggle).toHaveCount(0);
+    // Per the page copy: "Light/Dark mode is admin-only."
+    await expect(page.getByText(/Light\/Dark mode is admin-only/i)).toBeVisible();
+    // Admin-only Color mode + Density selects must not be rendered for agents.
+    await expect(page.getByLabel(/^color mode$/i)).toHaveCount(0);
+    await expect(page.getByLabel(/^density$/i)).toHaveCount(0);
+    // Agents still see the Theme Colors swatch radiogroup.
+    await expect(page.getByRole("radiogroup", { name: /theme color/i })).toBeVisible();
   });
 
-  test("admin sees Light/Dark mode control", async ({ page }) => {
+  test("admin sees Color mode + Density controls", async ({ page }) => {
     await loginAdmin(page);
     await page.goto("/profile");
     await page.locator(`[role="tab"][value="theme"]`).first().click();
-
-    const lightDarkToggle = page.getByRole("button", { name: /^(light|dark) mode$/i }).first();
-    await expect(lightDarkToggle).toBeVisible();
+    await expect(page.getByLabel(/^color mode$/i)).toBeVisible();
+    await expect(page.getByLabel(/^density$/i)).toBeVisible();
   });
 });
