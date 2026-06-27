@@ -11,6 +11,8 @@ export type ReportFilters = {
   dateRange: string;
   fromDate: string;
   toDate: string;
+  /** USPS 2-letter state code or "all". Filters defects by `state` column. */
+  state: string;
 };
 
 export type SavedView = { name: string; filters: ReportFilters };
