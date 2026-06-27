@@ -327,15 +327,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 : prefs.theme === "system"
                   ? "System"
                   : "Light";
+            // aria-pressed reflects dark-mode state: true=dark, false=light, mixed=system
+            const pressed: "true" | "false" | "mixed" =
+              prefs.theme === "dark" ? "true" : prefs.theme === "system" ? "mixed" : "false";
             return (
               <button
                 type="button"
                 onClick={() => updatePref("theme", next)}
+                onKeyDown={(e) => {
+                  // Space/Enter already trigger click; ensure Space doesn't scroll the page.
+                  if (e.key === " ") e.preventDefault();
+                }}
+                aria-pressed={pressed}
+                data-theme-toggle
+                data-state={prefs.theme}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 aria-label={`Theme: ${label}. Click to switch to ${next}.`}
                 title={`Theme: ${label} — click for ${next}`}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
+                <span className="sr-only">Current theme: {label}</span>
               </button>
             );
           })()}
