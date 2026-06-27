@@ -287,6 +287,7 @@ export type Database = {
           schedules: string[]
           screenshot_url: string | null
           severity: string
+          state: string | null
           status: string
           steps_to_reproduce: string
           tax_year: string | null
@@ -319,6 +320,7 @@ export type Database = {
           schedules?: string[]
           screenshot_url?: string | null
           severity?: string
+          state?: string | null
           status?: string
           steps_to_reproduce?: string
           tax_year?: string | null
@@ -351,6 +353,7 @@ export type Database = {
           schedules?: string[]
           screenshot_url?: string | null
           severity?: string
+          state?: string | null
           status?: string
           steps_to_reproduce?: string
           tax_year?: string | null
