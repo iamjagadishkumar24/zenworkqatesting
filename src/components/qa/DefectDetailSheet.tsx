@@ -566,10 +566,16 @@ export function DefectDetailSheet({
                   />
                 </Field>
                 <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={cancelEdit}>
+                  <Button variant="outline" onClick={cancelEdit} disabled={saving}>
                     Cancel
                   </Button>
-                  <Button onClick={save}>{isAdmin ? "Save changes" : "Resubmit for review"}</Button>
+                  <Button onClick={save} disabled={saving} aria-busy={saving}>
+                    {saving
+                      ? "Saving…"
+                      : isAdmin
+                        ? "Save changes"
+                        : "Resubmit for review"}
+                  </Button>
                 </div>
               </div>
             ) : (
