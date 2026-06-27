@@ -460,6 +460,31 @@ export function ReportDefectDialog({
               placeholder="https://…"
             />
           </div>
+          {requireState && (
+            <div className="sm:col-span-2" data-testid="state-filing-state">
+              <Label htmlFor="state-filing-state-select">U.S. State *</Label>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Select the state this State Filing issue applies to. One state per report.
+              </p>
+              <Select value={stateCode} onValueChange={(v) => setStateCode(v)}>
+                <SelectTrigger
+                  id="state-filing-state-select"
+                  aria-required="true"
+                  aria-invalid={requireState && !isValidUsState(stateCode) ? true : undefined}
+                  className="mt-2"
+                >
+                  <SelectValue placeholder="Select a U.S. state or territory" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {US_STATES.map((s) => (
+                    <SelectItem key={s.code} value={s.code}>
+                      {s.name} ({s.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {scheduleOptions && scheduleOptions.length > 0 && (
             <div className="sm:col-span-2" data-testid="schedules-section">
               <Label>{scheduleLabel}</Label>
