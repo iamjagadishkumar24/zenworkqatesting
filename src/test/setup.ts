@@ -1,6 +1,17 @@
 import "@testing-library/jest-dom/vitest";
+import "vitest-axe/extend-expect";
 import { afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
+import * as matchers from "vitest-axe/matchers";
+import { expect } from "vitest";
+
+expect.extend(matchers);
+
+declare module "vitest" {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  interface Assertion<T = any> extends matchers.AxeMatchers {}
+  interface AsymmetricMatchersContaining extends matchers.AxeMatchers {}
+}
 
 afterEach(() => cleanup());
 

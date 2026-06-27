@@ -106,6 +106,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const routeSearch = useRouterState({ select: (s) => s.location.search as { q?: string } });
   const [collapsed, setCollapsed] = useState(false);
   const [q, setQ] = useState("");
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [accountAnnouncement, setAccountAnnouncement] = useState("");
   const isAdmin = currentUser?.role === "admin";
   const visibleNav = nav.filter((n) => !n.adminOnly || isAdmin);
 
@@ -337,11 +339,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
             );
           })()}
-          <DropdownMenu>
+          <span
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="sr-only"
+            data-testid="account-menu-live-region"
+          >
+            {accountAnnouncement}
+          </span>
+          <DropdownMenu
+            open={accountOpen}
+            onOpenChange={(o) => {
+              setAccountOpen(o);
+              const who = currentUser?.name || currentUser?.email || "your account";
+              setAccountAnnouncement(
+                o ? `Account menu opened for ${who}.` : "Account menu closed.",
+              );
+            }}
+          >
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 aria-busy={!currentUser?.name && !currentUser?.email ? true : undefined}
+                aria-haspopup="menu"
                 aria-label={
                   currentUser?.name
                     ? `Open account menu for ${currentUser.name}`
