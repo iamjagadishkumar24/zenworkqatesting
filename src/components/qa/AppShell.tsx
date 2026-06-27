@@ -354,9 +354,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   avatarUrl={currentUser?.avatarUrl}
                   size="md"
                 />
-                <span className="hidden text-sm font-medium sm:inline">
-                  {getFirstName(currentUser?.name, currentUser?.email)}
-                </span>
+                {currentUser?.name || currentUser?.email ? (
+                  <span className="hidden text-sm font-medium sm:inline">
+                    {getFirstName(currentUser?.name, currentUser?.email)}
+                  </span>
+                ) : (
+                  <span
+                    className="hidden sm:inline h-4 w-16 rounded bg-muted animate-pulse"
+                    aria-hidden="true"
+                  />
+                )}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
