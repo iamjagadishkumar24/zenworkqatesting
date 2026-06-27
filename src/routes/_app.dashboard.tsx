@@ -31,6 +31,7 @@ import { useRetests } from "@/lib/qa/retest";
 import { routeForModule } from "@/lib/qa/constants";
 import { DeadlineCountdown, AdminDeadlineSummary } from "@/components/qa/DeadlineCountdown";
 import { DashboardSkeleton } from "@/components/qa/RouteSkeletons";
+import { StateFilingWidgets } from "@/components/qa/StateFilingWidgets";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: DashboardRoute,
