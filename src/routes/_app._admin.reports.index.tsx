@@ -360,6 +360,22 @@ function ReportsPage() {
       .slice(0, 10);
   }, [defects]);
 
+  /** State Filing breakdown — only counts defects with a USPS state code. */
+  const stateBreakdown = useMemo(() => {
+    const map: Record<string, number> = {};
+    defects.forEach((d) => {
+      if (!d.state || !isValidUsState(d.state)) return;
+      map[d.state] = (map[d.state] ?? 0) + 1;
+    });
+    return Object.entries(map)
+      .map(([code, count]) => ({
+        code,
+        name: US_STATES.find((s) => s.code === code)?.name ?? code,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [defects]);
+
   const activeFilters = {
     environment: env ?? "All",
     taxYear: taxYear === "all" ? "All" : taxYear,
