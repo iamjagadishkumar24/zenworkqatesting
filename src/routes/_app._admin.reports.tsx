@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
@@ -65,7 +65,7 @@ function validateReportSearch(input: Record<string, unknown>): ReportSearch {
 
 export const Route = createFileRoute("/_app/_admin/reports")({
   validateSearch: validateReportSearch,
-  component: ReportsRouteGate,
+  component: ReportsPage,
 });
 
 const COLORS = [
@@ -878,10 +878,3 @@ function ReportsPage() {
   );
 }
 
-function ReportsRouteGate() {
-  const { currentUser } = useQA();
-  if (currentUser && currentUser.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
-  return <ReportsPage />;
-}
