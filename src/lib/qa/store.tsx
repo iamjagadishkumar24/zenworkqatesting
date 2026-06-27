@@ -369,6 +369,7 @@ function rowToDefect(r: DefectRow, comments: CommentRow[] = []): DefectWithVersi
     createdBy: r.created_by,
     updatedBy: r.updated_by,
     qbDesktopCategory: (r.quickbooks_desktop_category as Defect["qbDesktopCategory"]) ?? undefined,
+    state: r.state ?? undefined,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     version: r.version,
