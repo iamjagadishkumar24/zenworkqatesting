@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { useQA } from "@/lib/qa/store";
+import { useQA, useRealtimeDebug, type RealtimeDebugEvent } from "@/lib/qa/store";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,8 @@ export const Route = createFileRoute("/_app/_admin/realtime-debug")({
 });
 
 function RealtimeDebugPage() {
-  const { realtimeEvents, clearRealtimeEvents, currentUser } = useQA();
+  const { currentUser } = useQA();
+  const { realtimeEvents, clearRealtimeEvents } = useRealtimeDebug();
   const role = currentUser?.role ?? "unknown";
 
   const [status, setStatus] = useState<string>("connecting");
@@ -186,7 +187,7 @@ function RealtimeDebugPage() {
             </div>
           ) : (
             <ul className="divide-y">
-              {realtimeEvents.map((e) => (
+              {realtimeEvents.map((e: RealtimeDebugEvent) => (
                 <li key={e.id} className="flex items-start gap-3 px-4 py-2 text-sm">
                   <span className="font-mono text-xs text-muted-foreground">
                     {new Date(e.at).toLocaleTimeString()}

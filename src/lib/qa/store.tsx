@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type {
@@ -238,12 +246,6 @@ export type RealtimeDebugEvent = {
 export type RealtimeStatus = "idle" | "connecting" | "connected" | "reconnecting" | "error";
 
 type Ctx = State & {
-  realtimeEvents: RealtimeDebugEvent[];
-  realtimeStatus: RealtimeStatus;
-  realtimeChannelName: string | null;
-  realtimeReconnectAttempts: number;
-  realtimeLastEventAt: string | null;
-  clearRealtimeEvents: () => void;
   login: (email: string, password: string) => Promise<Result>;
   signup: (name: string, email: string, password: string) => Promise<Result>;
   logout: () => Promise<void>;
@@ -872,12 +874,6 @@ export function QAProvider({ children }: { children: ReactNode }) {
 
   const ctx: Ctx = {
     ...state,
-    realtimeEvents,
-    realtimeStatus,
-    realtimeChannelName,
-    realtimeReconnectAttempts,
-    realtimeLastEventAt,
-    clearRealtimeEvents: () => setRealtimeEvents([]),
     login: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
@@ -1209,11 +1205,64 @@ export function QAProvider({ children }: { children: ReactNode }) {
     },
   };
 
-  return <Context.Provider value={ctx}>{children}</Context.Provider>;
+  // Memoize main ctx so its identity is stable when realtime-debug state
+  // (events/status/channel) bumps. Without this, every realtime message
+  // re-renders every useQA() consumer across the app.
+  const memoCtx = useMemo(
+    () => ctx,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      state,
+      runtimeConfig.liveEnabled,
+      runtimeConfig.performanceMode,
+    ],
+  );
+
+  // Realtime-debug state is consumed only by the admin Realtime Debug page.
+  // Isolating it in its own context prevents high-frequency realtime events
+  // from re-rendering the entire app.
+  const rtDebug = useMemo(
+    () => ({
+      realtimeEvents,
+      realtimeStatus,
+      realtimeChannelName,
+      realtimeReconnectAttempts,
+      realtimeLastEventAt,
+      clearRealtimeEvents: () => setRealtimeEvents([]),
+    }),
+    [
+      realtimeEvents,
+      realtimeStatus,
+      realtimeChannelName,
+      realtimeReconnectAttempts,
+      realtimeLastEventAt,
+    ],
+  );
+
+  return (
+    <Context.Provider value={memoCtx}>
+      <RealtimeDebugContext.Provider value={rtDebug}>{children}</RealtimeDebugContext.Provider>
+    </Context.Provider>
+  );
 }
 
 export function useQA() {
   const c = useContext(Context);
   if (!c) throw new Error("useQA must be used within QAProvider");
+  return c;
+}
+
+export type RealtimeDebugCtx = {
+  realtimeEvents: RealtimeDebugEvent[];
+  realtimeStatus: RealtimeStatus;
+  realtimeChannelName: string | null;
+  realtimeReconnectAttempts: number;
+  realtimeLastEventAt: string | null;
+  clearRealtimeEvents: () => void;
+};
+const RealtimeDebugContext = createContext<RealtimeDebugCtx | null>(null);
+export function useRealtimeDebug(): RealtimeDebugCtx {
+  const c = useContext(RealtimeDebugContext);
+  if (!c) throw new Error("useRealtimeDebug must be used within QAProvider");
   return c;
 }
