@@ -1,1276 +1,1268 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
+    PostgrestVersion: "14.5";
+  };
   public: {
     Tables: {
       activity_log: {
         Row: {
-          action: string
-          actor_email: string | null
-          actor_id: string | null
-          actor_name: string | null
-          actor_role: string | null
-          category: string
-          defect_id: string | null
-          environment: string | null
-          form_name: string | null
-          id: string
-          ip_address: string | null
-          metadata: Json | null
-          new_value: Json | null
-          occurred_at: string
-          old_value: Json | null
-          record_id: string | null
-          record_type: string | null
-          result: string
-          session_id: string | null
-          summary: string | null
-          task_id: string | null
-          tax_year: string | null
-          user_agent: string | null
-        }
+          action: string;
+          actor_email: string | null;
+          actor_id: string | null;
+          actor_name: string | null;
+          actor_role: string | null;
+          category: string;
+          defect_id: string | null;
+          environment: string | null;
+          form_name: string | null;
+          id: string;
+          ip_address: string | null;
+          metadata: Json | null;
+          new_value: Json | null;
+          occurred_at: string;
+          old_value: Json | null;
+          record_id: string | null;
+          record_type: string | null;
+          result: string;
+          session_id: string | null;
+          summary: string | null;
+          task_id: string | null;
+          tax_year: string | null;
+          user_agent: string | null;
+        };
         Insert: {
-          action: string
-          actor_email?: string | null
-          actor_id?: string | null
-          actor_name?: string | null
-          actor_role?: string | null
-          category: string
-          defect_id?: string | null
-          environment?: string | null
-          form_name?: string | null
-          id?: string
-          ip_address?: string | null
-          metadata?: Json | null
-          new_value?: Json | null
-          occurred_at?: string
-          old_value?: Json | null
-          record_id?: string | null
-          record_type?: string | null
-          result?: string
-          session_id?: string | null
-          summary?: string | null
-          task_id?: string | null
-          tax_year?: string | null
-          user_agent?: string | null
-        }
+          action: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          actor_name?: string | null;
+          actor_role?: string | null;
+          category: string;
+          defect_id?: string | null;
+          environment?: string | null;
+          form_name?: string | null;
+          id?: string;
+          ip_address?: string | null;
+          metadata?: Json | null;
+          new_value?: Json | null;
+          occurred_at?: string;
+          old_value?: Json | null;
+          record_id?: string | null;
+          record_type?: string | null;
+          result?: string;
+          session_id?: string | null;
+          summary?: string | null;
+          task_id?: string | null;
+          tax_year?: string | null;
+          user_agent?: string | null;
+        };
         Update: {
-          action?: string
-          actor_email?: string | null
-          actor_id?: string | null
-          actor_name?: string | null
-          actor_role?: string | null
-          category?: string
-          defect_id?: string | null
-          environment?: string | null
-          form_name?: string | null
-          id?: string
-          ip_address?: string | null
-          metadata?: Json | null
-          new_value?: Json | null
-          occurred_at?: string
-          old_value?: Json | null
-          record_id?: string | null
-          record_type?: string | null
-          result?: string
-          session_id?: string | null
-          summary?: string | null
-          task_id?: string | null
-          tax_year?: string | null
-          user_agent?: string | null
-        }
-        Relationships: []
-      }
+          action?: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          actor_name?: string | null;
+          actor_role?: string | null;
+          category?: string;
+          defect_id?: string | null;
+          environment?: string | null;
+          form_name?: string | null;
+          id?: string;
+          ip_address?: string | null;
+          metadata?: Json | null;
+          new_value?: Json | null;
+          occurred_at?: string;
+          old_value?: Json | null;
+          record_id?: string | null;
+          record_type?: string | null;
+          result?: string;
+          session_id?: string | null;
+          summary?: string | null;
+          task_id?: string | null;
+          tax_year?: string | null;
+          user_agent?: string | null;
+        };
+        Relationships: [];
+      };
       agent_audit_log: {
         Row: {
-          action: string
-          created_at: string
-          details: Json
-          id: string
-          performed_by_id: string | null
-          performed_by_name: string | null
-          target_email: string
-          target_name: string | null
-          target_user_id: string | null
-        }
+          action: string;
+          created_at: string;
+          details: Json;
+          id: string;
+          performed_by_id: string | null;
+          performed_by_name: string | null;
+          target_email: string;
+          target_name: string | null;
+          target_user_id: string | null;
+        };
         Insert: {
-          action: string
-          created_at?: string
-          details?: Json
-          id?: string
-          performed_by_id?: string | null
-          performed_by_name?: string | null
-          target_email: string
-          target_name?: string | null
-          target_user_id?: string | null
-        }
+          action: string;
+          created_at?: string;
+          details?: Json;
+          id?: string;
+          performed_by_id?: string | null;
+          performed_by_name?: string | null;
+          target_email: string;
+          target_name?: string | null;
+          target_user_id?: string | null;
+        };
         Update: {
-          action?: string
-          created_at?: string
-          details?: Json
-          id?: string
-          performed_by_id?: string | null
-          performed_by_name?: string | null
-          target_email?: string
-          target_name?: string | null
-          target_user_id?: string | null
-        }
-        Relationships: []
-      }
+          action?: string;
+          created_at?: string;
+          details?: Json;
+          id?: string;
+          performed_by_id?: string | null;
+          performed_by_name?: string | null;
+          target_email?: string;
+          target_name?: string | null;
+          target_user_id?: string | null;
+        };
+        Relationships: [];
+      };
       agent_invites: {
         Row: {
-          created_at: string
-          created_by: string | null
-          email: string
-          id: string
-          name: string
-          notes: string
-          status: string
-          updated_at: string
-          user_id: string | null
-        }
+          created_at: string;
+          created_by: string | null;
+          email: string;
+          id: string;
+          name: string;
+          notes: string;
+          status: string;
+          updated_at: string;
+          user_id: string | null;
+        };
         Insert: {
-          created_at?: string
-          created_by?: string | null
-          email: string
-          id?: string
-          name: string
-          notes?: string
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-        }
+          created_at?: string;
+          created_by?: string | null;
+          email: string;
+          id?: string;
+          name: string;
+          notes?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
         Update: {
-          created_at?: string
-          created_by?: string | null
-          email?: string
-          id?: string
-          name?: string
-          notes?: string
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          created_by?: string | null;
+          email?: string;
+          id?: string;
+          name?: string;
+          notes?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       app_settings: {
         Row: {
-          key: string
-          updated_at: string
-          updated_by: string | null
-          value: Json
-        }
+          key: string;
+          updated_at: string;
+          updated_by: string | null;
+          value: Json;
+        };
         Insert: {
-          key: string
-          updated_at?: string
-          updated_by?: string | null
-          value: Json
-        }
+          key: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          value: Json;
+        };
         Update: {
-          key?: string
-          updated_at?: string
-          updated_by?: string | null
-          value?: Json
-        }
-        Relationships: []
-      }
+          key?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          value?: Json;
+        };
+        Relationships: [];
+      };
       defect_audit_log: {
         Row: {
-          changed_at: string
-          changed_by: string
-          defect_id: string
-          field: string
-          id: string
-          new_value: string | null
-          old_value: string | null
-        }
+          changed_at: string;
+          changed_by: string;
+          defect_id: string;
+          field: string;
+          id: string;
+          new_value: string | null;
+          old_value: string | null;
+        };
         Insert: {
-          changed_at?: string
-          changed_by: string
-          defect_id: string
-          field: string
-          id?: string
-          new_value?: string | null
-          old_value?: string | null
-        }
+          changed_at?: string;
+          changed_by: string;
+          defect_id: string;
+          field: string;
+          id?: string;
+          new_value?: string | null;
+          old_value?: string | null;
+        };
         Update: {
-          changed_at?: string
-          changed_by?: string
-          defect_id?: string
-          field?: string
-          id?: string
-          new_value?: string | null
-          old_value?: string | null
-        }
+          changed_at?: string;
+          changed_by?: string;
+          defect_id?: string;
+          field?: string;
+          id?: string;
+          new_value?: string | null;
+          old_value?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "defect_audit_log_defect_id_fkey"
-            columns: ["defect_id"]
-            isOneToOne: false
-            referencedRelation: "defects"
-            referencedColumns: ["id"]
+            foreignKeyName: "defect_audit_log_defect_id_fkey";
+            columns: ["defect_id"];
+            isOneToOne: false;
+            referencedRelation: "defects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       defect_comments: {
         Row: {
-          author: string
-          created_at: string
-          defect_id: string
-          edited: boolean
-          id: string
-          text: string
-          updated_at: string
-          updated_by: string | null
-        }
+          author: string;
+          created_at: string;
+          defect_id: string;
+          edited: boolean;
+          id: string;
+          text: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
         Insert: {
-          author: string
-          created_at?: string
-          defect_id: string
-          edited?: boolean
-          id?: string
-          text: string
-          updated_at?: string
-          updated_by?: string | null
-        }
+          author: string;
+          created_at?: string;
+          defect_id: string;
+          edited?: boolean;
+          id?: string;
+          text: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
         Update: {
-          author?: string
-          created_at?: string
-          defect_id?: string
-          edited?: boolean
-          id?: string
-          text?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
+          author?: string;
+          created_at?: string;
+          defect_id?: string;
+          edited?: boolean;
+          id?: string;
+          text?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "defect_comments_defect_id_fkey"
-            columns: ["defect_id"]
-            isOneToOne: false
-            referencedRelation: "defects"
-            referencedColumns: ["id"]
+            foreignKeyName: "defect_comments_defect_id_fkey";
+            columns: ["defect_id"];
+            isOneToOne: false;
+            referencedRelation: "defects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       defects: {
         Row: {
-          actual_result: string
-          assigned_agent: string
-          attachment_url: string | null
-          attachment_url2: string | null
-          created_at: string
-          created_by: string
-          description: string
-          drive_url: string | null
-          environment: string
-          evidence_url: string | null
-          excel_url: string | null
-          expected_result: string
-          form_feature: string
-          id: string
-          jira_url: string | null
-          module: string
-          priority: string
-          quickbooks_desktop_category: string | null
-          schedules: string[]
-          screenshot_url: string | null
-          severity: string
-          status: string
-          steps_to_reproduce: string
-          tax_year: string | null
-          title: string
-          updated_at: string
-          updated_by: string
-          validity: string
-          version: number
-          video_url: string | null
-        }
+          actual_result: string;
+          assigned_agent: string;
+          attachment_url: string | null;
+          attachment_url2: string | null;
+          created_at: string;
+          created_by: string;
+          description: string;
+          drive_url: string | null;
+          environment: string;
+          evidence_url: string | null;
+          excel_url: string | null;
+          expected_result: string;
+          form_feature: string;
+          id: string;
+          jira_url: string | null;
+          module: string;
+          priority: string;
+          quickbooks_desktop_category: string | null;
+          schedules: string[];
+          screenshot_url: string | null;
+          severity: string;
+          status: string;
+          steps_to_reproduce: string;
+          tax_year: string | null;
+          title: string;
+          updated_at: string;
+          updated_by: string;
+          validity: string;
+          version: number;
+          video_url: string | null;
+        };
         Insert: {
-          actual_result?: string
-          assigned_agent?: string
-          attachment_url?: string | null
-          attachment_url2?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string
-          drive_url?: string | null
-          environment?: string
-          evidence_url?: string | null
-          excel_url?: string | null
-          expected_result?: string
-          form_feature: string
-          id: string
-          jira_url?: string | null
-          module: string
-          priority?: string
-          quickbooks_desktop_category?: string | null
-          schedules?: string[]
-          screenshot_url?: string | null
-          severity?: string
-          status?: string
-          steps_to_reproduce?: string
-          tax_year?: string | null
-          title: string
-          updated_at?: string
-          updated_by?: string
-          validity?: string
-          version?: number
-          video_url?: string | null
-        }
+          actual_result?: string;
+          assigned_agent?: string;
+          attachment_url?: string | null;
+          attachment_url2?: string | null;
+          created_at?: string;
+          created_by?: string;
+          description?: string;
+          drive_url?: string | null;
+          environment?: string;
+          evidence_url?: string | null;
+          excel_url?: string | null;
+          expected_result?: string;
+          form_feature: string;
+          id: string;
+          jira_url?: string | null;
+          module: string;
+          priority?: string;
+          quickbooks_desktop_category?: string | null;
+          schedules?: string[];
+          screenshot_url?: string | null;
+          severity?: string;
+          status?: string;
+          steps_to_reproduce?: string;
+          tax_year?: string | null;
+          title: string;
+          updated_at?: string;
+          updated_by?: string;
+          validity?: string;
+          version?: number;
+          video_url?: string | null;
+        };
         Update: {
-          actual_result?: string
-          assigned_agent?: string
-          attachment_url?: string | null
-          attachment_url2?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string
-          drive_url?: string | null
-          environment?: string
-          evidence_url?: string | null
-          excel_url?: string | null
-          expected_result?: string
-          form_feature?: string
-          id?: string
-          jira_url?: string | null
-          module?: string
-          priority?: string
-          quickbooks_desktop_category?: string | null
-          schedules?: string[]
-          screenshot_url?: string | null
-          severity?: string
-          status?: string
-          steps_to_reproduce?: string
-          tax_year?: string | null
-          title?: string
-          updated_at?: string
-          updated_by?: string
-          validity?: string
-          version?: number
-          video_url?: string | null
-        }
-        Relationships: []
-      }
+          actual_result?: string;
+          assigned_agent?: string;
+          attachment_url?: string | null;
+          attachment_url2?: string | null;
+          created_at?: string;
+          created_by?: string;
+          description?: string;
+          drive_url?: string | null;
+          environment?: string;
+          evidence_url?: string | null;
+          excel_url?: string | null;
+          expected_result?: string;
+          form_feature?: string;
+          id?: string;
+          jira_url?: string | null;
+          module?: string;
+          priority?: string;
+          quickbooks_desktop_category?: string | null;
+          schedules?: string[];
+          screenshot_url?: string | null;
+          severity?: string;
+          status?: string;
+          steps_to_reproduce?: string;
+          tax_year?: string | null;
+          title?: string;
+          updated_at?: string;
+          updated_by?: string;
+          validity?: string;
+          version?: number;
+          video_url?: string | null;
+        };
+        Relationships: [];
+      };
       email_log: {
         Row: {
-          created_at: string
-          error: string | null
-          id: string
-          payload: Json | null
-          provider: string
-          related_defect_id: string | null
-          related_task_id: string | null
-          sent_at: string | null
-          status: string
-          subject: string
-          template: string
-          to_email: string
-          to_name: string | null
-          triggered_by_id: string | null
-          triggered_by_name: string | null
-        }
+          created_at: string;
+          error: string | null;
+          id: string;
+          payload: Json | null;
+          provider: string;
+          related_defect_id: string | null;
+          related_task_id: string | null;
+          sent_at: string | null;
+          status: string;
+          subject: string;
+          template: string;
+          to_email: string;
+          to_name: string | null;
+          triggered_by_id: string | null;
+          triggered_by_name: string | null;
+        };
         Insert: {
-          created_at?: string
-          error?: string | null
-          id?: string
-          payload?: Json | null
-          provider?: string
-          related_defect_id?: string | null
-          related_task_id?: string | null
-          sent_at?: string | null
-          status?: string
-          subject: string
-          template: string
-          to_email: string
-          to_name?: string | null
-          triggered_by_id?: string | null
-          triggered_by_name?: string | null
-        }
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          payload?: Json | null;
+          provider?: string;
+          related_defect_id?: string | null;
+          related_task_id?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          subject: string;
+          template: string;
+          to_email: string;
+          to_name?: string | null;
+          triggered_by_id?: string | null;
+          triggered_by_name?: string | null;
+        };
         Update: {
-          created_at?: string
-          error?: string | null
-          id?: string
-          payload?: Json | null
-          provider?: string
-          related_defect_id?: string | null
-          related_task_id?: string | null
-          sent_at?: string | null
-          status?: string
-          subject?: string
-          template?: string
-          to_email?: string
-          to_name?: string | null
-          triggered_by_id?: string | null
-          triggered_by_name?: string | null
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          payload?: Json | null;
+          provider?: string;
+          related_defect_id?: string | null;
+          related_task_id?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          subject?: string;
+          template?: string;
+          to_email?: string;
+          to_name?: string | null;
+          triggered_by_id?: string | null;
+          triggered_by_name?: string | null;
+        };
+        Relationships: [];
+      };
       error_logs: {
         Row: {
-          actor_email: string | null
-          actor_id: string | null
-          actor_role: string | null
-          component: string | null
-          created_at: string
-          id: string
-          last_request: Json | null
-          message: string | null
-          metadata: Json | null
-          route: string | null
-          source: string | null
-          stack: string | null
-          url: string | null
-          user_agent: string | null
-        }
+          actor_email: string | null;
+          actor_id: string | null;
+          actor_role: string | null;
+          component: string | null;
+          created_at: string;
+          id: string;
+          last_request: Json | null;
+          message: string | null;
+          metadata: Json | null;
+          route: string | null;
+          source: string | null;
+          stack: string | null;
+          url: string | null;
+          user_agent: string | null;
+        };
         Insert: {
-          actor_email?: string | null
-          actor_id?: string | null
-          actor_role?: string | null
-          component?: string | null
-          created_at?: string
-          id?: string
-          last_request?: Json | null
-          message?: string | null
-          metadata?: Json | null
-          route?: string | null
-          source?: string | null
-          stack?: string | null
-          url?: string | null
-          user_agent?: string | null
-        }
+          actor_email?: string | null;
+          actor_id?: string | null;
+          actor_role?: string | null;
+          component?: string | null;
+          created_at?: string;
+          id?: string;
+          last_request?: Json | null;
+          message?: string | null;
+          metadata?: Json | null;
+          route?: string | null;
+          source?: string | null;
+          stack?: string | null;
+          url?: string | null;
+          user_agent?: string | null;
+        };
         Update: {
-          actor_email?: string | null
-          actor_id?: string | null
-          actor_role?: string | null
-          component?: string | null
-          created_at?: string
-          id?: string
-          last_request?: Json | null
-          message?: string | null
-          metadata?: Json | null
-          route?: string | null
-          source?: string | null
-          stack?: string | null
-          url?: string | null
-          user_agent?: string | null
-        }
-        Relationships: []
-      }
+          actor_email?: string | null;
+          actor_id?: string | null;
+          actor_role?: string | null;
+          component?: string | null;
+          created_at?: string;
+          id?: string;
+          last_request?: Json | null;
+          message?: string | null;
+          metadata?: Json | null;
+          route?: string | null;
+          source?: string | null;
+          stack?: string | null;
+          url?: string | null;
+          user_agent?: string | null;
+        };
+        Relationships: [];
+      };
       export_audit_log: {
         Row: {
-          created_at: string
-          environment: string | null
-          error: string | null
-          filters: Json
-          id: string
-          job_id: string | null
-          role: string
-          row_count: number
-          scope: string
-          status: string
-          user_id: string | null
-          user_name: string
-        }
+          created_at: string;
+          environment: string | null;
+          error: string | null;
+          filters: Json;
+          id: string;
+          job_id: string | null;
+          role: string;
+          row_count: number;
+          scope: string;
+          status: string;
+          user_id: string | null;
+          user_name: string;
+        };
         Insert: {
-          created_at?: string
-          environment?: string | null
-          error?: string | null
-          filters?: Json
-          id?: string
-          job_id?: string | null
-          role: string
-          row_count?: number
-          scope: string
-          status?: string
-          user_id?: string | null
-          user_name: string
-        }
+          created_at?: string;
+          environment?: string | null;
+          error?: string | null;
+          filters?: Json;
+          id?: string;
+          job_id?: string | null;
+          role: string;
+          row_count?: number;
+          scope: string;
+          status?: string;
+          user_id?: string | null;
+          user_name: string;
+        };
         Update: {
-          created_at?: string
-          environment?: string | null
-          error?: string | null
-          filters?: Json
-          id?: string
-          job_id?: string | null
-          role?: string
-          row_count?: number
-          scope?: string
-          status?: string
-          user_id?: string | null
-          user_name?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          environment?: string | null;
+          error?: string | null;
+          filters?: Json;
+          id?: string;
+          job_id?: string | null;
+          role?: string;
+          row_count?: number;
+          scope?: string;
+          status?: string;
+          user_id?: string | null;
+          user_name?: string;
+        };
+        Relationships: [];
+      };
       export_jobs: {
         Row: {
-          completed_at: string | null
-          created_at: string
-          environment: string | null
-          error: string | null
-          file_name: string | null
-          file_path: string | null
-          filters: Json
-          id: string
-          progress: number
-          requested_by_id: string | null
-          requested_by_name: string
-          retries: number
-          role: string
-          row_count: number
-          scope: string
-          status: string
-          updated_at: string
-        }
+          completed_at: string | null;
+          created_at: string;
+          environment: string | null;
+          error: string | null;
+          file_name: string | null;
+          file_path: string | null;
+          filters: Json;
+          id: string;
+          progress: number;
+          requested_by_id: string | null;
+          requested_by_name: string;
+          retries: number;
+          role: string;
+          row_count: number;
+          scope: string;
+          status: string;
+          updated_at: string;
+        };
         Insert: {
-          completed_at?: string | null
-          created_at?: string
-          environment?: string | null
-          error?: string | null
-          file_name?: string | null
-          file_path?: string | null
-          filters?: Json
-          id?: string
-          progress?: number
-          requested_by_id?: string | null
-          requested_by_name: string
-          retries?: number
-          role: string
-          row_count?: number
-          scope: string
-          status?: string
-          updated_at?: string
-        }
+          completed_at?: string | null;
+          created_at?: string;
+          environment?: string | null;
+          error?: string | null;
+          file_name?: string | null;
+          file_path?: string | null;
+          filters?: Json;
+          id?: string;
+          progress?: number;
+          requested_by_id?: string | null;
+          requested_by_name: string;
+          retries?: number;
+          role: string;
+          row_count?: number;
+          scope: string;
+          status?: string;
+          updated_at?: string;
+        };
         Update: {
-          completed_at?: string | null
-          created_at?: string
-          environment?: string | null
-          error?: string | null
-          file_name?: string | null
-          file_path?: string | null
-          filters?: Json
-          id?: string
-          progress?: number
-          requested_by_id?: string | null
-          requested_by_name?: string
-          retries?: number
-          role?: string
-          row_count?: number
-          scope?: string
-          status?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          completed_at?: string | null;
+          created_at?: string;
+          environment?: string | null;
+          error?: string | null;
+          file_name?: string | null;
+          file_path?: string | null;
+          filters?: Json;
+          id?: string;
+          progress?: number;
+          requested_by_id?: string | null;
+          requested_by_name?: string;
+          retries?: number;
+          role?: string;
+          row_count?: number;
+          scope?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       forms: {
         Row: {
-          assigned_agent: string
-          environment: string
-          failed: number
-          id: string
-          last_tested: string
-          module: string
-          name: string
-          open_defects: number
-          passed: number
-          status: string
-          updated_at: string
-        }
+          assigned_agent: string;
+          environment: string;
+          failed: number;
+          id: string;
+          last_tested: string;
+          module: string;
+          name: string;
+          open_defects: number;
+          passed: number;
+          status: string;
+          updated_at: string;
+        };
         Insert: {
-          assigned_agent?: string
-          environment?: string
-          failed?: number
-          id: string
-          last_tested?: string
-          module: string
-          name: string
-          open_defects?: number
-          passed?: number
-          status?: string
-          updated_at?: string
-        }
+          assigned_agent?: string;
+          environment?: string;
+          failed?: number;
+          id: string;
+          last_tested?: string;
+          module: string;
+          name: string;
+          open_defects?: number;
+          passed?: number;
+          status?: string;
+          updated_at?: string;
+        };
         Update: {
-          assigned_agent?: string
-          environment?: string
-          failed?: number
-          id?: string
-          last_tested?: string
-          module?: string
-          name?: string
-          open_defects?: number
-          passed?: number
-          status?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          assigned_agent?: string;
+          environment?: string;
+          failed?: number;
+          id?: string;
+          last_tested?: string;
+          module?: string;
+          name?: string;
+          open_defects?: number;
+          passed?: number;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       id_sequences: {
         Row: {
-          kind: string
-          last_seq: number
-          tax_year: string
-          updated_at: string
-        }
+          kind: string;
+          last_seq: number;
+          tax_year: string;
+          updated_at: string;
+        };
         Insert: {
-          kind: string
-          last_seq?: number
-          tax_year: string
-          updated_at?: string
-        }
+          kind: string;
+          last_seq?: number;
+          tax_year: string;
+          updated_at?: string;
+        };
         Update: {
-          kind?: string
-          last_seq?: number
-          tax_year?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          kind?: string;
+          last_seq?: number;
+          tax_year?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       notes: {
         Row: {
-          color: string
-          content: Json
-          content_text: string
-          created_at: string
-          id: string
-          is_archived: boolean
-          is_favorite: boolean
-          is_pinned: boolean
-          tags: string[]
-          title: string
-          updated_at: string
-          updated_by: string | null
-          user_id: string
-        }
+          color: string;
+          content: Json;
+          content_text: string;
+          created_at: string;
+          id: string;
+          is_archived: boolean;
+          is_favorite: boolean;
+          is_pinned: boolean;
+          tags: string[];
+          title: string;
+          updated_at: string;
+          updated_by: string | null;
+          user_id: string;
+        };
         Insert: {
-          color?: string
-          content?: Json
-          content_text?: string
-          created_at?: string
-          id?: string
-          is_archived?: boolean
-          is_favorite?: boolean
-          is_pinned?: boolean
-          tags?: string[]
-          title?: string
-          updated_at?: string
-          updated_by?: string | null
-          user_id: string
-        }
+          color?: string;
+          content?: Json;
+          content_text?: string;
+          created_at?: string;
+          id?: string;
+          is_archived?: boolean;
+          is_favorite?: boolean;
+          is_pinned?: boolean;
+          tags?: string[];
+          title?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          user_id: string;
+        };
         Update: {
-          color?: string
-          content?: Json
-          content_text?: string
-          created_at?: string
-          id?: string
-          is_archived?: boolean
-          is_favorite?: boolean
-          is_pinned?: boolean
-          tags?: string[]
-          title?: string
-          updated_at?: string
-          updated_by?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
+          color?: string;
+          content?: Json;
+          content_text?: string;
+          created_at?: string;
+          id?: string;
+          is_archived?: boolean;
+          is_favorite?: boolean;
+          is_pinned?: boolean;
+          tags?: string[];
+          title?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
-          body: string
-          created_at: string
-          defect_id: string | null
-          environment: string | null
-          id: string
-          read: boolean
-          title: string
-          type: string
-          user_id: string
-        }
+          body: string;
+          created_at: string;
+          defect_id: string | null;
+          environment: string | null;
+          id: string;
+          read: boolean;
+          title: string;
+          type: string;
+          user_id: string;
+        };
         Insert: {
-          body?: string
-          created_at?: string
-          defect_id?: string | null
-          environment?: string | null
-          id?: string
-          read?: boolean
-          title: string
-          type: string
-          user_id: string
-        }
+          body?: string;
+          created_at?: string;
+          defect_id?: string | null;
+          environment?: string | null;
+          id?: string;
+          read?: boolean;
+          title: string;
+          type: string;
+          user_id: string;
+        };
         Update: {
-          body?: string
-          created_at?: string
-          defect_id?: string | null
-          environment?: string | null
-          id?: string
-          read?: boolean
-          title?: string
-          type?: string
-          user_id?: string
-        }
+          body?: string;
+          created_at?: string;
+          defect_id?: string | null;
+          environment?: string | null;
+          id?: string;
+          read?: boolean;
+          title?: string;
+          type?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "notifications_defect_id_fkey"
-            columns: ["defect_id"]
-            isOneToOne: false
-            referencedRelation: "defects"
-            referencedColumns: ["id"]
+            foreignKeyName: "notifications_defect_id_fkey";
+            columns: ["defect_id"];
+            isOneToOne: false;
+            referencedRelation: "defects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       profiles: {
         Row: {
-          active: boolean
-          avatar_url: string | null
-          created_at: string
-          email: string
-          id: string
-          name: string
-        }
+          active: boolean;
+          avatar_url: string | null;
+          created_at: string;
+          email: string;
+          id: string;
+          name: string;
+        };
         Insert: {
-          active?: boolean
-          avatar_url?: string | null
-          created_at?: string
-          email: string
-          id: string
-          name: string
-        }
+          active?: boolean;
+          avatar_url?: string | null;
+          created_at?: string;
+          email: string;
+          id: string;
+          name: string;
+        };
         Update: {
-          active?: boolean
-          avatar_url?: string | null
-          created_at?: string
-          email?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
+          active?: boolean;
+          avatar_url?: string | null;
+          created_at?: string;
+          email?: string;
+          id?: string;
+          name?: string;
+        };
+        Relationships: [];
+      };
       qa_runtime_config: {
         Row: {
-          id: string
-          live_enabled: boolean
-          performance_mode: boolean
-          updated_at: string
-          updated_by: string | null
-        }
+          id: string;
+          live_enabled: boolean;
+          performance_mode: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
         Insert: {
-          id?: string
-          live_enabled?: boolean
-          performance_mode?: boolean
-          updated_at?: string
-          updated_by?: string | null
-        }
+          id?: string;
+          live_enabled?: boolean;
+          performance_mode?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
         Update: {
-          id?: string
-          live_enabled?: boolean
-          performance_mode?: boolean
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: []
-      }
+          id?: string;
+          live_enabled?: boolean;
+          performance_mode?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       qa_runtime_config_audit: {
         Row: {
-          changed_by_email: string | null
-          changed_by_id: string | null
-          changed_by_name: string | null
-          created_at: string
-          id: string
-          new_live_enabled: boolean
-          new_performance_mode: boolean
-          old_live_enabled: boolean | null
-          old_performance_mode: boolean | null
-        }
+          changed_by_email: string | null;
+          changed_by_id: string | null;
+          changed_by_name: string | null;
+          created_at: string;
+          id: string;
+          new_live_enabled: boolean;
+          new_performance_mode: boolean;
+          old_live_enabled: boolean | null;
+          old_performance_mode: boolean | null;
+        };
         Insert: {
-          changed_by_email?: string | null
-          changed_by_id?: string | null
-          changed_by_name?: string | null
-          created_at?: string
-          id?: string
-          new_live_enabled: boolean
-          new_performance_mode: boolean
-          old_live_enabled?: boolean | null
-          old_performance_mode?: boolean | null
-        }
+          changed_by_email?: string | null;
+          changed_by_id?: string | null;
+          changed_by_name?: string | null;
+          created_at?: string;
+          id?: string;
+          new_live_enabled: boolean;
+          new_performance_mode: boolean;
+          old_live_enabled?: boolean | null;
+          old_performance_mode?: boolean | null;
+        };
         Update: {
-          changed_by_email?: string | null
-          changed_by_id?: string | null
-          changed_by_name?: string | null
-          created_at?: string
-          id?: string
-          new_live_enabled?: boolean
-          new_performance_mode?: boolean
-          old_live_enabled?: boolean | null
-          old_performance_mode?: boolean | null
-        }
-        Relationships: []
-      }
+          changed_by_email?: string | null;
+          changed_by_id?: string | null;
+          changed_by_name?: string | null;
+          created_at?: string;
+          id?: string;
+          new_live_enabled?: boolean;
+          new_performance_mode?: boolean;
+          old_live_enabled?: boolean | null;
+          old_performance_mode?: boolean | null;
+        };
+        Relationships: [];
+      };
       report_views: {
         Row: {
-          created_at: string
-          filters: Json
-          id: string
-          name: string
-          updated_at: string
-          user_id: string
-        }
+          created_at: string;
+          filters: Json;
+          id: string;
+          name: string;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          filters?: Json
-          id?: string
-          name: string
-          updated_at?: string
-          user_id: string
-        }
+          created_at?: string;
+          filters?: Json;
+          id?: string;
+          name: string;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          filters?: Json
-          id?: string
-          name?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          filters?: Json;
+          id?: string;
+          name?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       retest_assignment_forms: {
         Row: {
-          assignment_id: string
-          form_id: string
-          form_name: string
-          id: string
-        }
+          assignment_id: string;
+          form_id: string;
+          form_name: string;
+          id: string;
+        };
         Insert: {
-          assignment_id: string
-          form_id: string
-          form_name: string
-          id?: string
-        }
+          assignment_id: string;
+          form_id: string;
+          form_name: string;
+          id?: string;
+        };
         Update: {
-          assignment_id?: string
-          form_id?: string
-          form_name?: string
-          id?: string
-        }
+          assignment_id?: string;
+          form_id?: string;
+          form_name?: string;
+          id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "retest_assignment_forms_assignment_id_fkey"
-            columns: ["assignment_id"]
-            isOneToOne: false
-            referencedRelation: "retest_assignments"
-            referencedColumns: ["id"]
+            foreignKeyName: "retest_assignment_forms_assignment_id_fkey";
+            columns: ["assignment_id"];
+            isOneToOne: false;
+            referencedRelation: "retest_assignments";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       retest_assignments: {
         Row: {
-          all_forms: boolean
-          assigned_agent_id: string | null
-          assigned_agent_name: string
-          assigned_by_id: string | null
-          assigned_by_name: string
-          completed_at: string | null
-          completed_on_time: boolean | null
-          completion_duration_seconds: number | null
-          created_at: string
-          deadline_at: string | null
-          due_date: string | null
-          due_time: string | null
-          environment: string
-          id: string
-          instructions: string
-          module: string
-          priority: string
-          status: string
-          tax_year: string | null
-          testing_type: string
-          title: string
-          updated_at: string
-        }
+          all_forms: boolean;
+          assigned_agent_id: string | null;
+          assigned_agent_name: string;
+          assigned_by_id: string | null;
+          assigned_by_name: string;
+          completed_at: string | null;
+          completed_on_time: boolean | null;
+          completion_duration_seconds: number | null;
+          created_at: string;
+          deadline_at: string | null;
+          due_date: string | null;
+          due_time: string | null;
+          environment: string;
+          id: string;
+          instructions: string;
+          module: string;
+          priority: string;
+          status: string;
+          tax_year: string | null;
+          testing_type: string;
+          title: string;
+          updated_at: string;
+        };
         Insert: {
-          all_forms?: boolean
-          assigned_agent_id?: string | null
-          assigned_agent_name?: string
-          assigned_by_id?: string | null
-          assigned_by_name?: string
-          completed_at?: string | null
-          completed_on_time?: boolean | null
-          completion_duration_seconds?: number | null
-          created_at?: string
-          deadline_at?: string | null
-          due_date?: string | null
-          due_time?: string | null
-          environment?: string
-          id: string
-          instructions?: string
-          module?: string
-          priority?: string
-          status?: string
-          tax_year?: string | null
-          testing_type?: string
-          title?: string
-          updated_at?: string
-        }
+          all_forms?: boolean;
+          assigned_agent_id?: string | null;
+          assigned_agent_name?: string;
+          assigned_by_id?: string | null;
+          assigned_by_name?: string;
+          completed_at?: string | null;
+          completed_on_time?: boolean | null;
+          completion_duration_seconds?: number | null;
+          created_at?: string;
+          deadline_at?: string | null;
+          due_date?: string | null;
+          due_time?: string | null;
+          environment?: string;
+          id: string;
+          instructions?: string;
+          module?: string;
+          priority?: string;
+          status?: string;
+          tax_year?: string | null;
+          testing_type?: string;
+          title?: string;
+          updated_at?: string;
+        };
         Update: {
-          all_forms?: boolean
-          assigned_agent_id?: string | null
-          assigned_agent_name?: string
-          assigned_by_id?: string | null
-          assigned_by_name?: string
-          completed_at?: string | null
-          completed_on_time?: boolean | null
-          completion_duration_seconds?: number | null
-          created_at?: string
-          deadline_at?: string | null
-          due_date?: string | null
-          due_time?: string | null
-          environment?: string
-          id?: string
-          instructions?: string
-          module?: string
-          priority?: string
-          status?: string
-          tax_year?: string | null
-          testing_type?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          all_forms?: boolean;
+          assigned_agent_id?: string | null;
+          assigned_agent_name?: string;
+          assigned_by_id?: string | null;
+          assigned_by_name?: string;
+          completed_at?: string | null;
+          completed_on_time?: boolean | null;
+          completion_duration_seconds?: number | null;
+          created_at?: string;
+          deadline_at?: string | null;
+          due_date?: string | null;
+          due_time?: string | null;
+          environment?: string;
+          id?: string;
+          instructions?: string;
+          module?: string;
+          priority?: string;
+          status?: string;
+          tax_year?: string | null;
+          testing_type?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       retest_pending_assignments: {
         Row: {
-          created_at: string
-          created_by_id: string | null
-          created_by_name: string
-          email: string
-          forms: Json
-          id: string
-          payload: Json
-        }
+          created_at: string;
+          created_by_id: string | null;
+          created_by_name: string;
+          email: string;
+          forms: Json;
+          id: string;
+          payload: Json;
+        };
         Insert: {
-          created_at?: string
-          created_by_id?: string | null
-          created_by_name?: string
-          email: string
-          forms?: Json
-          id?: string
-          payload: Json
-        }
+          created_at?: string;
+          created_by_id?: string | null;
+          created_by_name?: string;
+          email: string;
+          forms?: Json;
+          id?: string;
+          payload: Json;
+        };
         Update: {
-          created_at?: string
-          created_by_id?: string | null
-          created_by_name?: string
-          email?: string
-          forms?: Json
-          id?: string
-          payload?: Json
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          created_by_id?: string | null;
+          created_by_name?: string;
+          email?: string;
+          forms?: Json;
+          id?: string;
+          payload?: Json;
+        };
+        Relationships: [];
+      };
       role_audit_log: {
         Row: {
-          changed_at: string
-          changed_by_id: string
-          changed_by_name: string
-          id: string
-          new_role: Database["public"]["Enums"]["app_role"]
-          old_role: Database["public"]["Enums"]["app_role"] | null
-          target_name: string
-          target_user_id: string
-        }
+          changed_at: string;
+          changed_by_id: string;
+          changed_by_name: string;
+          id: string;
+          new_role: Database["public"]["Enums"]["app_role"];
+          old_role: Database["public"]["Enums"]["app_role"] | null;
+          target_name: string;
+          target_user_id: string;
+        };
         Insert: {
-          changed_at?: string
-          changed_by_id: string
-          changed_by_name?: string
-          id?: string
-          new_role: Database["public"]["Enums"]["app_role"]
-          old_role?: Database["public"]["Enums"]["app_role"] | null
-          target_name?: string
-          target_user_id: string
-        }
+          changed_at?: string;
+          changed_by_id: string;
+          changed_by_name?: string;
+          id?: string;
+          new_role: Database["public"]["Enums"]["app_role"];
+          old_role?: Database["public"]["Enums"]["app_role"] | null;
+          target_name?: string;
+          target_user_id: string;
+        };
         Update: {
-          changed_at?: string
-          changed_by_id?: string
-          changed_by_name?: string
-          id?: string
-          new_role?: Database["public"]["Enums"]["app_role"]
-          old_role?: Database["public"]["Enums"]["app_role"] | null
-          target_name?: string
-          target_user_id?: string
-        }
-        Relationships: []
-      }
+          changed_at?: string;
+          changed_by_id?: string;
+          changed_by_name?: string;
+          id?: string;
+          new_role?: Database["public"]["Enums"]["app_role"];
+          old_role?: Database["public"]["Enums"]["app_role"] | null;
+          target_name?: string;
+          target_user_id?: string;
+        };
+        Relationships: [];
+      };
       user_preferences: {
         Row: {
-          accent: string
-          created_at: string
-          default_landing: string
-          density: string
-          runtime_audit_page_size: number
-          show_agent_chart: boolean
-          show_kpi_cards: boolean
-          show_trend_chart: boolean
-          theme: string
-          updated_at: string
-          user_id: string
-        }
+          accent: string;
+          created_at: string;
+          default_landing: string;
+          density: string;
+          runtime_audit_page_size: number;
+          show_agent_chart: boolean;
+          show_kpi_cards: boolean;
+          show_trend_chart: boolean;
+          theme: string;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          accent?: string
-          created_at?: string
-          default_landing?: string
-          density?: string
-          runtime_audit_page_size?: number
-          show_agent_chart?: boolean
-          show_kpi_cards?: boolean
-          show_trend_chart?: boolean
-          theme?: string
-          updated_at?: string
-          user_id: string
-        }
+          accent?: string;
+          created_at?: string;
+          default_landing?: string;
+          density?: string;
+          runtime_audit_page_size?: number;
+          show_agent_chart?: boolean;
+          show_kpi_cards?: boolean;
+          show_trend_chart?: boolean;
+          theme?: string;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          accent?: string
-          created_at?: string
-          default_landing?: string
-          density?: string
-          runtime_audit_page_size?: number
-          show_agent_chart?: boolean
-          show_kpi_cards?: boolean
-          show_trend_chart?: boolean
-          theme?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          accent?: string;
+          created_at?: string;
+          default_landing?: string;
+          density?: string;
+          runtime_audit_page_size?: number;
+          show_agent_chart?: boolean;
+          show_kpi_cards?: boolean;
+          show_trend_chart?: boolean;
+          theme?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       user_roles: {
         Row: {
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          id: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Insert: {
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          id?: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Update: {
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
-    }
+          id?: string;
+          role?: Database["public"]["Enums"]["app_role"];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
       profiles_safe: {
         Row: {
-          active: boolean | null
-          avatar_url: string | null
-          id: string | null
-          name: string | null
-        }
+          active: boolean | null;
+          avatar_url: string | null;
+          id: string | null;
+          name: string | null;
+        };
         Insert: {
-          active?: boolean | null
-          avatar_url?: string | null
-          id?: string | null
-          name?: string | null
-        }
+          active?: boolean | null;
+          avatar_url?: string | null;
+          id?: string | null;
+          name?: string | null;
+        };
         Update: {
-          active?: boolean | null
-          avatar_url?: string | null
-          id?: string | null
-          name?: string | null
-        }
-        Relationships: []
-      }
-    }
+          active?: boolean | null;
+          avatar_url?: string | null;
+          id?: string | null;
+          name?: string | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       change_user_role: {
         Args: {
-          _new_role: Database["public"]["Enums"]["app_role"]
-          _target: string
-        }
-        Returns: Json
-      }
-      current_user_name: { Args: never; Returns: string }
+          _new_role: Database["public"]["Enums"]["app_role"];
+          _target: string;
+        };
+        Returns: Json;
+      };
+      current_user_name: { Args: never; Returns: string };
       has_role: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+          _role: Database["public"]["Enums"]["app_role"];
+          _user_id: string;
+        };
+        Returns: boolean;
+      };
       log_activity: {
         Args: {
-          _action: string
-          _actor_email?: string
-          _actor_id?: string
-          _actor_name?: string
-          _category: string
-          _defect_id?: string
-          _environment?: string
-          _form_name?: string
-          _ip?: string
-          _metadata?: Json
-          _new_value?: Json
-          _old_value?: Json
-          _record_id?: string
-          _record_type?: string
-          _result?: string
-          _session_id?: string
-          _summary?: string
-          _task_id?: string
-          _tax_year?: string
-          _ua?: string
-        }
-        Returns: string
-      }
+          _action: string;
+          _actor_email?: string;
+          _actor_id?: string;
+          _actor_name?: string;
+          _category: string;
+          _defect_id?: string;
+          _environment?: string;
+          _form_name?: string;
+          _ip?: string;
+          _metadata?: Json;
+          _new_value?: Json;
+          _old_value?: Json;
+          _record_id?: string;
+          _record_type?: string;
+          _result?: string;
+          _session_id?: string;
+          _summary?: string;
+          _task_id?: string;
+          _tax_year?: string;
+          _ua?: string;
+        };
+        Returns: string;
+      };
       next_scoped_id: {
-        Args: { _kind: string; _tax_year: string }
-        Returns: string
-      }
-      preview_agent_purge: { Args: { _name: string }; Returns: Json }
+        Args: { _kind: string; _tax_year: string };
+        Returns: string;
+      };
+      preview_agent_purge: { Args: { _name: string }; Returns: Json };
       purge_agent_data: {
-        Args: { _actor_id?: string; _actor_name?: string; _name: string }
-        Returns: Json
-      }
-      purge_orphaned_agent_refs: { Args: never; Returns: Json }
-      user_id_for_name: { Args: { _name: string }; Returns: string }
-    }
+        Args: { _actor_id?: string; _actor_name?: string; _name: string };
+        Returns: Json;
+      };
+      purge_orphaned_agent_refs: { Args: never; Returns: Json };
+      user_id_for_name: { Args: { _name: string }; Returns: string };
+    };
     Enums: {
-      app_role: "admin" | "agent"
-    }
+      app_role: "admin" | "agent";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
@@ -1278,4 +1270,4 @@ export const Constants = {
       app_role: ["admin", "agent"],
     },
   },
-} as const
+} as const;

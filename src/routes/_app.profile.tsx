@@ -140,7 +140,9 @@ function ProfilePage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">Profile <span aria-hidden="true">/</span> Settings</nav>
+          <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
+            Profile <span aria-hidden="true">/</span> Settings
+          </nav>
           <h2 className="text-2xl font-bold tracking-tight">Profile &amp; Settings</h2>
           <p className="text-sm text-muted-foreground">
             {isAdmin
