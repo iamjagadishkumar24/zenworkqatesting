@@ -485,20 +485,36 @@ export function QAProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Batch realtime debug events via rAF so a burst of postgres_changes (e.g.
+  // bulk update) collapses into a single React state update instead of N.
+  const pendingEventsRef = useRef<RealtimeDebugEvent[]>([]);
+  const eventsFlushRef = useRef<number | null>(null);
+  const flushEvents = () => {
+    eventsFlushRef.current = null;
+    const batch = pendingEventsRef.current;
+    if (batch.length === 0) return;
+    pendingEventsRef.current = [];
+    const last = batch[0].at;
+    setRealtimeLastEventAt(last);
+    setRealtimeEvents((prev) => [...batch, ...prev].slice(0, 100));
+  };
   const pushEvent = (e: Omit<RealtimeDebugEvent, "id" | "at" | "role">) => {
     const at = new Date().toISOString();
-    setRealtimeLastEventAt(at);
-    setRealtimeEvents((prev) =>
-      [
-        {
-          ...e,
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          at,
-          role: roleRef.current,
-        },
-        ...prev,
-      ].slice(0, 100),
-    );
+    pendingEventsRef.current = [
+      {
+        ...e,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        at,
+        role: roleRef.current,
+      },
+      ...pendingEventsRef.current,
+    ].slice(0, 100);
+    if (eventsFlushRef.current != null) return;
+    if (typeof requestAnimationFrame === "function") {
+      eventsFlushRef.current = requestAnimationFrame(flushEvents);
+    } else {
+      eventsFlushRef.current = setTimeout(flushEvents, 16) as unknown as number;
+    }
   };
 
   // Auth lifecycle
