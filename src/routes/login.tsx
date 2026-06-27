@@ -530,10 +530,11 @@ export function LoginPage() {
                       </Label>
                       <Input
                         id="n"
+                        autoComplete="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40"
+                        className="h-11 border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                       />
                     </div>
                     <div>
@@ -543,10 +544,11 @@ export function LoginPage() {
                       <Input
                         id="se"
                         type="email"
+                        autoComplete="email"
                         value={sEmail}
                         onChange={(e) => setSEmail(e.target.value)}
                         required
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40"
+                        className="h-11 border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                       />
                     </div>
                     <div>
@@ -563,18 +565,66 @@ export function LoginPage() {
                           required
                           minLength={8}
                           maxLength={128}
-                          className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40"
+                          aria-describedby="sp-hint sp-meter"
+                          className="h-11 border-white/20 bg-white/10 pr-12 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                         />
                         <button
                           type="button"
                           onClick={() => setShowSPwd((v) => !v)}
                           aria-label={showSPwd ? "Hide password" : "Show password"}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white"
+                          aria-pressed={showSPwd}
+                          className="absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                         >
                           {showSPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
-                      <p className="mt-1 text-[10px] text-white/50">
+                      {(() => {
+                        const checks = [
+                          { ok: sPwd.length >= 8, label: "8+ chars" },
+                          { ok: /[A-Z]/.test(sPwd), label: "Uppercase" },
+                          { ok: /[a-z]/.test(sPwd), label: "Lowercase" },
+                          { ok: /[0-9]/.test(sPwd), label: "Number" },
+                          { ok: /[^A-Za-z0-9]/.test(sPwd), label: "Symbol" },
+                        ];
+                        const score = checks.filter((c) => c.ok).length;
+                        const tone =
+                          score <= 2
+                            ? "bg-red-400"
+                            : score === 3
+                              ? "bg-amber-400"
+                              : score === 4
+                                ? "bg-lime-400"
+                                : "bg-emerald-400";
+                        const label =
+                          score === 0
+                            ? ""
+                            : score <= 2
+                              ? "Weak"
+                              : score === 3
+                                ? "Fair"
+                                : score === 4
+                                  ? "Strong"
+                                  : "Excellent";
+                        return sPwd.length > 0 ? (
+                          <div
+                            id="sp-meter"
+                            className="mt-2 space-y-1"
+                            role="status"
+                            aria-live="polite"
+                          >
+                            <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+                              <div
+                                className={`${tone} transition-all duration-300`}
+                                style={{ width: `${(score / 5) * 100}%` }}
+                              />
+                            </div>
+                            <p className="text-[11px] text-white/70">
+                              Strength: <span className="font-medium text-white">{label}</span>
+                            </p>
+                          </div>
+                        ) : null;
+                      })()}
+                      <p id="sp-hint" className="mt-1 text-[11px] text-white/50">
                         Min 8 chars with uppercase, lowercase, number, and special character. No
                         spaces.
                       </p>
@@ -593,19 +643,23 @@ export function LoginPage() {
                           required
                           minLength={8}
                           maxLength={128}
-                          className="border-white/20 bg-white/10 pr-10 text-white placeholder:text-white/40"
+                          aria-invalid={sPwd2.length > 0 && sPwd !== sPwd2 ? true : undefined}
+                          className="h-11 border-white/20 bg-white/10 pr-12 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-white/60"
                         />
                         <button
                           type="button"
                           onClick={() => setShowSPwd2((v) => !v)}
                           aria-label={showSPwd2 ? "Hide password" : "Show password"}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-white/60 hover:bg-white/10 hover:text-white"
+                          aria-pressed={showSPwd2}
+                          className="absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                         >
                           {showSPwd2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                       {sPwd2.length > 0 && sPwd !== sPwd2 && (
-                        <p className="mt-1 text-[11px] text-red-200">Passwords do not match.</p>
+                        <p role="alert" className="mt-1 text-[11px] text-red-200">
+                          Passwords do not match.
+                        </p>
                       )}
                     </div>
                     {(() => {
@@ -625,7 +679,8 @@ export function LoginPage() {
                         <Button
                           type="submit"
                           disabled={signingUp || !canSubmit}
-                          className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white hover:from-indigo-400 hover:to-fuchsia-400"
+                          aria-busy={signingUp}
+                          className="h-11 w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-base font-semibold text-white shadow-lg shadow-indigo-900/30 transition hover:from-indigo-400 hover:to-fuchsia-400 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0"
                         >
                           {signingUp ? (
                             <>
