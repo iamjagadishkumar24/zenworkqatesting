@@ -12,12 +12,16 @@ import { TestingModule } from "./TestingModule";
 
 const ITEMS = [
   "TIN Match",
-  "W-9 Solicitation",
+  "W-9 Form",
+  "W-8 Form",
   "Bulk Upload",
   "Vendor Management",
   "State Filing",
   "E-Delivery",
   "Print & Mail",
+  "AI Chat Assistance",
+  "BOI Reporting",
+  "EFTPS",
 ];
 
 function renderTax1099(viewportWidth: number) {
