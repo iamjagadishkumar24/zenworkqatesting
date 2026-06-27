@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQA } from "@/lib/qa/store";
 import { useEnvironment } from "@/lib/qa/environment";
@@ -90,7 +90,10 @@ function EmptyBreakdown({ message }: { message: string }) {
 }
 
 function ReportsPage() {
-  const { defects: allDefects, loading } = useQA();
+  const { defects: allDefects, loading, currentUser } = useQA();
+  if (currentUser && currentUser.role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
   const { env } = useEnvironment();
   const { taxYear, setTaxYear } = useTaxYear();
   const search = Route.useSearch();
