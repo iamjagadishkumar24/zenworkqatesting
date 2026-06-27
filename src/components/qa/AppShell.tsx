@@ -341,10 +341,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
+                aria-busy={!currentUser?.name && !currentUser?.email ? true : undefined}
                 aria-label={
                   currentUser?.name
                     ? `Open account menu for ${currentUser.name}`
-                    : "Open account menu"
+                    : currentUser?.email
+                      ? "Open account menu"
+                      : "Loading account, please wait"
                 }
                 className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
@@ -360,9 +363,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </span>
                 ) : (
                   <span
-                    className="hidden sm:inline h-4 w-16 rounded bg-muted animate-pulse"
-                    aria-hidden="true"
-                  />
+                    role="status"
+                    aria-busy="true"
+                    aria-live="polite"
+                    aria-label="Loading account"
+                    className="hidden sm:inline-flex items-center"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="inline-block h-4 w-16 rounded bg-muted animate-pulse motion-reduce:animate-none"
+                    />
+                    <span className="sr-only">Loading your account…</span>
+                  </span>
                 )}
               </button>
             </DropdownMenuTrigger>
