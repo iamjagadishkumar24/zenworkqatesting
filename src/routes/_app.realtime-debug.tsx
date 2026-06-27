@@ -8,14 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Radio, Trash2, Activity, Clock, Wifi, RefreshCw, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/realtime-debug")({
-  component: RealtimeDebugPage,
+  component: RealtimeDebugRouteGate,
 });
 
 function RealtimeDebugPage() {
   const { realtimeEvents, clearRealtimeEvents, currentUser } = useQA();
-  if (currentUser && currentUser.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
   const role = currentUser?.role ?? "unknown";
 
   const [status, setStatus] = useState<string>("connecting");
