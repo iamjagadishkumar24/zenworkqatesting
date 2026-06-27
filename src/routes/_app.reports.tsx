@@ -65,7 +65,7 @@ function validateReportSearch(input: Record<string, unknown>): ReportSearch {
 
 export const Route = createFileRoute("/_app/reports")({
   validateSearch: validateReportSearch,
-  component: ReportsPage,
+  component: ReportsRouteGate,
 });
 
 const COLORS = [
