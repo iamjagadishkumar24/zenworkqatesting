@@ -187,7 +187,7 @@ function RealtimeDebugPage() {
             </div>
           ) : (
             <ul className="divide-y">
-              {realtimeEvents.map((e) => (
+              {realtimeEvents.map((e: RealtimeDebugEvent) => (
                 <li key={e.id} className="flex items-start gap-3 px-4 py-2 text-sm">
                   <span className="font-mono text-xs text-muted-foreground">
                     {new Date(e.at).toLocaleTimeString()}
