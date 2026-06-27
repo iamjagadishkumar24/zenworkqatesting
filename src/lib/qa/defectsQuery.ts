@@ -18,6 +18,7 @@ export type DefectQuerySpec = {
   module?: string;
   from?: string | null;
   to?: string | null;
+  state?: string;
 };
 
 export type DefectSort = { key: string; dir: "asc" | "desc" };
@@ -98,6 +99,7 @@ function applySpec<Q>(qIn: Q, spec: DefectQuerySpec): Q {
     q = q.or(`assigned_agent.eq.${spec.agent},created_by.eq.${spec.agent}`);
   if (spec.from) q = q.gte("created_at", spec.from);
   if (spec.to) q = q.lt("created_at", spec.to);
+  if (spec.state && spec.state !== "all") q = q.eq("state", spec.state);
 
   if (spec.validity === "Valid") q = q.eq("validity", "Valid");
   else if (spec.validity === "Invalid") q = q.eq("validity", "Invalid");
