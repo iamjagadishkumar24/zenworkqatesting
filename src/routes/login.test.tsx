@@ -5,13 +5,13 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 const loginMock = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (cfg: any) => cfg,
+  createFileRoute: () => (cfg: unknown) => cfg,
   useNavigate: () => vi.fn(),
   Navigate: () => null,
 }));
 
 vi.mock("@tanstack/react-start", () => ({
-  useServerFn: (fn: any) => fn,
+  useServerFn: <F,>(fn: F): F => fn,
 }));
 
 vi.mock("@/lib/qa/admin.functions", () => ({

@@ -5,8 +5,10 @@ const setEnvMock = vi.fn();
 const navigateMock = vi.fn();
 let prefsValue: { defaultLanding?: string } = { defaultLanding: "/dashboard" };
 
+import type { ComponentType } from "react";
+
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (cfg: any) => cfg,
+  createFileRoute: () => (cfg: unknown) => cfg,
   useNavigate: () => navigateMock,
 }));
 vi.mock("@/lib/qa/environment", () => ({
@@ -17,7 +19,9 @@ vi.mock("@/lib/qa/prefs", () => ({
 }));
 
 import { Route } from "./_app.select-environment";
-const SelectEnvironment = (Route as any).options?.component ?? (Route as any).component;
+type RouteWithComponent = { options?: { component?: ComponentType }; component?: ComponentType };
+const routeRef = Route as unknown as RouteWithComponent;
+const SelectEnvironment = (routeRef.options?.component ?? routeRef.component) as ComponentType;
 
 describe("SelectEnvironment route", () => {
   beforeEach(() => {

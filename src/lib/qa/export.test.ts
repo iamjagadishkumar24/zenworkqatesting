@@ -7,8 +7,8 @@ const h = vi.hoisted(() => ({
 
 vi.mock("sonner", () => ({
   toast: {
-    error: (...a: any[]) => h.toastError(...a),
-    success: (...a: any[]) => h.toastSuccess(...a),
+    error: (...a: unknown[]) => h.toastError(...a),
+    success: (...a: unknown[]) => h.toastSuccess(...a),
   },
 }));
 vi.mock("xlsx-js-style", () => ({
@@ -44,8 +44,8 @@ describe("exportCsv", () => {
   beforeEach(() => {
     h.toastError.mockClear();
     h.toastSuccess.mockClear();
-    (URL as any).createObjectURL = vi.fn(() => "blob:fake");
-    (URL as any).revokeObjectURL = vi.fn();
+    (URL as unknown as Record<string, unknown>).createObjectURL = vi.fn(() => "blob:fake");
+    (URL as unknown as Record<string, unknown>).revokeObjectURL = vi.fn();
   });
 
   it("toasts an error and does not download when rows are empty", () => {

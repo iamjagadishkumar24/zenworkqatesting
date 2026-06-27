@@ -1,13 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent, screen, act } from "@testing-library/react";
+import type { ComponentType } from "react";
+
+type Notif = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  defectId?: string;
+  environment: string;
+  read: boolean;
+  createdAt: string;
+};
 
 const markReadMock = vi.fn(async () => {});
 const navigateMock = vi.fn();
 let envValue: string | null = "Production";
-let notifs: any[] = [];
+let notifs: Notif[] = [];
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (cfg: any) => cfg,
+  createFileRoute: () => (cfg: unknown) => cfg,
   useNavigate: () => navigateMock,
 }));
 vi.mock("@/lib/qa/store", () => ({
@@ -18,9 +30,11 @@ vi.mock("@/lib/qa/environment", () => ({
 }));
 
 import { Route } from "./_app.notifications";
-const NotificationsPage = (Route as any).options?.component ?? (Route as any).component;
+type RouteWithComponent = { options?: { component?: ComponentType }; component?: ComponentType };
+const routeRef = Route as unknown as RouteWithComponent;
+const NotificationsPage = (routeRef.options?.component ?? routeRef.component) as ComponentType;
 
-const mkN = (over: any = {}) => ({
+const mkN = (over: Partial<Notif> = {}): Notif => ({
   id: "n" + Math.random(),
   type: "defect_update",
   title: "T",

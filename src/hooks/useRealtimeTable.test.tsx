@@ -6,8 +6,8 @@ import type { ReactNode } from "react";
 const invalidateQueries = vi.fn();
 const removeChannel = vi.fn();
 const subscribe = vi.fn(() => ({}));
-const onFn: any = vi.fn(() => ({ subscribe }));
-const channelFn: any = vi.fn(() => ({ on: onFn }));
+const onFn = vi.fn(() => ({ subscribe }));
+const channelFn = vi.fn(() => ({ on: onFn }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -20,7 +20,7 @@ import { useRealtimeTable } from "./useRealtimeTable";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient();
-  qc.invalidateQueries = invalidateQueries as any;
+  qc.invalidateQueries = invalidateQueries as unknown as typeof qc.invalidateQueries;
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
@@ -44,7 +44,7 @@ describe("useRealtimeTable", () => {
       { wrapper },
     );
     expect(channelFn).toHaveBeenCalledWith(expect.stringContaining("rt:defects:user_id=eq.1"));
-    const call = onFn.mock.calls[0] as any[];
+    const call = onFn.mock.calls[0] as unknown as unknown[];
     const cfg = call[1];
     const cb = call[2] as (p: unknown) => void;
     expect(cfg).toMatchObject({

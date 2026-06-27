@@ -1,12 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
+import type { ComponentType } from "react";
 import { canAccessRoute } from "@/lib/qa/scope";
 
-const navigateSpy = vi.fn(({ to }: { to: string }) => <div data-testid="nav">{to}</div>);
+type NavigateProps = { to: string; replace?: boolean };
+const navigateSpy = vi.fn((props: NavigateProps) => <div data-testid="nav">{props.to}</div>);
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (cfg: any) => cfg,
-  Navigate: (props: any) => navigateSpy(props),
+  createFileRoute: () => (cfg: unknown) => cfg,
+  Navigate: (props: NavigateProps) => navigateSpy(props),
 }));
 
 let mockUser: { name: string; role: "admin" | "agent" } | null = null;
@@ -16,7 +18,9 @@ vi.mock("@/lib/qa/store", () => ({
 
 import { Route as IndexRoute } from "./index";
 
-const Index = (IndexRoute as any).options?.component ?? (IndexRoute as any).component;
+type RouteWithComponent = { options?: { component?: ComponentType }; component?: ComponentType };
+const routeRef = IndexRoute as unknown as RouteWithComponent;
+const Index = (routeRef.options?.component ?? routeRef.component) as ComponentType;
 
 describe("landing redirect + session persistence", () => {
   it("redirects unauthenticated visitor to /login", () => {

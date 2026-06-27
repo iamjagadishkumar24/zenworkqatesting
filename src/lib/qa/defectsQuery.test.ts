@@ -138,37 +138,45 @@ describe("queryDefectsPage", () => {
   });
 
   it("statusGroup variants apply expected filters", async () => {
-    for (const [grp, check] of [
-      ["Fixed", (calls: any[]) => calls.some((c) => c.method === "in" && c.args[0] === "status")],
+    type Call = { method: string; args: unknown[] };
+    type CheckFn = (calls: Call[]) => boolean;
+    const cases: Array<[string, CheckFn]> = [
+      ["Fixed", (calls) => calls.some((c) => c.method === "in" && c.args[0] === "status")],
       [
         "Retest Required",
-        (calls: any[]) => calls.some((c) => c.method === "eq" && c.args[1] === "Retest Required"),
+        (calls) => calls.some((c) => c.method === "eq" && c.args[1] === "Retest Required"),
       ],
       [
         "Valid",
-        (calls: any[]) =>
+        (calls) =>
           calls.some((c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Valid"),
       ],
       [
         "Invalid",
-        (calls: any[]) =>
+        (calls) =>
           calls.some(
             (c) => c.method === "eq" && c.args[0] === "validity" && c.args[1] === "Invalid",
           ),
       ],
       [
         "Pending Review",
-        (calls: any[]) =>
+        (calls) =>
           calls.some((c) => c.method === "or" && String(c.args[0]).includes("Unverified")),
       ],
       [
         "all",
-        (calls: any[]) =>
+        (calls) =>
           !calls.some((c) => c.method === "in" || (c.method === "eq" && c.args[0] === "validity")),
       ],
-    ] as const) {
+    ];
+    for (const [grp, check] of cases) {
       supa.builders.length = 0;
-      await queryDefectsPage({ statusGroup: grp as any }, { key: "id", dir: "asc" }, 1, 10);
+      await queryDefectsPage(
+        { statusGroup: grp as Parameters<typeof queryDefectsPage>[0]["statusGroup"] },
+        { key: "id", dir: "asc" },
+        1,
+        10,
+      );
       expect(check(lastCalls())).toBe(true);
     }
   });
