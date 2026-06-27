@@ -460,6 +460,7 @@ function Dashboard() {
           </div>
         )}
       </section>
+      <StateFilingWidgets defects={scopedDefects} />
     </div>
   );
 }
