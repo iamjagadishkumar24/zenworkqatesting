@@ -101,6 +101,14 @@ describeIfEnv('SECURITY DEFINER RPCs — anonymous callers are denied', () => {
           _role: 'admin',
         }),
     },
+    {
+      name: 'log_activity',
+      call: async () =>
+        await anon.rpc('log_activity', {
+          _category: 'test',
+          _action: 'anon.attempt',
+        }),
+    },
   ];
 
   it.each(cases)('anon → $name is denied at the API layer', async ({ call }) => {
@@ -128,6 +136,21 @@ describeIfEnv('Role-gated tables — anonymous SELECT is denied', () => {
     'user_preferences',
     'export_jobs',
     'export_audit_log',
+    'agent_invites',
+    'app_settings',
+    'defect_audit_log',
+    'defect_comments',
+    'defects',
+    'email_log',
+    'forms',
+    'id_sequences',
+    'notes',
+    'profiles',
+    'qa_runtime_config_audit',
+    'report_views',
+    'retest_assignment_forms',
+    'retest_assignments',
+    'retest_pending_assignments',
   ];
 
   it.each(tables.map((t) => ({ table: t })))(
@@ -218,5 +241,26 @@ describeIfAgent(
         expect(isAdminGuardRejection(error)).toBe(false);
       }
     });
+
+    it.each([
+      { name: 'current_user_name', args: undefined },
+      { name: 'has_role', args: { _user_id: '00000000-0000-0000-0000-000000000000', _role: 'admin' as const } },
+      { name: 'user_id_for_name', args: { _name: 'nobody' } },
+      {
+        name: 'log_activity',
+        args: { _category: 'test', _action: 'auth.attempt' },
+      },
+    ])(
+      'non-admin → $name IS allowed (authenticated grant)',
+      async ({ name, args }) => {
+        const { error } = args
+          ? await (client.rpc as (n: string, a: unknown) => Promise<{ error: unknown }>)(name, args)
+          : await (client.rpc as (n: string) => Promise<{ error: unknown }>)(name);
+        if (error) {
+          expect(isPermissionDenied(error as { code?: string; message?: string })).toBe(false);
+          expect(isAdminGuardRejection(error as { message?: string })).toBe(false);
+        }
+      },
+    );
   },
 );
