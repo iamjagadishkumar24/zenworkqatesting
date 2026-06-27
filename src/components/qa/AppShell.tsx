@@ -33,6 +33,7 @@ import { useEnvironment } from "@/lib/qa/environment";
 import { useTaxYear } from "@/lib/qa/taxYear";
 import { TAX_YEARS } from "@/lib/qa/constants";
 import { usePrefs } from "@/lib/qa/prefs";
+import { getFirstName } from "@/lib/qa/displayName";
 import { UserAvatar } from "./UserAvatar";
 import { BrandLogo } from "./BrandLogo";
 import {
@@ -353,7 +354,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   avatarUrl={currentUser?.avatarUrl}
                   size="md"
                 />
-                <span className="hidden text-sm font-medium sm:inline">{currentUser?.name}</span>
+                <span className="hidden text-sm font-medium sm:inline">
+                  {getFirstName(currentUser?.name, currentUser?.email)}
+                </span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
