@@ -1051,6 +1051,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         assignedAgent: "assigned_agent",
         qbDesktopCategory: "quickbooks_desktop_category",
         schedules: "schedules",
+        state: "state",
       };
       for (const [k, dbk] of Object.entries(map)) {
         if (k in patch) dbPatch[dbk] = (patch as Record<string, unknown>)[k];
