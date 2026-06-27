@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within, waitFor } from "@testing-library/react";
 
-const toastSuccess = vi.fn();
-const toastError = vi.fn();
 vi.mock("sonner", () => ({
-  toast: { success: toastSuccess, error: toastError, info: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
+import { toast } from "sonner";
+const toastSuccess = toast.success as unknown as ReturnType<typeof vi.fn>;
+const toastError = toast.error as unknown as ReturnType<typeof vi.fn>;
 
 // Trim MODULE_OPTIONS so we can exercise search + pagination predictably.
 vi.mock("@/lib/qa/constants", () => ({
