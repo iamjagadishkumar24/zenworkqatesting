@@ -107,7 +107,7 @@ function ReportedErrorsPage() {
     const t = setTimeout(() => {
       navigate({
         to: "/my-reported-errors",
-        search: trimmed ? { q: trimmed } : ({} as never),
+        search: (prev) => ({ ...prev, q: trimmed || undefined }),
         replace: true,
       });
     }, 250);

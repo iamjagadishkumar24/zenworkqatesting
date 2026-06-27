@@ -120,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const trimmed = value.trim();
     navigate({
       to: "/my-reported-errors",
-      search: trimmed ? { q: trimmed } : ({} as never),
+      search: (prev) => ({ ...prev, q: trimmed || undefined }),
       replace: path === "/my-reported-errors",
     });
   };

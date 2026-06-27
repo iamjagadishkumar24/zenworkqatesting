@@ -7,5 +7,5 @@ export const Route = createFileRoute("/_app/defects")({
     q: typeof s.q === "string" ? s.q : undefined,
     filter: typeof s.filter === "string" ? s.filter : undefined,
   }),
-  component: () => <Navigate to="/my-reported-errors" replace />,
+  component: () => <Navigate to="/my-reported-errors" search={{ q: undefined, preset: undefined }} replace />,
 });

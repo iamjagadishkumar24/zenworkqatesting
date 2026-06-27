@@ -89,7 +89,9 @@ export function LoginPage() {
         setEmail(saved);
         setRemember(true);
       }
-    } catch {}
+    } catch {
+      // localStorage unavailable (private mode, SSR) — ignore
+    }
   }, []);
 
   if (currentUser && ready)
@@ -170,7 +172,9 @@ export function LoginPage() {
     try {
       if (remember) localStorage.setItem("zenwork.rememberEmail", cleanEmail);
       else localStorage.removeItem("zenwork.rememberEmail");
-    } catch {}
+    } catch {
+      // localStorage unavailable — non-fatal
+    }
     toast.success("Welcome back");
     navigate({ to: env ? "/dashboard" : "/select-environment" });
   };
