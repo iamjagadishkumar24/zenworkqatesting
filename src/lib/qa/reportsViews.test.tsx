@@ -77,6 +77,7 @@ const BLANK: ReportFilters = {
   dateRange: "",
   fromDate: "",
   toDate: "",
+  state: "",
 };
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
