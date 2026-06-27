@@ -1007,6 +1007,7 @@ export function QAProvider({ children }: { children: ReactNode }) {
         updated_by: me.name,
         quickbooks_desktop_category: d.qbDesktopCategory ?? null,
         schedules: Array.isArray(d.schedules) ? d.schedules : [],
+        state: d.state ?? null,
       } as never);
       if (error) return { ok: false, error: error.message };
       return { ok: true };
