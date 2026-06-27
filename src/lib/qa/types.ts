@@ -130,6 +130,8 @@ export type Defect = {
   environment?: Environment;
   assignedAgent: string;
   qbDesktopCategory?: QbDesktopCategory;
+  /** USPS 2-letter U.S. state / territory code. Required for State Filing reports. */
+  state?: string;
   createdAt: string;
   updatedAt: string;
   updatedBy: string;
