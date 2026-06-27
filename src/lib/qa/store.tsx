@@ -1205,11 +1205,64 @@ export function QAProvider({ children }: { children: ReactNode }) {
     },
   };
 
-  return <Context.Provider value={ctx}>{children}</Context.Provider>;
+  // Memoize main ctx so its identity is stable when realtime-debug state
+  // (events/status/channel) bumps. Without this, every realtime message
+  // re-renders every useQA() consumer across the app.
+  const memoCtx = useMemo(
+    () => ctx,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      state,
+      runtimeConfig.liveEnabled,
+      runtimeConfig.performanceMode,
+    ],
+  );
+
+  // Realtime-debug state is consumed only by the admin Realtime Debug page.
+  // Isolating it in its own context prevents high-frequency realtime events
+  // from re-rendering the entire app.
+  const rtDebug = useMemo(
+    () => ({
+      realtimeEvents,
+      realtimeStatus,
+      realtimeChannelName,
+      realtimeReconnectAttempts,
+      realtimeLastEventAt,
+      clearRealtimeEvents: () => setRealtimeEvents([]),
+    }),
+    [
+      realtimeEvents,
+      realtimeStatus,
+      realtimeChannelName,
+      realtimeReconnectAttempts,
+      realtimeLastEventAt,
+    ],
+  );
+
+  return (
+    <Context.Provider value={memoCtx}>
+      <RealtimeDebugContext.Provider value={rtDebug}>{children}</RealtimeDebugContext.Provider>
+    </Context.Provider>
+  );
 }
 
 export function useQA() {
   const c = useContext(Context);
   if (!c) throw new Error("useQA must be used within QAProvider");
+  return c;
+}
+
+export type RealtimeDebugCtx = {
+  realtimeEvents: RealtimeDebugEvent[];
+  realtimeStatus: RealtimeStatus;
+  realtimeChannelName: string | null;
+  realtimeReconnectAttempts: number;
+  realtimeLastEventAt: string | null;
+  clearRealtimeEvents: () => void;
+};
+const RealtimeDebugContext = createContext<RealtimeDebugCtx | null>(null);
+export function useRealtimeDebug(): RealtimeDebugCtx {
+  const c = useContext(RealtimeDebugContext);
+  if (!c) throw new Error("useRealtimeDebug must be used within QAProvider");
   return c;
 }
