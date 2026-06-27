@@ -18,6 +18,7 @@ import { Route as AppTax1099FeaturesRouteImport } from './routes/_app.tax1099-fe
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSelectEnvironmentRouteImport } from './routes/_app.select-environment'
 import { Route as AppRetestRouteImport } from './routes/_app.retest'
+import { Route as AppReportedErrorsRouteImport } from './routes/_app.reported-errors'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppOnline1099RouteImport } from './routes/_app.online-1099'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
@@ -95,6 +96,11 @@ const AppSelectEnvironmentRoute = AppSelectEnvironmentRouteImport.update({
 const AppRetestRoute = AppRetestRouteImport.update({
   id: '/retest',
   path: '/retest',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportedErrorsRoute = AppReportedErrorsRouteImport.update({
+  id: '/reported-errors',
+  path: '/reported-errors',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -292,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/profile': typeof AppProfileRoute
+  '/reported-errors': typeof AppReportedErrorsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
@@ -335,6 +342,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AppNotificationsRoute
   '/online-1099': typeof AppOnline1099Route
   '/profile': typeof AppProfileRoute
+  '/reported-errors': typeof AppReportedErrorsRoute
   '/retest': typeof AppRetestRoute
   '/select-environment': typeof AppSelectEnvironmentRoute
   '/settings': typeof AppSettingsRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/online-1099': typeof AppOnline1099Route
   '/_app/profile': typeof AppProfileRoute
+  '/_app/reported-errors': typeof AppReportedErrorsRoute
   '/_app/retest': typeof AppRetestRoute
   '/_app/select-environment': typeof AppSelectEnvironmentRoute
   '/_app/settings': typeof AppSettingsRoute
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/online-1099'
     | '/profile'
+    | '/reported-errors'
     | '/retest'
     | '/select-environment'
     | '/settings'
@@ -468,6 +478,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/online-1099'
     | '/profile'
+    | '/reported-errors'
     | '/retest'
     | '/select-environment'
     | '/settings'
@@ -512,6 +523,7 @@ export interface FileRouteTypes {
     | '/_app/notifications'
     | '/_app/online-1099'
     | '/_app/profile'
+    | '/_app/reported-errors'
     | '/_app/retest'
     | '/_app/select-environment'
     | '/_app/settings'
@@ -608,6 +620,13 @@ declare module '@tanstack/react-router' {
       path: '/retest'
       fullPath: '/retest'
       preLoaderRoute: typeof AppRetestRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reported-errors': {
+      id: '/_app/reported-errors'
+      path: '/reported-errors'
+      fullPath: '/reported-errors'
+      preLoaderRoute: typeof AppReportedErrorsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/profile': {
@@ -917,6 +936,7 @@ interface AppRouteChildren {
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnline1099Route: typeof AppOnline1099Route
   AppProfileRoute: typeof AppProfileRoute
+  AppReportedErrorsRoute: typeof AppReportedErrorsRoute
   AppRetestRoute: typeof AppRetestRoute
   AppSelectEnvironmentRoute: typeof AppSelectEnvironmentRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -943,6 +963,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnline1099Route: AppOnline1099Route,
   AppProfileRoute: AppProfileRoute,
+  AppReportedErrorsRoute: AppReportedErrorsRoute,
   AppRetestRoute: AppRetestRoute,
   AppSelectEnvironmentRoute: AppSelectEnvironmentRoute,
   AppSettingsRoute: AppSettingsRoute,
