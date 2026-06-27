@@ -253,9 +253,11 @@ describeIfAgent(
     ])(
       'non-admin → $name IS allowed (authenticated grant)',
       async ({ name, args }) => {
-        const { error } = args
-          ? await (client.rpc as (n: string, a: unknown) => Promise<{ error: unknown }>)(name, args)
-          : await (client.rpc as (n: string) => Promise<{ error: unknown }>)(name);
+        const rpc = client.rpc as unknown as (
+          n: string,
+          a?: unknown,
+        ) => Promise<{ error: unknown }>;
+        const { error } = await rpc(name, args);
         if (error) {
           expect(isPermissionDenied(error as { code?: string; message?: string })).toBe(false);
           expect(isAdminGuardRejection(error as { message?: string })).toBe(false);
