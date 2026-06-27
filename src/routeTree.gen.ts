@@ -31,6 +31,7 @@ import { Route as AppExcelImportTestingRouteImport } from './routes/_app.excel-i
 import { Route as AppDefectsRouteImport } from './routes/_app.defects'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppChatbotTestingRouteImport } from './routes/_app.chatbot-testing'
+import { Route as AppAdminRouteImport } from './routes/_app._admin'
 import { Route as App990FormsRouteImport } from './routes/_app.990-forms'
 import { Route as App2290FormsRouteImport } from './routes/_app.2290-forms'
 import { Route as ApiPublicManifestRouteImport } from './routes/api/public/manifest'
@@ -151,6 +152,10 @@ const AppChatbotTestingRoute = AppChatbotTestingRouteImport.update({
   path: '/chatbot-testing',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => AppRoute,
+} as any)
 const App990FormsRoute = App990FormsRouteImport.update({
   id: '/990-forms',
   path: '/990-forms',
@@ -177,29 +182,29 @@ const AppTasksTaskIdRoute = AppTasksTaskIdRouteImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminReportsRoute = AppAdminReportsRouteImport.update({
-  id: '/_admin/reports',
+  id: '/reports',
   path: '/reports',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminRealtimeDebugRoute = AppAdminRealtimeDebugRouteImport.update({
-  id: '/_admin/realtime-debug',
+  id: '/realtime-debug',
   path: '/realtime-debug',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminAuthEventsRoute = AppAdminAuthEventsRouteImport.update({
-  id: '/_admin/auth-events',
+  id: '/auth-events',
   path: '/auth-events',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminAuditLogRoute = AppAdminAuditLogRouteImport.update({
-  id: '/_admin/audit-log',
+  id: '/audit-log',
   path: '/audit-log',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminAgentsRoute = AppAdminAgentsRouteImport.update({
-  id: '/_admin/agents',
+  id: '/agents',
   path: '/agents',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AppAdminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -276,6 +281,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_app/2290-forms': typeof App2290FormsRoute
   '/_app/990-forms': typeof App990FormsRoute
+  '/_app/_admin': typeof AppAdminRouteWithChildren
   '/_app/chatbot-testing': typeof AppChatbotTestingRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/defects': typeof AppDefectsRoute
@@ -378,6 +384,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_app/2290-forms'
     | '/_app/990-forms'
+    | '/_app/_admin'
     | '/_app/chatbot-testing'
     | '/_app/dashboard'
     | '/_app/defects'
@@ -571,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatbotTestingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/_admin': {
+      id: '/_app/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/990-forms': {
       id: '/_app/990-forms'
       path: '/990-forms'
@@ -611,42 +625,63 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof AppAdminReportsRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppAdminRoute
     }
     '/_app/_admin/realtime-debug': {
       id: '/_app/_admin/realtime-debug'
       path: '/realtime-debug'
       fullPath: '/realtime-debug'
       preLoaderRoute: typeof AppAdminRealtimeDebugRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppAdminRoute
     }
     '/_app/_admin/auth-events': {
       id: '/_app/_admin/auth-events'
       path: '/auth-events'
       fullPath: '/auth-events'
       preLoaderRoute: typeof AppAdminAuthEventsRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppAdminRoute
     }
     '/_app/_admin/audit-log': {
       id: '/_app/_admin/audit-log'
       path: '/audit-log'
       fullPath: '/audit-log'
       preLoaderRoute: typeof AppAdminAuditLogRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppAdminRoute
     }
     '/_app/_admin/agents': {
       id: '/_app/_admin/agents'
       path: '/agents'
       fullPath: '/agents'
       preLoaderRoute: typeof AppAdminAgentsRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppAdminRoute
     }
   }
 }
 
+interface AppAdminRouteChildren {
+  AppAdminAgentsRoute: typeof AppAdminAgentsRoute
+  AppAdminAuditLogRoute: typeof AppAdminAuditLogRoute
+  AppAdminAuthEventsRoute: typeof AppAdminAuthEventsRoute
+  AppAdminRealtimeDebugRoute: typeof AppAdminRealtimeDebugRoute
+  AppAdminReportsRoute: typeof AppAdminReportsRoute
+}
+
+const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminAgentsRoute: AppAdminAgentsRoute,
+  AppAdminAuditLogRoute: AppAdminAuditLogRoute,
+  AppAdminAuthEventsRoute: AppAdminAuthEventsRoute,
+  AppAdminRealtimeDebugRoute: AppAdminRealtimeDebugRoute,
+  AppAdminReportsRoute: AppAdminReportsRoute,
+}
+
+const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
+  AppAdminRouteChildren,
+)
+
 interface AppRouteChildren {
   App2290FormsRoute: typeof App2290FormsRoute
   App990FormsRoute: typeof App990FormsRoute
+  AppAdminRoute: typeof AppAdminRouteWithChildren
   AppChatbotTestingRoute: typeof AppChatbotTestingRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDefectsRoute: typeof AppDefectsRoute
@@ -665,17 +700,13 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppTax1099FeaturesRoute: typeof AppTax1099FeaturesRoute
   AppZenworkPaymentsRoute: typeof AppZenworkPaymentsRoute
-  AppAdminAgentsRoute: typeof AppAdminAgentsRoute
-  AppAdminAuditLogRoute: typeof AppAdminAuditLogRoute
-  AppAdminAuthEventsRoute: typeof AppAdminAuthEventsRoute
-  AppAdminRealtimeDebugRoute: typeof AppAdminRealtimeDebugRoute
-  AppAdminReportsRoute: typeof AppAdminReportsRoute
   AppTasksTaskIdRoute: typeof AppTasksTaskIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   App2290FormsRoute: App2290FormsRoute,
   App990FormsRoute: App990FormsRoute,
+  AppAdminRoute: AppAdminRouteWithChildren,
   AppChatbotTestingRoute: AppChatbotTestingRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDefectsRoute: AppDefectsRoute,
@@ -694,11 +725,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppTax1099FeaturesRoute: AppTax1099FeaturesRoute,
   AppZenworkPaymentsRoute: AppZenworkPaymentsRoute,
-  AppAdminAgentsRoute: AppAdminAgentsRoute,
-  AppAdminAuditLogRoute: AppAdminAuditLogRoute,
-  AppAdminAuthEventsRoute: AppAdminAuthEventsRoute,
-  AppAdminRealtimeDebugRoute: AppAdminRealtimeDebugRoute,
-  AppAdminReportsRoute: AppAdminReportsRoute,
   AppTasksTaskIdRoute: AppTasksTaskIdRoute,
 }
 
