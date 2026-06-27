@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, BellOff, CheckCheck } from "lucide-react";
 import {
@@ -19,6 +19,8 @@ export function NotificationsBell() {
   const { env } = useEnvironment();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+  const prevUnreadRef = useRef<number | null>(null);
 
   const items = useMemo(() => {
     if (!currentUser) return [];
@@ -29,23 +31,50 @@ export function NotificationsBell() {
 
   const unread = items.filter((i) => !i.read).length;
 
+  useEffect(() => {
+    const prev = prevUnreadRef.current;
+    if (prev !== null && unread > prev && !open) {
+      const diff = unread - prev;
+      setAnnouncement(
+        `${diff} new notification${diff === 1 ? "" : "s"}. ${unread} unread total.`,
+      );
+    }
+    prevUnreadRef.current = unread;
+  }, [unread, open]);
+
   const markAll = () => {
     const ids = items.filter((i) => !i.read).map((i) => i.id);
     if (ids.length) void markNotificationsRead(ids);
   };
 
   return (
+    <>
+    <span
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      className="sr-only"
+      data-testid="notifications-live-region"
+    >
+      {announcement}
+    </span>
     <DropdownMenu
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
         if (o && unread > 0) markAll();
+        setAnnouncement(
+          o
+            ? `Notifications panel opened. ${items.length === 0 ? "No notifications." : `${items.length} notification${items.length === 1 ? "" : "s"}, ${unread} unread.`}`
+            : "Notifications panel closed.",
+        );
       }}
     >
       <DropdownMenuTrigger asChild>
         <button
           className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-accent transition-colors"
           aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}
+          aria-haspopup="menu"
         >
           <Bell className="h-4 w-4" />
           {unread > 0 && (
@@ -106,5 +135,6 @@ export function NotificationsBell() {
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   );
 }
