@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+type ReportViewsFilters = Database["public"]["Tables"]["report_views"]["Insert"]["filters"];
 
 export type ReportFilters = {
   status: string;
