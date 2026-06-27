@@ -45,7 +45,13 @@ import { Route as AppAdminAuthEventsRouteImport } from './routes/_app._admin.aut
 import { Route as AppAdminAuditLogRouteImport } from './routes/_app._admin.audit-log'
 import { Route as AppAdminAgentsRouteImport } from './routes/_app._admin.agents'
 import { Route as AppAdminReportsIndexRouteImport } from './routes/_app._admin.reports.index'
+import { Route as AppAdminReportsUserRouteImport } from './routes/_app._admin.reports.user'
+import { Route as AppAdminReportsScheduledRouteImport } from './routes/_app._admin.reports.scheduled'
 import { Route as AppAdminReportsPerformanceRouteImport } from './routes/_app._admin.reports.performance'
+import { Route as AppAdminReportsExportCenterRouteImport } from './routes/_app._admin.reports.export-center'
+import { Route as AppAdminReportsAuditRouteImport } from './routes/_app._admin.reports.audit'
+import { Route as AppAdminReportsAnalyticsRouteImport } from './routes/_app._admin.reports.analytics'
+import { Route as AppAdminReportsActivityRouteImport } from './routes/_app._admin.reports.activity'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -226,12 +232,45 @@ const AppAdminReportsIndexRoute = AppAdminReportsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppAdminReportsRoute,
 } as any)
+const AppAdminReportsUserRoute = AppAdminReportsUserRouteImport.update({
+  id: '/user',
+  path: '/user',
+  getParentRoute: () => AppAdminReportsRoute,
+} as any)
+const AppAdminReportsScheduledRoute =
+  AppAdminReportsScheduledRouteImport.update({
+    id: '/scheduled',
+    path: '/scheduled',
+    getParentRoute: () => AppAdminReportsRoute,
+  } as any)
 const AppAdminReportsPerformanceRoute =
   AppAdminReportsPerformanceRouteImport.update({
     id: '/performance',
     path: '/performance',
     getParentRoute: () => AppAdminReportsRoute,
   } as any)
+const AppAdminReportsExportCenterRoute =
+  AppAdminReportsExportCenterRouteImport.update({
+    id: '/export-center',
+    path: '/export-center',
+    getParentRoute: () => AppAdminReportsRoute,
+  } as any)
+const AppAdminReportsAuditRoute = AppAdminReportsAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AppAdminReportsRoute,
+} as any)
+const AppAdminReportsAnalyticsRoute =
+  AppAdminReportsAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AppAdminReportsRoute,
+  } as any)
+const AppAdminReportsActivityRoute = AppAdminReportsActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AppAdminReportsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -267,7 +306,13 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
+  '/reports/activity': typeof AppAdminReportsActivityRoute
+  '/reports/analytics': typeof AppAdminReportsAnalyticsRoute
+  '/reports/audit': typeof AppAdminReportsAuditRoute
+  '/reports/export-center': typeof AppAdminReportsExportCenterRoute
   '/reports/performance': typeof AppAdminReportsPerformanceRoute
+  '/reports/scheduled': typeof AppAdminReportsScheduledRoute
+  '/reports/user': typeof AppAdminReportsUserRoute
   '/reports/': typeof AppAdminReportsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -303,7 +348,13 @@ export interface FileRoutesByTo {
   '/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
+  '/reports/activity': typeof AppAdminReportsActivityRoute
+  '/reports/analytics': typeof AppAdminReportsAnalyticsRoute
+  '/reports/audit': typeof AppAdminReportsAuditRoute
+  '/reports/export-center': typeof AppAdminReportsExportCenterRoute
   '/reports/performance': typeof AppAdminReportsPerformanceRoute
+  '/reports/scheduled': typeof AppAdminReportsScheduledRoute
+  '/reports/user': typeof AppAdminReportsUserRoute
   '/reports': typeof AppAdminReportsIndexRoute
 }
 export interface FileRoutesById {
@@ -343,7 +394,13 @@ export interface FileRoutesById {
   '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/manifest': typeof ApiPublicManifestRoute
+  '/_app/_admin/reports/activity': typeof AppAdminReportsActivityRoute
+  '/_app/_admin/reports/analytics': typeof AppAdminReportsAnalyticsRoute
+  '/_app/_admin/reports/audit': typeof AppAdminReportsAuditRoute
+  '/_app/_admin/reports/export-center': typeof AppAdminReportsExportCenterRoute
   '/_app/_admin/reports/performance': typeof AppAdminReportsPerformanceRoute
+  '/_app/_admin/reports/scheduled': typeof AppAdminReportsScheduledRoute
+  '/_app/_admin/reports/user': typeof AppAdminReportsUserRoute
   '/_app/_admin/reports/': typeof AppAdminReportsIndexRoute
 }
 export interface FileRouteTypes {
@@ -382,7 +439,13 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
+    | '/reports/activity'
+    | '/reports/analytics'
+    | '/reports/audit'
+    | '/reports/export-center'
     | '/reports/performance'
+    | '/reports/scheduled'
+    | '/reports/user'
     | '/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -418,7 +481,13 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
+    | '/reports/activity'
+    | '/reports/analytics'
+    | '/reports/audit'
+    | '/reports/export-center'
     | '/reports/performance'
+    | '/reports/scheduled'
+    | '/reports/user'
     | '/reports'
   id:
     | '__root__'
@@ -457,7 +526,13 @@ export interface FileRouteTypes {
     | '/_app/tasks/$taskId'
     | '/api/public/app-version'
     | '/api/public/manifest'
+    | '/_app/_admin/reports/activity'
+    | '/_app/_admin/reports/analytics'
+    | '/_app/_admin/reports/audit'
+    | '/_app/_admin/reports/export-center'
     | '/_app/_admin/reports/performance'
+    | '/_app/_admin/reports/scheduled'
+    | '/_app/_admin/reports/user'
     | '/_app/_admin/reports/'
   fileRoutesById: FileRoutesById
 }
@@ -724,6 +799,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminReportsIndexRouteImport
       parentRoute: typeof AppAdminReportsRoute
     }
+    '/_app/_admin/reports/user': {
+      id: '/_app/_admin/reports/user'
+      path: '/user'
+      fullPath: '/reports/user'
+      preLoaderRoute: typeof AppAdminReportsUserRouteImport
+      parentRoute: typeof AppAdminReportsRoute
+    }
+    '/_app/_admin/reports/scheduled': {
+      id: '/_app/_admin/reports/scheduled'
+      path: '/scheduled'
+      fullPath: '/reports/scheduled'
+      preLoaderRoute: typeof AppAdminReportsScheduledRouteImport
+      parentRoute: typeof AppAdminReportsRoute
+    }
     '/_app/_admin/reports/performance': {
       id: '/_app/_admin/reports/performance'
       path: '/performance'
@@ -731,16 +820,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminReportsPerformanceRouteImport
       parentRoute: typeof AppAdminReportsRoute
     }
+    '/_app/_admin/reports/export-center': {
+      id: '/_app/_admin/reports/export-center'
+      path: '/export-center'
+      fullPath: '/reports/export-center'
+      preLoaderRoute: typeof AppAdminReportsExportCenterRouteImport
+      parentRoute: typeof AppAdminReportsRoute
+    }
+    '/_app/_admin/reports/audit': {
+      id: '/_app/_admin/reports/audit'
+      path: '/audit'
+      fullPath: '/reports/audit'
+      preLoaderRoute: typeof AppAdminReportsAuditRouteImport
+      parentRoute: typeof AppAdminReportsRoute
+    }
+    '/_app/_admin/reports/analytics': {
+      id: '/_app/_admin/reports/analytics'
+      path: '/analytics'
+      fullPath: '/reports/analytics'
+      preLoaderRoute: typeof AppAdminReportsAnalyticsRouteImport
+      parentRoute: typeof AppAdminReportsRoute
+    }
+    '/_app/_admin/reports/activity': {
+      id: '/_app/_admin/reports/activity'
+      path: '/activity'
+      fullPath: '/reports/activity'
+      preLoaderRoute: typeof AppAdminReportsActivityRouteImport
+      parentRoute: typeof AppAdminReportsRoute
+    }
   }
 }
 
 interface AppAdminReportsRouteChildren {
+  AppAdminReportsActivityRoute: typeof AppAdminReportsActivityRoute
+  AppAdminReportsAnalyticsRoute: typeof AppAdminReportsAnalyticsRoute
+  AppAdminReportsAuditRoute: typeof AppAdminReportsAuditRoute
+  AppAdminReportsExportCenterRoute: typeof AppAdminReportsExportCenterRoute
   AppAdminReportsPerformanceRoute: typeof AppAdminReportsPerformanceRoute
+  AppAdminReportsScheduledRoute: typeof AppAdminReportsScheduledRoute
+  AppAdminReportsUserRoute: typeof AppAdminReportsUserRoute
   AppAdminReportsIndexRoute: typeof AppAdminReportsIndexRoute
 }
 
 const AppAdminReportsRouteChildren: AppAdminReportsRouteChildren = {
+  AppAdminReportsActivityRoute: AppAdminReportsActivityRoute,
+  AppAdminReportsAnalyticsRoute: AppAdminReportsAnalyticsRoute,
+  AppAdminReportsAuditRoute: AppAdminReportsAuditRoute,
+  AppAdminReportsExportCenterRoute: AppAdminReportsExportCenterRoute,
   AppAdminReportsPerformanceRoute: AppAdminReportsPerformanceRoute,
+  AppAdminReportsScheduledRoute: AppAdminReportsScheduledRoute,
+  AppAdminReportsUserRoute: AppAdminReportsUserRoute,
   AppAdminReportsIndexRoute: AppAdminReportsIndexRoute,
 }
 
