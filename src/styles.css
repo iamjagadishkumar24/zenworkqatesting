@@ -228,11 +228,9 @@
   /* Image and SVG defaults: prevent the common max-width regression and the
      baseline-gap that creates a 4px layout shift under <img> tags. */
   img,
-  svg,
   video {
     display: block;
     max-width: 100%;
-  }
   }
 }
 
