@@ -14,11 +14,14 @@ export interface MockResult<T = unknown> {
   count?: number | null;
 }
 
+// `setResult` / `then` accept any MockResult shape so that builders typed
+// for a specific row type remain assignment-compatible with the generic
+// `QueryBuilder<unknown>` collected inside `createSupabaseMock`.
 export type QueryBuilder<T = unknown> = {
   calls: ChainCall[];
   _result: MockResult<T>;
-  setResult: (r: MockResult<T>) => void;
-  then: (resolve: (v: MockResult<T>) => unknown) => Promise<unknown>;
+  setResult: (r: MockResult<unknown>) => void;
+  then: (resolve: (v: MockResult<unknown>) => unknown) => Promise<unknown>;
 } & Record<string, Mock>;
 
 export function createQueryBuilder<T = unknown>(
@@ -66,10 +69,10 @@ export function createQueryBuilder<T = unknown>(
       return builder;
     });
   }
-  builder.then = (resolve: (v: MockResult<T>) => unknown) =>
+  builder.then = (resolve: (v: MockResult<unknown>) => unknown) =>
     Promise.resolve(builder._result).then(resolve);
-  builder.setResult = (r: MockResult<T>) => {
-    builder._result = r;
+  builder.setResult = (r: MockResult<unknown>) => {
+    builder._result = r as MockResult<T>;
   };
   return builder;
 }
