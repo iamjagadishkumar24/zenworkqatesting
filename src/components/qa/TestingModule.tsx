@@ -364,6 +364,7 @@ export function TestingModule({
         formOptions={module === "Integrations" ? ["Form 1099-NEC", "Form 1099-MISC"] : undefined}
         defaultQbCategory={reportQbCategory ?? undefined}
         lockQbCategory={!!reportQbCategory}
+        requireState={module === "Tax1099 Features" && reportFor === "State Filing"}
       />
       <DefectDetailSheet
         defectId={viewId}
