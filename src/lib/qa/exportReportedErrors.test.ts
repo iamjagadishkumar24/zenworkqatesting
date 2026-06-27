@@ -89,9 +89,24 @@ describe("toReportedErrorRow + adminReviewLabel branches", () => {
       d({
         createdBy: "Alice",
         comments: [
-          { id: "1", author: "Alice", text: "mine", createdAt: "" } as unknown as Defect["comments"][number],
-          { id: "2", author: "Bob", text: "not mine", createdAt: "" } as unknown as Defect["comments"][number],
-          { id: "3", author: "Alice", text: "mine2", createdAt: "" } as unknown as Defect["comments"][number],
+          {
+            id: "1",
+            author: "Alice",
+            text: "mine",
+            createdAt: "",
+          } as unknown as Defect["comments"][number],
+          {
+            id: "2",
+            author: "Bob",
+            text: "not mine",
+            createdAt: "",
+          } as unknown as Defect["comments"][number],
+          {
+            id: "3",
+            author: "Alice",
+            text: "mine2",
+            createdAt: "",
+          } as unknown as Defect["comments"][number],
         ],
       }),
     );
@@ -109,14 +124,16 @@ describe("toReportedErrorRow + adminReviewLabel branches", () => {
     expect(r.retestUpdatedAt).toBe("2026-02-02T00:00:00Z");
   });
   it("prefers screenshotUrl over fallbacks; falls through to evidenceUrl when others empty", () => {
-    expect(toReportedErrorRow(d({ screenshotUrl: "a", videoUrl: "b" } as Partial<Defect>)).screenshot).toBe(
-      "a",
-    );
+    expect(
+      toReportedErrorRow(d({ screenshotUrl: "a", videoUrl: "b" } as Partial<Defect>)).screenshot,
+    ).toBe("a");
     expect(toReportedErrorRow(d({ evidenceUrl: "e" } as Partial<Defect>)).screenshot).toBe("e");
     expect(toReportedErrorRow(d()).screenshot).toBe("");
   });
   it("link prefers driveUrl then evidenceUrl", () => {
-    expect(toReportedErrorRow(d({ driveUrl: "d", evidenceUrl: "e" } as Partial<Defect>)).link).toBe("d");
+    expect(toReportedErrorRow(d({ driveUrl: "d", evidenceUrl: "e" } as Partial<Defect>)).link).toBe(
+      "d",
+    );
     expect(toReportedErrorRow(d({ evidenceUrl: "e" } as Partial<Defect>)).link).toBe("e");
     expect(toReportedErrorRow(d()).link).toBe("");
   });

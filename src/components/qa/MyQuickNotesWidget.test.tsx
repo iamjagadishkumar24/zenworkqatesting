@@ -9,7 +9,9 @@ const h = vi.hoisted(() => ({
 
 type LinkProps = { children?: ReactNode; href?: string; to?: string } & Record<string, unknown>;
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, ...rest }: LinkProps) => <a {...(rest as Record<string, unknown>)}>{children}</a>,
+  Link: ({ children, ...rest }: LinkProps) => (
+    <a {...(rest as Record<string, unknown>)}>{children}</a>
+  ),
 }));
 vi.mock("@tanstack/react-start", () => ({
   useServerFn: <F,>(fn: F): F => fn,

@@ -160,8 +160,7 @@ describe("queryDefectsPage", () => {
       ],
       [
         "Pending Review",
-        (calls) =>
-          calls.some((c) => c.method === "or" && String(c.args[0]).includes("Unverified")),
+        (calls) => calls.some((c) => c.method === "or" && String(c.args[0]).includes("Unverified")),
       ],
       [
         "all",
