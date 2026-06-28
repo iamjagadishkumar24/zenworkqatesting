@@ -275,7 +275,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-expanded={!collapsed}
             aria-controls="primary-nav"
-            aria-keyshortcuts="["
           >
             {collapsed ? (
               <ChevronRight className="h-3.5 w-3.5" />
