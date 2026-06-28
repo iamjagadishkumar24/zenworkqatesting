@@ -60,6 +60,7 @@ describe("Sidebar nav visibility by role", () => {
     const adminOnlyRoutes = [
       "/rights-management",
       "/agents",
+      "/permission-audit",
       "/audit-log",
       "/auth-events",
       "/reports",
