@@ -348,7 +348,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               const groupActive = entry.items.some(
                 (i) => path === i.to || path.startsWith(i.to + "/"),
               );
-              const open = openGroups[entry.id] ?? groupActive;
+              const open = openGroupId === entry.id;
               if (collapsed) {
                 return (
                   <div key={entry.id} className="flex flex-col gap-1">
