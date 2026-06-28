@@ -164,6 +164,7 @@ export function PermissionAuditHistoryPage() {
                 <TableHead>Role</TableHead>
                 <TableHead>Module</TableHead>
                 <TableHead>Action</TableHead>
+                <TableHead>Change</TableHead>
                 <TableHead>Result</TableHead>
               </TableRow>
             </TableHeader>
@@ -177,6 +178,19 @@ export function PermissionAuditHistoryPage() {
                   <TableCell className="capitalize">{a.role}</TableCell>
                   <TableCell>{a.module}</TableCell>
                   <TableCell className="capitalize">{a.action}</TableCell>
+                  <TableCell className="text-xs">
+                    <span className="text-muted-foreground">
+                      {a.oldEnabled === null || a.oldEnabled === undefined
+                        ? "—"
+                        : a.oldEnabled
+                          ? "Granted"
+                          : "Revoked"}
+                    </span>
+                    <span className="mx-1 text-muted-foreground">→</span>
+                    <span className="font-medium">
+                      {a.enabled ? "Granted" : "Revoked"}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={a.enabled ? "default" : "outline"}>
                       {a.enabled ? "Granted" : "Revoked"}
@@ -187,7 +201,7 @@ export function PermissionAuditHistoryPage() {
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="py-10 text-center text-sm text-muted-foreground"
                   >
                     {entries.length === 0
