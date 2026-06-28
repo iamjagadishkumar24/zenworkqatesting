@@ -356,8 +356,18 @@
    Accent overrides (Settings → Theme → Accent).
    Defined AFTER env themes so the user's accent choice always
    wins over the environment tint for primary/ring/sidebar accents.
-   "blue" is the default; no override needed.
+   Every accent — including "blue" — declares its own block so the
+   user's choice always overrides the active env tint
+   (Production/Stage rewrite --primary/--ring/--sidebar-primary).
    ============================================================ */
+:root[data-accent="blue"] {
+  --primary: oklch(0.54 0.19 258);
+  --primary-glow: oklch(0.69 0.17 258);
+  --ring: oklch(0.54 0.19 258);
+  --sidebar-primary: oklch(0.54 0.19 258);
+  --sidebar-accent-foreground: oklch(0.54 0.19 258);
+  --gradient-primary: linear-gradient(135deg, oklch(0.54 0.19 258), oklch(0.69 0.17 258));
+}
 :root[data-accent="violet"] {
   --primary: oklch(0.55 0.22 295);
   --primary-glow: oklch(0.68 0.2 295);
@@ -367,12 +377,15 @@
   --gradient-primary: linear-gradient(135deg, oklch(0.55 0.22 295), oklch(0.68 0.2 295));
 }
 :root[data-accent="emerald"] {
-  --primary: oklch(0.6 0.17 155);
-  --primary-glow: oklch(0.72 0.15 160);
-  --ring: oklch(0.6 0.17 155);
-  --sidebar-primary: oklch(0.6 0.17 155);
-  --sidebar-accent-foreground: oklch(0.6 0.17 155);
-  --gradient-primary: linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160));
+  /* Distinct from "green": shifted hue toward true emerald (170) with
+     higher chroma so emerald and green resolve to visibly different
+     --primary values everywhere they're consumed. */
+  --primary: oklch(0.58 0.18 170);
+  --primary-glow: oklch(0.74 0.16 172);
+  --ring: oklch(0.58 0.18 170);
+  --sidebar-primary: oklch(0.58 0.18 170);
+  --sidebar-accent-foreground: oklch(0.58 0.18 170);
+  --gradient-primary: linear-gradient(135deg, oklch(0.58 0.18 170), oklch(0.74 0.16 172));
 }
 :root[data-accent="rose"] {
   --primary: oklch(0.62 0.22 15);
@@ -389,16 +402,24 @@
   --sidebar-primary: oklch(0.7 0.2 295);
 }
 :root.dark[data-accent="emerald"] {
-  --primary: oklch(0.7 0.16 155);
-  --primary-glow: oklch(0.8 0.14 160);
-  --ring: oklch(0.7 0.16 155);
-  --sidebar-primary: oklch(0.7 0.16 155);
+  --primary: oklch(0.72 0.17 170);
+  --primary-glow: oklch(0.82 0.15 172);
+  --ring: oklch(0.72 0.17 170);
+  --sidebar-primary: oklch(0.72 0.17 170);
+  --gradient-primary: linear-gradient(135deg, oklch(0.72 0.17 170), oklch(0.82 0.15 172));
 }
 :root.dark[data-accent="rose"] {
   --primary: oklch(0.72 0.2 15);
   --primary-glow: oklch(0.82 0.18 15);
   --ring: oklch(0.72 0.2 15);
   --sidebar-primary: oklch(0.72 0.2 15);
+}
+:root.dark[data-accent="blue"] {
+  --primary: oklch(0.7 0.17 258);
+  --primary-glow: oklch(0.8 0.15 258);
+  --ring: oklch(0.7 0.17 258);
+  --sidebar-primary: oklch(0.7 0.17 258);
+  --gradient-primary: linear-gradient(135deg, oklch(0.7 0.17 258), oklch(0.8 0.15 258));
 }
 
 /* Dark-mode counterparts for the agent-only accents. Without these, picking
