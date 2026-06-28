@@ -85,13 +85,15 @@ describe("RightsManagementPage", () => {
     expect(screen.queryByText(/No permission changes yet/i)).not.toBeInTheDocument();
   });
 
-  it("toggling 'view' off records an audit entry and toasts success", () => {
+  it("toggling 'view' off records an audit entry and toasts success", async () => {
     render(<RightsManagementPage />);
     const viewSwitch = within(rowFor("Forms")).getAllByRole("switch")[0];
     fireEvent.click(viewSwitch);
     expect(viewSwitch).toHaveAttribute("data-state", "unchecked");
-    expect(toastSuccess).toHaveBeenCalledWith(
-      expect.stringMatching(/Revoked view on "Forms" for Alice Admin/),
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith(
+        expect.stringMatching(/Revoked view on "Forms" for Alice Admin/),
+      ),
     );
     const audit = getPermissionAudit();
     expect(audit).toHaveLength(1);
