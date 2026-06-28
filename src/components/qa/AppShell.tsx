@@ -213,8 +213,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return { ...entry, items };
     })
     .filter((entry) => !isGroup(entry) || entry.items.length > 0);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const toggleGroup = (id: string) => setOpenGroups((s) => ({ ...s, [id]: !s[id] }));
+  // Accordion behavior: only one expandable group is open at a time.
+  const activeGroupId = visibleNav.find(
+    (entry) =>
+      isGroup(entry) &&
+      entry.items.some((i) => path === i.to || path.startsWith(i.to + "/")),
+  )?.id ?? null;
+  const [openGroupId, setOpenGroupId] = useState<string | null>(activeGroupId);
+  // When the route changes to a different group, close any previously
+  // expanded group and open the one containing the active route.
+  useEffect(() => {
+    setOpenGroupId(activeGroupId);
+  }, [activeGroupId]);
+  const toggleGroup = (id: string) =>
+    setOpenGroupId((current) => (current === id ? null : id));
 
   // Keep header input in sync with the reported-errors URL `?q=`,
   // and clear it when navigating to any other page so old text never lingers.
