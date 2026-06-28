@@ -15,6 +15,7 @@ function fileForRoute(to: string): { file: string; adminGated: boolean } {
   const adminPrefixes = new Set([
     "rights-management",
     "agents",
+    "permission-audit",
     "audit-log",
     "auth-events",
     "reports",
