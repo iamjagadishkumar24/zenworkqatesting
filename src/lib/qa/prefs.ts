@@ -106,6 +106,12 @@ const DEFAULTS: AdminPrefs = {
 
 const BASE_KEY = "qa.admin.prefs.v1";
 
+// Module-level dedupe so multiple usePrefs() instances (AppShell + the
+// active route both mount the hook) don't fire the same save twice for a
+// single click, and so React StrictMode's effect double-invocation in dev
+// doesn't surface two "Theme synced" toasts.
+let lastSaveSignature: string | null = null;
+
 function userKey(uid: string | null): string {
   return uid ? `${BASE_KEY}:${uid}` : BASE_KEY;
 }
