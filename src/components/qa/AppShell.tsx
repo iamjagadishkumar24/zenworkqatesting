@@ -213,8 +213,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return { ...entry, items };
     })
     .filter((entry) => !isGroup(entry) || entry.items.length > 0);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const toggleGroup = (id: string) => setOpenGroups((s) => ({ ...s, [id]: !s[id] }));
+  // Accordion behavior: only one expandable group is open at a time.
+  const activeGroup = visibleNav.find(
+    (entry): entry is NavGroup =>
+      isGroup(entry) &&
+      entry.items.some((i) => path === i.to || path.startsWith(i.to + "/")),
+  );
+  const activeGroupId: string | null = activeGroup?.id ?? null;
+  const [openGroupId, setOpenGroupId] = useState<string | null>(activeGroupId);
+  // When the route changes to a different group, close any previously
+  // expanded group and open the one containing the active route.
+  useEffect(() => {
+    setOpenGroupId(activeGroupId);
+  }, [activeGroupId]);
+  const toggleGroup = (id: string) =>
+    setOpenGroupId((current) => (current === id ? null : id));
 
   // Keep header input in sync with the reported-errors URL `?q=`,
   // and clear it when navigating to any other page so old text never lingers.
@@ -335,7 +348,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               const groupActive = entry.items.some(
                 (i) => path === i.to || path.startsWith(i.to + "/"),
               );
-              const open = openGroups[entry.id] ?? groupActive;
+              const open = openGroupId === entry.id;
               if (collapsed) {
                 return (
                   <div key={entry.id} className="flex flex-col gap-1">
