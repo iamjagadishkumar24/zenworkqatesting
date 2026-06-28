@@ -35,6 +35,10 @@ import { Search, Download, ShieldCheck } from "lucide-react";
 import { MODULE_OPTIONS } from "@/lib/qa/constants";
 import { useQA } from "@/lib/qa/store";
 import { recordPermissionChange } from "@/lib/qa/permissionAudit";
+import {
+  listUserPermissionOverrides,
+  setUserPermission,
+} from "@/lib/qa/permissions.functions";
 
 type Role = "admin" | "agent";
 type Action = "view" | "create" | "edit" | "delete";
@@ -44,7 +48,6 @@ type MatrixByUser = Record<string, PermsForUser>;
 const USER_TYPES: Role[] = ["admin", "agent"];
 const ACTIONS: Action[] = ["view", "create", "edit", "delete"];
 const PAGE_SIZE = 8;
-const STORAGE_KEY = "qa.rightsManagement.matrixByUser.v1";
 
 function defaultPermsForRole(role: Role): PermsForUser {
   const m: PermsForUser = {};
@@ -59,30 +62,10 @@ function defaultPermsForRole(role: Role): PermsForUser {
   return m;
 }
 
-function loadMatrix(): MatrixByUser {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? (parsed as MatrixByUser) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveMatrix(m: MatrixByUser) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(m));
-  } catch {
-    /* noop */
-  }
-}
-
 export function RightsManagementPage() {
   const { users } = useQA();
-  const [matrixByUser, setMatrixByUser] = useState<MatrixByUser>(() => loadMatrix());
+  const [matrixByUser, setMatrixByUser] = useState<MatrixByUser>({});
+  const [loadingPerms, setLoadingPerms] = useState(false);
   const [userType, setUserType] = useState<Role>("admin");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [q, setQ] = useState("");
@@ -115,6 +98,43 @@ export function RightsManagementPage() {
     [eligibleUsers, selectedUserId],
   );
 
+  // Hydrate the selected user's overrides from the backend whenever the
+  // selection changes. Avoids leaking permissions between users.
+  useEffect(() => {
+    if (!selectedUser) return;
+    let cancelled = false;
+    setLoadingPerms(true);
+    (async () => {
+      try {
+        const rows = await listUserPermissionOverrides({
+          data: { userId: selectedUser.id },
+        });
+        if (cancelled) return;
+        const base = defaultPermsForRole(selectedUser.role);
+        for (const r of rows) {
+          if (!base[r.module]) {
+            base[r.module] = { view: false, create: false, edit: false, delete: false };
+          }
+          base[r.module][r.action] = r.enabled;
+        }
+        setMatrixByUser((prev) => ({ ...prev, [selectedUser.id]: base }));
+      } catch (e) {
+        if (!cancelled) {
+          toast.error(
+            e instanceof Error
+              ? `Couldn't load permissions: ${e.message}`
+              : "Couldn't load permissions",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingPerms(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedUser]);
+
   const perms: PermsForUser = useMemo(() => {
     if (!selectedUser) return defaultPermsForRole(userType);
     const stored = matrixByUser[selectedUser.id];
@@ -134,24 +154,37 @@ export function RightsManagementPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  function apply(userId: string, module: string, action: Action, next: boolean) {
+  async function apply(userId: string, module: string, action: Action, next: boolean) {
     const user = eligibleUsers.find((u) => u.id === userId);
     if (!user) {
       toast.error("Select a user first");
       return;
     }
+    const prevMatrix = matrixByUser;
     setMatrixByUser((prev) => {
       const current = prev[userId] ?? defaultPermsForRole(user.role);
-      const updated: MatrixByUser = {
+      return {
         ...prev,
         [userId]: {
           ...current,
           [module]: { ...current[module], [action]: next },
         },
       };
-      saveMatrix(updated);
-      return updated;
     });
+    try {
+      await setUserPermission({
+        data: { targetUserId: user.id, module, action, enabled: next },
+      });
+    } catch (e) {
+      // Rollback local matrix; the change never reached the server.
+      setMatrixByUser(prevMatrix);
+      toast.error(
+        e instanceof Error
+          ? `Permission update failed: ${e.message}`
+          : "Permission update failed",
+      );
+      return;
+    }
     try {
       recordPermissionChange({
         userId: user.id,
@@ -175,7 +208,7 @@ export function RightsManagementPage() {
       setConfirm({ userId, module, action, next });
       return;
     }
-    apply(userId, module, action, next);
+    void apply(userId, module, action, next);
   }
 
   function exportJson() {
@@ -213,7 +246,7 @@ export function RightsManagementPage() {
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const parsed = JSON.parse(String(reader.result)) as {
           permissions?: PermsForUser;
@@ -221,14 +254,26 @@ export function RightsManagementPage() {
         if (!parsed || typeof parsed !== "object" || !parsed.permissions) {
           throw new Error("Invalid file");
         }
-        setMatrixByUser((prev) => {
-          const updated: MatrixByUser = {
-            ...prev,
-            [selectedUser.id]: { ...defaultPermsForRole(selectedUser.role), ...parsed.permissions },
-          };
-          saveMatrix(updated);
-          return updated;
-        });
+        const incoming = parsed.permissions;
+        // Persist each toggle individually so the backend remains source of truth.
+        for (const [mod, row] of Object.entries(incoming)) {
+          for (const a of ACTIONS) {
+            if (typeof row[a] === "boolean") {
+              await setUserPermission({
+                data: {
+                  targetUserId: selectedUser.id,
+                  module: mod,
+                  action: a,
+                  enabled: row[a],
+                },
+              });
+            }
+          }
+        }
+        setMatrixByUser((prev) => ({
+          ...prev,
+          [selectedUser.id]: { ...defaultPermsForRole(selectedUser.role), ...incoming },
+        }));
         toast.success("Permissions imported");
       } catch {
         toast.error("Invalid permissions file");
@@ -338,6 +383,9 @@ export function RightsManagementPage() {
                 ? `${selectedUser.name || selectedUser.email} (${selectedUser.role})`
                 : `No ${userType} selected`}
             </span>
+            {loadingPerms && (
+              <span className="ml-2 text-xs text-muted-foreground">loading…</span>
+            )}
           </CardTitle>
           <CardDescription>
             Toggle View / Create / Edit / Delete access per module. Revoking edit or delete
