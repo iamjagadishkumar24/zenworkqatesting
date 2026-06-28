@@ -350,10 +350,8 @@ export function RightsManagementPage() {
         } else {
           toast.success("Permissions imported");
         }
-      } catch (e) {
-        toast.error(
-          e instanceof Error ? `Invalid permissions file: ${e.message}` : "Invalid permissions file",
-        );
+      } catch {
+        toast.error("Invalid permissions file");
       }
     };
     reader.readAsText(file);
