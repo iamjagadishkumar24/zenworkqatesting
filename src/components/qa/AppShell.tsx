@@ -64,6 +64,7 @@ import {
 import { NotificationsBell } from "./NotificationsBell";
 import { toast } from "sonner";
 import { checkForNewAppVersion } from "@/lib/cache-busting";
+import { moduleForRoute, usePermissions } from "@/lib/qa/permissions";
 
 type NavItem = {
   to: string;
@@ -203,11 +204,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountAnnouncement, setAccountAnnouncement] = useState("");
   const isAdmin = currentUser?.role === "admin";
+  const { can } = usePermissions();
+  const isItemAllowed = (to: string) => {
+    const moduleName = moduleForRoute(to);
+    if (!moduleName) return true;
+    return can(moduleName, "view");
+  };
   const visibleNav: NavEntry[] = nav
     .filter((n) => !n.adminOnly || isAdmin)
+    .filter((n) => isGroup(n) || isItemAllowed(n.to))
     .map((entry) => {
       if (!isGroup(entry)) return entry;
-      const items = entry.items.filter((i) => !i.adminOnly || isAdmin);
+      const items = entry.items
+        .filter((i) => !i.adminOnly || isAdmin)
+        .filter((i) => isItemAllowed(i.to));
       return { ...entry, items };
     })
     .filter((entry) => !isGroup(entry) || entry.items.length > 0);
