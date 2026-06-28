@@ -463,14 +463,30 @@
   --gradient-primary: linear-gradient(135deg, oklch(0.62 0.13 195), oklch(0.74 0.12 195));
 }
 
-/* Hide the "Made with Lovable" badge without affecting layout */
+/* Hide the "Made with Lovable" badge in all viewports/routes without affecting layout.
+   Uses a wide net of selectors so future container/class changes still match. */
 #lovable-badge,
-a[href*="lovable.dev"][target="_blank"],
-a[href*="lovable.app"][aria-label*="Lovable" i],
+[id^="lovable-badge"],
+[id*="lovable-badge"],
+[class*="lovable-badge"],
 [data-lovable-badge],
-[id^="lovable-badge"] {
+[data-testid*="lovable-badge"],
+a[href*="lovable.dev"],
+a[href*="lovable.app"][target="_blank"],
+a[aria-label*="lovable" i],
+a[title*="lovable" i],
+iframe[src*="lovable.dev"],
+iframe[src*="lovable.app/badge"] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: absolute !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
 }
