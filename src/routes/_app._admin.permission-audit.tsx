@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import {
   clearPermissionAudit,
   getPermissionAudit,
+  hydratePermissionAudit,
   subscribePermissionAudit,
   type PermissionAuditEntry,
 } from "@/lib/qa/permissionAudit";
@@ -46,6 +47,7 @@ export function PermissionAuditHistoryPage() {
   useEffect(() => {
     const unsub = subscribePermissionAudit(() => setEntries(getPermissionAudit()));
     setEntries(getPermissionAudit());
+    void hydratePermissionAudit();
     return unsub;
   }, []);
 
