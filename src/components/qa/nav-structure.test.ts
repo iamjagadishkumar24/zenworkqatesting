@@ -25,6 +25,7 @@ function routeFileFor(to: string): string {
   const adminPrefixes = new Set([
     "rights-management",
     "agents",
+    "permission-audit",
     "audit-log",
     "auth-events",
     "reports",
@@ -113,12 +114,13 @@ describe("Admin sidebar navigation structure", () => {
     expect(top.some((i) => i.to === "/my-reported-errors")).toBe(false);
   });
 
-  it("keeps Settings group restricted to Profile, Audit Logs, Auth Events", () => {
+  it("keeps Settings group restricted to Profile, Permission Audit, Audit Logs, Auth Events", () => {
     const group = (nav as Array<Item | Group>).find(
       (e) => isGroup(e) && e.id === "settings",
     ) as Group;
     expect(group.items.map((i) => i.to)).toEqual([
       "/profile",
+      "/permission-audit",
       "/audit-log",
       "/auth-events",
     ]);
