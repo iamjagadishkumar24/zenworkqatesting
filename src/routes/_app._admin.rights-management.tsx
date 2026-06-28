@@ -524,6 +524,22 @@ export function RightsManagementPage() {
           <Button variant="outline" onClick={exportJson} disabled={!selectedUser}>
             <Download className="mr-2 h-4 w-4" /> Export
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              void (async () => {
+                const ok = await refreshSelectedUser();
+                if (ok) toast.success("Permissions refreshed");
+              })();
+            }}
+            disabled={!selectedUser || loadingPerms}
+            aria-label="Refresh permissions"
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${loadingPerms ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
           <label className="inline-flex">
             <input
               type="file"
@@ -545,6 +561,64 @@ export function RightsManagementPage() {
             </span>
           </label>
         </div>
+      </div>
+
+      <div
+        role="status"
+        aria-live="polite"
+        className={`flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-sm ${
+          realtimeStatus === "live"
+            ? "border-emerald-500/30 bg-emerald-500/5"
+            : realtimeStatus === "error"
+              ? "border-destructive/30 bg-destructive/5"
+              : "border-border bg-muted/30"
+        }`}
+      >
+        <Radio
+          className={`h-4 w-4 ${
+            realtimeStatus === "live"
+              ? "text-emerald-600"
+              : realtimeStatus === "error"
+                ? "text-destructive"
+                : "text-muted-foreground"
+          }`}
+        />
+        <span className="font-medium">
+          {realtimeStatus === "live"
+            ? "Live"
+            : realtimeStatus === "error"
+              ? "Realtime disconnected"
+              : "Connecting…"}
+        </span>
+        {lastRealtime ? (
+          <span className="text-muted-foreground">
+            Last change: {lastRealtime.actor ?? "Someone"}{" "}
+            {lastRealtime.enabled ? "granted" : "revoked"}{" "}
+            <span className="capitalize">{lastRealtime.action}</span> on{" "}
+            <span className="font-medium">{lastRealtime.module}</span> for{" "}
+            {lastRealtime.targetUserName} ·{" "}
+            {new Date(lastRealtime.at).toLocaleTimeString()}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">
+            Waiting for permission change events…
+          </span>
+        )}
+        {realtimeStatus === "error" && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto"
+            onClick={() => {
+              void (async () => {
+                const ok = await refreshSelectedUser();
+                if (ok) toast.success("Permissions refreshed");
+              })();
+            }}
+          >
+            <RefreshCw className="mr-2 h-3 w-3" /> Retry
+          </Button>
+        )}
       </div>
 
       <Card>
