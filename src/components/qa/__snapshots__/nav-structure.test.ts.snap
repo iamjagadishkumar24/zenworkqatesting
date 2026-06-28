@@ -33,11 +33,6 @@ exports[`Admin sidebar navigation structure > matches snapshot for labels, route
     "to": "/integrations",
   },
   {
-    "adminOnly": true,
-    "label": "Rights Management",
-    "to": "/rights-management",
-  },
-  {
     "adminOnly": false,
     "label": "Knowledge Base",
     "to": "/knowledge-base",
@@ -66,6 +61,11 @@ exports[`Admin sidebar navigation structure > matches snapshot for labels, route
     "adminOnly": false,
     "label": "Zenwork Payments",
     "to": "/zenwork-payments",
+  },
+  {
+    "adminOnly": true,
+    "label": "Rights Management",
+    "to": "/rights-management",
   },
   {
     "adminOnly": false,
