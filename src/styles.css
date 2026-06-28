@@ -401,6 +401,60 @@
   --sidebar-primary: oklch(0.72 0.2 15);
 }
 
+/* Dark-mode counterparts for the agent-only accents. Without these, picking
+   any of these colors while dark mode is active silently fell back to the
+   default dark primary, so the accent only "applied" in light mode. */
+:root.dark[data-accent="light"] {
+  --primary: oklch(0.82 0.01 255);
+  --primary-glow: oklch(0.9 0.01 255);
+  --ring: oklch(0.82 0.01 255);
+  --sidebar-primary: oklch(0.82 0.01 255);
+  --sidebar-accent-foreground: oklch(0.9 0.01 255);
+  --gradient-primary: linear-gradient(135deg, oklch(0.9 0.005 255), oklch(0.82 0.01 255));
+}
+:root.dark[data-accent="green"] {
+  --primary: oklch(0.72 0.16 155);
+  --primary-glow: oklch(0.82 0.14 160);
+  --ring: oklch(0.72 0.16 155);
+  --sidebar-primary: oklch(0.72 0.16 155);
+  --gradient-primary: linear-gradient(135deg, oklch(0.72 0.16 155), oklch(0.82 0.14 160));
+}
+:root.dark[data-accent="purple"] {
+  --primary: oklch(0.7 0.2 295);
+  --primary-glow: oklch(0.78 0.18 295);
+  --ring: oklch(0.7 0.2 295);
+  --sidebar-primary: oklch(0.7 0.2 295);
+  --gradient-primary: linear-gradient(135deg, oklch(0.7 0.2 295), oklch(0.78 0.18 295));
+}
+:root.dark[data-accent="orange"] {
+  --primary: oklch(0.78 0.17 60);
+  --primary-glow: oklch(0.86 0.15 65);
+  --ring: oklch(0.78 0.17 60);
+  --sidebar-primary: oklch(0.78 0.17 60);
+  --gradient-primary: linear-gradient(135deg, oklch(0.78 0.17 60), oklch(0.86 0.15 65));
+}
+:root.dark[data-accent="pink"] {
+  --primary: oklch(0.78 0.18 350);
+  --primary-glow: oklch(0.86 0.16 350);
+  --ring: oklch(0.78 0.18 350);
+  --sidebar-primary: oklch(0.78 0.18 350);
+  --gradient-primary: linear-gradient(135deg, oklch(0.78 0.18 350), oklch(0.86 0.16 350));
+}
+:root.dark[data-accent="grey"] {
+  --primary: oklch(0.7 0.02 255);
+  --primary-glow: oklch(0.8 0.02 255);
+  --ring: oklch(0.7 0.02 255);
+  --sidebar-primary: oklch(0.7 0.02 255);
+  --gradient-primary: linear-gradient(135deg, oklch(0.7 0.02 255), oklch(0.8 0.02 255));
+}
+:root.dark[data-accent="teal"] {
+  --primary: oklch(0.74 0.13 195);
+  --primary-glow: oklch(0.84 0.12 195);
+  --ring: oklch(0.74 0.13 195);
+  --sidebar-primary: oklch(0.74 0.13 195);
+  --gradient-primary: linear-gradient(135deg, oklch(0.74 0.13 195), oklch(0.84 0.12 195));
+}
+
 /* Agent-only accent palette. "light" and "blue" use the default (no override). */
 :root[data-accent="light"] {
   /* Neutral light-grey accent so the "Light" swatch isn't a silent

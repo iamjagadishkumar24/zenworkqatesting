@@ -106,6 +106,12 @@ const DEFAULTS: AdminPrefs = {
 
 const BASE_KEY = "qa.admin.prefs.v1";
 
+// Module-level dedupe so multiple usePrefs() instances (AppShell + the
+// active route both mount the hook) don't fire the same save twice for a
+// single click, and so React StrictMode's effect double-invocation in dev
+// doesn't surface two "Theme synced" toasts.
+let lastSaveSignature: string | null = null;
+
 function userKey(uid: string | null): string {
   return uid ? `${BASE_KEY}:${uid}` : BASE_KEY;
 }
@@ -198,53 +204,62 @@ export function usePrefs() {
     return () => mq.removeEventListener?.("change", onChange);
   }, [prefs.theme]);
 
-  const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) =>
-    setPrefs((p) => {
-      const next = { ...p, [k]: v };
-      // Frontend validation: reject unsupported theme/accent values up front
-      // so a crafted UI can't ask the backend to persist garbage. The toast
-      // mirrors the error the server would have returned.
-      if (k === "accent" && !ALLOWED_ACCENTS.includes(v as AdminPrefs["accent"])) {
-        toast.error(`Unsupported theme color: ${String(v)}`);
-        return p;
-      }
-      if (k === "theme" && !ALLOWED_THEMES.includes(v as AdminPrefs["theme"])) {
-        toast.error(`Unsupported theme mode: ${String(v)}`);
-        return p;
-      }
-      // Best-effort backend sync; localStorage write happens in the apply effect.
-      if (uid) {
-        const isAccentChange = k === "accent";
-        void saveMyPreferences({
-          data: {
-            theme: next.theme,
-            accent: next.accent,
-            density: next.density,
-            default_landing: next.defaultLanding,
-            show_kpi_cards: next.showKpiCards,
-            show_trend_chart: next.showTrendChart,
-            show_agent_chart: next.showAgentChart,
-          },
-        })
-          .then(() => {
-            if (isAccentChange) {
-              toast.success("Theme synced", {
-                description:
-                  "Your accent color was saved. If it doesn't appear everywhere, refresh the page.",
-              });
-            }
-          })
-          .catch((err: unknown) => {
-            // Surface the server's response so the user sees why their
-            // selection didn't persist (e.g. unsupported value, RLS denial).
-            const msg = err instanceof Error ? err.message : String(err);
-            toast.error(`Couldn't save theme: ${msg}`, {
-              description: "Try refreshing the page and selecting the color again.",
-            });
+  const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) => {
+    // Validate first so a crafted UI can't ask the backend to persist garbage.
+    if (k === "accent" && !ALLOWED_ACCENTS.includes(v as AdminPrefs["accent"])) {
+      toast.error(`Unsupported theme color: ${String(v)}`);
+      return;
+    }
+    if (k === "theme" && !ALLOWED_THEMES.includes(v as AdminPrefs["theme"])) {
+      toast.error(`Unsupported theme mode: ${String(v)}`);
+      return;
+    }
+    // No-op when the value didn't actually change. Prevents duplicate
+    // save requests and duplicate "Theme synced" toasts when a user clicks
+    // the already-active swatch.
+    if (prefs[k] === v) return;
+    const next = { ...prefs, [k]: v };
+    setPrefs(next);
+    // Side effects live OUTSIDE the setState updater so React StrictMode's
+    // double-invocation of state updaters doesn't fire the save (and the
+    // toast) twice for a single click.
+    if (!uid) return;
+    const isAccentChange = k === "accent";
+    // Dedupe rapid identical saves across re-mounts of usePrefs (AppShell +
+    // route both call the hook). A single click should produce one network
+    // call and one toast.
+    const signature = `${uid}:${next.theme}:${next.accent}:${next.density}:${next.defaultLanding}:${next.showKpiCards}:${next.showTrendChart}:${next.showAgentChart}`;
+    if (lastSaveSignature === signature) return;
+    lastSaveSignature = signature;
+    void saveMyPreferences({
+      data: {
+        theme: next.theme,
+        accent: next.accent,
+        density: next.density,
+        default_landing: next.defaultLanding,
+        show_kpi_cards: next.showKpiCards,
+        show_trend_chart: next.showTrendChart,
+        show_agent_chart: next.showAgentChart,
+      },
+    })
+      .then(() => {
+        if (isAccentChange) {
+          toast.success("Theme synced", {
+            id: "theme-synced",
+            description: "Your accent color was saved across your devices.",
           });
-      }
-      return next;
-    });
+        }
+      })
+      .catch((err: unknown) => {
+        // Allow a retry on failure by clearing the dedupe signature.
+        lastSaveSignature = null;
+        const msg = err instanceof Error ? err.message : String(err);
+        toast.error(`Couldn't save theme: ${msg}`, {
+          id: "theme-sync-error",
+          description: "Try refreshing the page and selecting the color again.",
+        });
+      });
+  };
 
   const reset = () => setPrefs(DEFAULTS);
 
