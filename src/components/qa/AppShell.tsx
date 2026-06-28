@@ -243,6 +243,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full bg-background">
       <aside
+        aria-label="Primary"
+        data-collapsed={collapsed ? "true" : "false"}
         className={cn(
           "sticky top-0 h-screen shrink-0 overflow-y-auto border-r border-sidebar-border bg-sidebar transition-all",
           collapsed ? "w-16" : "w-64",
@@ -270,7 +272,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               "grid place-items-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent",
               collapsed ? "h-5 w-5" : "h-8 w-8",
             )}
-            aria-label="Toggle sidebar"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+            aria-controls="primary-nav"
           >
             {collapsed ? (
               <ChevronRight className="h-3.5 w-3.5" />
@@ -279,7 +283,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </button>
         </div>
-        <nav className="flex flex-col gap-1 p-3">
+        <nav id="primary-nav" aria-label="Main navigation" className="flex flex-col gap-1 p-3">
           {visibleNav.map((entry) => {
             if (isGroup(entry)) {
               // For non-admins, if a group collapses to a single visible item,
@@ -303,6 +307,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       style={active ? { background: "var(--gradient-primary)" } : undefined}
                       title={entry.label}
                       aria-label={entry.label}
+                      aria-current={active ? "page" : undefined}
                     >
                       <GroupIcon className="h-4 w-4 shrink-0" />
                     </Link>
@@ -319,6 +324,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         : "text-sidebar-foreground hover:bg-sidebar-accent/60",
                     )}
                     style={active ? { background: "var(--gradient-primary)" } : undefined}
+                    aria-current={active ? "page" : undefined}
                   >
                     <GroupIcon className="h-4 w-4 shrink-0" />
                     <span className="truncate">{entry.label}</span>
@@ -349,6 +355,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           style={active ? { background: "var(--gradient-primary)" } : undefined}
                           title={item.label}
                           aria-label={item.label}
+                          aria-current={active ? "page" : undefined}
                         >
                           <ItemIcon className="h-4 w-4 shrink-0" />
                         </Link>
@@ -402,6 +409,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 : "text-sidebar-foreground hover:bg-sidebar-accent/60",
                             )}
                             style={active ? { background: "var(--gradient-primary)" } : undefined}
+                            aria-current={active ? "page" : undefined}
                           >
                             <ItemIcon className="h-4 w-4 shrink-0" />
                             <span className="truncate">{item.label}</span>
@@ -433,6 +441,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     : "text-sidebar-foreground hover:bg-sidebar-accent/60",
                 )}
                 style={active ? { background: "var(--gradient-primary)" } : undefined}
+                aria-current={active ? "page" : undefined}
+                aria-label={collapsed ? item.label : undefined}
+                title={collapsed ? item.label : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!collapsed && <span className="truncate">{item.label}</span>}

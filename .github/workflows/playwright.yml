@@ -90,6 +90,38 @@ jobs:
             exit 1
           fi
 
+      - name: Sidebar persistence + active-highlight regression
+        id: sidebar_persistence
+        env:
+          PLAYWRIGHT_AGENT_EMAIL: ${{ secrets.PLAYWRIGHT_AGENT_EMAIL }}
+          PLAYWRIGHT_AGENT_PASSWORD: ${{ secrets.PLAYWRIGHT_AGENT_PASSWORD }}
+          PLAYWRIGHT_ADMIN_EMAIL: ${{ secrets.PLAYWRIGHT_ADMIN_EMAIL }}
+          PLAYWRIGHT_ADMIN_PASSWORD: ${{ secrets.PLAYWRIGHT_ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$PLAYWRIGHT_AGENT_EMAIL" ] || [ -z "$PLAYWRIGHT_AGENT_PASSWORD" ]; then
+            echo "::error::PLAYWRIGHT_AGENT_* secrets are required to gate sidebar persistence"
+            exit 1
+          fi
+          set -o pipefail
+          mkdir -p test-results
+          bunx playwright test \
+            e2e/sidebar-collapsed-persists.spec.ts \
+            e2e/sidebar-active-highlight-persists.spec.ts \
+            --retries=2 \
+            --trace=retain-on-failure \
+            --output=test-results/sidebar \
+            --reporter=list,html 2>&1 | tee test-results/sidebar.log
+
+      - name: Upload sidebar regression artifacts
+        if: failure() && steps.sidebar_persistence.conclusion == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failures-sidebar
+          path: |
+            test-results/sidebar
+            test-results/sidebar.log
+          retention-days: 14
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
