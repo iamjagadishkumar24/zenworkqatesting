@@ -150,6 +150,11 @@ exports[`Admin sidebar navigation structure > matches snapshot for labels, route
       },
       {
         "adminOnly": true,
+        "label": "Permission Audit",
+        "to": "/permission-audit",
+      },
+      {
+        "adminOnly": true,
         "label": "Audit Logs",
         "to": "/audit-log",
       },

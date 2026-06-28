@@ -167,6 +167,7 @@ export const nav: NavEntry[] = [
     icon: SettingsIcon,
     items: [
       { to: "/profile", label: "Profile & Settings", icon: SettingsIcon },
+      { to: "/permission-audit", label: "Permission Audit", icon: ShieldCheck, adminOnly: true },
       { to: "/audit-log", label: "Audit Logs", icon: ScrollText, adminOnly: true },
       { to: "/auth-events", label: "Auth Events", icon: ShieldAlert, adminOnly: true },
     ],

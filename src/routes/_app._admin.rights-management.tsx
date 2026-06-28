@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,54 +31,100 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Search, Download, ShieldCheck, History } from "lucide-react";
+import { Search, Download, ShieldCheck } from "lucide-react";
 import { MODULE_OPTIONS } from "@/lib/qa/constants";
+import { useQA } from "@/lib/qa/store";
+import { recordPermissionChange } from "@/lib/qa/permissionAudit";
 
 type Role = "admin" | "agent";
 type Action = "view" | "create" | "edit" | "delete";
-type Matrix = Record<Role, Record<string, Record<Action, boolean>>>;
+type PermsForUser = Record<string, Record<Action, boolean>>;
+type MatrixByUser = Record<string, PermsForUser>;
 
-const ROLES: Role[] = ["admin", "agent"];
+const USER_TYPES: Role[] = ["admin", "agent"];
 const ACTIONS: Action[] = ["view", "create", "edit", "delete"];
 const PAGE_SIZE = 8;
+const STORAGE_KEY = "qa.rightsManagement.matrixByUser.v1";
 
-function defaultMatrix(): Matrix {
-  const m = {} as Matrix;
-  for (const r of ROLES) {
-    m[r] = {};
-    for (const mod of MODULE_OPTIONS) {
-      m[r][mod] = {
-        view: true,
-        create: r === "admin",
-        edit: r === "admin",
-        delete: r === "admin",
-      };
-    }
+function defaultPermsForRole(role: Role): PermsForUser {
+  const m: PermsForUser = {};
+  for (const mod of MODULE_OPTIONS) {
+    m[mod] = {
+      view: true,
+      create: role === "admin",
+      edit: role === "admin",
+      delete: role === "admin",
+    };
   }
   return m;
 }
 
-type AuditEntry = {
-  id: string;
-  at: string;
-  role: Role;
-  module: string;
-  action: Action;
-  enabled: boolean;
-};
+function loadMatrix(): MatrixByUser {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as MatrixByUser) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveMatrix(m: MatrixByUser) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(m));
+  } catch {
+    /* noop */
+  }
+}
 
 export function RightsManagementPage() {
-  const [matrix, setMatrix] = useState<Matrix>(() => defaultMatrix());
-  const [role, setRole] = useState<Role>("admin");
+  const { users } = useQA();
+  const [matrixByUser, setMatrixByUser] = useState<MatrixByUser>(() => loadMatrix());
+  const [userType, setUserType] = useState<Role>("admin");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [confirm, setConfirm] = useState<{
-    role: Role;
+    userId: string;
     module: string;
     action: Action;
     next: boolean;
   } | null>(null);
+
+  const eligibleUsers = useMemo(
+    () => (users ?? []).filter((u) => u.active && u.role === userType),
+    [users, userType],
+  );
+
+  // Keep the selected user valid as the user list (and user type) changes.
+  useEffect(() => {
+    if (eligibleUsers.length === 0) {
+      if (selectedUserId !== "") setSelectedUserId("");
+      return;
+    }
+    if (!eligibleUsers.some((u) => u.id === selectedUserId)) {
+      setSelectedUserId(eligibleUsers[0].id);
+    }
+  }, [eligibleUsers, selectedUserId]);
+
+  const selectedUser = useMemo(
+    () => eligibleUsers.find((u) => u.id === selectedUserId) ?? null,
+    [eligibleUsers, selectedUserId],
+  );
+
+  const perms: PermsForUser = useMemo(() => {
+    if (!selectedUser) return defaultPermsForRole(userType);
+    const stored = matrixByUser[selectedUser.id];
+    const base = defaultPermsForRole(selectedUser.role);
+    if (!stored) return base;
+    // Merge so newly added modules show defaults.
+    const merged: PermsForUser = { ...base };
+    for (const mod of Object.keys(stored)) merged[mod] = { ...base[mod], ...stored[mod] };
+    return merged;
+  }, [matrixByUser, selectedUser, userType]);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -88,48 +134,71 @@ export function RightsManagementPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  function apply(role: Role, module: string, action: Action, next: boolean) {
-    setMatrix((prev) => ({
-      ...prev,
-      [role]: {
-        ...prev[role],
-        [module]: { ...prev[role][module], [action]: next },
-      },
-    }));
-    setAudit((prev) => [
-      {
-        id: crypto.randomUUID(),
-        at: new Date().toISOString(),
-        role,
+  function apply(userId: string, module: string, action: Action, next: boolean) {
+    const user = eligibleUsers.find((u) => u.id === userId);
+    if (!user) {
+      toast.error("Select a user first");
+      return;
+    }
+    setMatrixByUser((prev) => {
+      const current = prev[userId] ?? defaultPermsForRole(user.role);
+      const updated: MatrixByUser = {
+        ...prev,
+        [userId]: {
+          ...current,
+          [module]: { ...current[module], [action]: next },
+        },
+      };
+      saveMatrix(updated);
+      return updated;
+    });
+    try {
+      recordPermissionChange({
+        userId: user.id,
+        userName: user.name || user.email || user.id,
+        role: user.role,
         module,
         action,
         enabled: next,
-      },
-      ...prev,
-    ]);
+      });
+    } catch {
+      /* audit failures must not break permission updates */
+    }
     toast.success(
-      `${next ? "Granted" : "Revoked"} ${action} on "${module}" for ${role}`,
+      `${next ? "Granted" : "Revoked"} ${action} on "${module}" for ${user.name || user.email}`,
     );
   }
 
-  function onToggle(role: Role, module: string, action: Action, next: boolean) {
+  function onToggle(userId: string, module: string, action: Action, next: boolean) {
     // Destructive permission changes ask for confirmation.
     if (!next && (action === "delete" || action === "edit")) {
-      setConfirm({ role, module, action, next });
+      setConfirm({ userId, module, action, next });
       return;
     }
-    apply(role, module, action, next);
+    apply(userId, module, action, next);
   }
 
   function exportJson() {
+    if (!selectedUser) {
+      toast.error("Select a user to export");
+      return;
+    }
     try {
-      const blob = new Blob([JSON.stringify(matrix, null, 2)], {
+      const payload = {
+        userId: selectedUser.id,
+        userName: selectedUser.name,
+        role: selectedUser.role,
+        permissions: perms,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
         type: "application/json",
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `rights-matrix-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `permissions-${selectedUser.name || selectedUser.id}-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Permissions exported");
@@ -139,12 +208,27 @@ export function RightsManagementPage() {
   }
 
   function importJson(file: File) {
+    if (!selectedUser) {
+      toast.error("Select a user to import into");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const parsed = JSON.parse(String(reader.result)) as Matrix;
-        if (!parsed.admin || !parsed.agent) throw new Error("Invalid file");
-        setMatrix(parsed);
+        const parsed = JSON.parse(String(reader.result)) as {
+          permissions?: PermsForUser;
+        };
+        if (!parsed || typeof parsed !== "object" || !parsed.permissions) {
+          throw new Error("Invalid file");
+        }
+        setMatrixByUser((prev) => {
+          const updated: MatrixByUser = {
+            ...prev,
+            [selectedUser.id]: { ...defaultPermsForRole(selectedUser.role), ...parsed.permissions },
+          };
+          saveMatrix(updated);
+          return updated;
+        });
         toast.success("Permissions imported");
       } catch {
         toast.error("Invalid permissions file");
@@ -162,19 +246,47 @@ export function RightsManagementPage() {
             Rights Management
           </h2>
           <p className="text-sm text-muted-foreground">
-            Manage role-based module and feature access. Changes are tracked in the audit
-            history below.
+            Manage per-user module and feature access. Permission changes are recorded
+            in the Permission Audit History under Settings.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Select value={role} onValueChange={(v) => setRole(v as Role)}>
-            <SelectTrigger className="w-[140px]" aria-label="Role">
+          <Select
+            value={userType}
+            onValueChange={(v) => {
+              setUserType(v as Role);
+              setSelectedUserId("");
+            }}
+          >
+            <SelectTrigger className="w-[140px]" aria-label="User type">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {ROLES.map((r) => (
+              {USER_TYPES.map((r) => (
                 <SelectItem key={r} value={r} className="capitalize">
-                  {r}
+                  {r === "admin" ? "Admin" : "Agent"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={selectedUserId || undefined}
+            onValueChange={(v) => setSelectedUserId(v)}
+            disabled={eligibleUsers.length === 0}
+          >
+            <SelectTrigger className="w-[220px]" aria-label="User">
+              <SelectValue
+                placeholder={
+                  eligibleUsers.length === 0
+                    ? `No active ${userType}s`
+                    : `Select ${userType}…`
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {eligibleUsers.map((u) => (
+                <SelectItem key={u.id} value={u.id}>
+                  {u.name || u.email || u.id}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -191,7 +303,7 @@ export function RightsManagementPage() {
               className="w-64 pl-9"
             />
           </div>
-          <Button variant="outline" onClick={exportJson}>
+          <Button variant="outline" onClick={exportJson} disabled={!selectedUser}>
             <Download className="mr-2 h-4 w-4" /> Export
           </Button>
           <label className="inline-flex">
@@ -199,13 +311,18 @@ export function RightsManagementPage() {
               type="file"
               accept="application/json"
               className="hidden"
+              disabled={!selectedUser}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) importJson(f);
                 e.currentTarget.value = "";
               }}
             />
-            <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent">
+            <span
+              className={`inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium ${
+                selectedUser ? "cursor-pointer hover:bg-accent" : "cursor-not-allowed opacity-50"
+              }`}
+            >
               Import
             </span>
           </label>
@@ -215,7 +332,12 @@ export function RightsManagementPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            Permissions — <span className="capitalize">{role}</span>
+            Permissions —{" "}
+            <span>
+              {selectedUser
+                ? `${selectedUser.name || selectedUser.email} (${selectedUser.role})`
+                : `No ${userType} selected`}
+            </span>
           </CardTitle>
           <CardDescription>
             Toggle View / Create / Edit / Delete access per module. Revoking edit or delete
@@ -238,23 +360,27 @@ export function RightsManagementPage() {
               </TableHeader>
               <TableBody>
                 {pageItems.map((mod) => {
-                  const perms =
-                    matrix[role]?.[mod] ?? {
-                      view: false,
-                      create: false,
-                      edit: false,
-                      delete: false,
-                    };
-                  const enabledCount = ACTIONS.filter((a) => perms[a]).length;
+                  const row = perms[mod] ?? {
+                    view: false,
+                    create: false,
+                    edit: false,
+                    delete: false,
+                  };
+                  const enabledCount = ACTIONS.filter((a) => row[a]).length;
                   return (
                     <TableRow key={mod}>
                       <TableCell className="font-medium">{mod}</TableCell>
                       {ACTIONS.map((a) => (
                         <TableCell key={a} className="text-center">
                           <Switch
-                            checked={perms[a]}
-                            onCheckedChange={(c) => onToggle(role, mod, a, c)}
-                            aria-label={`${a} ${mod} for ${role}`}
+                            checked={row[a]}
+                            disabled={!selectedUser}
+                            onCheckedChange={(c) =>
+                              selectedUser && onToggle(selectedUser.id, mod, a, c)
+                            }
+                            aria-label={`${a} ${mod} for ${
+                              selectedUser?.name || selectedUser?.email || userType
+                            }`}
                           />
                         </TableCell>
                       ))}
@@ -303,57 +429,6 @@ export function RightsManagementPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <History className="h-4 w-4" /> Permission audit history
-          </CardTitle>
-          <CardDescription>
-            Last {audit.length} change{audit.length === 1 ? "" : "s"} in this session.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>When</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Module</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Result</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {audit.slice(0, 20).map((a) => (
-                <TableRow key={a.id}>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {new Date(a.at).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="capitalize">{a.role}</TableCell>
-                  <TableCell>{a.module}</TableCell>
-                  <TableCell className="capitalize">{a.action}</TableCell>
-                  <TableCell>
-                    <Badge variant={a.enabled ? "default" : "outline"}>
-                      {a.enabled ? "Granted" : "Revoked"}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {audit.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-10 text-center text-sm text-muted-foreground"
-                  >
-                    No permission changes yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
       <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -363,7 +438,11 @@ export function RightsManagementPage() {
                 <>
                   This will revoke <strong className="capitalize">{confirm.action}</strong>{" "}
                   on <strong>{confirm.module}</strong> for the{" "}
-                  <strong className="capitalize">{confirm.role}</strong> role.
+                  <strong>
+                    {eligibleUsers.find((u) => u.id === confirm.userId)?.name ||
+                      "selected user"}
+                  </strong>
+                  .
                 </>
               )}
             </AlertDialogDescription>
@@ -372,7 +451,8 @@ export function RightsManagementPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (confirm) apply(confirm.role, confirm.module, confirm.action, confirm.next);
+                if (confirm)
+                  apply(confirm.userId, confirm.module, confirm.action, confirm.next);
                 setConfirm(null);
               }}
             >

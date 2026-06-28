@@ -25,12 +25,31 @@ vi.mock("@/lib/qa/constants", () => ({
   ],
 }));
 
+const { mockUsers } = vi.hoisted(() => ({
+  mockUsers: [
+    { id: "a1", name: "Alice Admin", email: "alice@test", role: "admin", active: true },
+    { id: "a2", name: "Andy Admin", email: "andy@test", role: "admin", active: true },
+    { id: "g1", name: "Greta Agent", email: "greta@test", role: "agent", active: true },
+    { id: "g2", name: "Gus Agent", email: "gus@test", role: "agent", active: true },
+    { id: "x1", name: "Inactive Agent", email: "x@test", role: "agent", active: false },
+  ],
+}));
+
+vi.mock("@/lib/qa/store", () => ({
+  useQA: () => ({ users: mockUsers }),
+}));
+
 import { RightsManagementPage } from "./_app._admin.rights-management";
+import {
+  __resetPermissionAuditForTests,
+  getPermissionAudit,
+} from "@/lib/qa/permissionAudit";
 
 beforeEach(() => {
   toastSuccess.mockClear();
   toastError.mockClear();
-  // crypto.randomUUID polyfill for jsdom
+  window.localStorage.clear();
+  __resetPermissionAuditForTests();
   if (!("randomUUID" in crypto)) {
     Object.defineProperty(crypto, "randomUUID", {
       value: () => Math.random().toString(36).slice(2),
@@ -46,45 +65,53 @@ function rowFor(module: string) {
 }
 
 describe("RightsManagementPage", () => {
-  it("renders permission matrix with default admin grants and audit empty state", () => {
+  it("renders permission matrix with default admin grants for the first admin", () => {
     render(<RightsManagementPage />);
     expect(
       screen.getByRole("heading", { name: /Rights Management/i }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/Alice Admin \(admin\)/)).toBeInTheDocument();
     const row = rowFor("Forms");
     const switches = within(row).getAllByRole("switch");
-    // admin role defaults: view/create/edit/delete all true
     switches.forEach((s) => expect(s).toHaveAttribute("data-state", "checked"));
-    expect(screen.getByText(/No permission changes yet/i)).toBeInTheDocument();
+    // Inline audit history table has been moved to Settings.
+    expect(screen.queryByRole("heading", { name: /audit history/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/No permission changes yet/i)).not.toBeInTheDocument();
   });
 
-  it("grants/revokes non-destructive permissions and logs an audit entry + toast", () => {
+  it("toggling 'view' off records an audit entry and toasts success", () => {
     render(<RightsManagementPage />);
     const viewSwitch = within(rowFor("Forms")).getAllByRole("switch")[0];
-    // toggling 'view' off is non-destructive and applies directly
     fireEvent.click(viewSwitch);
     expect(viewSwitch).toHaveAttribute("data-state", "unchecked");
     expect(toastSuccess).toHaveBeenCalledWith(
-      expect.stringMatching(/Revoked view on "Forms" for admin/),
+      expect.stringMatching(/Revoked view on "Forms" for Alice Admin/),
     );
-    expect(screen.getByRole("cell", { name: /Revoked/i })).toBeInTheDocument();
+    const audit = getPermissionAudit();
+    expect(audit).toHaveLength(1);
+    expect(audit[0]).toMatchObject({
+      userId: "a1",
+      userName: "Alice Admin",
+      role: "admin",
+      module: "Forms",
+      action: "view",
+      enabled: false,
+    });
   });
 
   it("asks for confirmation before revoking delete and applies on confirm", async () => {
     render(<RightsManagementPage />);
     const deleteSwitch = within(rowFor("Forms")).getAllByRole("switch")[3];
     fireEvent.click(deleteSwitch);
-    // dialog appears
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText(/Revoke permission/i)).toBeInTheDocument();
-    // switch still on until confirmed
     expect(deleteSwitch).toHaveAttribute("data-state", "checked");
     fireEvent.click(within(dialog).getByRole("button", { name: /^Revoke$/ }));
     await waitFor(() =>
       expect(deleteSwitch).toHaveAttribute("data-state", "unchecked"),
     );
     expect(toastSuccess).toHaveBeenCalledWith(
-      expect.stringMatching(/Revoked delete on "Forms" for admin/),
+      expect.stringMatching(/Revoked delete on "Forms" for Alice Admin/),
     );
   });
 
@@ -125,11 +152,13 @@ describe("RightsManagementPage", () => {
     expect(screen.getByText(/No modules match "zzz-nope"/i)).toBeInTheDocument();
   });
 
-  it("switches role and shows agent-defaults (view only)", () => {
+  it("switches user type to Agent and auto-selects the first active agent with agent defaults", async () => {
     render(<RightsManagementPage />);
-    // open select and choose agent
-    fireEvent.click(screen.getByRole("combobox", { name: /Role/i }));
+    fireEvent.click(screen.getByRole("combobox", { name: /User type/i }));
     fireEvent.click(screen.getByRole("option", { name: /agent/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Greta Agent \(agent\)/)).toBeInTheDocument(),
+    );
     const row = rowFor("Forms");
     const switches = within(row).getAllByRole("switch");
     expect(switches[0]).toHaveAttribute("data-state", "checked"); // view
@@ -138,7 +167,32 @@ describe("RightsManagementPage", () => {
     expect(switches[3]).toHaveAttribute("data-state", "unchecked"); // delete
   });
 
-  it("exports the permissions matrix as JSON and toasts success", () => {
+  it("keeps permission state isolated per user when switching between users", async () => {
+    render(<RightsManagementPage />);
+    // Revoke view on Forms for Alice (default-selected admin).
+    fireEvent.click(within(rowFor("Forms")).getAllByRole("switch")[0]);
+    // Switch to Andy via the User dropdown.
+    fireEvent.click(screen.getByRole("combobox", { name: /^User$/ }));
+    fireEvent.click(screen.getByRole("option", { name: /Andy Admin/ }));
+    await waitFor(() =>
+      expect(screen.getByText(/Andy Admin \(admin\)/)).toBeInTheDocument(),
+    );
+    // Andy keeps the default admin grants — Alice's change didn't leak.
+    const andyView = within(rowFor("Forms")).getAllByRole("switch")[0];
+    expect(andyView).toHaveAttribute("data-state", "checked");
+  });
+
+  it("excludes inactive agents from the User dropdown", () => {
+    render(<RightsManagementPage />);
+    fireEvent.click(screen.getByRole("combobox", { name: /User type/i }));
+    fireEvent.click(screen.getByRole("option", { name: /agent/i }));
+    fireEvent.click(screen.getByRole("combobox", { name: /^User$/ }));
+    expect(screen.getByRole("option", { name: /Greta Agent/ })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Gus Agent/ })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /Inactive Agent/ })).not.toBeInTheDocument();
+  });
+
+  it("exports the selected user's permissions as JSON and toasts success", () => {
     const createObjectURL = vi.fn(() => "blob:mock");
     const revokeObjectURL = vi.fn();
     (URL as unknown as { createObjectURL: typeof createObjectURL }).createObjectURL =
@@ -156,11 +210,12 @@ describe("RightsManagementPage", () => {
     clickSpy.mockRestore();
   });
 
-  it("imports a valid permissions JSON file and toasts success", async () => {
+  it("imports a valid per-user permissions JSON file and toasts success", async () => {
     render(<RightsManagementPage />);
     const valid = JSON.stringify({
-      admin: { Forms: { view: false, create: false, edit: false, delete: false } },
-      agent: { Forms: { view: true, create: false, edit: false, delete: false } },
+      userId: "a1",
+      role: "admin",
+      permissions: { Forms: { view: false, create: false, edit: false, delete: false } },
     });
     const file = new File([valid], "perms.json", { type: "application/json" });
     // eslint-disable-next-line testing-library/no-node-access
@@ -180,9 +235,9 @@ describe("RightsManagementPage", () => {
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("Invalid permissions file"));
   });
 
-  it("rejects a JSON file missing required role keys", async () => {
+  it("rejects a JSON file missing the required permissions key", async () => {
     render(<RightsManagementPage />);
-    const file = new File([JSON.stringify({ admin: {} })], "partial.json", {
+    const file = new File([JSON.stringify({ userId: "a1" })], "partial.json", {
       type: "application/json",
     });
     // eslint-disable-next-line testing-library/no-node-access
