@@ -11,6 +11,8 @@ export type PermissionAuditEntry = {
   module: string;
   action: "view" | "create" | "edit" | "delete";
   enabled: boolean;
+  oldEnabled?: boolean | null;
+  actorName?: string | null;
 };
 
 const STORAGE_KEY = "qa.permissionAudit.v1";
@@ -71,6 +73,8 @@ export async function hydratePermissionAudit(): Promise<void> {
         module: r.module,
         action: r.action,
         enabled: r.enabled,
+        oldEnabled: r.oldEnabled,
+        actorName: r.actorName,
       }));
       safeWrite(entries);
       hydrated = true;
@@ -119,6 +123,7 @@ export function recordPermissionChange(
           module: entry.module,
           action: entry.action,
           enabled: entry.enabled,
+          oldEnabled: entry.oldEnabled ?? null,
           actorName: null,
         },
       });
