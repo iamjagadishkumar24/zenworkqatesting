@@ -39,6 +39,12 @@ vi.mock("@/lib/qa/store", () => ({
   useQA: () => ({ users: mockUsers }),
 }));
 
+vi.mock("@/lib/qa/permissions.functions", () => ({
+  listUserPermissionOverrides: vi.fn().mockResolvedValue([]),
+  setUserPermission: vi.fn().mockResolvedValue({ ok: true }),
+  listMyPermissionOverrides: vi.fn().mockResolvedValue([]),
+}));
+
 import { RightsManagementPage } from "./_app._admin.rights-management";
 import {
   __resetPermissionAuditForTests,
