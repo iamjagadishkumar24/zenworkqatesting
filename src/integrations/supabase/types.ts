@@ -731,6 +731,45 @@ export type Database = {
           },
         ]
       }
+      permission_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string | null
+          at: string
+          enabled: boolean
+          id: string
+          module: string
+          target_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string | null
+          target_user_name: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string | null
+          at?: string
+          enabled: boolean
+          id?: string
+          module: string
+          target_role: Database["public"]["Enums"]["app_role"]
+          target_user_id?: string | null
+          target_user_name: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string | null
+          at?: string
+          enabled?: boolean
+          id?: string
+          module?: string
+          target_role?: Database["public"]["Enums"]["app_role"]
+          target_user_id?: string | null
+          target_user_name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
