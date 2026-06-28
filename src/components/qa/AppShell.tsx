@@ -661,9 +661,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="text-xs text-muted-foreground capitalize">{currentUser?.role}</div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
-                Profile &amp; Settings
-              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   logout();
