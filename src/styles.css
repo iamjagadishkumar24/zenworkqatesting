@@ -462,3 +462,15 @@
   --sidebar-accent-foreground: oklch(0.55 0.13 195);
   --gradient-primary: linear-gradient(135deg, oklch(0.62 0.13 195), oklch(0.74 0.12 195));
 }
+
+/* Hide the "Made with Lovable" badge without affecting layout */
+#lovable-badge,
+a[href*="lovable.dev"][target="_blank"],
+a[href*="lovable.app"][aria-label*="Lovable" i],
+[data-lovable-badge],
+[id^="lovable-badge"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
