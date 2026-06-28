@@ -48,6 +48,23 @@ type MatrixByUser = Record<string, PermsForUser>;
 const USER_TYPES: Role[] = ["admin", "agent"];
 const ACTIONS: Action[] = ["view", "create", "edit", "delete"];
 const PAGE_SIZE = 8;
+const ALLOWED_MODULES = new Set<string>(MODULE_OPTIONS);
+const ALLOWED_ACTIONS = new Set<Action>(ACTIONS);
+
+/**
+ * Critical admin permissions: an admin must not be able to revoke these on
+ * themselves. Removing them could lock the admin out of the very surfaces
+ * needed to restore access.
+ */
+function isCriticalSelfChange(
+  isSelfAdmin: boolean,
+  _module: string,
+  _action: Action,
+  next: boolean,
+): boolean {
+  // Block any self-revoke for an admin acting on their own row.
+  return isSelfAdmin && next === false;
+}
 
 function defaultPermsForRole(role: Role): PermsForUser {
   const m: PermsForUser = {};
@@ -63,7 +80,7 @@ function defaultPermsForRole(role: Role): PermsForUser {
 }
 
 export function RightsManagementPage() {
-  const { users } = useQA();
+  const { users, currentUser } = useQA();
   const [matrixByUser, setMatrixByUser] = useState<MatrixByUser>({});
   const [loadingPerms, setLoadingPerms] = useState(false);
   const [userType, setUserType] = useState<Role>("admin");
@@ -158,6 +175,16 @@ export function RightsManagementPage() {
     const user = eligibleUsers.find((u) => u.id === userId);
     if (!user) {
       toast.error("Select a user first");
+      return;
+    }
+    if (!ALLOWED_MODULES.has(module) || !ALLOWED_ACTIONS.has(action)) {
+      toast.error("Unknown module or action");
+      return;
+    }
+    const isSelfAdmin =
+      !!currentUser && currentUser.id === user.id && currentUser.role === "admin";
+    if (isCriticalSelfChange(isSelfAdmin, module, action, next)) {
+      toast.error("Admins can't revoke their own permissions");
       return;
     }
     const prevMatrix = matrixByUser;
@@ -255,10 +282,43 @@ export function RightsManagementPage() {
           throw new Error("Invalid file");
         }
         const incoming = parsed.permissions;
-        // Persist each toggle individually so the backend remains source of truth.
+        if (!incoming || typeof incoming !== "object") {
+          throw new Error("Missing permissions object");
+        }
+        // Reject unknown modules/actions to prevent injection via crafted JSON.
+        const unknownModules: string[] = [];
+        const unknownActions: string[] = [];
+        const sanitized: PermsForUser = {};
         for (const [mod, row] of Object.entries(incoming)) {
+          if (!ALLOWED_MODULES.has(mod)) {
+            unknownModules.push(mod);
+            continue;
+          }
+          if (!row || typeof row !== "object") continue;
+          const safeRow = { view: false, create: false, edit: false, delete: false } as Record<Action, boolean>;
+          for (const [a, v] of Object.entries(row)) {
+            if (!ALLOWED_ACTIONS.has(a as Action)) {
+              unknownActions.push(a);
+              continue;
+            }
+            if (typeof v !== "boolean") continue;
+            safeRow[a as Action] = v;
+          }
+          sanitized[mod] = safeRow;
+        }
+        if (Object.keys(sanitized).length === 0) {
+          throw new Error("No valid modules in file");
+        }
+        const isSelfAdmin =
+          !!currentUser &&
+          currentUser.id === selectedUser.id &&
+          currentUser.role === "admin";
+        // Persist each toggle individually so the backend remains source of truth.
+        const failures: string[] = [];
+        for (const [mod, row] of Object.entries(sanitized)) {
           for (const a of ACTIONS) {
-            if (typeof row[a] === "boolean") {
+            if (isCriticalSelfChange(isSelfAdmin, mod, a, row[a])) continue;
+            try {
               await setUserPermission({
                 data: {
                   targetUserId: selectedUser.id,
@@ -267,16 +327,33 @@ export function RightsManagementPage() {
                   enabled: row[a],
                 },
               });
+            } catch (e) {
+              failures.push(`${mod}/${a}`);
+              if (failures.length > 5) break;
             }
           }
+          if (failures.length > 5) break;
         }
         setMatrixByUser((prev) => ({
           ...prev,
-          [selectedUser.id]: { ...defaultPermsForRole(selectedUser.role), ...incoming },
+          [selectedUser.id]: { ...defaultPermsForRole(selectedUser.role), ...sanitized },
         }));
-        toast.success("Permissions imported");
-      } catch {
-        toast.error("Invalid permissions file");
+        if (unknownModules.length || unknownActions.length) {
+          toast.warning?.(
+            `Skipped unknown ${unknownModules.length} module(s) and ${unknownActions.length} action(s)`,
+          ) ?? toast.success(
+            `Imported with ${unknownModules.length + unknownActions.length} skipped`,
+          );
+        }
+        if (failures.length) {
+          toast.error(`Some updates failed: ${failures.slice(0, 3).join(", ")}`);
+        } else {
+          toast.success("Permissions imported");
+        }
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? `Invalid permissions file: ${e.message}` : "Invalid permissions file",
+        );
       }
     };
     reader.readAsText(file);
