@@ -15,6 +15,7 @@ export type PermissionAuditDTO = {
   module: string;
   action: PermissionAuditAction;
   enabled: boolean;
+  oldEnabled: boolean | null;
 };
 
 const ACTIONS: readonly PermissionAuditAction[] = ["view", "create", "edit", "delete"];
@@ -36,6 +37,10 @@ function row(r: Record<string, unknown>): PermissionAuditDTO {
       ? r.action
       : "view") as PermissionAuditAction,
     enabled: !!r.enabled,
+    oldEnabled:
+      r.old_enabled === null || r.old_enabled === undefined
+        ? null
+        : !!r.old_enabled,
   };
 }
 
@@ -96,6 +101,8 @@ export const recordPermissionAudit = createServerFn({ method: "POST" })
       module,
       action: action as PermissionAuditAction,
       enabled: !!o.enabled,
+      oldEnabled:
+        typeof o.oldEnabled === "boolean" ? o.oldEnabled : null,
       actorName:
         typeof o.actorName === "string" ? o.actorName.trim().slice(0, 200) : null,
     };
@@ -113,6 +120,7 @@ export const recordPermissionAudit = createServerFn({ method: "POST" })
         module: data.module,
         action: data.action,
         enabled: data.enabled,
+        old_enabled: data.oldEnabled,
       })
       .select("*")
       .single();
