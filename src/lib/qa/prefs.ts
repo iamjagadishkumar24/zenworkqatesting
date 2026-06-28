@@ -46,6 +46,8 @@ export type AdminPrefs = {
   // Import/export
   csvDelimiter: "," | ";" | "\t";
   importMergeStrategy: "skip-existing" | "overwrite";
+  // Sidebar
+  sidebarCollapsed: boolean;
 };
 
 // Single source of truth for which accent values the backend will accept.
@@ -99,6 +101,7 @@ const DEFAULTS: AdminPrefs = {
   showAgentChart: true,
   csvDelimiter: ",",
   importMergeStrategy: "skip-existing",
+  sidebarCollapsed: false,
 };
 
 const BASE_KEY = "qa.admin.prefs.v1";
