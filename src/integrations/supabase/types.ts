@@ -1051,6 +1051,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_permissions: {
+        Row: {
+          action: Database["public"]["Enums"]["permission_action"]
+          created_at: string
+          enabled: boolean
+          id: string
+          module: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["permission_action"]
+          created_at?: string
+          enabled: boolean
+          id?: string
+          module: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["permission_action"]
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           accent: string
@@ -1144,12 +1177,28 @@ export type Database = {
         Returns: Json
       }
       current_user_name: { Args: never; Returns: string }
+      has_permission: {
+        Args: {
+          _action: Database["public"]["Enums"]["permission_action"]
+          _module: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      list_user_permission_overrides: {
+        Args: { _user_id: string }
+        Returns: {
+          action: Database["public"]["Enums"]["permission_action"]
+          enabled: boolean
+          module: string
+        }[]
       }
       log_activity: {
         Args: {
@@ -1186,10 +1235,27 @@ export type Database = {
         Returns: Json
       }
       purge_orphaned_agent_refs: { Args: never; Returns: Json }
+      role_default_permission: {
+        Args: {
+          _action: Database["public"]["Enums"]["permission_action"]
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      set_user_permission: {
+        Args: {
+          _action: Database["public"]["Enums"]["permission_action"]
+          _enabled: boolean
+          _module: string
+          _target_user_id: string
+        }
+        Returns: undefined
+      }
       user_id_for_name: { Args: { _name: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "agent"
+      permission_action: "view" | "create" | "edit" | "delete"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1318,6 +1384,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "agent"],
+      permission_action: ["view", "create", "edit", "delete"],
     },
   },
 } as const
