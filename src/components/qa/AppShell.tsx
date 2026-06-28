@@ -240,6 +240,49 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="flex flex-col gap-1 p-3">
           {visibleNav.map((entry) => {
             if (isGroup(entry)) {
+              // For non-admins, if a group collapses to a single visible item,
+              // render it as a flat link using the group's header label/icon
+              // (no expandable submenu, no duplicate entries).
+              if (!isAdmin && entry.items.length === 1) {
+                const only = entry.items[0];
+                const GroupIcon = entry.icon;
+                const active = path === only.to || path.startsWith(only.to + "/");
+                if (collapsed) {
+                  return (
+                    <Link
+                      key={entry.id}
+                      to={only.to}
+                      className={cn(
+                        "flex items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                        active
+                          ? "text-primary-foreground shadow-sm"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent/60",
+                      )}
+                      style={active ? { background: "var(--gradient-primary)" } : undefined}
+                      title={entry.label}
+                      aria-label={entry.label}
+                    >
+                      <GroupIcon className="h-4 w-4 shrink-0" />
+                    </Link>
+                  );
+                }
+                return (
+                  <Link
+                    key={entry.id}
+                    to={only.to}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                      active
+                        ? "text-primary-foreground shadow-sm"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/60",
+                    )}
+                    style={active ? { background: "var(--gradient-primary)" } : undefined}
+                  >
+                    <GroupIcon className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{entry.label}</span>
+                  </Link>
+                );
+              }
               const Icon = entry.icon;
               const groupActive = entry.items.some(
                 (i) => path === i.to || path.startsWith(i.to + "/"),
