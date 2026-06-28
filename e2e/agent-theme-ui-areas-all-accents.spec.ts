@@ -31,28 +31,32 @@ type AreaSample = Record<string, string>;
 
 async function sampleUiAreas(page: Page): Promise<AreaSample> {
   return page.evaluate(() => {
+    // Tokens in this project are full `oklch(...)` values, NOT HSL triples,
+    // so probes must reference them with `var(--token)` directly — wrapping
+    // in `hsl(var(--token))` would produce an invalid color that silently
+    // falls back to the default and makes every accent look identical.
     const probes: Record<string, Partial<CSSStyleDeclaration>> = {
-      sidebar: { background: "hsl(var(--sidebar-primary))" },
-      sidebarFg: { color: "hsl(var(--sidebar-primary-foreground))" },
-      header: { background: "hsl(var(--background))", color: "hsl(var(--foreground))" },
-      buttonBg: { background: "hsl(var(--primary))" },
-      buttonFg: { color: "hsl(var(--primary-foreground))" },
-      card: { background: "hsl(var(--card))", color: "hsl(var(--card-foreground))" },
-      cardBorder: { borderColor: "hsl(var(--border))", borderStyle: "solid", borderWidth: "1px" },
-      tableHead: { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" },
-      tableRowBorder: { borderColor: "hsl(var(--border))", borderStyle: "solid", borderWidth: "1px" },
-      formInputBorder: { borderColor: "hsl(var(--input))", borderStyle: "solid", borderWidth: "1px" },
-      formRing: { outlineColor: "hsl(var(--ring))", outlineStyle: "solid", outlineWidth: "2px" },
-      chartLine: { color: "hsl(var(--primary))" },
+      sidebar: { background: "var(--sidebar-primary)" },
+      sidebarFg: { color: "var(--sidebar-primary-foreground)" },
+      header: { background: "var(--background)", color: "var(--foreground)" },
+      buttonBg: { background: "var(--primary)" },
+      buttonFg: { color: "var(--primary-foreground)" },
+      card: { background: "var(--card)", color: "var(--card-foreground)" },
+      cardBorder: { borderColor: "var(--border)", borderStyle: "solid", borderWidth: "1px" },
+      tableHead: { background: "var(--muted)", color: "var(--muted-foreground)" },
+      tableRowBorder: { borderColor: "var(--border)", borderStyle: "solid", borderWidth: "1px" },
+      formInputBorder: { borderColor: "var(--input)", borderStyle: "solid", borderWidth: "1px" },
+      formRing: { outlineColor: "var(--ring)", outlineStyle: "solid", outlineWidth: "2px" },
+      chartLine: { color: "var(--primary)" },
       chartGradient: { background: "var(--gradient-primary)" },
-      badge: { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" },
-      badgeSecondary: { background: "hsl(var(--secondary))", color: "hsl(var(--secondary-foreground))" },
-      alertBg: { background: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" },
-      alertDestructive: { background: "hsl(var(--destructive))", color: "hsl(var(--destructive-foreground))" },
-      modalBg: { background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))" },
-      modalRing: { outlineColor: "hsl(var(--ring))", outlineStyle: "solid", outlineWidth: "2px" },
-      dropdownBg: { background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))" },
-      dropdownAccent: { background: "hsl(var(--accent))" },
+      badge: { background: "var(--primary)", color: "var(--primary-foreground)" },
+      badgeSecondary: { background: "var(--secondary)", color: "var(--secondary-foreground)" },
+      alertBg: { background: "var(--accent)", color: "var(--accent-foreground)" },
+      alertDestructive: { background: "var(--destructive)", color: "var(--destructive-foreground)" },
+      modalBg: { background: "var(--popover)", color: "var(--popover-foreground)" },
+      modalRing: { outlineColor: "var(--ring)", outlineStyle: "solid", outlineWidth: "2px" },
+      dropdownBg: { background: "var(--popover)", color: "var(--popover-foreground)" },
+      dropdownAccent: { background: "var(--accent)" },
     };
 
     const made: HTMLElement[] = [];
