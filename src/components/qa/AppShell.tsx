@@ -214,12 +214,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     })
     .filter((entry) => !isGroup(entry) || entry.items.length > 0);
   // Accordion behavior: only one expandable group is open at a time.
-  const activeGroupId: string | null =
-    visibleNav.find(
-      (entry): entry is Extract<NavEntry, { kind: "group" }> =>
-        isGroup(entry) &&
-        entry.items.some((i) => path === i.to || path.startsWith(i.to + "/")),
-    )?.id ?? null;
+  const activeGroup = visibleNav.find(
+    (entry): entry is NavGroup =>
+      isGroup(entry) &&
+      entry.items.some((i) => path === i.to || path.startsWith(i.to + "/")),
+  );
+  const activeGroupId: string | null = activeGroup?.id ?? null;
   const [openGroupId, setOpenGroupId] = useState<string | null>(activeGroupId);
   // When the route changes to a different group, close any previously
   // expanded group and open the one containing the active route.
