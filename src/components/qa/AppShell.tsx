@@ -86,6 +86,44 @@ type NavGroup = {
 type NavEntry = NavItem | NavGroup;
 const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
 
+/**
+ * Pure helper: compute the navigation entries to render for a given role.
+ * - Filters admin-only entries for non-admins.
+ * - For non-admin viewers, collapses any group with a single visible item
+ *   down to a flat link (uses the group's header label/icon, links to the
+ *   only child route). Avoids redundant single-item dropdowns.
+ */
+export type RenderedNavEntry =
+  | { kind: "link"; to: string; label: string; icon: NavItem["icon"] }
+  | {
+      kind: "group";
+      id: string;
+      label: string;
+      icon: NavGroup["icon"];
+      items: NavItem[];
+    };
+
+export function getVisibleNav(
+  source: NavEntry[],
+  isAdmin: boolean,
+): RenderedNavEntry[] {
+  return source
+    .filter((n) => !n.adminOnly || isAdmin)
+    .map((entry): RenderedNavEntry | null => {
+      if (!isGroup(entry)) {
+        return { kind: "link", to: entry.to, label: entry.label, icon: entry.icon };
+      }
+      const items = entry.items.filter((i) => !i.adminOnly || isAdmin);
+      if (items.length === 0) return null;
+      if (!isAdmin && items.length === 1) {
+        const only = items[0];
+        return { kind: "link", to: only.to, label: entry.label, icon: entry.icon };
+      }
+      return { kind: "group", id: entry.id, label: entry.label, icon: entry.icon, items };
+    })
+    .filter((e): e is RenderedNavEntry => e !== null);
+}
+
 export const nav: NavEntry[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/forms", label: "Forms", icon: FileText },
@@ -158,7 +196,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const routeSearch = useRouterState({ select: (s) => s.location.search as { q?: string } });
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = prefs.sidebarCollapsed;
+  const setCollapsed = (next: boolean | ((c: boolean) => boolean)) => {
+    const value = typeof next === "function" ? next(collapsed) : next;
+    updatePref("sidebarCollapsed", value);
+  };
   const [q, setQ] = useState("");
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountAnnouncement, setAccountAnnouncement] = useState("");
