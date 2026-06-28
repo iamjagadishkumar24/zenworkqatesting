@@ -74,8 +74,9 @@ describe("RightsManagementPage", () => {
     const row = rowFor("Forms");
     const switches = within(row).getAllByRole("switch");
     switches.forEach((s) => expect(s).toHaveAttribute("data-state", "checked"));
-    // Inline audit history has been moved to Settings.
-    expect(screen.queryByText(/audit history/i)).not.toBeInTheDocument();
+    // Inline audit history table has been moved to Settings.
+    expect(screen.queryByRole("heading", { name: /audit history/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/No permission changes yet/i)).not.toBeInTheDocument();
   });
 
   it("toggling 'view' off records an audit entry and toasts success", () => {
