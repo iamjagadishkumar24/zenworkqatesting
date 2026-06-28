@@ -122,6 +122,38 @@ jobs:
             test-results/sidebar.log
           retention-days: 14
 
+      - name: Permission Audit + Rights Management RBAC regression
+        id: permission_audit_rbac
+        env:
+          PLAYWRIGHT_AGENT_EMAIL: ${{ secrets.PLAYWRIGHT_AGENT_EMAIL }}
+          PLAYWRIGHT_AGENT_PASSWORD: ${{ secrets.PLAYWRIGHT_AGENT_PASSWORD }}
+          PLAYWRIGHT_ADMIN_EMAIL: ${{ secrets.PLAYWRIGHT_ADMIN_EMAIL }}
+          PLAYWRIGHT_ADMIN_PASSWORD: ${{ secrets.PLAYWRIGHT_ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$PLAYWRIGHT_ADMIN_EMAIL" ] || [ -z "$PLAYWRIGHT_ADMIN_PASSWORD" ]; then
+            echo "::error::PLAYWRIGHT_ADMIN_* secrets are required to gate Permission Audit RBAC"
+            exit 1
+          fi
+          set -o pipefail
+          mkdir -p test-results
+          bunx playwright test \
+            e2e/permission-audit-access.spec.ts \
+            e2e/rights-management-user-switch-no-leak.spec.ts \
+            --retries=2 \
+            --trace=retain-on-failure \
+            --output=test-results/permission-audit \
+            --reporter=list,html 2>&1 | tee test-results/permission-audit.log
+
+      - name: Upload Permission Audit regression artifacts
+        if: failure() && steps.permission_audit_rbac.conclusion == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failures-permission-audit
+          path: |
+            test-results/permission-audit
+            test-results/permission-audit.log
+          retention-days: 14
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
