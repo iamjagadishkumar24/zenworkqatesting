@@ -25,15 +25,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { History, Search, Trash2 } from "lucide-react";
+import { History, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   clearPermissionAudit,
   getPermissionAudit,
   hydratePermissionAudit,
+  refreshPermissionAudit,
   subscribePermissionAudit,
   type PermissionAuditEntry,
 } from "@/lib/qa/permissionAudit";
+import { supabase } from "@/integrations/supabase/client";
 
 type Filter = "all" | "admin" | "agent";
 
@@ -43,13 +45,35 @@ export function PermissionAuditHistoryPage() {
   );
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const unsub = subscribePermissionAudit(() => setEntries(getPermissionAudit()));
     setEntries(getPermissionAudit());
     void hydratePermissionAudit();
-    return unsub;
+    const channel = supabase
+      .channel("permission-audit-page")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "permission_audit" },
+        () => {
+          void refreshPermissionAudit();
+        },
+      )
+      .subscribe();
+    return () => {
+      unsub();
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    const ok = await refreshPermissionAudit();
+    setRefreshing(false);
+    if (ok) toast.success("Audit refreshed");
+    else toast.error("Couldn't refresh audit history");
+  }
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -78,6 +102,17 @@ export function PermissionAuditHistoryPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            aria-label="Refresh audit history"
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
           <Select value={filter} onValueChange={(v) => setFilter(v as Filter)}>
             <SelectTrigger className="w-[160px]" aria-label="Filter by user type">
               <SelectValue />
@@ -129,6 +164,7 @@ export function PermissionAuditHistoryPage() {
                 <TableHead>Role</TableHead>
                 <TableHead>Module</TableHead>
                 <TableHead>Action</TableHead>
+                <TableHead>Change</TableHead>
                 <TableHead>Result</TableHead>
               </TableRow>
             </TableHeader>
@@ -142,6 +178,19 @@ export function PermissionAuditHistoryPage() {
                   <TableCell className="capitalize">{a.role}</TableCell>
                   <TableCell>{a.module}</TableCell>
                   <TableCell className="capitalize">{a.action}</TableCell>
+                  <TableCell className="text-xs">
+                    <span className="text-muted-foreground">
+                      {a.oldEnabled === null || a.oldEnabled === undefined
+                        ? "—"
+                        : a.oldEnabled
+                          ? "Granted"
+                          : "Revoked"}
+                    </span>
+                    <span className="mx-1 text-muted-foreground">→</span>
+                    <span className="font-medium">
+                      {a.enabled ? "Granted" : "Revoked"}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={a.enabled ? "default" : "outline"}>
                       {a.enabled ? "Granted" : "Revoked"}
@@ -152,7 +201,7 @@ export function PermissionAuditHistoryPage() {
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="py-10 text-center text-sm text-muted-foreground"
                   >
                     {entries.length === 0

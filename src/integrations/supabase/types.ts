@@ -740,6 +740,7 @@ export type Database = {
           enabled: boolean
           id: string
           module: string
+          old_enabled: boolean | null
           target_role: Database["public"]["Enums"]["app_role"]
           target_user_id: string | null
           target_user_name: string
@@ -752,6 +753,7 @@ export type Database = {
           enabled: boolean
           id?: string
           module: string
+          old_enabled?: boolean | null
           target_role: Database["public"]["Enums"]["app_role"]
           target_user_id?: string | null
           target_user_name: string
@@ -764,6 +766,7 @@ export type Database = {
           enabled?: boolean
           id?: string
           module?: string
+          old_enabled?: boolean | null
           target_role?: Database["public"]["Enums"]["app_role"]
           target_user_id?: string | null
           target_user_name?: string

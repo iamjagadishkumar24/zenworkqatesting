@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Search, Download, ShieldCheck } from "lucide-react";
+import { Search, Download, ShieldCheck, RefreshCw, Radio } from "lucide-react";
 import { MODULE_OPTIONS } from "@/lib/qa/constants";
 import { useQA } from "@/lib/qa/store";
 import { recordPermissionChange } from "@/lib/qa/permissionAudit";
@@ -39,6 +39,7 @@ import {
   listUserPermissionOverrides,
   setUserPermission,
 } from "@/lib/qa/permissions.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 type Role = "admin" | "agent";
 type Action = "view" | "create" | "edit" | "delete";
@@ -93,6 +94,17 @@ export function RightsManagementPage() {
     action: Action;
     next: boolean;
   } | null>(null);
+  const [lastRealtime, setLastRealtime] = useState<{
+    at: string;
+    actor: string | null;
+    targetUserName: string;
+    module: string;
+    action: Action;
+    enabled: boolean;
+  } | null>(null);
+  const [realtimeStatus, setRealtimeStatus] = useState<
+    "connecting" | "live" | "error"
+  >("connecting");
 
   const eligibleUsers = useMemo(
     () => (users ?? []).filter((u) => u.active && u.role === userType),
@@ -114,6 +126,86 @@ export function RightsManagementPage() {
     () => eligibleUsers.find((u) => u.id === selectedUserId) ?? null,
     [eligibleUsers, selectedUserId],
   );
+
+  // Reload the selected user's overrides from the backend. Exposed as a
+  // manual refresh when realtime sync fails or to recover from errors.
+  async function refreshSelectedUser(): Promise<boolean> {
+    if (!selectedUser) return false;
+    setLoadingPerms(true);
+    try {
+      const rows = await listUserPermissionOverrides({
+        data: { userId: selectedUser.id },
+      });
+      const base = defaultPermsForRole(selectedUser.role);
+      for (const r of rows) {
+        if (!base[r.module]) {
+          base[r.module] = { view: false, create: false, edit: false, delete: false };
+        }
+        base[r.module][r.action] = r.enabled;
+      }
+      setMatrixByUser((prev) => ({ ...prev, [selectedUser.id]: base }));
+      return true;
+    } catch (e) {
+      toast.error(
+        e instanceof Error
+          ? `Refresh failed: ${e.message}`
+          : "Refresh failed",
+      );
+      return false;
+    } finally {
+      setLoadingPerms(false);
+    }
+  }
+
+  // Subscribe to permission_audit inserts so admins see, in real time, when
+  // someone else changes permissions. Refreshes the currently selected user
+  // automatically when the change targets them.
+  useEffect(() => {
+    setRealtimeStatus("connecting");
+    const channel = supabase
+      .channel("rights-management-audit")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "permission_audit" },
+        (payload) => {
+          const r = (payload.new ?? {}) as Record<string, unknown>;
+          const actor =
+            (r.actor_name as string | null) ||
+            (r.actor_id ? String(r.actor_id).slice(0, 8) : null);
+          const targetUserName = String(r.target_user_name ?? "");
+          const targetUserId = (r.target_user_id as string | null) ?? null;
+          const module = String(r.module ?? "");
+          const action = String(r.action ?? "view") as Action;
+          const enabled = !!r.enabled;
+          setLastRealtime({
+            at: String(r.at ?? new Date().toISOString()),
+            actor,
+            targetUserName,
+            module,
+            action,
+            enabled,
+          });
+          if (
+            selectedUser &&
+            targetUserId &&
+            targetUserId === selectedUser.id &&
+            (!currentUser || currentUser.id !== (r.actor_id as string))
+          ) {
+            void refreshSelectedUser();
+          }
+        },
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") setRealtimeStatus("live");
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setRealtimeStatus("error");
+        }
+      });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUser?.id, currentUser?.id]);
 
   // Hydrate the selected user's overrides from the backend whenever the
   // selection changes. Avoids leaking permissions between users.
@@ -212,6 +304,10 @@ export function RightsManagementPage() {
       );
       return;
     }
+    const oldEnabled =
+      prevMatrix[userId]?.[module]?.[action] ??
+      defaultPermsForRole(user.role)[module]?.[action] ??
+      false;
     try {
       recordPermissionChange({
         userId: user.id,
@@ -220,6 +316,8 @@ export function RightsManagementPage() {
         module,
         action,
         enabled: next,
+        oldEnabled,
+        actorName: currentUser?.name ?? currentUser?.email ?? null,
       });
     } catch {
       /* audit failures must not break permission updates */
@@ -426,6 +524,22 @@ export function RightsManagementPage() {
           <Button variant="outline" onClick={exportJson} disabled={!selectedUser}>
             <Download className="mr-2 h-4 w-4" /> Export
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              void (async () => {
+                const ok = await refreshSelectedUser();
+                if (ok) toast.success("Permissions refreshed");
+              })();
+            }}
+            disabled={!selectedUser || loadingPerms}
+            aria-label="Refresh permissions"
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${loadingPerms ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
           <label className="inline-flex">
             <input
               type="file"
@@ -447,6 +561,64 @@ export function RightsManagementPage() {
             </span>
           </label>
         </div>
+      </div>
+
+      <div
+        role="status"
+        aria-live="polite"
+        className={`flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-sm ${
+          realtimeStatus === "live"
+            ? "border-emerald-500/30 bg-emerald-500/5"
+            : realtimeStatus === "error"
+              ? "border-destructive/30 bg-destructive/5"
+              : "border-border bg-muted/30"
+        }`}
+      >
+        <Radio
+          className={`h-4 w-4 ${
+            realtimeStatus === "live"
+              ? "text-emerald-600"
+              : realtimeStatus === "error"
+                ? "text-destructive"
+                : "text-muted-foreground"
+          }`}
+        />
+        <span className="font-medium">
+          {realtimeStatus === "live"
+            ? "Live"
+            : realtimeStatus === "error"
+              ? "Realtime disconnected"
+              : "Connecting…"}
+        </span>
+        {lastRealtime ? (
+          <span className="text-muted-foreground">
+            Last change: {lastRealtime.actor ?? "Someone"}{" "}
+            {lastRealtime.enabled ? "granted" : "revoked"}{" "}
+            <span className="capitalize">{lastRealtime.action}</span> on{" "}
+            <span className="font-medium">{lastRealtime.module}</span> for{" "}
+            {lastRealtime.targetUserName} ·{" "}
+            {new Date(lastRealtime.at).toLocaleTimeString()}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">
+            Waiting for permission change events…
+          </span>
+        )}
+        {realtimeStatus === "error" && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto"
+            onClick={() => {
+              void (async () => {
+                const ok = await refreshSelectedUser();
+                if (ok) toast.success("Permissions refreshed");
+              })();
+            }}
+          >
+            <RefreshCw className="mr-2 h-3 w-3" /> Retry
+          </Button>
+        )}
       </div>
 
       <Card>
