@@ -26,10 +26,10 @@ export function scopeForUser<T extends { createdBy: string; assignedAgent?: stri
 }
 
 // Strict filters used by the Forms and 1099 Online catalogs to guarantee that
-// 2290-related entries (e.g. "Form 2290", "EZ2290", "2290.us", "GT2290") never
+// 2290-related entries (e.g. "Form 2290", "EZ2290", "2290.us", "GT2290", "2290.ai") never
 // appear outside the dedicated 2290 Forms module.
 export function isTwoTwoNinetyName(name: string): boolean {
-  return /(^|\b)(2290|ez2290|gt2290)\b/i.test(name);
+  return /(^|\b)(2290|ez2290|gt2290)\b/i.test(name) || /2290\.ai/i.test(name);
 }
 
 export function excludeNonCatalogForms(names: string[]): string[] {

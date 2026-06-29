@@ -74,7 +74,7 @@ export const INTEGRATIONS: string[] = [
   "FreshBooks",
 ];
 
-export const FORMS_2290: string[] = ["EZ2290", "2290.us", "GT2290"];
+export const FORMS_2290: string[] = ["EZ2290", "2290.us", "GT2290", "2290.ai"];
 
 export const FORMS_990: string[] = [
   "Form 990",

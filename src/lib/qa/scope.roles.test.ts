@@ -74,6 +74,8 @@ describe("2290 catalog exclusion", () => {
     expect(isTwoTwoNinetyName("EZ2290")).toBe(true);
     expect(isTwoTwoNinetyName("GT2290")).toBe(true);
     expect(isTwoTwoNinetyName("ez2290")).toBe(true);
+    expect(isTwoTwoNinetyName("2290.ai")).toBe(true);
+    expect(isTwoTwoNinetyName("2290.us")).toBe(true);
   });
   it("does not flag unrelated forms", () => {
     expect(isTwoTwoNinetyName("Form 1099-NEC")).toBe(false);

@@ -6,7 +6,7 @@ export const Route = createFileRoute("/_app/2290-forms")({
   component: () => (
     <TestingModule
       title="2290 Forms"
-      description="Heavy-vehicle 2290 form testing across EZ2290, 2290.us and GT2290."
+      description="Heavy-vehicle 2290 form testing across EZ2290, 2290.us, GT2290 and 2290.ai."
       module="2290 Forms"
       items={FORMS_2290}
       itemLabel="form"
