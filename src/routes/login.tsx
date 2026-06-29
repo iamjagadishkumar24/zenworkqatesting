@@ -224,14 +224,15 @@ export function LoginPage() {
     setForgotBusy(false);
     try {
       const { recordAuthAttempt } = await import("@/lib/qa/authAudit.functions");
-      void recordAuthAttempt({
+      const { trackAuditPromise } = await import("@/lib/qa/auditFailures");
+      trackAuditPromise("auth_attempt", recordAuthAttempt({
         data: {
           kind: "password_reset_requested",
           email: cleanEmail,
           reason: error?.message,
           user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
         },
-      });
+      }));
     } catch {
       /* noop */
     }

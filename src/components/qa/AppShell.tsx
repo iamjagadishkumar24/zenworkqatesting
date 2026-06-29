@@ -44,6 +44,7 @@ import { usePrefs } from "@/lib/qa/prefs";
 import { getFirstName } from "@/lib/qa/displayName";
 import { UserAvatar } from "./UserAvatar";
 import { BrandLogo } from "./BrandLogo";
+import { AuditFailureIndicator } from "./AuditFailureIndicator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -590,6 +591,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
           </form>
           <NotificationsBell />
+          <AuditFailureIndicator isAdmin={isAdmin} />
           <span
             role="status"
             aria-live="polite"
