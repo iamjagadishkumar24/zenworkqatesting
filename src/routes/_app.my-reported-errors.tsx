@@ -431,6 +431,26 @@ function ReportedErrorsPage() {
                 <TableHead>Priority</TableHead>
                 <TableHead>Reported By</TableHead>
                 <TableHead>Assigned</TableHead>
+                <TableHead>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 font-medium hover:text-foreground"
+                    onClick={() =>
+                      setSortDir((d) => (d === null ? "asc" : d === "asc" ? "desc" : null))
+                    }
+                    aria-label="Sort by Issue Category"
+                    data-testid="sort-issue-category"
+                  >
+                    Issue Category
+                    {sortDir === "asc" ? (
+                      <ArrowUp className="h-3 w-3" />
+                    ) : sortDir === "desc" ? (
+                      <ArrowDown className="h-3 w-3" />
+                    ) : (
+                      <ArrowUpDown className="h-3 w-3 opacity-50" />
+                    )}
+                  </button>
+                </TableHead>
                 <TableHead>Updated</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -451,6 +471,9 @@ function ReportedErrorsPage() {
                   </TableCell>
                   <TableCell className="text-sm">{d.createdBy}</TableCell>
                   <TableCell className="text-sm">{d.assignedAgent}</TableCell>
+                  <TableCell className="text-sm">
+                    {defectIssueCategory(d) ?? <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(d.updatedAt).toLocaleDateString()}
                   </TableCell>
@@ -514,7 +537,7 @@ function ReportedErrorsPage() {
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={11}
+                    colSpan={12}
                     className="py-14 text-center text-sm text-muted-foreground"
                   >
                     <div className="mx-auto flex max-w-sm flex-col items-center gap-3">
