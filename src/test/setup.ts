@@ -15,6 +15,21 @@ declare module "vitest" {
 
 afterEach(() => cleanup());
 
+// Supabase realtime opens a WebSocket via undici in jsdom which occasionally
+// emits an Event whose constructor identity check fails in Node's internal
+// event_target (ERR_INVALID_ARG_TYPE: "Received an instance of Event"). It
+// has no impact on the unit-under-test, but it surfaces as an unhandled
+// exception and fails the suite — swallow only that specific symptom.
+if (typeof process !== "undefined" && typeof process.on === "function") {
+  process.on("uncaughtException", (err: unknown) => {
+    const e = err as { code?: string; message?: string } | undefined;
+    if (e && e.code === "ERR_INVALID_ARG_TYPE" && /instance of Event/.test(String(e.message))) {
+      return;
+    }
+    throw err as Error;
+  });
+}
+
 type Mutable = Record<string, unknown>;
 const g = globalThis as unknown as Mutable;
 
