@@ -39,11 +39,18 @@ describe("Report Defect — 2290.ai category persistence and re-display", () => 
       fireEvent.click(within(section).getByRole("combobox"));
       fireEvent.click(await screen.findByRole("option", { name: category }));
 
-      // Required fields.
-      fireEvent.change(screen.getByLabelText(/Error Title \*/i), {
+      // Required fields. Labels aren't htmlFor-linked, so reach the input via
+      // the label's parent <div>.
+      const inputAfter = (labelText: RegExp) => {
+        const label = screen.getByText(labelText);
+        const field = label.parentElement!.querySelector("input,textarea");
+        if (!field) throw new Error(`No input/textarea after label ${labelText}`);
+        return field as HTMLInputElement | HTMLTextAreaElement;
+      };
+      fireEvent.change(inputAfter(/Error Title \*/i), {
         target: { value: "Sample 2290.ai issue" },
       });
-      fireEvent.change(screen.getByLabelText(/Description \*/i), {
+      fireEvent.change(inputAfter(/Description \/ Comments \*/i), {
         target: { value: "Repro steps captured." },
       });
 
