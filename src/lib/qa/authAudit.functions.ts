@@ -53,6 +53,11 @@ export const recordAuthAttempt = createServerFn({ method: "POST" })
     });
     if (error) {
       console.warn("[authAudit] insert failed", error);
+      return {
+        ok: true,
+        auditWriteFailed: true,
+        auditWriteError: error.message ?? "audit insert failed",
+      } as const;
     }
-    return { ok: true } as const;
+    return { ok: true, auditWriteFailed: false } as const;
   });
