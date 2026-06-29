@@ -76,6 +76,7 @@ type NavItem = {
 type NavGroup = {
   id: string;
   label: string;
+  adminLabel?: string;
   icon: React.ComponentType<{ className?: string }>;
   adminOnly?: boolean;
   items: NavItem[];
@@ -117,7 +118,8 @@ export function getVisibleNav(
         const only = items[0];
         return { kind: "link", to: only.to, label: entry.label, icon: entry.icon };
       }
-      return { kind: "group", id: entry.id, label: entry.label, icon: entry.icon, items };
+      const label = isAdmin && entry.adminLabel ? entry.adminLabel : entry.label;
+      return { kind: "group", id: entry.id, label, icon: entry.icon, items };
     })
     .filter((e): e is RenderedNavEntry => e !== null);
 }
@@ -139,7 +141,8 @@ export const nav: NavEntry[] = [
   { to: "/notes", label: "Quick Notes", icon: StickyNote },
   {
     id: "management",
-    label: "Agents & Tasks Management",
+    label: "Task Management",
+    adminLabel: "Agents & Tasks Management",
     icon: UsersIcon,
     items: [
       { to: "/retest", label: "Task Management", icon: ClipboardCheck },
