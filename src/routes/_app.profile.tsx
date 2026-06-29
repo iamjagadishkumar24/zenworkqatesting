@@ -637,32 +637,6 @@ function ProfilePage() {
                       );
                     })}
                   </div>
-                  <div className="mt-6">
-                    <div className="flex items-baseline justify-between mb-2">
-                      <Label className="block">Compare all themes</Label>
-                      <span className="text-xs text-muted-foreground">
-                        Side-by-side preview — click Apply to switch
-                      </span>
-                    </div>
-                    <div
-                      aria-label="Theme preview grid"
-                      className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
-                    >
-                      {AGENT_THEMES.map((t) => {
-                        const key = (t.value ?? "light") as NonNullable<AdminPrefs["accent"]>;
-                        const active = (prefs.accent ?? "light") === t.value;
-                        return (
-                          <AccentPreviewTile
-                            key={`preview-${t.value}`}
-                            label={t.label}
-                            active={active}
-                            tokens={ACCENT_PREVIEW[key]}
-                            onApply={() => update("accent", t.value as AdminPrefs["accent"])}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
                 </div>
               )}
             </CardContent>
