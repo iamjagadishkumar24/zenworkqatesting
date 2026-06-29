@@ -2,12 +2,14 @@ import XLSXStyle from "xlsx-js-style";
 import { toast } from "sonner";
 import type { Defect, Environment } from "./types";
 import { extractDefectId } from "./retestLink";
+import { defectIssueCategory } from "./adminFilters";
 
 export const REPORTED_ERROR_HEADERS = [
   "Date Reported",
   "Agent Name",
   "Form",
   "Schedules / Related Forms",
+  "2290.ai Issue Category",
   "Error Description",
   "Expected Result / Outcome",
   "Priority",
@@ -29,6 +31,7 @@ export type ReportedErrorRow = {
   /** legacy alias kept so existing UI tables that read `r.section` still work. */
   section: string;
   schedules: string;
+  issueCategory: string;
   description: string;
   expected: string;
   priority: string;
@@ -63,11 +66,16 @@ export function toReportedErrorRow(d: Defect, retest?: RetestSummary | null): Re
   const all = d.comments ?? [];
   const own = all.filter((c) => c.author === d.createdBy);
   const fmtComments = (xs: typeof all) => xs.map((c) => `${c.author}: ${c.text}`).join("\n\n");
+  const issueCat = defectIssueCategory(d);
+  const otherSchedules = Array.isArray(d.schedules)
+    ? d.schedules.filter((s) => s !== issueCat)
+    : [];
   return {
     reportedAt: d.createdAt || null,
     agent: d.createdBy ?? "",
     section: d.formFeature || "",
-    schedules: Array.isArray(d.schedules) ? d.schedules.join(", ") : "",
+    schedules: otherSchedules.join(", "),
+    issueCategory: issueCat ?? "",
     description: d.description ?? "",
     expected: d.expectedResult ?? "",
     priority: d.priority ?? "",
@@ -99,6 +107,7 @@ function rowToTuple(r: ReportedErrorRow): (string | number | Date | null)[] {
     r.agent,
     r.section,
     r.schedules,
+    r.issueCategory,
     r.description,
     r.expected,
     r.priority,
@@ -186,12 +195,12 @@ function buildSheet(rows: (string | number | Date | null)[][]) {
   ws["!rows"] = [{ hpt: 22 }];
 
   // Column indices for the layout (see REPORTED_ERROR_HEADERS).
-  // 0:Date 1:Agent 2:Section 3:Schedules 4:Desc 5:Expected 6:Priority
-  // 7:Screenshot 8:Link 9:Jira 10:AdditionalComments 11:AdminReview
-  // 12:RetestStatus 13:RetestComments 14:RetestUpdated
-  const wrapCols = new Set([3, 4, 5, 10, 13]);
-  const linkCols = new Set([7, 8, 9]);
-  const dateCols = new Set([0, 14]);
+  // 0:Date 1:Agent 2:Section 3:Schedules 4:IssueCategory 5:Desc 6:Expected
+  // 7:Priority 8:Screenshot 9:Link 10:Jira 11:AdditionalComments
+  // 12:AdminReview 13:RetestStatus 14:RetestComments 15:RetestUpdated
+  const wrapCols = new Set([3, 4, 5, 6, 11, 14]);
+  const linkCols = new Set([8, 9, 10]);
+  const dateCols = new Set([0, 15]);
   for (let r = 0; r < rows.length; r++) {
     for (let c = 0; c < HEADERS.length; c++) {
       const addr = XLSXStyle.utils.encode_cell({ r: r + 1, c });
