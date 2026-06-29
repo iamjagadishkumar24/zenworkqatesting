@@ -135,3 +135,21 @@ export function trackAuditResult<T extends Record<string, unknown> | void | null
   }
   return result;
 }
+
+/**
+ * Fire-and-forget wrapper for an audit-bearing server-fn promise. Records a
+ * failure if the promise resolves with `auditWriteFailed: true` or rejects.
+ */
+export function trackAuditPromise<T extends Record<string, unknown> | void | null | undefined>(
+  scope: AuditFailureScope,
+  promise: Promise<T>,
+): void {
+  promise.then(
+    (r) => {
+      trackAuditResult(scope, r);
+    },
+    (err: unknown) => {
+      recordAuditFailure(scope, err);
+    },
+  );
+}
