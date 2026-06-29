@@ -41,6 +41,7 @@ describe("Reported-error export — columns", () => {
       "Agent Name",
       "Form",
       "Schedules / Related Forms",
+      "2290.ai Issue Category",
       "Error Description",
       "Expected Result / Outcome",
       "Priority",
