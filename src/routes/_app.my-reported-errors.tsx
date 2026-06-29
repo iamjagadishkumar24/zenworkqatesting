@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
-import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Download, X } from "lucide-react";
+import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Download, X, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ExportPreviewDialog } from "@/components/qa/ExportPreviewDialog";
 import { useAllowAgentExports } from "@/lib/qa/useExportJob";
@@ -47,6 +47,8 @@ import {
   type AdminDefectFilters,
   type Presence,
   type RetestState,
+  FORM_2290_AI_CATEGORIES,
+  defectIssueCategory,
 } from "@/lib/qa/adminFilters";
 
 const DEFECT_STATUSES: DefectStatus[] = [
@@ -131,6 +133,8 @@ function ReportedErrorsPage() {
   const [hasComments, setHasComments] = useState<Presence>("any");
   const [hasAttach, setHasAttach] = useState<Presence>("any");
   const [retest, setRetest] = useState<RetestState>("any");
+  const [issueCategory, setIssueCategory] = useState<string>("all");
+  const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
   const [reassignFor, setReassignFor] = useState<{ id: string; current: string } | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const allowAgentExports = useAllowAgentExports();
@@ -166,9 +170,21 @@ function ReportedErrorsPage() {
       hasComments: isAdmin ? hasComments : "any",
       hasAttachments: isAdmin ? hasAttach : "any",
       retest: isAdmin ? retest : "any",
+      issueCategory,
     };
     const base = filterDefectsAdmin(scoped, f);
-    return applyDefectPreset(base, preset);
+    const preset_filtered = applyDefectPreset(base, preset);
+    if (!sortDir) return preset_filtered;
+    const sorted = [...preset_filtered].sort((a, b) => {
+      const ca = defectIssueCategory(a) ?? "";
+      const cb = defectIssueCategory(b) ?? "";
+      // Empty values sort last regardless of direction.
+      if (ca && !cb) return -1;
+      if (!ca && cb) return 1;
+      const cmp = ca.localeCompare(cb);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return sorted;
   }, [
     scoped,
     q,
@@ -184,6 +200,8 @@ function ReportedErrorsPage() {
     retest,
     isAdmin,
     preset,
+    issueCategory,
+    sortDir,
   ]);
 
   const resetFilters = () => {
@@ -198,6 +216,8 @@ function ReportedErrorsPage() {
     setHasComments("any");
     setHasAttach("any");
     setRetest("any");
+    setIssueCategory("all");
+    setSortDir(null);
     navigate({ to: "/my-reported-errors", search: {} as never, replace: true });
   };
 
@@ -375,6 +395,16 @@ function ReportedErrorsPage() {
                 />
               </>
             )}
+            <FilterSelect
+              value={issueCategory}
+              onChange={setIssueCategory}
+              placeholder="2290.ai Issue Category"
+              options={[
+                { v: "all", l: "All issue categories" },
+                ...FORM_2290_AI_CATEGORIES.map((c) => ({ v: c, l: c })),
+                { v: "none", l: "No category (non-2290.ai)" },
+              ]}
+            />
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
             <span>
@@ -401,6 +431,26 @@ function ReportedErrorsPage() {
                 <TableHead>Priority</TableHead>
                 <TableHead>Reported By</TableHead>
                 <TableHead>Assigned</TableHead>
+                <TableHead>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 font-medium hover:text-foreground"
+                    onClick={() =>
+                      setSortDir((d) => (d === null ? "asc" : d === "asc" ? "desc" : null))
+                    }
+                    aria-label="Sort by Issue Category"
+                    data-testid="sort-issue-category"
+                  >
+                    Issue Category
+                    {sortDir === "asc" ? (
+                      <ArrowUp className="h-3 w-3" />
+                    ) : sortDir === "desc" ? (
+                      <ArrowDown className="h-3 w-3" />
+                    ) : (
+                      <ArrowUpDown className="h-3 w-3 opacity-50" />
+                    )}
+                  </button>
+                </TableHead>
                 <TableHead>Updated</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -421,6 +471,9 @@ function ReportedErrorsPage() {
                   </TableCell>
                   <TableCell className="text-sm">{d.createdBy}</TableCell>
                   <TableCell className="text-sm">{d.assignedAgent}</TableCell>
+                  <TableCell className="text-sm">
+                    {defectIssueCategory(d) ?? <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(d.updatedAt).toLocaleDateString()}
                   </TableCell>
@@ -484,7 +537,7 @@ function ReportedErrorsPage() {
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={11}
+                    colSpan={12}
                     className="py-14 text-center text-sm text-muted-foreground"
                   >
                     <div className="mx-auto flex max-w-sm flex-col items-center gap-3">
