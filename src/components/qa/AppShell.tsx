@@ -221,7 +221,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       const items = entry.items
         .filter((i) => !i.adminOnly || isAdmin)
         .filter((i) => isItemAllowed(i.to));
-      return { ...entry, items };
+      const label = isAdmin && entry.adminLabel ? entry.adminLabel : entry.label;
+      return { ...entry, label, items };
     })
     .filter((entry) => !isGroup(entry) || entry.items.length > 0);
   // Accordion behavior: only one expandable group is open at a time.
