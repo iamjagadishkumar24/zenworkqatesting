@@ -139,7 +139,7 @@ export const nav: NavEntry[] = [
   { to: "/notes", label: "Quick Notes", icon: StickyNote },
   {
     id: "management",
-    label: "Management",
+    label: "Agents & Tasks Management",
     icon: UsersIcon,
     items: [
       { to: "/retest", label: "Task Management", icon: ClipboardCheck },
