@@ -43,7 +43,7 @@ describe("Report Defect — 2290.ai categories appear immediately", () => {
   it("places the Issue Category before downstream fields (title, attachments, schedules)", () => {
     open2290Form("2290.ai");
     const section = screen.getByTestId(CATEGORY_TESTID);
-    const titleLabel = screen.getByText(/^Title \*/i);
+    const titleLabel = screen.getByText(/Error Title \*/i);
     expect(
       section.compareDocumentPosition(titleLabel) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
