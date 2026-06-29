@@ -12,12 +12,9 @@ const ACCENTS = [
   "light",
   "blue",
   "green",
-  "emerald",
   "teal",
   "purple",
-  "violet",
   "pink",
-  "rose",
   "orange",
   "grey",
 ] as const;
@@ -131,16 +128,16 @@ test.describe("Theme tokens (authless): every accent × env resolves header/side
     }
   });
 
-  test("Blue and Emerald override env tints (Production/Stage)", async ({ page }) => {
+  test("Blue and Green override env tints (Production/Stage)", async ({ page }) => {
     await page.goto("/login", { waitUntil: "domcontentloaded" });
     const blueDefault = await readTokens(page, "blue", "");
-    const emeraldDefault = await readTokens(page, "emerald", "");
+    const greenDefault = await readTokens(page, "green", "");
     for (const env of ["Production", "Stage"] as const) {
       const blue = await readTokens(page, "blue", env);
-      const emerald = await readTokens(page, "emerald", env);
+      const green = await readTokens(page, "green", env);
       expect(blue.primary, `Blue stable under env=${env}`).toBe(blueDefault.primary);
-      expect(emerald.primary, `Emerald stable under env=${env}`).toBe(emeraldDefault.primary);
-      expect(blue.primary, `Blue != Emerald under env=${env}`).not.toBe(emerald.primary);
+      expect(green.primary, `Green stable under env=${env}`).toBe(greenDefault.primary);
+      expect(blue.primary, `Blue != Green under env=${env}`).not.toBe(green.primary);
     }
   });
 });

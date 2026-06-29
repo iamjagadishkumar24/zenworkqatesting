@@ -6,9 +6,6 @@ const PrefsInput = z.object({
   theme: z.enum(["system", "light", "dark"]),
   accent: z.enum([
     "blue",
-    "violet",
-    "emerald",
-    "rose",
     "light",
     "green",
     "purple",

@@ -48,12 +48,7 @@ const AGENT_THEMES: { value: AdminPrefs["accent"]; label: string; swatch: string
   {
     value: "green",
     label: "Green",
-    swatch: "linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160))",
-  },
-  {
-    value: "emerald",
-    label: "Emerald",
-    swatch: "linear-gradient(135deg, oklch(0.62 0.16 155), oklch(0.76 0.14 160))",
+    swatch: "linear-gradient(135deg, oklch(0.6 0.18 145), oklch(0.74 0.16 145))",
   },
   {
     value: "teal",
@@ -66,19 +61,9 @@ const AGENT_THEMES: { value: AdminPrefs["accent"]; label: string; swatch: string
     swatch: "linear-gradient(135deg, oklch(0.55 0.22 295), oklch(0.68 0.2 295))",
   },
   {
-    value: "violet",
-    label: "Violet",
-    swatch: "linear-gradient(135deg, oklch(0.58 0.22 295), oklch(0.72 0.2 295))",
-  },
-  {
     value: "pink",
     label: "Pink",
-    swatch: "linear-gradient(135deg, oklch(0.68 0.2 350), oklch(0.78 0.18 350))",
-  },
-  {
-    value: "rose",
-    label: "Rose",
-    swatch: "linear-gradient(135deg, oklch(0.65 0.2 15), oklch(0.78 0.18 15))",
+    swatch: "linear-gradient(135deg, oklch(0.66 0.22 340), oklch(0.78 0.2 340))",
   },
   {
     value: "orange",

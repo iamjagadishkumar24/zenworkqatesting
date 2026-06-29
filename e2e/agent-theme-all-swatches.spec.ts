@@ -5,12 +5,9 @@ const SWATCHES: { label: string; token: string }[] = [
   { label: "Light", token: "light" },
   { label: "Blue", token: "blue" },
   { label: "Green", token: "green" },
-  { label: "Emerald", token: "emerald" },
   { label: "Teal", token: "teal" },
   { label: "Purple", token: "purple" },
-  { label: "Violet", token: "violet" },
   { label: "Pink", token: "pink" },
-  { label: "Rose", token: "rose" },
   { label: "Orange", token: "orange" },
   { label: "Grey", token: "grey" },
 ];

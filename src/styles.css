@@ -368,55 +368,6 @@
   --sidebar-accent-foreground: oklch(0.54 0.19 258);
   --gradient-primary: linear-gradient(135deg, oklch(0.54 0.19 258), oklch(0.69 0.17 258));
 }
-:root[data-accent="violet"] {
-  /* Shifted hue (280) and chroma so violet reads as true violet and is
-     visually distinct from purple (295). */
-  --primary: oklch(0.5 0.24 280);
-  --primary-glow: oklch(0.66 0.22 280);
-  --ring: oklch(0.5 0.24 280);
-  --sidebar-primary: oklch(0.5 0.24 280);
-  --sidebar-accent-foreground: oklch(0.5 0.24 280);
-  --gradient-primary: linear-gradient(135deg, oklch(0.5 0.24 280), oklch(0.66 0.22 280));
-}
-:root[data-accent="emerald"] {
-  /* Distinct from "green": shifted hue toward true emerald (170) with
-     higher chroma so emerald and green resolve to visibly different
-     --primary values everywhere they're consumed. */
-  --primary: oklch(0.58 0.18 170);
-  --primary-glow: oklch(0.74 0.16 172);
-  --ring: oklch(0.58 0.18 170);
-  --sidebar-primary: oklch(0.58 0.18 170);
-  --sidebar-accent-foreground: oklch(0.58 0.18 170);
-  --gradient-primary: linear-gradient(135deg, oklch(0.58 0.18 170), oklch(0.74 0.16 172));
-}
-:root[data-accent="rose"] {
-  --primary: oklch(0.62 0.22 15);
-  --primary-glow: oklch(0.73 0.2 15);
-  --ring: oklch(0.62 0.22 15);
-  --sidebar-primary: oklch(0.62 0.22 15);
-  --sidebar-accent-foreground: oklch(0.62 0.22 15);
-  --gradient-primary: linear-gradient(135deg, oklch(0.62 0.22 15), oklch(0.73 0.2 15));
-}
-:root.dark[data-accent="violet"] {
-  --primary: oklch(0.66 0.22 280);
-  --primary-glow: oklch(0.78 0.2 280);
-  --ring: oklch(0.66 0.22 280);
-  --sidebar-primary: oklch(0.66 0.22 280);
-  --gradient-primary: linear-gradient(135deg, oklch(0.66 0.22 280), oklch(0.78 0.2 280));
-}
-:root.dark[data-accent="emerald"] {
-  --primary: oklch(0.72 0.17 170);
-  --primary-glow: oklch(0.82 0.15 172);
-  --ring: oklch(0.72 0.17 170);
-  --sidebar-primary: oklch(0.72 0.17 170);
-  --gradient-primary: linear-gradient(135deg, oklch(0.72 0.17 170), oklch(0.82 0.15 172));
-}
-:root.dark[data-accent="rose"] {
-  --primary: oklch(0.72 0.2 15);
-  --primary-glow: oklch(0.82 0.18 15);
-  --ring: oklch(0.72 0.2 15);
-  --sidebar-primary: oklch(0.72 0.2 15);
-}
 :root.dark[data-accent="blue"] {
   --primary: oklch(0.7 0.17 258);
   --primary-glow: oklch(0.8 0.15 258);
@@ -437,11 +388,11 @@
   --gradient-primary: linear-gradient(135deg, oklch(0.9 0.005 255), oklch(0.82 0.01 255));
 }
 :root.dark[data-accent="green"] {
-  --primary: oklch(0.72 0.16 155);
-  --primary-glow: oklch(0.82 0.14 160);
-  --ring: oklch(0.72 0.16 155);
-  --sidebar-primary: oklch(0.72 0.16 155);
-  --gradient-primary: linear-gradient(135deg, oklch(0.72 0.16 155), oklch(0.82 0.14 160));
+  --primary: oklch(0.74 0.17 145);
+  --primary-glow: oklch(0.84 0.15 145);
+  --ring: oklch(0.74 0.17 145);
+  --sidebar-primary: oklch(0.74 0.17 145);
+  --gradient-primary: linear-gradient(135deg, oklch(0.74 0.17 145), oklch(0.84 0.15 145));
 }
 :root.dark[data-accent="purple"] {
   --primary: oklch(0.7 0.2 295);
@@ -458,11 +409,11 @@
   --gradient-primary: linear-gradient(135deg, oklch(0.78 0.17 60), oklch(0.86 0.15 65));
 }
 :root.dark[data-accent="pink"] {
-  --primary: oklch(0.78 0.18 350);
-  --primary-glow: oklch(0.86 0.16 350);
-  --ring: oklch(0.78 0.18 350);
-  --sidebar-primary: oklch(0.78 0.18 350);
-  --gradient-primary: linear-gradient(135deg, oklch(0.78 0.18 350), oklch(0.86 0.16 350));
+  --primary: oklch(0.78 0.2 340);
+  --primary-glow: oklch(0.86 0.18 340);
+  --ring: oklch(0.78 0.2 340);
+  --sidebar-primary: oklch(0.78 0.2 340);
+  --gradient-primary: linear-gradient(135deg, oklch(0.78 0.2 340), oklch(0.86 0.18 340));
 }
 :root.dark[data-accent="grey"] {
   --primary: oklch(0.7 0.02 255);
@@ -493,12 +444,14 @@
   --gradient-primary: linear-gradient(135deg, oklch(0.9 0.005 255), oklch(0.78 0.01 255));
 }
 :root[data-accent="green"] {
-  --primary: oklch(0.6 0.17 155);
-  --primary-glow: oklch(0.72 0.15 160);
-  --ring: oklch(0.6 0.17 155);
-  --sidebar-primary: oklch(0.6 0.17 155);
-  --sidebar-accent-foreground: oklch(0.6 0.17 155);
-  --gradient-primary: linear-gradient(135deg, oklch(0.6 0.17 155), oklch(0.72 0.15 160));
+  /* True grass green at hue 145 — pulled well away from teal (195) so the
+     two accents resolve to clearly different --primary values. */
+  --primary: oklch(0.6 0.18 145);
+  --primary-glow: oklch(0.74 0.16 145);
+  --ring: oklch(0.6 0.18 145);
+  --sidebar-primary: oklch(0.6 0.18 145);
+  --sidebar-accent-foreground: oklch(0.6 0.18 145);
+  --gradient-primary: linear-gradient(135deg, oklch(0.6 0.18 145), oklch(0.74 0.16 145));
 }
 :root[data-accent="purple"] {
   --primary: oklch(0.55 0.22 295);
@@ -517,12 +470,14 @@
   --gradient-primary: linear-gradient(135deg, oklch(0.66 0.18 55), oklch(0.78 0.16 60));
 }
 :root[data-accent="pink"] {
-  --primary: oklch(0.68 0.2 350);
-  --primary-glow: oklch(0.78 0.18 350);
-  --ring: oklch(0.68 0.2 350);
-  --sidebar-primary: oklch(0.68 0.2 350);
-  --sidebar-accent-foreground: oklch(0.6 0.2 350);
-  --gradient-primary: linear-gradient(135deg, oklch(0.68 0.2 350), oklch(0.78 0.18 350));
+  /* Magenta-pink at hue 340 — visibly distinct from purple (295) and
+     from any red/rose neighbour. */
+  --primary: oklch(0.66 0.22 340);
+  --primary-glow: oklch(0.78 0.2 340);
+  --ring: oklch(0.66 0.22 340);
+  --sidebar-primary: oklch(0.66 0.22 340);
+  --sidebar-accent-foreground: oklch(0.6 0.22 340);
+  --gradient-primary: linear-gradient(135deg, oklch(0.66 0.22 340), oklch(0.78 0.2 340));
 }
 :root[data-accent="grey"] {
   --primary: oklch(0.5 0.02 255);
