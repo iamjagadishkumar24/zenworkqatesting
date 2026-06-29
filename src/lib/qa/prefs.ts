@@ -27,9 +27,6 @@ export type AdminPrefs = {
   theme: "system" | "light" | "dark";
   accent:
     | "blue"
-    | "violet"
-    | "emerald"
-    | "rose"
     | "light"
     | "green"
     | "purple"
@@ -54,9 +51,6 @@ export type AdminPrefs = {
 // Kept in sync with the zod enum in userPreferences.functions.ts.
 export const ALLOWED_ACCENTS: AdminPrefs["accent"][] = [
   "blue",
-  "violet",
-  "emerald",
-  "rose",
   "light",
   "green",
   "purple",
