@@ -2,13 +2,34 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Clock, Timer, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Clock, Timer, CheckCircle2, ArrowUpRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useRetests } from "@/lib/qa/retest";
 import { useEnvironment } from "@/lib/qa/environment";
 import { useQA } from "@/lib/qa/store";
 import { deadlineInfo, sortByDeadline, TIER_CLASSES } from "@/lib/qa/deadline";
+
+const PRIORITY_BADGE: Record<string, string> = {
+  Critical: "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/40",
+  High: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/40",
+  Medium: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40",
+  Low: "bg-muted text-muted-foreground border-border",
+};
+
+function formatDueAt(iso: string | null | undefined): string {
+  if (!iso) return "No due date";
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
 
 /**
  * Compact live deadline indicator shown top-right of the agent dashboard.
@@ -61,6 +82,7 @@ export function DeadlineCountdown() {
   const primary = myActive[0];
   const primaryInfo = deadlineInfo(primary.deadline_at, now);
   const multiple = myActive.length > 1;
+  const overdueCount = rows.filter((x) => x.info.isOverdue).length;
 
   return (
     <Popover>
@@ -69,18 +91,25 @@ export function DeadlineCountdown() {
           type="button"
           aria-label={`${myActive.length} active deadline${multiple ? "s" : ""}, nearest ${primaryInfo.shortLabel}`}
           className={cn(
-            "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:shadow-md hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "relative inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:shadow-md hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             TIER_CLASSES[primaryInfo.tier],
           )}
         >
-          {primaryInfo.isOverdue ? (
+          {multiple ? (
+            <span className="relative inline-flex h-4 w-4 shrink-0" aria-hidden="true">
+              <Timer className="absolute left-0 top-0 h-3.5 w-3.5 opacity-50" />
+              <Timer className="absolute left-[3px] top-[3px] h-3.5 w-3.5" />
+            </span>
+          ) : primaryInfo.isOverdue ? (
             <AlertTriangle className="h-3.5 w-3.5" />
           ) : (
             <Timer className="h-3.5 w-3.5" />
           )}
           {multiple ? (
             <span className="flex items-center gap-1.5">
-              <span>{myActive.length} Due</span>
+              <span>
+                {myActive.length} Active Deadline{multiple ? "s" : ""}
+              </span>
               <span className="opacity-60">·</span>
               <span className="font-mono tabular-nums">{primaryInfo.shortLabel}</span>
             </span>
@@ -91,34 +120,93 @@ export function DeadlineCountdown() {
                 : `${primaryInfo.shortLabel} Left`}
             </span>
           )}
+          {multiple ? (
+            <span
+              className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground/85 px-1 text-[10px] font-semibold leading-none text-background"
+              aria-hidden="true"
+            >
+              {myActive.length}
+            </span>
+          ) : null}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0">
+      <PopoverContent align="end" className="w-[22rem] p-0 sm:w-96">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" /> Upcoming Deadlines
+            <Clock className="h-3.5 w-3.5" /> Active Deadlines
           </div>
-          <Badge variant="secondary">{myActive.length}</Badge>
+          <div className="flex items-center gap-1.5">
+            {overdueCount > 0 ? (
+              <Badge
+                variant="outline"
+                className="border-red-500/40 bg-red-500/10 text-[10px] text-red-700 dark:text-red-300"
+              >
+                {overdueCount} overdue
+              </Badge>
+            ) : null}
+            <Badge variant="secondary">{myActive.length}</Badge>
+          </div>
         </div>
-        <div className="max-h-80 overflow-y-auto p-2">
+        <div
+          className="max-h-96 divide-y divide-border/60 overflow-y-auto"
+          role="list"
+          aria-label="Active deadlines"
+        >
           {rows.map(({ r, info }) => (
             <Link
               key={r.id}
               to="/tasks/$taskId"
               params={{ taskId: r.id }}
-              className="flex items-center justify-between gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted/60"
+              role="listitem"
+              aria-label={`${r.title || r.id}, ${r.module || "Task"}, priority ${r.priority}, ${info.isOverdue ? `${info.shortLabel} overdue` : `${info.shortLabel} remaining`}`}
+              className={cn(
+                "group flex flex-col gap-1.5 px-3 py-2.5 text-sm transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none",
+                info.isOverdue && "bg-red-500/5",
+              )}
             >
-              <span className="min-w-0 flex-1 truncate">{r.title || r.id}</span>
-              <span
-                className={cn(
-                  "rounded border px-1.5 py-0.5 font-mono text-[11px] tabular-nums",
-                  TIER_CLASSES[info.tier],
-                )}
-              >
-                {info.isOverdue ? `+${info.shortLabel}` : info.shortLabel}
-              </span>
+              <div className="flex items-start justify-between gap-2">
+                <span className="min-w-0 flex-1 truncate font-medium">{r.title || r.id}</span>
+                <span
+                  className={cn(
+                    "shrink-0 rounded border px-1.5 py-0.5 font-mono text-[11px] tabular-nums",
+                    TIER_CLASSES[info.tier],
+                  )}
+                >
+                  {info.isOverdue ? `+${info.shortLabel}` : info.shortLabel}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                {r.module ? (
+                  <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5">
+                    {r.module}
+                  </span>
+                ) : null}
+                <span
+                  className={cn(
+                    "rounded border px-1.5 py-0.5",
+                    PRIORITY_BADGE[r.priority] ?? PRIORITY_BADGE.Low,
+                  )}
+                >
+                  {r.priority}
+                </span>
+                <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5">
+                  {r.status}
+                </span>
+                <span className="ml-auto inline-flex items-center gap-1">
+                  {formatDueAt(r.deadline_at)}
+                  <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-70" />
+                </span>
+              </div>
             </Link>
           ))}
+        </div>
+        <div className="border-t px-3 py-2 text-right">
+          <Link
+            to="/tasks"
+            className="text-[11px] font-medium text-primary hover:underline"
+          >
+            View all tasks →
+          </Link>
         </div>
       </PopoverContent>
     </Popover>
