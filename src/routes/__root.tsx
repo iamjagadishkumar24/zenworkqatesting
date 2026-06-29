@@ -13,7 +13,6 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { QAProvider } from "@/lib/qa/store";
 import { EnvironmentProvider } from "@/lib/qa/environment";
 import { TaxYearProvider } from "@/lib/qa/taxYear";
-import { Toaster } from "@/components/ui/sonner";
 import { DevErrorOverlay } from "@/components/DevErrorOverlay";
 import {
   installCacheBustingVersionCheck,
@@ -221,7 +220,6 @@ function RootComponent() {
         <EnvironmentProvider>
           <TaxYearProvider>
             <Outlet />
-            <Toaster richColors position="top-right" />
           </TaxYearProvider>
         </EnvironmentProvider>
       </QAProvider>
