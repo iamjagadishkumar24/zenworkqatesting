@@ -317,6 +317,31 @@ export function ReportDefectDialog({
               )}
             </div>
           )}
+          {is2290Ai && (
+            <div className="sm:col-span-2" data-testid="form-2290-ai-category">
+              <Label htmlFor="form-2290-ai-category-select">2290.ai Issue Category *</Label>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Match the filing option on the 2290.ai home page where the issue occurred.
+              </p>
+              <Select value={aiCategory} onValueChange={(v) => setAiCategory(v)}>
+                <SelectTrigger
+                  id="form-2290-ai-category-select"
+                  aria-required="true"
+                  aria-invalid={is2290Ai && !aiCategory ? true : undefined}
+                  className="mt-2"
+                >
+                  <SelectValue placeholder="Select a 2290.ai issue category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FORM_2290_AI_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {showIntegration && (
             <div>
               <Label>Integration *</Label>
@@ -537,31 +562,6 @@ export function ReportDefectDialog({
                   );
                 })}
               </div>
-            </div>
-          )}
-          {is2290Ai && (
-            <div className="sm:col-span-2" data-testid="form-2290-ai-category">
-              <Label htmlFor="form-2290-ai-category-select">2290.ai Issue Category *</Label>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Match the filing option on the 2290.ai home page where the issue occurred.
-              </p>
-              <Select value={aiCategory} onValueChange={(v) => setAiCategory(v)}>
-                <SelectTrigger
-                  id="form-2290-ai-category-select"
-                  aria-required="true"
-                  aria-invalid={is2290Ai && !aiCategory ? true : undefined}
-                  className="mt-2"
-                >
-                  <SelectValue placeholder="Select a 2290.ai issue category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FORM_2290_AI_CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           )}
         </div>
