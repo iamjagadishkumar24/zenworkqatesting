@@ -44,7 +44,7 @@ describe("Sidebar nav visibility by role", () => {
     }
     // The single visible child shows up as a flat link using the group label.
     expect(
-      agent.some((e) => e.kind === "link" && e.label === "Management" && e.to === "/retest"),
+      agent.some((e) => e.kind === "link" && e.label === "Task Management" && e.to === "/retest"),
     ).toBe(true);
     expect(
       agent.some(
@@ -86,6 +86,31 @@ describe("Sidebar nav visibility by role", () => {
         e.kind === "link" ? [e.to] : e.items.map((i) => i.to),
       );
       expect(new Set(tos).size).toBe(tos.length);
+    }
+  });
+
+  it("agents see the management entry labeled 'Task Management' (flat link) and not the admin label", () => {
+    const labels = agent.map((e) => e.label);
+    expect(labels).toContain("Task Management");
+    expect(labels).not.toContain("Agents & Tasks Management");
+    expect(labels).not.toContain("Management");
+    const entry = agent.find((e) => e.label === "Task Management");
+    expect(entry?.kind).toBe("link");
+    if (entry?.kind === "link") expect(entry.to).toBe("/retest");
+  });
+
+  it("admins see the management group labeled 'Agents & Tasks Management' and not the agent label", () => {
+    const labels = admin.map((e) => e.label);
+    expect(labels).toContain("Agents & Tasks Management");
+    expect(labels).not.toContain("Task Management");
+    expect(labels).not.toContain("Management");
+    const entry = admin.find((e) => e.label === "Agents & Tasks Management");
+    expect(entry?.kind).toBe("group");
+    if (entry?.kind === "group") {
+      expect(entry.id).toBe("management");
+      expect(entry.items.map((i) => i.to)).toEqual(
+        expect.arrayContaining(["/retest", "/agents"]),
+      );
     }
   });
 });
