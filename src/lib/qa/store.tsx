@@ -896,14 +896,15 @@ export function QAProvider({ children }: { children: ReactNode }) {
       if (error) {
         try {
           const { recordAuthAttempt } = await import("./authAudit.functions");
-          void recordAuthAttempt({
+          const { trackAuditPromise } = await import("./auditFailures");
+          trackAuditPromise("auth_attempt", recordAuthAttempt({
             data: {
               kind: "login_failure",
               email,
               reason: error.message,
               user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
             },
-          });
+          }));
         } catch {
           /* noop */
         }
@@ -943,14 +944,15 @@ export function QAProvider({ children }: { children: ReactNode }) {
         const isLeaked = /pwned|leaked|breach|weak_password/i.test(msg) || code === "weak_password";
         try {
           const { recordAuthAttempt } = await import("./authAudit.functions");
-          void recordAuthAttempt({
+          const { trackAuditPromise } = await import("./auditFailures");
+          trackAuditPromise("auth_attempt", recordAuthAttempt({
             data: {
               kind: isLeaked ? "leaked_password_blocked" : "signup_failure",
               email: cleanEmail,
               reason: msg,
               user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
             },
-          });
+          }));
         } catch {
           /* noop */
         }
@@ -958,13 +960,14 @@ export function QAProvider({ children }: { children: ReactNode }) {
       }
       try {
         const { recordAuthAttempt } = await import("./authAudit.functions");
-        void recordAuthAttempt({
+        const { trackAuditPromise } = await import("./auditFailures");
+        trackAuditPromise("auth_attempt", recordAuthAttempt({
           data: {
             kind: "signup_success",
             email: cleanEmail,
             user_agent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
           },
-        });
+        }));
       } catch {
         /* noop */
       }
