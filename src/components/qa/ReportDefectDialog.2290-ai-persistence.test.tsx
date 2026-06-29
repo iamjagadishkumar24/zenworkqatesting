@@ -1,5 +1,17 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, within, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+// Polyfills Radix Select needs in jsdom.
+if (!(window as unknown as { PointerEvent?: unknown }).PointerEvent) {
+  (window as unknown as { PointerEvent: typeof MouseEvent }).PointerEvent = class extends MouseEvent {} as unknown as typeof MouseEvent;
+}
+Object.assign(window.HTMLElement.prototype, {
+  hasPointerCapture: () => false,
+  setPointerCapture: () => {},
+  releasePointerCapture: () => {},
+  scrollIntoView: () => {},
+});
 
 const addDefect = vi.fn(async (_: unknown) => ({ ok: true as const }));
 
@@ -34,10 +46,11 @@ describe("Report Defect — 2290.ai category persistence and re-display", () => 
       addDefect.mockClear();
       renderDialog();
 
-      // Pick the 2290.ai issue category.
+      // Pick the 2290.ai issue category via Radix Select.
+      const user = userEvent.setup();
       const section = screen.getByTestId("form-2290-ai-category");
-      fireEvent.click(within(section).getByRole("combobox"));
-      fireEvent.click(await screen.findByRole("option", { name: category }));
+      await user.click(within(section).getByRole("combobox"));
+      await user.click(await screen.findByRole("option", { name: category }));
 
       // Required fields. Labels aren't htmlFor-linked, so reach the input via
       // the label's parent <div>.
