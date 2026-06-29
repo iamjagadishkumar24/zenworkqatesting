@@ -37,6 +37,19 @@ import { QB_DESKTOP_CATEGORIES } from "@/lib/qa/types";
 
 const PRIORITIES: Priority[] = ["Low", "Medium", "High", "Critical"];
 
+/**
+ * Dedicated error reporting categories for 2290.ai. These mirror the three
+ * filing options shown on the 2290.ai landing page and are required when the
+ * selected form is "2290.ai". The chosen category is persisted into the
+ * existing `schedules` field so it flows through filters, search, reports,
+ * dashboards and CSV exports without a schema change.
+ */
+export const FORM_2290_AI_CATEGORIES: readonly string[] = [
+  "Take a Picture & Upload",
+  "eFiling Wizard",
+  "One-Click eFiling",
+] as const;
+
 type Draft = Omit<
   Defect,
   "id" | "createdAt" | "updatedAt" | "updatedBy" | "createdBy" | "comments"
@@ -119,6 +132,7 @@ export function ReportDefectDialog({
   const showForm = !featureMode;
   const formChoices = formOptions && formOptions.length ? formOptions : FORM_LIST;
   const [selectedSchedules, setSelectedSchedules] = useState<string[]>([]);
+  const [aiCategory, setAiCategory] = useState<string>("");
   const [stateCode, setStateCode] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const toggleSchedule = (s: string) =>
@@ -149,6 +163,7 @@ export function ReportDefectDialog({
   useEffect(() => {
     if (open) {
       setSelectedSchedules([]);
+      setAiCategory("");
       setStateCode("");
       setDraft((d) => ({
         ...d,
@@ -178,6 +193,8 @@ export function ReportDefectDialog({
 
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
+  const is2290Ai = !featureMode && draft._form === "2290.ai";
+
   const submit = async () => {
     if (submitting) return;
     if (showForm && !draft._form) return toast.error("Please select a form");
@@ -201,14 +218,22 @@ export function ReportDefectDialog({
     if (scheduleOptions && scheduleOptions.length > 0 && selectedSchedules.length === 0) {
       return toast.error(`Please select at least one ${scheduleLabel.toLowerCase()} entry.`);
     }
+    if (is2290Ai && !aiCategory) {
+      return toast.error("Please select a 2290.ai issue category.");
+    }
     if (requireState && !isValidUsState(stateCode)) {
       return toast.error("Please select the U.S. state for this State Filing error.");
     }
 
+    const schedulesPayload = is2290Ai
+      ? [aiCategory]
+      : selectedSchedules.length > 0
+        ? [...selectedSchedules]
+        : undefined;
     const payload = {
       ...draft,
       formFeature: featureMode ? draft._form : encodeFormFeature(draft._form, draft._integration),
-      schedules: selectedSchedules.length > 0 ? [...selectedSchedules] : undefined,
+      schedules: schedulesPayload,
       state: requireState ? stateCode : undefined,
     };
     delete (payload as Partial<Draft>)._form;
