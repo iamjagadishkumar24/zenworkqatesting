@@ -395,6 +395,16 @@ function ReportedErrorsPage() {
                 />
               </>
             )}
+            <FilterSelect
+              value={issueCategory}
+              onChange={setIssueCategory}
+              placeholder="2290.ai Issue Category"
+              options={[
+                { v: "all", l: "All issue categories" },
+                ...FORM_2290_AI_CATEGORIES.map((c) => ({ v: c, l: c })),
+                { v: "none", l: "No category (non-2290.ai)" },
+              ]}
+            />
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
             <span>
