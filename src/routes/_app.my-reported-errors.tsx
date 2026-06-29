@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DefectStatusBadge, PriorityBadge } from "@/components/qa/StatusBadge";
 import { DefectDetailSheet } from "@/components/qa/DefectDetailSheet";
-import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Download, X } from "lucide-react";
+import { Eye, Pencil, Search, Bug, Trash2, UserPlus, Download, X, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ExportPreviewDialog } from "@/components/qa/ExportPreviewDialog";
 import { useAllowAgentExports } from "@/lib/qa/useExportJob";
@@ -47,6 +47,8 @@ import {
   type AdminDefectFilters,
   type Presence,
   type RetestState,
+  FORM_2290_AI_CATEGORIES,
+  defectIssueCategory,
 } from "@/lib/qa/adminFilters";
 
 const DEFECT_STATUSES: DefectStatus[] = [
@@ -131,6 +133,8 @@ function ReportedErrorsPage() {
   const [hasComments, setHasComments] = useState<Presence>("any");
   const [hasAttach, setHasAttach] = useState<Presence>("any");
   const [retest, setRetest] = useState<RetestState>("any");
+  const [issueCategory, setIssueCategory] = useState<string>("all");
+  const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
   const [reassignFor, setReassignFor] = useState<{ id: string; current: string } | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const allowAgentExports = useAllowAgentExports();
@@ -166,9 +170,21 @@ function ReportedErrorsPage() {
       hasComments: isAdmin ? hasComments : "any",
       hasAttachments: isAdmin ? hasAttach : "any",
       retest: isAdmin ? retest : "any",
+      issueCategory,
     };
     const base = filterDefectsAdmin(scoped, f);
-    return applyDefectPreset(base, preset);
+    const preset_filtered = applyDefectPreset(base, preset);
+    if (!sortDir) return preset_filtered;
+    const sorted = [...preset_filtered].sort((a, b) => {
+      const ca = defectIssueCategory(a) ?? "";
+      const cb = defectIssueCategory(b) ?? "";
+      // Empty values sort last regardless of direction.
+      if (ca && !cb) return -1;
+      if (!ca && cb) return 1;
+      const cmp = ca.localeCompare(cb);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return sorted;
   }, [
     scoped,
     q,
@@ -184,6 +200,8 @@ function ReportedErrorsPage() {
     retest,
     isAdmin,
     preset,
+    issueCategory,
+    sortDir,
   ]);
 
   const resetFilters = () => {
@@ -198,6 +216,8 @@ function ReportedErrorsPage() {
     setHasComments("any");
     setHasAttach("any");
     setRetest("any");
+    setIssueCategory("all");
+    setSortDir(null);
     navigate({ to: "/my-reported-errors", search: {} as never, replace: true });
   };
 
