@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { recordAuditFailure } from "@/lib/qa/auditFailures";
 
 function getBrowserMeta() {
   if (typeof navigator === "undefined") return { ua: null as string | null };
@@ -29,7 +30,7 @@ export async function recordAuthEvent(opts: {
             : opts.kind === "profile_updated"
               ? `${opts.email ?? "user"} updated profile`
               : `${opts.email ?? "user"} changed email`;
-    await supabase.rpc("log_activity", {
+    const { error } = await supabase.rpc("log_activity", {
       _category:
         opts.kind === "profile_updated" || opts.kind === "email_changed" ? "user_mgmt" : "auth",
       _action: `auth.${opts.kind}`,
@@ -44,8 +45,11 @@ export async function recordAuthEvent(opts: {
           ? ({ reason: opts.reason } as never)
           : null,
     });
+    if (error) {
+      recordAuditFailure("activity_log", error.message);
+    }
   } catch (e) {
     // never block the user flow on audit failure
-    console.warn("[activityLog] record failed", e);
+    recordAuditFailure("activity_log", e);
   }
 }
