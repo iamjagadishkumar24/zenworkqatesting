@@ -488,7 +488,7 @@ export function RightsManagementPage() {
             </SelectContent>
           </Select>
           <Select
-            value={selectedUserId || undefined}
+            value={selectedUserId}
             onValueChange={(v) => setSelectedUserId(v)}
             disabled={eligibleUsers.length === 0}
           >
