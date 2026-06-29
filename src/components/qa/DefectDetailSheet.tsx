@@ -4,6 +4,7 @@ import { useQA } from "@/lib/qa/store";
 import type { Defect, DefectStatus, Priority } from "@/lib/qa/types";
 import { supabase } from "@/integrations/supabase/client";
 import { encodeRetestTitle } from "@/lib/qa/retestLink";
+import { defectIssueCategory } from "@/lib/qa/adminFilters";
 import {
   Sheet,
   SheetContent,
@@ -598,11 +599,28 @@ export function DefectDetailSheet({
                 <Field label="Description">
                   {defect.description || <span className="text-muted-foreground">—</span>}
                 </Field>
-                {Array.isArray(defect.schedules) && defect.schedules.length > 0 && (
-                  <Field label="Schedules / Related Forms">
-                    <span data-testid="defect-schedules">{defect.schedules.join(", ")}</span>
-                  </Field>
-                )}
+                {(() => {
+                  const issueCat = defectIssueCategory(defect);
+                  const otherSchedules = Array.isArray(defect.schedules)
+                    ? defect.schedules.filter((s) => s !== issueCat)
+                    : [];
+                  return (
+                    <>
+                      {issueCat && (
+                        <Field label="2290.ai Issue Category">
+                          <span data-testid="defect-issue-category">{issueCat}</span>
+                        </Field>
+                      )}
+                      {otherSchedules.length > 0 && (
+                        <Field label="Schedules / Related Forms">
+                          <span data-testid="defect-schedules">
+                            {otherSchedules.join(", ")}
+                          </span>
+                        </Field>
+                      )}
+                    </>
+                  );
+                })()}
                 <Field label="Expected Result / Outcome">{defect.expectedResult || "—"}</Field>
                 <div className="grid gap-3 sm:grid-cols-2 text-xs">
                   <Field label="Assigned Agent">{defect.assignedAgent}</Field>
