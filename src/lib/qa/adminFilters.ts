@@ -13,6 +13,29 @@ import {
 export type RetestState = "any" | "required" | "passed" | "failed" | "none";
 export type Presence = "any" | "yes" | "no";
 
+/**
+ * Dedicated 2290.ai issue categories. These mirror the three filing options on
+ * the 2290.ai landing page and are persisted into the existing
+ * `schedules` field by the Report Defect dialog. Kept here (in addition to
+ * the dialog) so list/filter code can depend on them without importing UI.
+ */
+export const FORM_2290_AI_CATEGORIES = [
+  "Take a Picture & Upload",
+  "eFiling Wizard",
+  "One-Click eFiling",
+] as const;
+export type Form2290AiCategory = (typeof FORM_2290_AI_CATEGORIES)[number];
+
+export function defectIssueCategory(d: Pick<Defect, "schedules">): Form2290AiCategory | null {
+  const list = d.schedules ?? [];
+  for (const s of list) {
+    if ((FORM_2290_AI_CATEGORIES as readonly string[]).includes(s)) {
+      return s as Form2290AiCategory;
+    }
+  }
+  return null;
+}
+
 export type AdminDefectFilters = {
   q?: string;
   assignedAgent?: string; // "" | "all" -> any
@@ -25,6 +48,10 @@ export type AdminDefectFilters = {
   hasComments?: Presence;
   hasAttachments?: Presence;
   retest?: RetestState;
+  // 2290.ai issue category. "all" or undefined disables; "none" matches
+  // defects with no category set; any specific category string matches that
+  // value stored in `schedules`.
+  issueCategory?: string;
 };
 
 type AttachKeys = Pick<
@@ -97,6 +124,14 @@ export function filterDefectsAdmin<T extends Defect>(defects: T[], f: AdminDefec
     if (f.retest && f.retest !== "any") {
       if (defectRetestState(d.status) !== f.retest) return false;
     }
+    if (!isAny(f.issueCategory)) {
+      const cat = defectIssueCategory(d);
+      if (f.issueCategory === "none") {
+        if (cat) return false;
+      } else if (cat !== f.issueCategory) {
+        return false;
+      }
+    }
 
     if (!term) return true;
     const hay = [
@@ -110,6 +145,7 @@ export function filterDefectsAdmin<T extends Defect>(defects: T[], f: AdminDefec
       d.assignedAgent,
       d.createdBy,
       d.taxYear ?? "",
+      ...(d.schedules ?? []),
     ]
       .join(" ")
       .toLowerCase();
