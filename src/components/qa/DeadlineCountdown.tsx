@@ -202,7 +202,7 @@ export function DeadlineCountdown() {
         </div>
         <div className="border-t px-3 py-2 text-right">
           <Link
-            to="/tasks"
+            to="/retest"
             className="text-[11px] font-medium text-primary hover:underline"
           >
             View all tasks →
