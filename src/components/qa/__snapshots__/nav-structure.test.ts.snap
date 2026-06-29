@@ -73,7 +73,7 @@ exports[`Admin sidebar navigation structure > matches snapshot for labels, route
     "to": "/notes",
   },
   {
-    "group": "Management",
+    "group": "Task Management",
     "id": "management",
     "items": [
       {
