@@ -192,14 +192,14 @@ export function usePrefs() {
 
   // When theme === "system", keep in sync with OS-level changes.
   useEffect(() => {
-    if (typeof window === "undefined" || prefs.theme !== "system") return;
+    if (typeof window === "undefined" || prefs.theme !== "system" || !isAdmin) return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = (e: MediaQueryListEvent) => {
       document.documentElement.classList.toggle("dark", e.matches);
     };
     mq.addEventListener?.("change", onChange);
     return () => mq.removeEventListener?.("change", onChange);
-  }, [prefs.theme]);
+  }, [prefs.theme, isAdmin]);
 
   const update = <K extends keyof AdminPrefs>(k: K, v: AdminPrefs[K]) => {
     // Validate first so a crafted UI can't ask the backend to persist garbage.
