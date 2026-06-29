@@ -193,7 +193,10 @@ export function ReportDefectDialog({
 
   const upd = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
-  const is2290Ai = !featureMode && draft._form === "2290.ai";
+  // 2290.ai categories must appear whenever the selected form is 2290.ai,
+  // regardless of whether the dialog is in featureMode (e.g. when opened
+  // from the 2290 Forms module where the form is locked as a Feature).
+  const is2290Ai = draft._form === "2290.ai";
 
   const submit = async () => {
     if (submitting) return;
